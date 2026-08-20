@@ -1,0 +1,229 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Business {
+  id              Int       @id @default(autoincrement())
+  name            String
+  category        String    // e.g., Restaurants, Doctors, Salons, Plumbers
+  description     String
+  address         String
+  phone           String
+  whatsapp        String
+  website         String?
+  email           String?
+  instagram       String?
+  facebook        String?
+  youtube         String?
+  googleMaps      String?
+  verified        Boolean   @default(false)
+  premium         Boolean   @default(false)
+  subscription    String    @default("Free") // Free, Silver, Gold, Premium, Enterprise
+  rating          Float     @default(0.0)
+  reviewCount     Int       @default(0)
+  image           String
+  workingHours    String    @default("9:00 AM - 9:00 PM")
+  location        String    @default("Boisar") // Boisar East, Boisar West, Tarapur MIDC, Ostwal Empire
+  latitude        Float?
+  longitude       Float?
+  views           Int       @default(0)
+  phoneClicks     Int       @default(0)
+  whatsappClicks  Int       @default(0)
+  directionClicks Int       @default(0)
+  websiteClicks   Int       @default(0)
+  createdBy       String?   // Stores the login phone of the user who registered this business
+  createdAt       DateTime  @default(now())
+  
+  leads           Lead[]
+  reviews         Review[]
+  products        Product[]
+  services        Service[]
+  faqs            FAQ[]
+  jobs            Job[]
+}
+
+model Lead {
+  id            Int       @id @default(autoincrement())
+  businessId    Int
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerName  String
+  customerPhone String
+  customerEmail String?
+  query         String
+  status        String    @default("Pending") // Pending, Won, Lost, Completed
+  notes         String?
+  createdAt     DateTime  @default(now())
+}
+
+model Review {
+  id            Int       @id @default(autoincrement())
+  businessId    Int
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userName      String
+  rating        Int       // 1 to 5
+  comment       String
+  helpfulCount  Int       @default(0)
+  createdAt     DateTime  @default(now())
+}
+
+model Product {
+  id          Int       @id @default(autoincrement())
+  businessId  Int
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  price       Float
+  image       String?
+  description String?
+}
+
+model Service {
+  id          Int       @id @default(autoincrement())
+  businessId  Int
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  price       Float?
+  duration    String?   // e.g., "1 hour", "30 mins"
+  description String?
+}
+
+model FAQ {
+  id          Int       @id @default(autoincrement())
+  businessId  Int
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  question    String
+  answer      String
+}
+
+model AdOrder {
+  id                Int      @id @default(autoincrement())
+  businessId        Int
+  businessName      String
+  title             String
+  description       String
+  image             String?
+  placement         String   @default("sponsored") // slider, sponsored, results, all
+  targetingScope    String   @default("both")      // personal, custom, both
+  targetCategory    String   @default("All")
+  durationDays      Int      @default(7)
+  dailyBudget       Float    @default(100.0)
+  totalCost         Float    @default(700.0)
+  status            String   @default("Pending")   // Pending, Approved, Rejected
+  showTextOverlay   Boolean  @default(true)
+  targetUrl         String?
+  ctaText           String?
+  createdAt         DateTime @default(now())
+}
+
+model SystemSetting {
+  key   String @id
+  value String
+}
+
+model Job {
+  id          Int              @id @default(autoincrement())
+  businessId  Int
+  business    Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  title       String
+  type        String           @default("Full Time") // Full Time, Part Time, Contract
+  description String
+  salary      String?          // e.g., "15k - 20k per month"
+  location    String           @default("Boisar")
+  status      String           @default("Open") // Open, Closed
+  createdAt   DateTime         @default(now())
+  
+  applications JobApplication[]
+}
+
+model JobApplication {
+  id             Int      @id @default(autoincrement())
+  jobId          Int
+  job            Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  applicantName  String
+  applicantPhone String
+  applicantEmail String?
+  resumeUrl      String?
+  coverLetter    String?
+  status         String   @default("Pending") // Pending, Reviewed, Rejected, Hired
+  createdAt      DateTime @default(now())
+}
+
+model BloodDonor {
+  id          Int      @id @default(autoincrement())
+  name        String
+  bloodGroup  String
+  location    String
+  phone       String
+  lastDonated String   @default("Ready to donate")
+  verified    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model MarketplaceItem {
+  id          Int      @id @default(autoincrement())
+  title       String
+  category    String   @default("Vehicles")
+  price       Float
+  condition   String   @default("Good")
+  location    String   @default("Boisar")
+  sellerName  String
+  phone       String
+  image       String?
+  createdAt   DateTime @default(now())
+}
+
+model PropertyListing {
+  id              Int      @id @default(autoincrement())
+  iAm             String   @default("Owner")
+  contactName     String
+  contactPhone    String
+  whatsappPhone   String?
+  forAction       String   @default("Sale")
+  propertyType    String   @default("Flat/ Apartment")
+  cityName        String   @default("Boisar")
+  projectName     String?
+  addressLocality String
+  bedrooms        String?
+  balconies       String?
+  furnishing      String?
+  bathrooms       String?
+  carpetArea      String?
+  superArea       String?
+  price           String
+  description     String?
+  images          String?  // Separated by ||gallery_sep||
+  createdAt       DateTime @default(now())
+}
+
+model BookListing {
+  id          Int      @id @default(autoincrement())
+  title       String
+  category    String   @default("10th/12th School")
+  subject     String?
+  priceType   String   @default("Free / Gift")
+  price       Float    @default(0)
+  donorName   String
+  phone       String
+  location    String   @default("Boisar")
+  condition   String?  @default("Good Condition")
+  image       String?
+  createdAt   DateTime @default(now())
+}
+
+model ListingReport {
+  id          Int      @id @default(autoincrement())
+  listingId   String
+  listingType String   @default("business") // business, property, marketplace, blood, book
+  reason      String
+  reportedBy  String?
+  status      String   @default("Pending") // Pending, Reviewed, Resolved
+  createdAt   DateTime @default(now())
+}
+

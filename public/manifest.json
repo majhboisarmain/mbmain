@@ -1,0 +1,52 @@
+{
+  "id": "in.majhboisar.twa",
+  "short_name": "Majh Boisar",
+  "name": "Majh Boisar — #1 City Directory & Search Engine",
+  "description": "Discover local businesses, shops, jobs, properties, hotels, and voluntary blood donors in Boisar, Tarapur MIDC & Palghar.",
+  "icons": [
+    {
+      "src": "/majh-boisar-mb-logo.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/majh-boisar-mb-logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#0d9488",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "categories": ["business", "shopping", "lifestyle", "utilities"],
+  "lang": "en",
+  "shortcuts": [
+    {
+      "name": "Blood Donors",
+      "short_name": "Blood Donors",
+      "description": "Find voluntary blood donors in Boisar",
+      "url": "/blood-donation",
+      "icons": [{ "src": "/majh-boisar-mb-logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Jobs in Boisar",
+      "short_name": "Jobs",
+      "description": "Explore local jobs and MIDC vacancies",
+      "url": "/jobs",
+      "icons": [{ "src": "/majh-boisar-mb-logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Properties",
+      "short_name": "Properties",
+      "description": "Find flats and shops on rent or sale in Boisar",
+      "url": "/properties",
+      "icons": [{ "src": "/majh-boisar-mb-logo.png", "sizes": "192x192" }]
+    }
+  ]
+}
