@@ -3404,35 +3404,6 @@ function DashboardContent() {
                     >
                       <Plus className="w-4 h-4" /> + Register New Business
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const defaultBiz = {
-                          id: 1,
-                          name: 'Freesia by Express Inn',
-                          category: 'Hotels & Lodging',
-                          description: 'Verified Hotel in Boisar',
-                          address: 'Ostwal Empire, Boisar West',
-                          location: 'Ostwal Empire',
-                          phone: '7769947217',
-                          whatsapp: '7769947217',
-                          subscription: 'Pro',
-                          verified: true,
-                          views: 120,
-                          phoneClicks: 45,
-                          whatsappClicks: 32,
-                          products: [],
-                          services: [],
-                          reviews: [],
-                          leads: []
-                        };
-                        setBusiness(defaultBiz as any);
-                        setActiveSubTab('hotel_bookings');
-                      }}
-                      className="bg-purple-900 hover:bg-purple-950 text-white font-black text-xs px-5 py-3 rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
-                    >
-                      🏨 Open Hotel Bookings Desk
-                    </button>
                   </div>
                 </div>
               </div>

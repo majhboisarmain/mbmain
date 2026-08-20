@@ -216,38 +216,6 @@ export default function AdminPanelPage() {
           } catch (e) {}
         }
       }
-      if (all.length === 0) {
-        return [
-          {
-            id: 'HB-8491',
-            hotelId: 'hotel-shanti-deluxe',
-            hotelName: 'Hotel Shanti Residency',
-            hotelPhone: '9820123456',
-            guestName: 'Rahul Verma',
-            guestPhone: '9820123456',
-            roomType: 'Deluxe AC Room (1 Night)',
-            checkInDate: 'Today, 2:00 PM',
-            totalAmount: 1899,
-            payoutStatus: 'Pending',
-            createdAt: new Date().toISOString()
-          },
-          {
-            id: 'HB-8490',
-            hotelId: 'midc-comfort-inn',
-            hotelName: 'Tarapur MIDC Comfort Inn',
-            hotelPhone: '9876543210',
-            guestName: 'Pooja Patil',
-            guestPhone: '9876543210',
-            roomType: 'Executive Room (6 Hours)',
-            checkInDate: 'Yesterday',
-            totalAmount: 1099,
-            payoutStatus: 'Settled',
-            payoutRef: 'UPI-9482019482',
-            payoutSettledAt: new Date(Date.now() - 86400000).toISOString(),
-            createdAt: new Date(Date.now() - 86400000).toISOString()
-          }
-        ];
-      }
       return all;
     } catch (e) {
       return [];
