@@ -218,6 +218,24 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteNavigationJsonLd) }}
         />
+        {/* Google Analytics GA4 */}
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-QH96MHWKDX"
+        />
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+        >
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-QH96MHWKDX', {
+              page_path: window.location.pathname,
+            });
+          `}
+        </Script>
         <Script id="google-translate-init" strategy="afterInteractive">
           {`
             function googleTranslateElementInit() {
