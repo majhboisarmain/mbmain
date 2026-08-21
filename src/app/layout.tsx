@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import Preloader from "@/components/Preloader";
 
 import NetworkStatusListener from "@/components/NetworkStatusListener";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -234,6 +235,7 @@ export default function RootLayout({
         />
         <LanguageProvider>
           <AppProvider>
+            <ServiceWorkerRegister />
             <NetworkStatusListener />
             <div className="w-full min-h-screen flex flex-col relative">
               <Preloader />
