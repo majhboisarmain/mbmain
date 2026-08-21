@@ -59,7 +59,7 @@ const resortsJsonLd = {
       'description': resort.description,
       'image': resort.gallery?.[0] || 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&auto=format&fit=crop&q=80',
       'telephone': `+91${resort.phone}`,
-      'priceRange': `₹${resort.dayPicnicPrice || 500} - ₹${resort.nightStayPrice || 2500}`,
+      'priceRange': `₹${resort.dayPicnicPrice || 500} - ₹${resort.pricePerNight || 2500}`,
       'address': {
         '@type': 'PostalAddress',
         'addressLocality': resort.location || 'Boisar / Kelwa Beach',
