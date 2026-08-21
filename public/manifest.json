@@ -23,6 +23,22 @@
       "purpose": "maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Majh Boisar Desktop View"
+    },
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Majh Boisar Mobile View"
+    }
+  ],
   "start_url": "/?source=pwa",
   "scope": "/",
   "background_color": "#ffffff",
@@ -35,6 +51,9 @@
   "categories": ["business", "shopping", "lifestyle", "utilities"],
   "prefer_related_applications": false,
   "related_applications": [],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
   "shortcuts": [
     {
       "name": "Blood Donors",
