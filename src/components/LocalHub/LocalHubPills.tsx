@@ -33,8 +33,14 @@ export default function LocalHubPills() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Cards sorted in a logical, user-friendly order with Blood Donor added
+  // Cards sorted in a logical, user-friendly order with Home Services prominently placed
   const localCards = [
+    {
+      id: 'technicians',
+      title: 'Home Services',
+      image: '/imagess/home technician.png',
+      onClick: () => router.push('/services')
+    },
     {
       id: 'resorts',
       title: 'Resorts & Pool Villas',
@@ -82,12 +88,6 @@ export default function LocalHubPills() {
       title: 'Used Items',
       image: '/imagess/used items.png',
       onClick: () => setMarketplaceOpen(true)
-    },
-    {
-      id: 'technicians',
-      title: 'Home Technicians',
-      image: '/imagess/home technician.png',
-      onClick: () => setTechOpen(true)
     },
     {
       id: 'tempo',

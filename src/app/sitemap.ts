@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Core static pages
   const routes = [
     { route: '', priority: 1.0, changeFrequency: 'daily' as const },
+    { route: '/services', priority: 0.95, changeFrequency: 'daily' as const },
     { route: '/hotels', priority: 0.95, changeFrequency: 'daily' as const },
     { route: '/resorts', priority: 0.95, changeFrequency: 'daily' as const },
     { route: '/properties', priority: 0.95, changeFrequency: 'daily' as const },
