@@ -38,7 +38,7 @@ export default function LocalHubPills() {
     {
       id: 'technicians',
       title: 'Home Services',
-      image: '/imagess/home technician.png',
+      image: '/imagess/home servvies pill.png',
       onClick: () => router.push('/services')
     },
     {

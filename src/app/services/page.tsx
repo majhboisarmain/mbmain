@@ -10,7 +10,8 @@ import {
   Droplets, Zap, Hammer, Paintbrush, ShieldAlert, Truck, 
   LayoutGrid, Tv, ShieldCheck, Clock, ExternalLink, X,
   CheckCircle2, ArrowUpDown, Filter, Building2, UserCheck,
-  ChevronDown
+  ChevronDown, HeartHandshake, User, Car, UtensilsCrossed,
+  Baby, Sparkle
 } from 'lucide-react';
 
 interface ServiceCategory {
@@ -20,7 +21,7 @@ interface ServiceCategory {
   iconBg: string;
   iconColor: string;
   borderColor: string;
-  iconType: 'ac' | 'plumber' | 'electrician' | 'carpenter' | 'painter' | 'cleaning' | 'pest' | 'movers' | 'more' | 'ro' | 'appliance' | 'cctv' | 'solar' | 'mason' | 'mechanic';
+  iconType: 'ac' | 'plumber' | 'electrician' | 'carpenter' | 'painter' | 'cleaning' | 'pest' | 'movers' | 'more' | 'maid' | 'ro' | 'appliance' | 'cctv' | 'solar' | 'mason' | 'mechanic';
 }
 
 interface PopularService {
@@ -32,6 +33,21 @@ interface PopularService {
   reviews: number;
   image: string;
   desc: string;
+}
+
+interface DomesticHelper {
+  id: string;
+  name: string;
+  role: 'House Maid' | 'Car Driver' | 'Cook / Chef' | 'Babysitter' | 'Deep Clean' | 'Electrician' | 'Plumber' | 'Elderly Care';
+  timing: string;
+  experience: string;
+  expectedSalary: string;
+  location: string;
+  phone: string;
+  rating: number;
+  reviewsCount: number;
+  verified: boolean;
+  image: string;
 }
 
 interface ServiceProvider {
@@ -61,7 +77,7 @@ const SERVICE_CATEGORIES: ServiceCategory[] = [
   { id: 'more', name: 'More Services', query: 'Home Services', iconBg: 'bg-purple-50', iconColor: 'text-purple-600', borderColor: 'border-purple-200', iconType: 'more' },
 ];
 
-// Expanded Categories for "More Services" including House Maid & Cook
+// Expanded Categories for "More Services"
 const EXTENDED_CATEGORIES: ServiceCategory[] = [
   { id: 'maid', name: 'House Maid & Cook', query: 'House Maid', iconBg: 'bg-pink-50', iconColor: 'text-pink-600', borderColor: 'border-pink-200', iconType: 'maid' },
   { id: 'ro', name: 'RO & Water Purifier', query: 'RO Purifier', iconBg: 'bg-cyan-50', iconColor: 'text-cyan-600', borderColor: 'border-cyan-200', iconType: 'ro' },
@@ -166,6 +182,122 @@ const POPULAR_SERVICES: PopularService[] = [
   }
 ];
 
+// Pre-populated Domestic Helpers in Boisar
+const INITIAL_DOMESTIC_HELPERS: DomesticHelper[] = [
+  {
+    id: 'maid-1',
+    name: 'Sunita Kamble',
+    role: 'House Maid',
+    timing: 'Morning & Evening (Part-Time)',
+    experience: '5+ Yrs in Boisar',
+    expectedSalary: '₹2,200/mo (Bartan + Jhadu + Pocha)',
+    location: 'Ostwal Empire / Boisar West',
+    phone: '7769947217',
+    rating: 4.8,
+    reviewsCount: 28,
+    verified: true,
+    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'driver-1',
+    name: 'Rajesh Patil',
+    role: 'Car Driver',
+    timing: 'Full-Time (8 AM - 7 PM)',
+    experience: '8+ Yrs (Manual & Automatic)',
+    expectedSalary: '₹14,000/mo (Local & Mumbai Trips)',
+    location: 'Katkar Pada / Station',
+    phone: '7769947217',
+    rating: 4.9,
+    reviewsCount: 34,
+    verified: true,
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'cook-1',
+    name: 'Shanti Devi',
+    role: 'Cook / Chef',
+    timing: 'Morning 7-10 AM & Eve 6-9 PM',
+    experience: '6+ Yrs Home Cooking',
+    expectedSalary: '₹3,500/mo (Pure Veg & Non-Veg)',
+    location: 'Boisar West & Ostwal',
+    phone: '7769947217',
+    rating: 4.8,
+    reviewsCount: 22,
+    verified: true,
+    image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'baby-1',
+    name: 'Rekha Ahire',
+    role: 'Babysitter',
+    timing: 'Part-Time / Day Care (9 AM - 4 PM)',
+    experience: '4+ Yrs Child Care',
+    expectedSalary: '₹4,500/mo (Infant Feeding & Play)',
+    location: 'Tarapur MIDC & Pasthal',
+    phone: '7769947217',
+    rating: 4.9,
+    reviewsCount: 19,
+    verified: true,
+    image: 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=500&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'clean-1',
+    name: 'Deepak Sharma',
+    role: 'Deep Clean',
+    timing: 'On-Demand / Weekend Visits',
+    experience: '5+ Yrs Machine Cleaning',
+    expectedSalary: '₹499/visit (Bathroom & Kitchen)',
+    location: 'All Boisar Areas',
+    phone: '7769947217',
+    rating: 4.7,
+    reviewsCount: 41,
+    verified: true,
+    image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'elec-1',
+    name: 'Manoj Sharma',
+    role: 'Electrician',
+    timing: '24/7 On-Call Emergency Service',
+    experience: '7+ Yrs Industrial & Home Wiring',
+    expectedSalary: '₹199 Inspection / Visit Fee',
+    location: 'Station Road & MIDC',
+    phone: '7769947217',
+    rating: 4.8,
+    reviewsCount: 52,
+    verified: true,
+    image: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=500&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'plumb-1',
+    name: 'Suresh Yadav',
+    role: 'Plumber',
+    timing: 'Daily 8 AM - 9 PM',
+    experience: '6+ Yrs Pipe & Motor Repair',
+    expectedSalary: '₹199 Inspection / Visit Fee',
+    location: 'Pasthal & Boisar West',
+    phone: '7769947217',
+    rating: 4.7,
+    reviewsCount: 39,
+    verified: true,
+    image: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=500&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'elder-1',
+    name: 'Kamla Bai',
+    role: 'Elderly Care',
+    timing: 'Day & Night Attendant (12h / 24h)',
+    experience: '6+ Yrs Patient Assistance',
+    expectedSalary: '₹8,500/mo (Medicine & Companionship)',
+    location: 'Navapur Road & Ostwal',
+    phone: '7769947217',
+    rating: 4.9,
+    reviewsCount: 16,
+    verified: true,
+    image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80'
+  }
+];
+
 function ServicesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -177,6 +309,13 @@ function ServicesPageContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArea, setSelectedArea] = useState('All');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showHelperModal, setShowHelperModal] = useState(false);
+
+  // Domestic Helper Filter State
+  const [helperFilter, setHelperFilter] = useState<string>('All Helpers');
+  const [domesticHelpers, setDomesticHelpers] = useState<DomesticHelper[]>(INITIAL_DOMESTIC_HELPERS);
+
+  // Provider states
   const [providers, setProviders] = useState<ServiceProvider[]>([]);
 
   // Add Provider Form
@@ -187,18 +326,33 @@ function ServicesPageContent() {
   const [formLocation, setFormLocation] = useState('Boisar West');
   const [formVisitingFee, setFormVisitingFee] = useState('₹199 Inspection Fee');
   const [formImage, setFormImage] = useState('');
+
+  // Add Helper Form
+  const [helperName, setHelperName] = useState('');
+  const [helperRole, setHelperRole] = useState<'House Maid' | 'Car Driver' | 'Cook / Chef' | 'Babysitter' | 'Deep Clean' | 'Electrician' | 'Plumber' | 'Elderly Care'>('House Maid');
+  const [helperTiming, setHelperTiming] = useState('Morning & Evening (Part-Time)');
+  const [helperExp, setHelperExp] = useState('4+ Yrs Experience');
+  const [helperSalary, setHelperSalary] = useState('₹2,500/mo (Bartan+Jhadu+Pocha)');
+  const [helperLocation, setHelperLocation] = useState('Ostwal Empire');
+  const [helperPhone, setHelperPhone] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Load custom providers from local storage
+  // Load custom providers and helpers from local storage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem('majh_boisar_tech_list');
         const parsed = saved ? JSON.parse(saved) : [];
         setProviders(Array.isArray(parsed) ? parsed : []);
-      } catch (e) {
-        setProviders([]);
-      }
+
+        const savedHelpers = localStorage.getItem('majh_boisar_domestic_helpers');
+        if (savedHelpers) {
+          const parsedH = JSON.parse(savedHelpers);
+          if (Array.isArray(parsedH) && parsedH.length > 0) {
+            setDomesticHelpers([...parsedH, ...INITIAL_DOMESTIC_HELPERS]);
+          }
+        }
+      } catch (e) {}
     }
   }, []);
 
@@ -208,9 +362,9 @@ function ServicesPageContent() {
     }
   }, [catParam]);
 
-  // Lock background scroll when modal open
+  // Lock background scroll when modals are open
   useEffect(() => {
-    if (showAddForm) {
+    if (showAddForm || showHelperModal) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -218,7 +372,7 @@ function ServicesPageContent() {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [showAddForm]);
+  }, [showAddForm, showHelperModal]);
 
   // Render SVG Symbol by Category Type
   const renderCategoryIcon = (type: ServiceCategory['iconType'], colorClass: string) => {
@@ -301,15 +455,6 @@ function ServicesPageContent() {
             <circle cx="17" cy="18" r="2" />
           </svg>
         );
-      case 'more':
-        return (
-          <svg className={`w-6 h-6 ${colorClass}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="7" height="7" x="3" y="3" rx="2" />
-            <rect width="7" height="7" x="14" y="3" rx="2" />
-            <rect width="7" height="7" x="14" y="14" rx="2" />
-            <rect width="7" height="7" x="3" y="14" rx="2" />
-          </svg>
-        );
       case 'maid':
         return (
           <svg className={`w-6 h-6 ${colorClass}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -331,7 +476,14 @@ function ServicesPageContent() {
       case 'mechanic':
         return <Wrench className={`w-6 h-6 ${colorClass}`} />;
       default:
-        return <Wrench className={`w-6 h-6 ${colorClass}`} />;
+        return (
+          <svg className={`w-6 h-6 ${colorClass}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect width="7" height="7" x="3" y="3" rx="2" />
+            <rect width="7" height="7" x="14" y="3" rx="2" />
+            <rect width="7" height="7" x="14" y="14" rx="2" />
+            <rect width="7" height="7" x="3" y="14" rx="2" />
+          </svg>
+        );
     }
   };
 
@@ -375,6 +527,72 @@ function ServicesPageContent() {
     }, 1500);
   };
 
+  const handleAddHelperSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!helperName.trim() || !helperPhone.trim()) {
+      showToast("Please enter Name and Contact Number!", "error");
+      return;
+    }
+
+    const newHelper: DomesticHelper = {
+      id: `helper-${Date.now()}`,
+      name: helperName.trim(),
+      role: helperRole,
+      timing: helperTiming,
+      experience: helperExp,
+      expectedSalary: helperSalary,
+      location: helperLocation.trim() || 'Boisar West',
+      phone: helperPhone.trim(),
+      rating: 5.0,
+      reviewsCount: 1,
+      verified: true,
+      image: helperRole === 'House Maid' ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=80'
+        : helperRole === 'Car Driver' ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80'
+        : helperRole === 'Cook / Chef' ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=80'
+        : 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=500&auto=format&fit=crop&q=80'
+    };
+
+    const updatedHelpers = [newHelper, ...domesticHelpers];
+    setDomesticHelpers(updatedHelpers);
+
+    if (typeof window !== 'undefined') {
+      const customOnly = updatedHelpers.filter(h => h.id.startsWith('helper-'));
+      localStorage.setItem('majh_boisar_domestic_helpers', JSON.stringify(customOnly));
+    }
+
+    setSuccessMsg('🎉 Domestic Helper Profile Added Successfully!');
+    showToast('🎉 Helper Profile Registered Live on Majh Boisar!', 'success');
+
+    setTimeout(() => {
+      setSuccessMsg('');
+      setShowHelperModal(false);
+      setHelperName('');
+      setHelperPhone('');
+    }, 1500);
+  };
+
+  // Filtered Domestic Helpers
+  const filteredDomesticHelpers = useMemo(() => {
+    return domesticHelpers.filter(h => {
+      const matchRole = helperFilter === 'All Helpers' || h.role.toLowerCase() === helperFilter.toLowerCase() ||
+        (helperFilter === 'House Maid' && h.role === 'House Maid') ||
+        (helperFilter === 'Car Driver' && h.role === 'Car Driver') ||
+        (helperFilter === 'Cook / Chef' && h.role === 'Cook / Chef') ||
+        (helperFilter === 'Babysitter' && h.role === 'Babysitter') ||
+        (helperFilter === 'Deep Clean' && h.role === 'Deep Clean') ||
+        (helperFilter === 'Electrician' && h.role === 'Electrician') ||
+        (helperFilter === 'Plumber' && h.role === 'Plumber') ||
+        (helperFilter === 'Elderly Care' && h.role === 'Elderly Care');
+
+      const matchSearch = !searchQuery.trim() ||
+        h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        h.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        h.location.toLowerCase().includes(searchQuery.toLowerCase());
+
+      return matchRole && matchSearch;
+    });
+  }, [domesticHelpers, helperFilter, searchQuery]);
+
   // Filtered providers
   const filteredProviders = useMemo(() => {
     return providers.filter(p => {
@@ -404,10 +622,25 @@ function ServicesPageContent() {
               Home
             </Link>
             <span className="text-slate-300">/</span>
-            <span className="text-teal-900 font-black truncate">Home Services &amp; Repairs in Boisar</span>
+            <span className="text-teal-900 font-black truncate">Home Services &amp; Domestic Helpers in Boisar</span>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => {
+                if (!isLoggedIn) {
+                  showToast("Please Sign In or Register first to list your profile.", "info", 4000);
+                  setLoginModalOpen(true);
+                  return;
+                }
+                setShowHelperModal(true);
+              }}
+              className="bg-pink-600 hover:bg-pink-700 active:scale-95 text-white font-black text-xs px-3 py-1.5 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>+ Add Helper Profile</span>
+            </button>
+
             <button
               onClick={() => {
                 if (!isLoggedIn) {
@@ -420,7 +653,7 @@ function ServicesPageContent() {
               className="bg-teal-700 hover:bg-teal-800 active:scale-95 text-white font-black text-xs px-3.5 py-1.5 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>List Your Service</span>
+              <span>List Service</span>
             </button>
           </div>
         </div>
@@ -434,19 +667,19 @@ function ServicesPageContent() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
-                ⚡ 1-TAP LOCAL CALL
+                ⚡ 1-TAP DIRECT CONNECT
               </span>
               <span className="text-[11px] text-teal-300 font-semibold">
-                Boisar West · Tarapur MIDC · Ostwal · Katkar Pada
+                Boisar West · Tarapur MIDC · Ostwal Empire · Katkar Pada
               </span>
             </div>
             <h1 className="text-sm sm:text-base md:text-lg font-black text-white leading-snug">
-              Verified Electricians, Plumbers, AC Technicians &amp; Home Repairs in Boisar
+              Verified Maids, Drivers, Cooks, Electricians, Plumbers &amp; Technicians in Boisar
             </h1>
           </div>
 
           <a
-            href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar,%20I%20need%20home%20repair%20service%20in%20Boisar."
+            href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar,%20I%20need%20a%20verified%20maid%20or%20technician%20in%20Boisar."
             target="_blank"
             rel="noopener noreferrer"
             className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black flex items-center justify-center gap-1.5 shadow-md transition-all shrink-0 cursor-pointer self-start sm:self-auto"
@@ -464,7 +697,7 @@ function ServicesPageContent() {
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search services (e.g. AC service, plumber, electrician, pest control)..."
+                placeholder="Search services or helpers (e.g. house maid, car driver, AC service, cook)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-slate-100/90 border border-slate-200 rounded-xl pl-10 pr-9 py-2 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-teal-600 transition-all placeholder:text-slate-400"
@@ -547,7 +780,136 @@ function ServicesPageContent() {
           </div>
         </div>
 
-        {/* 4. POPULAR SERVICES SECTION (Matching Reference Screenshot) */}
+        {/* ── 4. DEDICATED SECTION: DOMESTIC HELPERS & MAIDS IN BOISAR ── */}
+        <div className="bg-white rounded-3xl border border-pink-200/80 p-4 sm:p-5 shadow-2xs space-y-3.5">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-pink-50 border border-pink-200 text-pink-600 flex items-center justify-center shrink-0 shadow-2xs">
+                <HeartHandshake className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
+                  Domestic Helpers &amp; Maids in Boisar
+                </h2>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Verified maids, drivers, cooks, babysitters &amp; cleaners.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                if (!isLoggedIn) {
+                  showToast("Please Sign In or Register first to add a helper profile.", "info", 4000);
+                  setLoginModalOpen(true);
+                  return;
+                }
+                setShowHelperModal(true);
+              }}
+              className="bg-pink-600 hover:bg-pink-700 active:scale-95 text-white font-black text-xs px-4 py-2 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer self-start sm:self-auto"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Profile</span>
+            </button>
+          </div>
+
+          {/* Helper Filter Pills (Matching User Request) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {[
+              { id: 'All Helpers', label: 'All Helpers' },
+              { id: 'House Maid', label: '🧹 House Maid' },
+              { id: 'Car Driver', label: '🚗 Car Driver' },
+              { id: 'Cook / Chef', label: '👨‍🍳 Cook / Chef' },
+              { id: 'Babysitter', label: '👶 Babysitter' },
+              { id: 'Deep Clean', label: '✨ Deep Clean' },
+              { id: 'Electrician', label: '⚡ Electrician' },
+              { id: 'Plumber', label: '🚰 Plumber' },
+              { id: 'Elderly Care', label: '👵 Elderly Care' }
+            ].map((pill) => {
+              const active = helperFilter === pill.id;
+              return (
+                <button
+                  key={pill.id}
+                  onClick={() => setHelperFilter(pill.id)}
+                  className={`px-3 py-1 rounded-full text-[11px] font-black transition-all cursor-pointer whitespace-nowrap border ${
+                    active 
+                      ? 'bg-pink-600 text-white border-pink-600 shadow-2xs' 
+                      : 'bg-slate-50 hover:bg-pink-50 text-slate-700 hover:text-pink-900 border-slate-200'
+                  }`}
+                >
+                  {pill.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Domestic Helpers Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+            {filteredDomesticHelpers.map((helper) => (
+              <div
+                key={helper.id}
+                className="bg-white border border-slate-200 hover:border-pink-300 rounded-2xl p-3.5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group text-left"
+              >
+                <div>
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={helper.image}
+                      alt={helper.name}
+                      className="w-14 h-14 rounded-2xl object-cover border border-slate-200 shrink-0 group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="text-xs sm:text-sm font-black text-slate-900 truncate">{helper.name}</h3>
+                        <span className="bg-emerald-50 text-emerald-700 text-[8.5px] font-black px-1.5 py-0.2 rounded border border-emerald-200 shrink-0">
+                          ✓ Verified
+                        </span>
+                      </div>
+                      <span className="inline-block bg-pink-50 text-pink-700 text-[9.5px] font-black px-2 py-0.5 rounded-md mt-0.5">
+                        {helper.role}
+                      </span>
+                      <p className="text-[10px] text-slate-500 font-bold mt-1 truncate">
+                        🕒 {helper.timing}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-2.5 pt-2 border-t border-slate-100 space-y-1">
+                    <p className="text-[10.5px] text-slate-600 font-bold flex items-center gap-1 truncate">
+                      <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                      <span>{helper.location} • {helper.experience}</span>
+                    </p>
+                    <p className="text-[11px] font-black text-pink-700 leading-snug">
+                      💰 {helper.expectedSalary}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Contact Actions */}
+                <div className="flex items-center gap-2 pt-2.5 mt-2.5 border-t border-slate-100">
+                  <a
+                    href={`tel:${helper.phone}`}
+                    className="flex-1 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-black text-[11px] py-1.5 rounded-xl text-center shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <Phone className="w-3 h-3" />
+                    <span>Call</span>
+                  </a>
+                  <a
+                    href={`https://wa.me/91${helper.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${helper.name}, I need a ${helper.role} in Boisar. Please share your availability & charges.`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-black text-[11px] py-1.5 rounded-xl text-center shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <MessageSquare className="w-3 h-3" />
+                    <span>WhatsApp</span>
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 5. POPULAR SERVICES SECTION (Matching Reference Screenshot) */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -596,7 +958,7 @@ function ServicesPageContent() {
           </div>
         </div>
 
-        {/* 5. VERIFIED PROVIDERS / TECHNICIANS DIRECTORY */}
+        {/* 6. VERIFIED PROVIDERS / TECHNICIANS DIRECTORY */}
         <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -707,7 +1069,7 @@ function ServicesPageContent() {
           </div>
         </div>
 
-        {/* 6. Luxury Bottom Banner for Service Providers */}
+        {/* 7. Bottom Banner */}
         <div 
           style={{ background: 'linear-gradient(135deg, #092c24 0%, #0d3d32 50%, #061c17 100%)', color: '#ffffff' }}
           className="rounded-3xl p-5 sm:p-6 border border-teal-500/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 text-left"
@@ -718,10 +1080,10 @@ function ServicesPageContent() {
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-black text-white leading-tight">
-                Are you an Electrician, Plumber, Painter or AC Technician in Boisar?
+                Are you a Maid, Cook, Driver or Technician in Boisar?
               </h3>
               <p className="text-xs text-teal-200 font-medium mt-0.5">
-                List your business on Majh Boisar and get direct daily repair &amp; maintenance calls from local residents.
+                List your profile on Majh Boisar and get direct customer calls with zero commission.
               </p>
             </div>
           </div>
@@ -734,16 +1096,150 @@ function ServicesPageContent() {
                 setLoginModalOpen(true);
                 return;
               }
-              setShowAddForm(true);
+              setShowHelperModal(true);
             }}
             className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-6 py-3 rounded-2xl shadow-md transition-all cursor-pointer flex items-center gap-1.5 shrink-0 uppercase tracking-wider active:scale-95 whitespace-nowrap"
           >
             <Plus className="w-4 h-4 text-slate-950" />
-            <span>Register Your Service</span>
+            <span>Register Profile</span>
           </button>
         </div>
 
       </div>
+
+      {/* ── ADD HELPER / MAID PROFILE MODAL ── */}
+      {showHelperModal && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-4 sm:p-6 shadow-2xl relative border border-slate-200 max-h-[90vh] flex flex-col text-left overflow-hidden">
+            
+            <button
+              onClick={() => setShowHelperModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="border-b border-slate-200 pb-3 mb-4">
+              <div className="flex items-center gap-2 text-pink-700">
+                <HeartHandshake className="w-5 h-5" />
+                <h3 className="text-sm font-black uppercase tracking-wider">Add Domestic Helper / Maid Profile</h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">Register maids, drivers, cooks, babysitters or helpers in Boisar</p>
+            </div>
+
+            {successMsg ? (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 flex items-center gap-2 text-xs font-black animate-in fade-in">
+                <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span>{successMsg}</span>
+              </div>
+            ) : (
+              <form onSubmit={handleAddHelperSubmit} className="space-y-3 overflow-y-auto pr-1">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-extrabold uppercase mb-1">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={helperName}
+                    onChange={e => setHelperName(e.target.value)}
+                    placeholder="e.g. Sunita Kamble / Rajesh Patil"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-pink-600"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[10px] text-slate-600 font-extrabold uppercase mb-1">Job Role *</label>
+                    <select
+                      value={helperRole}
+                      onChange={e => setHelperRole(e.target.value as any)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-pink-600 cursor-pointer"
+                    >
+                      <option value="House Maid">House Maid (कामवाली बाई)</option>
+                      <option value="Car Driver">Car Driver (कार ड्राइवर)</option>
+                      <option value="Cook / Chef">Cook / Chef (रसोइया)</option>
+                      <option value="Babysitter">Babysitter (बेबीसिटर / नानी)</option>
+                      <option value="Deep Clean">Deep Clean (क्लीनर)</option>
+                      <option value="Electrician">Electrician (इलेक्ट्रीशियन)</option>
+                      <option value="Plumber">Plumber (प्लंबर)</option>
+                      <option value="Elderly Care">Elderly Care (बुजुर्ग देखभाल)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-slate-600 font-extrabold uppercase mb-1">Contact Mobile Number *</label>
+                    <input
+                      type="tel"
+                      required
+                      value={helperPhone}
+                      onChange={e => setHelperPhone(e.target.value)}
+                      placeholder="e.g. 7769947217"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-pink-600"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[10px] text-slate-600 font-extrabold uppercase mb-1">Availability / Timings *</label>
+                    <input
+                      type="text"
+                      required
+                      value={helperTiming}
+                      onChange={e => setHelperTiming(e.target.value)}
+                      placeholder="e.g. Morning & Evening (Part-Time) / Full-Time"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-pink-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-slate-600 font-extrabold uppercase mb-1">Expected Salary / Charge *</label>
+                    <input
+                      type="text"
+                      required
+                      value={helperSalary}
+                      onChange={e => setHelperSalary(e.target.value)}
+                      placeholder="e.g. ₹2,500/mo (Bartan+Jhadu+Pocha)"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-pink-600"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[10px] text-slate-600 font-extrabold uppercase mb-1">Area / Location in Boisar *</label>
+                    <input
+                      type="text"
+                      required
+                      value={helperLocation}
+                      onChange={e => setHelperLocation(e.target.value)}
+                      placeholder="e.g. Ostwal Empire, Boisar West, MIDC"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-pink-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-slate-600 font-extrabold uppercase mb-1">Experience</label>
+                    <input
+                      type="text"
+                      value={helperExp}
+                      onChange={e => setHelperExp(e.target.value)}
+                      placeholder="e.g. 5+ Yrs in Boisar"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-pink-600"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-pink-600 hover:bg-pink-700 active:scale-[0.98] text-white font-black text-xs py-3 rounded-xl shadow-md transition-all cursor-pointer mt-2"
+                >
+                  Submit &amp; Register Helper Profile
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── LIST SERVICE / TECHNICIAN REGISTRATION POPUP MODAL ── */}
       {showAddForm && (
