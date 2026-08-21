@@ -205,6 +205,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${jakarta.variable} h-full dark`}>
+      <head>
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <link rel="preload" as="image" href="/majh-boisar-mb-logo.png" />
+      </head>
       <body className="min-h-full bg-slate-50 text-slate-800 font-sans antialiased flex flex-col">
         <script
           type="application/ld+json"

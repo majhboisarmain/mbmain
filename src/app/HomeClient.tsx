@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Search, MapPin, Sparkles, Phone, ArrowRight, MessageSquare, 
-  PlusCircle, CheckCircle, Star, Sparkle, X, Send, Eye, ShieldCheck,
+  PlusCircle, Plus, CheckCircle, Star, Sparkle, X, Send, Eye, ShieldCheck,
   Building, GraduationCap, Scissors, Stethoscope, Utensils, Wrench,
   ChevronRight, Mic, Heart, Key, HardHat, HeartPulse,
   PawPrint, Landmark, Activity, Coins, Truck, Mail, LayoutGrid, ChevronLeft,
@@ -596,7 +596,7 @@ export default function HomeClient() {
     }
 
     if (q.includes('hotel') || q.includes('room') || q.includes('lodge') || q.includes('stay') || cat.includes('hotel') || modal.includes('hotel')) {
-      setPortraitHotelOpen(true);
+      router.push('/hotels');
       return;
     }
 
@@ -729,7 +729,7 @@ export default function HomeClient() {
           
           const cleanState = {
             influencers: (parsed.influencers || []).filter((p: any) => !dummyIds.includes(p.id)),
-            properties: (parsed.properties || []).filter((p: any) => !dummyIds.includes(p.id)),
+            properties: (parsed.properties || []).filter((p: any) => !dummyIds.includes(p.id) && p.name !== 'ee' && p.contactName !== 'ee' && p.name !== 'Owner: ee' && p.title !== 'Owner: ee'),
             helpers: (parsed.helpers || []).filter((p: any) => !dummyIds.includes(p.id)),
             caterers: (parsed.caterers || []).filter((p: any) => !dummyIds.includes(p.id)),
           };
@@ -868,14 +868,8 @@ export default function HomeClient() {
     }).slice(0, 4);
   }, [searchQuery, profilesState]);
 
-  // Page Load Skeleton State
-  const [isPageLoading, setIsPageLoading] = useState(true);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsPageLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, []);
+  // Page Load State
+  const [isPageLoading, setIsPageLoading] = useState(false);
 
   // Sync loggedInUser values to form when modal opens
   useEffect(() => {
@@ -2364,53 +2358,62 @@ export default function HomeClient() {
 
             {/* Full Real Estate Portal Navbar Header */}
             {activeSpecialCategory === 'properties' ? (
-              <div className="px-3 sm:px-6 py-2 border-b border-slate-200 flex items-center justify-between gap-2 bg-white text-slate-800 shadow-sm z-30 shrink-0">
+              <div className="px-2.5 sm:px-6 py-2.5 border-b border-slate-200 flex items-center justify-between gap-2 bg-white text-slate-800 shadow-sm z-30 shrink-0">
                 {/* Logo & Portal Badge */}
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-2.5 shrink-0">
                   <img 
                     src="/majh-boisar-full-logo.png" 
                     alt="Majh Boisar" 
-                    className="h-7 sm:h-9 w-auto object-contain cursor-pointer"
+                    className="h-7 sm:h-8.5 md:h-9 w-auto object-contain cursor-pointer transition-transform active:scale-95"
                     onClick={() => {
                       setActiveSpecialCategory(null);
                       setSelectedProfile(null);
                       setPropertyMode(null);
                     }}
                   />
-                  <span className="hidden lg:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-teal-700 text-[9px] font-black uppercase">
+                  <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-teal-700 text-[9.5px] font-black uppercase">
                     Real Estate
                   </span>
                 </div>
 
                 {/* Right Action Items */}
-                <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   <button
                     onClick={() => setViewEnquiriesModalOpen(true)}
-                    className="flex items-center gap-1.5 text-xs font-bold text-slate-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1 rounded-full transition-colors relative shadow-xs"
+                    className="flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-2 sm:px-2.5 py-1.5 rounded-full transition-colors relative shadow-xs shrink-0 cursor-pointer"
                     title="View property inquiries"
                   >
-                    <Mail className="w-3.5 h-3.5 text-amber-700" />
-                    <span>Enquiries</span>
+                    <Mail className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                    <span className="hidden sm:inline">Enquiries</span>
                     {(() => {
-                      const list = JSON.parse(typeof window !== 'undefined' ? localStorage.getItem('majh_boisar_property_enquiries') || '[]' : '[]');
-                      const userPhoneDigits = loggedInUser?.phone ? loggedInUser.phone.replace(/\D/g, '') : '';
-                      const myUserProps = JSON.parse(typeof window !== 'undefined' ? localStorage.getItem('majh_boisar_user_properties') || '[]' : '[]');
-                      const myPropIds = new Set(myUserProps.map((p: any) => p.id));
+                      try {
+                        if (typeof window === 'undefined') return null;
+                        const raw = localStorage.getItem('majh_boisar_property_enquiries');
+                        const list = raw ? JSON.parse(raw) : [];
+                        if (!Array.isArray(list)) return null;
+                        const userPhoneDigits = loggedInUser?.phone ? loggedInUser.phone.replace(/\D/g, '') : '';
+                        const myUserPropsRaw = localStorage.getItem('majh_boisar_user_properties');
+                        const myUserProps = myUserPropsRaw ? JSON.parse(myUserPropsRaw) : [];
+                        const myPropIds = new Set(Array.isArray(myUserProps) ? myUserProps.map((p: any) => p.id) : []);
 
-                      const count = list.filter((enq: any) => {
-                        if (myPropIds.has(enq.propertyId)) return true;
-                        if (userPhoneDigits && enq.ownerPhone) {
-                          const enqOwnerDigits = enq.ownerPhone.replace(/\D/g, '');
-                          if (enqOwnerDigits && (enqOwnerDigits.endsWith(userPhoneDigits) || userPhoneDigits.endsWith(enqOwnerDigits))) return true;
-                        }
-                        return false;
-                      }).length;
+                        const count = list.filter((enq: any) => {
+                          if (!enq) return false;
+                          if (myPropIds.has(enq.propertyId)) return true;
+                          if (userPhoneDigits && enq.ownerPhone) {
+                            const enqOwnerDigits = String(enq.ownerPhone).replace(/\D/g, '');
+                            if (enqOwnerDigits && (enqOwnerDigits.endsWith(userPhoneDigits) || userPhoneDigits.endsWith(enqOwnerDigits))) return true;
+                          }
+                          return false;
+                        }).length;
 
-                      return count > 0 ? (
-                        <span className="bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">
-                          {count}
-                        </span>
-                      ) : null;
+                        return count > 0 ? (
+                          <span className="bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                            {count}
+                          </span>
+                        ) : null;
+                      } catch (e) {
+                        return null;
+                      }
                     })()}
                   </button>
 
@@ -2423,7 +2426,7 @@ export default function HomeClient() {
                         setBuyerPassModalOpen(true);
                       }
                     }}
-                    className={`flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-full border transition-all cursor-pointer shadow-xs whitespace-nowrap ${
+                    className={`flex items-center gap-1 text-[11px] sm:text-xs font-black px-2 sm:px-2.5 py-1.5 rounded-full border transition-all cursor-pointer shadow-xs whitespace-nowrap shrink-0 ${
                       !isLoggedIn 
                         ? 'bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100'
                         : userUnlockedPropsState.length >= 2 && buyerCallCredits <= 0
@@ -2435,24 +2438,24 @@ export default function HomeClient() {
                     <Phone className="w-3 h-3 text-emerald-600 shrink-0" />
                     <span>
                       {!isLoggedIn 
-                        ? '2 Free Calls'
+                        ? '2 Calls'
                         : userUnlockedPropsState.length < 2 
-                          ? `${2 - userUnlockedPropsState.length} Free Calls`
+                          ? `${2 - userUnlockedPropsState.length} Calls`
                           : buyerCallCredits > 0 
                             ? `${buyerCallCredits} Calls` 
-                            : 'Get Calls Pass'}
+                            : 'Pass'}
                     </span>
                   </button>
 
                   {!isLoggedIn ? (
                     <button 
                       onClick={() => setLoginModalOpen(true)}
-                      className="flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-teal-700 bg-slate-100 hover:bg-teal-50 px-3 py-1 rounded-full transition-colors"
+                      className="flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-700 hover:text-teal-700 bg-slate-100 hover:bg-teal-50 px-2.5 sm:px-3 py-1.5 rounded-full transition-colors shrink-0 cursor-pointer"
                     >
                       Login
                     </button>
                   ) : (
-                    <span className="inline text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-full truncate max-w-[120px]">
+                    <span className="inline text-[11px] sm:text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1.5 rounded-full truncate max-w-[65px] sm:max-w-[120px] shrink-0">
                       {userName}
                     </span>
                   )}
@@ -2463,10 +2466,10 @@ export default function HomeClient() {
                       setSelectedProfile(null);
                       setPropertyMode(null);
                     }}
-                    className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors ml-0.5"
+                    className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors shrink-0 cursor-pointer ml-0.5"
                     title="Exit Real Estate Portal"
                   >
-                    <X className="w-4.5 h-4.5" />
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
               </div>
@@ -2545,12 +2548,12 @@ export default function HomeClient() {
                           type="button"
                           onClick={() => {
                             if (!isLoggedIn) {
+                              showToast("Please login first to post your property.", "info", 4000);
                               setLoginModalOpen(true);
-                              setActiveSpecialCategory(null);
-                            } else {
-                              setActiveSpecialCategory(null);
-                              setPostPropertyModalOpen(true);
+                              return;
                             }
+                            setActiveSpecialCategory(null);
+                            setPostPropertyModalOpen(true);
                           }}
                           className="py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white text-xs font-black transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
                         >
@@ -2600,42 +2603,61 @@ export default function HomeClient() {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {((profilesState.properties || []).filter((p: any) => p.listingType === 'property').slice(0, 6)).map((property: any) => (
-                        <div
-                          key={property.id}
-                          onClick={() => setSelectedProfile(property)}
-                          className="bg-white rounded-xl border border-slate-200 hover:border-slate-400 overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col group"
-                        >
-                          <div className="h-32 sm:h-36 relative bg-slate-100 overflow-hidden">
-                            <img
-                              src={property.avatar || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'}
-                              alt={property.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
-                            <div className="absolute top-2 left-2 flex items-center gap-1">
-                              <span className="bg-slate-900/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded">
-                                {property.forAction === 'Rent' || property.category?.toLowerCase().includes('rent') ? 'RENT' : 'SALE'}
-                              </span>
-                              <span className="bg-emerald-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-xs">
-                                0% BROKERAGE
-                              </span>
+                    {((profilesState.properties || []).filter((p: any) => p.listingType === 'property')).length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {((profilesState.properties || []).filter((p: any) => p.listingType === 'property').slice(0, 6)).map((property: any) => (
+                          <div
+                            key={property.id}
+                            onClick={() => setSelectedProfile(property)}
+                            className="bg-white rounded-xl border border-slate-200 hover:border-slate-400 overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col group"
+                          >
+                            <div className="h-32 sm:h-36 relative bg-slate-100 overflow-hidden">
+                              <img
+                                src={property.avatar || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'}
+                                alt={property.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute top-2 left-2 flex items-center gap-1">
+                                <span className="bg-slate-900/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded">
+                                  {property.forAction === 'Rent' || property.category?.toLowerCase().includes('rent') ? 'RENT' : 'SALE'}
+                                </span>
+                              </div>
+                              <div className="absolute bottom-2 left-2 bg-white/95 text-slate-950 font-black text-[11px] px-2 py-0.5 rounded shadow-xs">
+                                {formatPrice(property.price || property.budget)}
+                              </div>
                             </div>
-                            <div className="absolute bottom-2 left-2 bg-white/95 text-slate-950 font-black text-[11px] px-2 py-0.5 rounded shadow-xs">
-                              {formatPrice(property.price || property.budget)}
-                            </div>
-                          </div>
 
-                          <div className="p-2.5 flex-1 flex flex-col justify-between">
-                            <div>
-                              <h4 className="text-[11px] sm:text-xs font-black text-slate-900 line-clamp-1">{property.name || property.title}</h4>
-                              <p className="text-[10px] text-slate-500 font-medium mt-0.5">📍 {property.location || 'Boisar'}</p>
+                            <div className="p-2.5 flex-1 flex flex-col justify-between">
+                              <div>
+                                <h4 className="text-[11px] sm:text-xs font-black text-slate-900 line-clamp-1">{property.name || property.title}</h4>
+                                <p className="text-[10px] text-slate-500 font-medium mt-0.5">📍 {property.location || 'Boisar'}</p>
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-400 mt-1.5">{property.category || 'Flat'}</span>
                             </div>
-                            <span className="text-[10px] font-bold text-slate-400 mt-1.5">{property.category || 'Flat'}</span>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center space-y-2">
+                        <p className="text-xs font-black text-slate-800">No properties listed yet</p>
+                        <p className="text-[11px] text-slate-500">Are you selling or renting a flat, shop, or plot in Boisar?</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!isLoggedIn) {
+                              showToast("Please login first to post your property.", "info", 4000);
+                              setLoginModalOpen(true);
+                              return;
+                            }
+                            setPostPropertyModalOpen(true);
+                          }}
+                          className="mt-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black px-4 py-2 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Post Your Property Free</span>
+                        </button>
+                      </div>
+                    )}
 
                     {/* 2 Sponsored Property Ad Slots */}
                     <div className="pt-2 space-y-2">
@@ -2842,8 +2864,12 @@ export default function HomeClient() {
                       {/* Sell Property Button */}
                       <button 
                         onClick={() => {
-                          if (!isLoggedIn) setLoginModalOpen(true);
-                          else setPostPropertyModalOpen(true);
+                          if (!isLoggedIn) {
+                            showToast("Please login first to post your property.", "info", 4000);
+                            setLoginModalOpen(true);
+                          } else {
+                            setPostPropertyModalOpen(true);
+                          }
                         }}
                         className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs px-3.5 py-1.5 rounded-xl shadow-xs transition-all flex items-center gap-1 shrink-0 ml-auto whitespace-nowrap cursor-pointer"
                       >
@@ -2973,9 +2999,6 @@ export default function HomeClient() {
                                     <span className="bg-teal-50 border border-teal-200 text-teal-700 text-[10px] font-black px-2 py-0.5 rounded uppercase">
                                       {profile.location || 'Boisar West'}
                                     </span>
-                                    <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-black px-2 py-0.5 rounded uppercase">
-                                      0% Brokerage
-                                    </span>
                                   </div>
                                   <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-snug group-hover:text-teal-700 transition-colors mt-1">
                                     {profile.category}
@@ -3083,12 +3106,17 @@ export default function HomeClient() {
                         <p className="text-xs text-slate-500 font-medium mt-1">Be the first to post a property for sale or rent in Boisar!</p>
                         <button
                           onClick={() => {
-                            if (!isLoggedIn) setLoginModalOpen(true);
-                            else setPostPropertyModalOpen(true);
+                            if (!isLoggedIn) {
+                              showToast("Please login first to post your property.", "info", 4000);
+                              setLoginModalOpen(true);
+                            } else {
+                              setPostPropertyModalOpen(true);
+                            }
                           }}
-                          className="mt-4 bg-[#0b5c47] hover:bg-[#074737] text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
+                          className="mt-4 bg-[#0b5c47] hover:bg-[#074737] text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer inline-flex items-center gap-1.5"
                         >
-                          + Post Property Free
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Post Property Free</span>
                         </button>
                       </div>
                     )}
@@ -3526,9 +3554,6 @@ export default function HomeClient() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-black px-2.5 py-1 rounded-lg">
-                          0% Brokerage
-                        </span>
                       </div>
                    </div>
 

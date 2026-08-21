@@ -51,27 +51,27 @@ export default function LocalOffersModal({ isOpen, onClose }: LocalOffersModalPr
         </button>
 
         {/* Modal Header */}
-        <div className="flex items-center justify-between gap-3 mb-4 shrink-0 pr-10 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0 shadow-2xs">
-              <Tag className="w-5 h-5" />
+        <div className="flex items-center justify-between gap-2.5 mb-3 shrink-0 pr-8 border-b border-slate-100 pb-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0 shadow-2xs">
+              <Tag className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight truncate">
-                Boisar Local Deals &amp; Offers
+              <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight truncate">
+                Local Deals &amp; Offers
               </h3>
-              <p className="text-xs text-slate-500 font-bold truncate">
-                Exclusive discount vouchers &amp; deals from verified local shops in Boisar
+              <p className="text-[10.5px] sm:text-xs text-slate-500 font-medium truncate">
+                Discount vouchers &amp; deals from Boisar shops
               </p>
             </div>
           </div>
 
           <button
             onClick={handleRegister}
-            className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs whitespace-nowrap flex items-center gap-1 shrink-0"
+            className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-black text-xs px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs whitespace-nowrap flex items-center gap-1 shrink-0 ml-auto"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>+ List Yours</span>
+            <span>List Offer</span>
           </button>
         </div>
 

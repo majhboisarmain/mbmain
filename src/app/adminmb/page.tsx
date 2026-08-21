@@ -1887,10 +1887,6 @@ export default function AdminPanelPage() {
           sessionStorage.removeItem('admin_lockout_until');
         }
         setIsAdminPageUnlocked(true);
-        setRole('Admin');
-        if (!isLoggedIn) {
-          login('Super Admin', '9999999999', 'admin@majhboisar.in');
-        }
         setAdminPasscodeError('');
       } else {
         const failed = (typeof window !== 'undefined' ? parseInt(sessionStorage.getItem('admin_failed_attempts') || '0') : 0) + 1;

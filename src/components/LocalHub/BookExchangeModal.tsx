@@ -142,17 +142,17 @@ export default function BookExchangeModal({ isOpen, onClose }: BookExchangeModal
         </button>
 
         {/* Modal Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 shrink-0 pr-10 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
-              <BookOpen className="w-5 h-5" />
+        <div className="flex items-center justify-between gap-2.5 mb-3 shrink-0 pr-8 border-b border-slate-100 pb-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
+              <BookOpen className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                Boisar Student Book Exchange
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight truncate">
+                Student Book Exchange
               </h3>
-              <p className="text-xs text-slate-500 font-bold">
-                Donate, swap, or buy 10th/12th school guides, ITI notes, and engineering textbooks
+              <p className="text-[10.5px] sm:text-xs text-slate-500 font-medium truncate">
+                Donate, swap, or buy school guides, ITI &amp; exam notes
               </p>
             </div>
           </div>
@@ -160,10 +160,10 @@ export default function BookExchangeModal({ isOpen, onClose }: BookExchangeModal
           {!showAddForm && (
             <button 
               onClick={() => { if (!isLoggedIn) { setLoginModalOpen(true); return; } setShowAddForm(true); }}
-              className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-2xs shrink-0 flex items-center gap-1.5 self-start sm:self-auto"
+              className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs px-3 py-1.5 sm:py-2 rounded-xl transition-all cursor-pointer shadow-2xs shrink-0 flex items-center gap-1 ml-auto whitespace-nowrap"
             >
-              <Plus className="w-4 h-4" />
-              <span>{isLoggedIn ? '+ Donate / List Book' : '🔒 Login to Donate'}</span>
+              {isLoggedIn ? <Plus className="w-3.5 h-3.5" /> : null}
+              <span>{isLoggedIn ? 'Donate Book' : '🔒 Login to Donate'}</span>
             </button>
           )}
         </div>

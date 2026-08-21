@@ -153,35 +153,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const user = { name, phone, email };
     setIsLoggedIn(true);
     setLoggedInUser(user);
+    setRoleState('User');
 
-    const cleanPhone = phone.replace(/\D/g, '');
-
-    // Check if logging in as Admin / Super Admin
-    const savedRole = typeof window !== 'undefined' ? localStorage.getItem('majh_boisar_role') as Role : null;
-    const isSuperAdmin = savedRole === 'Admin' || name === 'Super Admin' || cleanPhone === '9999999999';
-
-    if (isSuperAdmin) {
-      setRoleState('Admin');
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('majh_boisar_role', 'Admin');
-      }
-    } else {
-      setRoleState('User');
-      setHasRegisteredBusinessState(false);
-    }
-    
     showToast(`Welcome ${name}! Logged in successfully 🎉`, 'success');
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('majh_boisar_user', JSON.stringify(user));
-      // Remove old user business hints on new normal user login
-      if (!isSuperAdmin) {
-        localStorage.removeItem('majh_boisar_role');
-        localStorage.removeItem('majh_boisar_has_business');
-      }
+      localStorage.removeItem('majh_boisar_role');
+      localStorage.removeItem('majh_boisar_has_business');
 
       // Append to registered users list for Admin Panel tracking
       try {
+        const cleanPhone = phone.replace(/\D/g, '');
         const existingUsersStr = localStorage.getItem('majh_boisar_registered_users');
         const existingUsers = existingUsersStr ? JSON.parse(existingUsersStr) : [];
         const alreadyExists = existingUsers.some((u: any) => u.phone?.replace(/\D/g, '') === cleanPhone);
@@ -192,7 +175,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             name,
             phone: cleanPhone,
             email: email || `${cleanPhone}@majhboisar.in`,
-            role: isSuperAdmin ? 'Super Admin' : 'Registered User',
+            role: 'Registered User',
             joinedDate: new Date().toISOString().split('T')[0],
             status: 'Active'
           };
@@ -203,10 +186,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Validate business status strictly for regular users (not Admin)
-    if (!isSuperAdmin) {
-      checkBusinessStatus(phone);
-    }
+    // Validate business status
+    checkBusinessStatus(phone);
   };
 
   const updateUserProfile = (name: string, email?: string) => {
@@ -236,8 +217,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Clear legacy admin role if stored in public localStorage
       const savedRole = localStorage.getItem('majh_boisar_role') as Role;
-      if (savedRole && ['Guest', 'User', 'BusinessOwner', 'Admin'].includes(savedRole)) {
+      if (savedRole === 'Admin') {
+        localStorage.removeItem('majh_boisar_role');
+        setRoleState('User');
+      } else if (savedRole && ['Guest', 'User', 'BusinessOwner'].includes(savedRole)) {
         setRoleState(savedRole);
       }
       
@@ -245,25 +230,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (savedUser) {
         try {
           const parsed = JSON.parse(savedUser);
-          setLoggedInUser(parsed);
-          setIsLoggedIn(true);
+          // If legacy user was stored as 'Super Admin', purge and reset to regular guest
+          if (parsed.name === 'Super Admin' || parsed.phone === '9999999999') {
+            localStorage.removeItem('majh_boisar_user');
+            localStorage.removeItem('majh_boisar_role');
+            setLoggedInUser(null);
+            setIsLoggedIn(false);
+          } else {
+            setLoggedInUser(parsed);
+            setIsLoggedIn(true);
 
-          // Load business status from localStorage:
-          // Check new key first, then fall back to old role-based detection
-          const hasBizHint = localStorage.getItem('majh_boisar_has_business') === 'true';
-          const roleWasBusinessOwner = savedRole === 'BusinessOwner';
-          const hasBusiness = hasBizHint || roleWasBusinessOwner;
-          
-          setHasRegisteredBusinessState(hasBusiness);
-          
-          // Sync the new key if we determined user has a business from old role
-          if (roleWasBusinessOwner && !hasBizHint) {
-            localStorage.setItem('majh_boisar_has_business', 'true');
-          }
-          
-          // Validate against API in the background (non-blocking)
-          if (parsed.phone) {
-            checkBusinessStatus(parsed.phone);
+            const hasBizHint = localStorage.getItem('majh_boisar_has_business') === 'true';
+            setHasRegisteredBusinessState(hasBizHint);
+            
+            if (parsed.phone) {
+              checkBusinessStatus(parsed.phone);
+            }
           }
         } catch (e) {
           console.error(e);
@@ -275,8 +257,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const roleDetails = {
     Guest: { name: 'Guest Visitor', email: '' },
     User: { name: loggedInUser?.name || 'User', email: loggedInUser?.email || '' },
-    BusinessOwner: { name: loggedInUser?.name || 'Rajesh Patil (Owner)', email: loggedInUser?.email || 'info@boisarresidency.com' },
-    Admin: { name: 'Super Admin', email: 'admin@majhboisar.in' },
+    BusinessOwner: { name: loggedInUser?.name || 'Business Owner', email: loggedInUser?.email || '' },
+    Admin: { name: loggedInUser?.name || 'Admin', email: loggedInUser?.email || 'admin@majhboisar.in' },
   };
 
   const { name: userName, email: userEmail } = roleDetails[currentRole];

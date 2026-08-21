@@ -109,27 +109,27 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
         </button>
 
         {/* Modal Header */}
-        <div className="flex items-center justify-between gap-3 mb-4 shrink-0 pr-8 border-b border-slate-100 pb-3 flex-wrap sm:flex-nowrap">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0 shadow-2xs">
-              <Truck className="w-5 h-5" />
+        <div className="flex items-center justify-between gap-2.5 mb-3 shrink-0 pr-8 border-b border-slate-100 pb-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0 shadow-2xs">
+              <Truck className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                Chota Hathi &amp; Luggage Tempo Helpline
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight truncate">
+                Chota Hathi &amp; Tempo Helpline
               </h3>
-              <p className="text-xs text-slate-500 font-bold">
-                1-Tap direct call with local Tata Ace, 8ft Pickup, and goods auto drivers in Boisar
+              <p className="text-[10.5px] sm:text-xs text-slate-500 font-medium truncate">
+                Direct call with Tata Ace, 8ft Pickup &amp; goods auto drivers
               </p>
             </div>
           </div>
 
           <button
             onClick={() => setShowAddForm(!showAddForm)}
-            className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ml-auto"
+            className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-black text-xs px-3 py-1.5 rounded-xl shadow-2xs transition-all flex items-center gap-1 cursor-pointer shrink-0 ml-auto whitespace-nowrap"
           >
-            <Plus className="w-4 h-4" />
-            <span>{showAddForm ? 'View Tempo Helpline' : '+ Register Tempo / Driver'}</span>
+            <Plus className="w-3.5 h-3.5" />
+            <span>{showAddForm ? 'View List' : 'Register Tempo'}</span>
           </button>
         </div>
 

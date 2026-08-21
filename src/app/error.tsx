@@ -35,20 +35,26 @@ export default function Error({
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
           <button
-            onClick={() => reset()}
+            onClick={() => {
+              try { reset(); } catch (e) {}
+              window.location.reload();
+            }}
             className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
           >
             <RefreshCw className="w-4 h-4" />
             <span>Try Again</span>
           </button>
 
-          <Link
-            href="/"
-            className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs px-6 py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
+          <button
+            onClick={() => {
+              try { reset(); } catch (e) {}
+              window.location.href = '/';
+            }}
+            className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs px-6 py-3 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
           >
             <Home className="w-4 h-4" />
             <span>Go to Home</span>
-          </Link>
+          </button>
         </div>
 
       </div>

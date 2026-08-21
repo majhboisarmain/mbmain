@@ -3,7 +3,7 @@ import React from 'react';
 
 export const metadata: Metadata = {
   title: 'Properties in Boisar — Flats, 1/2/3 BHK Apartments, Plots & Shops For Sale & Rent | Majh Boisar',
-  description: 'Find 100+ verified properties for sale and rent in Boisar, Palghar. 1 BHK, 2 BHK, 3 BHK flats, row houses, commercial shops & industrial/residential plots in Boisar West, Tarapur MIDC, Ostwal Empire & Navapur Road with 0% brokerage.',
+  description: 'Find 100+ verified properties for sale and rent in Boisar, Palghar. 1 BHK, 2 BHK, 3 BHK flats, row houses, commercial shops & industrial/residential plots in Boisar West, Tarapur MIDC, Ostwal Empire & Navapur Road.',
   keywords: [
     'properties in boisar',
     'property in boisar',
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     canonical: 'https://majhboisar.in/properties',
   },
   openGraph: {
-    title: 'Properties in Boisar — Flats, Apartments & Plots For Sale / Rent (0% Brokerage)',
+    title: 'Properties in Boisar — Flats, Apartments & Plots For Sale / Rent',
     description: 'Explore verified flats, row houses, plots, and commercial spaces in Boisar. Contact genuine owners and trusted brokers directly.',
     url: 'https://majhboisar.in/properties',
     siteName: 'Majh Boisar Real Estate',
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Properties in Boisar — Flats & Plots For Sale/Rent',
-    description: 'Find 1/2/3 BHK flats & commercial plots in Boisar with 0% brokerage directly from owners.',
+    description: 'Find 1/2/3 BHK flats & commercial plots in Boisar directly from owners and verified agents.',
     images: ['https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&auto=format&fit=crop&q=80'],
   },
 };
@@ -61,7 +61,7 @@ const propertiesJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'RealEstateAgent',
   'name': 'Majh Boisar Real Estate Portal',
-  'description': 'Direct owner & broker real estate portal for Boisar, Palghar. Buy, sell, and rent 1 BHK, 2 BHK flats, plots, and commercial properties with 0% brokerage.',
+  'description': 'Direct owner & broker real estate portal for Boisar, Palghar. Buy, sell, and rent 1 BHK, 2 BHK flats, plots, and commercial properties.',
   'url': 'https://majhboisar.in/properties',
   'areaServed': {
     '@type': 'AdministrativeArea',
@@ -87,7 +87,7 @@ const propertiesFaqJsonLd = {
   'mainEntity': [
     {
       '@type': 'Question',
-      'name': 'How to buy or rent flats in Boisar with 0% brokerage?',
+      'name': 'How to buy or rent flats in Boisar?',
       'acceptedAnswer': {
         '@type': 'Answer',
         'text': 'Majh Boisar Real Estate portal connects you directly with genuine flat owners and verified local brokers in Boisar. You can filter by 1 BHK, 2 BHK, 3 BHK, budget, and location (Ostwal Empire, Boisar West, Navapur Road, Salwad) with direct phone calls & WhatsApp connect.'
@@ -106,7 +106,7 @@ const propertiesFaqJsonLd = {
       'name': 'Can I post a free property listing to sell or rent my home in Boisar?',
       'acceptedAnswer': {
         '@type': 'Answer',
-        'text': 'Yes! Property owners, landlords, and registered brokers can list flats, shops, row houses, and industrial plots for free on Majh Boisar with zero brokerage.'
+        'text': 'Yes! Property owners, landlords, and registered brokers can list flats, shops, row houses, and industrial plots for free on Majh Boisar.'
       }
     }
   ]

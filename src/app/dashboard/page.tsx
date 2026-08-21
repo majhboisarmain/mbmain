@@ -3115,9 +3115,6 @@ function DashboardContent() {
                       <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
                         Property Dashboard
                       </h1>
-                      <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9.5px] font-bold px-2 py-0.5 rounded-md">
-                        0% Brokerage
-                      </span>
                     </div>
                     <p className="text-xs text-slate-500 font-medium mt-0.5">
                       Manage your listings, update prices, and view buyer leads.
@@ -3402,7 +3399,8 @@ function DashboardContent() {
                       onClick={() => setNewBizModalOpen(true)}
                       className="bg-teal-600 hover:bg-teal-700 text-white font-black text-xs px-5 py-3 rounded-xl transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                      <Plus className="w-4 h-4" /> + Register New Business
+                      <Plus className="w-4 h-4" />
+                      <span>Register New Business</span>
                     </button>
                   </div>
                 </div>

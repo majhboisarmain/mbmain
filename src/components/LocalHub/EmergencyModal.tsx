@@ -42,16 +42,16 @@ export default function EmergencyModal({ isOpen, onClose }: EmergencyModalProps)
         </button>
 
         {/* Modal Header */}
-        <div className="flex items-center gap-3 mb-4 shrink-0 pr-8 border-b border-slate-100 pb-3">
-          <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0 shadow-2xs">
-            <ShieldAlert className="w-5 h-5" />
+        <div className="flex items-center gap-2.5 mb-3 shrink-0 pr-8 border-b border-slate-100 pb-2.5">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0 shadow-2xs">
+            <ShieldAlert className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
           </div>
-          <div>
-            <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-              Boisar 24/7 Emergency Helplines
+          <div className="min-w-0">
+            <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight truncate">
+              24/7 Emergency Helplines
             </h3>
-            <p className="text-xs text-slate-500 font-bold">
-              Direct emergency contact numbers for Boisar Police, MIDC Fire Station, Trauma Ambulance &amp; Power grid
+            <p className="text-[10.5px] sm:text-xs text-slate-500 font-medium truncate">
+              Police, Fire Brigade, Ambulance &amp; Power grid
             </p>
           </div>
         </div>

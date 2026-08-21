@@ -7,15 +7,14 @@ export default function Preloader() {
   const [fade, setFade] = useState(false);
 
   useEffect(() => {
-    // Start fading out after 1.2 seconds
+    // Only show quick micro-preloader on initial mount without blocking the user
     const timer1 = setTimeout(() => {
       setFade(true);
-    }, 1200);
+    }, 150);
 
-    // Completely remove from DOM after 1.5 seconds
     const timer2 = setTimeout(() => {
       setShow(false);
-    }, 1500);
+    }, 300);
 
     return () => {
       clearTimeout(timer1);

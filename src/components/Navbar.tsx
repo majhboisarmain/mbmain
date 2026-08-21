@@ -9,7 +9,7 @@ import LoginModal from './LoginModal';
 import MyHotelPassesModal from './MyHotelPassesModal';
 import {
   Search, MapPin, User, Shield, Briefcase, ChevronDown, Check,
-  Menu, X, LogOut, Building, Layers, HelpCircle, MessageSquare, ChevronRight, Smartphone, Download, Ticket
+  Menu, X, LogOut, Building, Layers, HelpCircle, MessageSquare, ChevronRight, Smartphone, Download, Ticket, Plus
 } from 'lucide-react';
 
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
@@ -233,7 +233,7 @@ export default function Navbar() {
                 alt="Majh Boisar"
                 loading="lazy"
                 decoding="async"
-                className="h-6 sm:h-8 md:h-9 w-auto object-contain transition-transform duration-200 hover:scale-[1.02]"
+                className="h-8 sm:h-9 md:h-10.5 w-auto object-contain transition-transform duration-200 hover:scale-[1.03]"
               />
             </Link>
           </div>
@@ -388,19 +388,6 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-5 shrink-0">
             {/* Desktop Navigation Links */}
             <nav className="flex items-center gap-3 text-[11px] font-black text-slate-555 mr-2">
-
-
-
-              {/* Only show Admin Panel to logged-in Admins */}
-              {mounted && isLoggedIn && currentRole === 'Admin' && (
-                <Link
-                  href="/adminmb"
-                  className={`px-2 py-1 rounded-lg transition-all ${pathname.startsWith('/adminmb') ? 'text-teal-650 bg-slate-100' : 'hover:text-slate-800 hover:bg-slate-50'
-                    }`}
-                >
-                  Admin
-                </Link>
-              )}
             </nav>
 
 
@@ -414,7 +401,7 @@ export default function Navbar() {
 
             {/* Register Your Business / Dashboard CTA — context-aware */}
             {mounted && (
-              isLoggedIn && (hasRegisteredBusiness || currentRole === 'Admin') ? (
+              isLoggedIn && hasRegisteredBusiness ? (
                 // User has a business → show Dashboard button
                 <Link
                   href="/dashboard"
@@ -429,7 +416,8 @@ export default function Navbar() {
                   href="/dashboard"
                   className="btn-teal text-xs font-black px-3 py-1.5 rounded-lg hover:shadow-md transition-shadow flex items-center gap-1.5 cursor-pointer"
                 >
-                  ➕ Register Your Business
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Register Your Business</span>
                 </Link>
               ) : (
                 // Guest → show Free Listing button to trigger login
@@ -676,7 +664,7 @@ export default function Navbar() {
                           )}
 
                           {/* BUSINESS OWNER MENU ITEM */}
-                          {(hasRegisteredBusiness || currentRole === 'BusinessOwner') && currentRole !== 'Admin' && (
+                          {(hasRegisteredBusiness || currentRole === 'BusinessOwner') && (
                             <Link
                               href="/dashboard?mode=shop"
                               onClick={() => setProfileDropdownOpen(false)}
@@ -685,29 +673,6 @@ export default function Navbar() {
                               <span className="text-teal-600">💼</span>
                               <span>My Business Dashboard</span>
                             </Link>
-                          )}
-
-                          {/* ADMIN MENU ITEM */}
-                          {currentRole === 'Admin' && (
-                            <>
-                              <Link
-                                href="/dashboard"
-                                onClick={() => setProfileDropdownOpen(false)}
-                                className="flex items-center gap-3 rounded-lg px-2.5 py-1.5 text-xs text-slate-655 hover:bg-slate-50 hover:text-slate-800 transition-colors font-bold"
-                              >
-                                <span className="text-slate-400">💼</span>
-                                <span>Control Dashboard</span>
-                              </Link>
-
-                              <Link
-                                href="/adminmb"
-                                onClick={() => setProfileDropdownOpen(false)}
-                                className="flex items-center gap-3 rounded-lg px-2.5 py-1.5 text-xs text-slate-655 hover:bg-slate-50 hover:text-slate-800 transition-colors font-bold"
-                              >
-                                <span className="text-slate-400">🛡️</span>
-                                <span>Admin Panel</span>
-                              </Link>
-                            </>
                           )}
 
                           {/* Settings - Available for ALL logged in users */}
@@ -835,7 +800,7 @@ export default function Navbar() {
             </div>
 
             {/* Mobile Quick Access: Dashboard (if has business) OR Register Your Business (if logged in, no business) */}
-            {mounted && isLoggedIn && (hasRegisteredBusiness || currentRole === 'Admin') && (
+            {mounted && isLoggedIn && hasRegisteredBusiness && (
               <Link
                 href="/dashboard"
                 className="flex items-center gap-1 bg-slate-900 hover:bg-teal-700 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-xs transition-colors cursor-pointer shrink-0"
@@ -844,21 +809,26 @@ export default function Navbar() {
                 <span>Dashboard</span>
               </Link>
             )}
-            {mounted && isLoggedIn && !hasRegisteredBusiness && currentRole !== 'Admin' && (
+            {mounted && isLoggedIn && !hasRegisteredBusiness && (
               <Link
                 href="/dashboard"
                 className="flex items-center gap-1 bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-xs transition-colors cursor-pointer shrink-0"
               >
-                <span>➕ Register</span>
+                <Plus className="w-3 h-3" />
+                <span>Register</span>
               </Link>
             )}
 
             {mounted && !isLoggedIn && (
               <button
                 onClick={() => setLoginModalOpen(true)}
-                className="btn-teal text-[10px] font-black px-2.5 py-1 rounded-lg cursor-pointer hover:shadow-sm active:scale-95 transition-all"
+                className="relative live-glow-teal btn-teal text-[10.5px] font-black px-3 py-1.5 rounded-lg cursor-pointer hover:shadow-md active:scale-95 transition-all flex items-center gap-1.5"
               >
-                {t('nav.login')}
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-80"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                </span>
+                <span>{t('nav.login')}</span>
               </button>
             )}
 

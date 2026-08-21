@@ -152,17 +152,17 @@ export default function LocalMarketplaceModal({ isOpen, onClose }: LocalMarketpl
         </button>
 
         {/* Modal Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 shrink-0 pr-10 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs">
-              <ShoppingBag className="w-5 h-5" />
+        <div className="flex items-center justify-between gap-2.5 mb-3 shrink-0 pr-8 border-b border-slate-100 pb-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs">
+              <ShoppingBag className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                Boisar Used Items Marketplace
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight truncate">
+                Used Items Marketplace
               </h3>
-              <p className="text-xs text-slate-500 font-bold">
-                Buy and sell pre-owned bikes, electronics, mobiles, and furniture directly from Boisar residents
+              <p className="text-[10.5px] sm:text-xs text-slate-500 font-medium truncate">
+                Buy &amp; sell pre-owned bikes, electronics &amp; furniture
               </p>
             </div>
           </div>
@@ -170,10 +170,10 @@ export default function LocalMarketplaceModal({ isOpen, onClose }: LocalMarketpl
           {!showAddForm && (
             <button 
               onClick={() => { if (!isLoggedIn) { setLoginModalOpen(true); return; } setShowAddForm(true); }}
-              className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-2xs shrink-0 flex items-center gap-1.5 self-start sm:self-auto"
+              className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs px-3 py-1.5 sm:py-2 rounded-xl transition-all cursor-pointer shadow-2xs shrink-0 flex items-center gap-1 ml-auto whitespace-nowrap"
             >
-              <Plus className="w-4 h-4" />
-              <span>{isLoggedIn ? '+ List Used Item' : '🔒 Login to List'}</span>
+              {isLoggedIn ? <Plus className="w-3.5 h-3.5" /> : null}
+              <span>{isLoggedIn ? 'Post Item' : '🔒 Login to List'}</span>
             </button>
           )}
         </div>

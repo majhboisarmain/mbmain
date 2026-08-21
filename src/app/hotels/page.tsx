@@ -45,7 +45,7 @@ import StaycationTabSwitcher from '@/components/StaycationTabSwitcher';
 
 export default function HotelsPage() {
   const router = useRouter();
-  const { loggedInUser, isLoggedIn } = useApp();
+  const { loggedInUser, isLoggedIn, setLoginModalOpen, showToast } = useApp();
 
   const [hotels, setHotels] = useState<HotelItem[]>(BOISAR_HOTELS);
   const [searchQuery, setSearchQuery] = useState('');
@@ -794,7 +794,22 @@ export default function HotelsPage() {
           })}
         </div>
 
-        {/* Bottom Banner: Add Your Hotel */}
+        {/* Empty State when 0 hotels match */}
+        {filteredAndSortedHotels.length === 0 && (
+          <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-3 mt-6">
+            <Building2 className="w-12 h-12 text-slate-300 mx-auto" />
+            <h3 className="text-base font-black text-slate-800">No hotels matching your criteria</h3>
+            <p className="text-xs text-slate-500">Try changing your search query or switching to All Hotels.</p>
+            <button
+              onClick={() => { setSearchQuery(''); setActiveTab('All'); setSortBy('recommended'); }}
+              className="mt-2 text-xs font-black text-purple-900 bg-purple-50 px-4 py-2 rounded-xl border border-purple-200 cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          </div>
+        )}
+
+        {/* Bottom Banner: Add Your Hotel (Positioned below results & empty state) */}
         <div 
           style={{ background: 'linear-gradient(135deg, #180630 0%, #2b0c50 50%, #120424 100%)', color: '#ffffff' }}
           className="rounded-3xl p-5 sm:p-6 mt-8 border border-amber-400/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 text-left"
@@ -815,7 +830,14 @@ export default function HotelsPage() {
 
           <button
             type="button"
-            onClick={() => setIsAddHotelOpen(true)}
+            onClick={() => {
+              if (!isLoggedIn) {
+                showToast("Please Sign In or Register first to list your hotel and access your dashboard.", "info", 4000);
+                setLoginModalOpen(true);
+                return;
+              }
+              setIsAddHotelOpen(true);
+            }}
             className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-6 py-3 rounded-2xl shadow-md transition-all cursor-pointer flex items-center gap-1.5 shrink-0 uppercase tracking-wider active:scale-95 whitespace-nowrap"
           >
             <Plus className="w-4 h-4 text-slate-950" />
@@ -823,19 +845,6 @@ export default function HotelsPage() {
           </button>
         </div>
 
-        {filteredAndSortedHotels.length === 0 && (
-          <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-3 mt-6">
-            <Building2 className="w-12 h-12 text-slate-300 mx-auto" />
-            <h3 className="text-base font-black text-slate-800">No hotels matching your criteria</h3>
-            <p className="text-xs text-slate-500">Try changing your search query or switching to All Hotels.</p>
-            <button
-              onClick={() => { setSearchQuery(''); setActiveTab('All'); setSortBy('recommended'); }}
-              className="mt-2 text-xs font-black text-purple-900 bg-purple-50 px-4 py-2 rounded-xl border border-purple-200 cursor-pointer"
-            >
-              Reset Filters
-            </button>
-          </div>
-        )}
 
       </div>
 

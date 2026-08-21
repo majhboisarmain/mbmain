@@ -45,7 +45,7 @@ export default function LocalHubPills() {
       id: 'hotels',
       title: 'Hotel & Hourly Stay',
       image: '/imagess/hotel booking.png',
-      onClick: () => setHotelOpen(true)
+      onClick: () => router.push('/hotels')
     },
     {
       id: 'emergency',

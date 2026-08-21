@@ -369,26 +369,26 @@ Please confirm slot availability. Thank you!`;
         </button>
 
         {/* Modal Header */}
-        <div className="flex items-center justify-between gap-2 mb-4 shrink-0 pr-10 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-purple-50 border border-purple-200 text-purple-600 flex items-center justify-center shrink-0 shadow-2xs">
-              <Trophy className="w-5 h-5" />
+        <div className="flex items-center justify-between gap-2.5 mb-3 shrink-0 pr-8 border-b border-slate-100 pb-2.5">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-purple-50 border border-purple-200 text-purple-600 flex items-center justify-center shrink-0 shadow-2xs">
+              <Trophy className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight truncate">
-                Boisar Sports Turfs &amp; Game Zone
+              <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight truncate">
+                Sports Turfs &amp; Gaming
               </h3>
-              <p className="text-xs text-slate-500 font-bold truncate">
-                Live slot status &amp; instant booking
+              <p className="text-[10.5px] sm:text-xs text-slate-500 font-medium truncate">
+                Live turf slot status &amp; instant booking
               </p>
             </div>
           </div>
 
           <button
             onClick={handleRegister}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-black text-xs px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs whitespace-nowrap flex items-center gap-1 shrink-0"
+            className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white font-black text-xs px-3 py-1.5 rounded-xl transition-all cursor-pointer shadow-2xs whitespace-nowrap flex items-center gap-1 shrink-0 ml-auto"
           >
-            <span>+ List Yours</span>
+            <span>List Venue</span>
           </button>
         </div>
 

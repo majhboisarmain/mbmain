@@ -28,172 +28,9 @@ interface Job {
   _count?: { applications: number };
 }
 
-const DEFAULT_BOISAR_JOBS: Job[] = [
-  {
-    id: 101,
-    title: 'Senior Accounts Executive (Tally Prime / GST)',
-    type: 'Full Time',
-    description: 'Handling GST filing, day-to-day accounts, billing, and vendor payments for MIDC factory.',
-    salary: '₹25,000 - ₹35,000 / mo',
-    location: 'Tarapur MIDC, Boisar',
-    status: 'Open',
-    createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    businessId: 1,
-    business: {
-      name: 'Shree Chem Industries Ltd.',
-      image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=200',
-      location: 'Tarapur MIDC Gate 2',
-      phone: '9822114455',
-      whatsapp: '919822114455',
-      verified: true
-    },
-    _count: { applications: 12 }
-  },
-  {
-    id: 102,
-    title: 'Chemical Plant Production Supervisor',
-    type: 'Full Time',
-    description: 'Supervising chemical batch operations, shift scheduling, and plant safety standards.',
-    salary: '₹28,000 - ₹40,000 / mo',
-    location: 'Tarapur MIDC Zone 1',
-    status: 'Open',
-    createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-    businessId: 2,
-    business: {
-      name: 'Tarapur Polymer & Chemicals',
-      image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=200',
-      location: 'MIDC Road, Salwad',
-      phone: '9822445566',
-      whatsapp: '919822445566',
-      verified: true
-    },
-    _count: { applications: 8 }
-  },
-  {
-    id: 103,
-    title: 'Front Desk Receptionist & Guest Executive',
-    type: 'Full Time',
-    description: 'Handling hotel guest check-ins, room reservations, billing system, and customer support.',
-    salary: '₹18,000 - ₹24,000 / mo',
-    location: 'Ostwal Empire, Boisar (West)',
-    status: 'Open',
-    createdAt: new Date(Date.now() - 10 * 3600 * 1000).toISOString(),
-    businessId: 3,
-    business: {
-      name: 'Freesia by Express Inn',
-      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200',
-      location: 'Ostwal Empire Main Road',
-      phone: '8149998666',
-      whatsapp: '918149998666',
-      verified: true
-    },
-    _count: { applications: 15 }
-  },
-  {
-    id: 104,
-    title: 'Retail Store Sales & Cashier Executive',
-    type: 'Full Time',
-    description: 'Customer assistance, billing counter management, and garment stock inventory handling.',
-    salary: '₹15,000 - ₹20,000 / mo',
-    location: 'Navapur Road, Boisar',
-    status: 'Open',
-    createdAt: new Date(Date.now() - 18 * 3600 * 1000).toISOString(),
-    businessId: 4,
-    business: {
-      name: 'Style Club Lifestyle Retail',
-      image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200',
-      location: 'Near Boisar Bus Depot',
-      phone: '9028551030',
-      whatsapp: '919028551030',
-      verified: true
-    },
-    _count: { applications: 19 }
-  },
-  {
-    id: 105,
-    title: 'Staff Nurse (ICU & General Ward)',
-    type: 'Full Time',
-    description: 'Patient care, vitals monitoring, medicine administration, and doctor assistance.',
-    salary: '₹22,000 - ₹32,000 / mo',
-    location: 'Chitralaya Road, Boisar',
-    status: 'Open',
-    createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-    businessId: 5,
-    business: {
-      name: 'City General Hospital & ICU',
-      image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=200',
-      location: 'Opp. Harmony Plaza, Boisar',
-      phone: '7264951994',
-      whatsapp: '917264951994',
-      verified: true
-    },
-    _count: { applications: 6 }
-  },
-  {
-    id: 106,
-    title: 'CNC & VMC Machine Operator',
-    type: 'Full Time',
-    description: 'Operating CNC milling & turning machines for precision engineering parts. ITI preferred.',
-    salary: '₹20,000 - ₹27,000 / mo',
-    location: 'Tarapur MIDC Gate No. 1',
-    status: 'Open',
-    createdAt: new Date(Date.now() - 36 * 3600 * 1000).toISOString(),
-    businessId: 6,
-    business: {
-      name: 'Apex Precision Engineering',
-      image: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=200',
-      location: 'Tarapur MIDC, Boisar',
-      phone: '9822338899',
-      whatsapp: '919822338899',
-      verified: true
-    },
-    _count: { applications: 11 }
-  },
-  {
-    id: 107,
-    title: 'Primary English & Science Teacher',
-    type: 'Full Time',
-    description: 'Teaching primary students (Class 1-5), preparing test sheets, and classroom coordination.',
-    salary: '₹18,000 - ₹26,000 / mo',
-    location: 'Khaira, Boisar (East)',
-    status: 'Open',
-    createdAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
-    businessId: 7,
-    business: {
-      name: 'Bright Future Academy',
-      image: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=200',
-      location: 'Khaira Road, Boisar',
-      phone: '7385153162',
-      whatsapp: '917385153162',
-      verified: true
-    },
-    _count: { applications: 9 }
-  },
-  {
-    id: 108,
-    title: 'Delivery Associate (Bike Rider)',
-    type: 'Part Time',
-    description: 'Hyperlocal package & order delivery across Boisar and Tarapur. Smartphone and bike required.',
-    salary: '₹16,000 - ₹22,000 / mo',
-    location: 'Station Road, Boisar',
-    status: 'Open',
-    createdAt: new Date(Date.now() - 60 * 3600 * 1000).toISOString(),
-    businessId: 8,
-    business: {
-      name: 'Express Local Logistics',
-      image: 'https://images.unsplash.com/photo-1617347454431-f49d7ff5c3b1?w=200',
-      location: 'Near Boisar Railway Station',
-      phone: '9822014455',
-      whatsapp: '919822014455',
-      verified: true
-    },
-    _count: { applications: 22 }
-  }
-];
-
 export default function JobsBoard() {
-  const [jobs, setJobs] = useState<Job[]>(DEFAULT_BOISAR_JOBS);
-  const [loading, setLoading] = useState(false);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('All');
   const [showPostModal, setShowPostModal] = useState(false);
@@ -209,28 +46,22 @@ export default function JobsBoard() {
 
   const fetchJobs = async () => {
     try {
-      const res = await fetch(`/api/jobs?type=${typeFilter}&query=${query}&status=Open`);
+      setLoading(true);
+      const res = await fetch(`/api/jobs?type=${encodeURIComponent(typeFilter)}&query=${encodeURIComponent(query)}&status=Open`);
+      if (!res.ok) {
+        setJobs([]);
+        return;
+      }
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         setJobs(data);
       } else {
-        // Filter local fallback
-        let filtered = DEFAULT_BOISAR_JOBS;
-        if (typeFilter && typeFilter !== 'All') {
-          filtered = filtered.filter(j => j.type.toLowerCase() === typeFilter.toLowerCase());
-        }
-        if (query.trim()) {
-          const q = query.toLowerCase();
-          filtered = filtered.filter(j => 
-            j.title.toLowerCase().includes(q) ||
-            j.location.toLowerCase().includes(q) ||
-            j.business.name.toLowerCase().includes(q)
-          );
-        }
-        setJobs(filtered);
+        setJobs([]);
       }
     } catch {
-      setJobs(DEFAULT_BOISAR_JOBS);
+      setJobs([]);
+    } finally {
+      setLoading(false);
     }
   };
 
