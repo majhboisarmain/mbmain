@@ -242,6 +242,10 @@ const localBusinessDirectoryJsonLd = {
     "reviewCount": "4850",
     "bestRating": "5",
     "worstRating": "1"
+  },
+  "founder": {
+    "@type": "Person",
+    "name": "Ganesh Bhadane"
   }
 };
 
@@ -251,10 +255,18 @@ const localFaqJsonLd = {
   "mainEntity": [
     {
       "@type": "Question",
+      "name": "Who is the founder of Majh Boisar?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Majh Boisar (माझं बोईसर) was founded by Ganesh Bhadane with the vision of building a unified, hyperlocal super-app and digital ecosystem for the citizens, businesses, and workforce of Boisar and Tarapur MIDC."
+      }
+    },
+    {
+      "@type": "Question",
       "name": "What is Majh Boisar (माझं बोईसर)?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Majh Boisar (majhboisar.in) is Boisar's #1 official local search engine and verified business directory. It connects Boisar residents with 800+ verified doctors, hospitals, hotels, resorts, housemaids, electricians, plumbers, real estate flats, and daily Tarapur MIDC jobs."
+        "text": "Majh Boisar (majhboisar.in) is Boisar's #1 official local search engine and verified business directory founded by Ganesh Bhadane. It connects Boisar residents with 800+ verified doctors, hospitals, hotels, resorts, housemaids, electricians, plumbers, real estate flats, and daily Tarapur MIDC jobs."
       }
     },
     {
