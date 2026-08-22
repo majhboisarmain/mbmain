@@ -1,0 +1,21 @@
+# Majh Boisar (माझं बोईसर) - Boisar's Official Local Super App & City Directory
+
+> Majh Boisar (https://majhboisar.in) is the premier local search engine, city directory, and hyperlocal hyper-connected platform for Boisar, Tarapur MIDC, Palghar, and surrounding areas in Maharashtra, India.
+
+## Core City Services & Portals
+- **Local Business Directory**: Over 1,000+ verified businesses across electronics, clothing, restaurants, salons, medical clinics, and industrial suppliers in Boisar (`https://majhboisar.in/search`).
+- **Jobs & Careers**: Verified hiring vacancies in Tarapur MIDC chemical/textile plants, offices, retail shops, and hospitals with 0% commission direct HR contact (`https://majhboisar.in/jobs`).
+- **Real Estate & Rentals**: 1BHK, 2BHK, 3BHK flats, commercial shops, and industrial plots for sale/rent in Ostwal Empire, Pasthal, Tata Shubh Griha, and Boisar West (`https://majhboisar.in/properties`).
+- **Hourly Hotels & Couple Stays**: 3-hour, 6-hour, 12-hour, and overnight hotel rooms with local ID acceptance, couple-friendly policies, and zero-advance desk payment (`https://majhboisar.in/hotels`).
+- **Beach Resorts & Pool Villas**: Weekend stays, day-picnics, private pool villas in Kelwa Beach, Bordi, Dahanu, and Boisar (`https://majhboisar.in/resorts`).
+- **Travels & Vehicle Hire**: 1-tap booking for local autos, AC sedan cabs to Mumbai Airport (BOM), outstation Ertiga/Innova, bike rentals, and tempo shifting (Tata Ace Chota Hathi) (`https://majhboisar.in/hire-vehicle`).
+- **Home Services & Domestic Helpers**: Verified housemaids (kamwali bai), cooks, drivers, electricians, plumbers, AC repair technicians, and carpenters (`https://majhboisar.in/services`).
+- **Content Creators & Influencers**: Local Boisar food vloggers, lifestyle creators, video editors, and anchors for business promotions (`https://majhboisar.in/creators`).
+- **Emergency Numbers & Blood Donation**: Boisar police, fire brigade, 24x7 ambulance, local hospitals, and voluntary blood donors (`https://majhboisar.in/blood-donation`).
+
+## Key Location Data
+- **City**: Boisar, District Palghar, Maharashtra, India.
+- **PIN Codes**: 401501, 401504, 401506.
+- **Key Landmarks**: Boisar Railway Station, Tarapur MIDC (Gate 1, 2, 3), Ostwal Empire, Pasthal, Katkar Pada, Navapur Beach, Kelwa Beach, Dandi.
+- **Official Contact**: support@majhboisar.in / +91 9307294733
+- **Primary Website**: https://majhboisar.in
