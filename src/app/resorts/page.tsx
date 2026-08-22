@@ -365,33 +365,6 @@ function ResortsPageContent() {
           /* 1. LISTINGS VIEW                                               */
           /* ============================================================== */
           <div className="space-y-4">
-            
-            {/* 2. Sleek & Compact Top Promo Banner */}
-            <div className="bg-gradient-to-r from-slate-950 via-teal-950 to-slate-900 text-white rounded-2xl p-3 sm:p-4 border border-teal-500/30 shadow-sm text-left flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
-                    🏖️ WEEKEND DEALS
-                  </span>
-                  <span className="text-[11px] text-teal-300 font-semibold">
-                    Kelwa Beach · Dahanu · Boisar
-                  </span>
-                </div>
-                <h2 className="text-xs sm:text-sm font-black text-white leading-snug">
-                  Certified Beach Touch Resorts &amp; Private Pool Villas
-                </h2>
-              </div>
-
-              <a
-                href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar,%20I%20want%20to%20inquire%20about%20weekend%20resort%20and%20villa%20deals."
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3.5 py-1.5 sm:py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black flex items-center justify-center gap-1.5 shadow-md transition-all shrink-0 cursor-pointer self-start sm:self-auto"
-              >
-                <MessageCircle className="w-3.5 h-3.5" />
-                <span>Inquire on WhatsApp</span>
-              </a>
-            </div>
 
             {/* 3. Ultra-Clean & Compact Search & Filter Control Card */}
             <div className="bg-white rounded-xl border border-slate-200 p-2 shadow-2xs space-y-1.5 text-left">
@@ -630,23 +603,18 @@ function ResortsPageContent() {
               </div>
             )}
 
-            {/* 4. Luxury Bottom Banner: Add Your Resort */}
+            {/* 4. Luxury Bottom Banner: Add Your Resort (Slim & Compact) */}
             <div 
               style={{ background: 'linear-gradient(135deg, #180630 0%, #2b0c50 50%, #120424 100%)', color: '#ffffff' }}
-              className="rounded-3xl p-5 sm:p-6 mt-8 border border-amber-400/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 text-left"
+              className="rounded-2xl p-3.5 sm:p-4 mt-6 border border-amber-400/30 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 text-left"
             >
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center justify-center text-xl shrink-0">
-                  <Waves className="w-6 h-6 text-amber-300" />
-                </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-black text-white leading-tight">
-                    Are you a Resort or Pool Villa Owner in Boisar / Kelwa?
-                  </h3>
-                  <p className="text-xs text-purple-200 font-medium mt-0.5">
-                    List your property on Majh Boisar and get instant day-picnic &amp; night bookings.
-                  </p>
-                </div>
+              <div className="space-y-0.5">
+                <h3 className="text-xs sm:text-sm font-black text-white">
+                  Are you a Resort or Pool Villa Owner in Boisar / Kelwa?
+                </h3>
+                <p className="text-[10.5px] text-purple-200">
+                  List your property on Majh Boisar and get direct day-picnic &amp; night stay bookings.
+                </p>
               </div>
 
               <button
@@ -659,9 +627,9 @@ function ResortsPageContent() {
                   }
                   setIsListModalOpen(true);
                 }}
-                className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-6 py-3 rounded-2xl shadow-md transition-all cursor-pointer flex items-center gap-1.5 shrink-0 uppercase tracking-wider active:scale-95 whitespace-nowrap"
+                className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1 shrink-0 active:scale-95 whitespace-nowrap"
               >
-                <Plus className="w-4 h-4 text-slate-950" />
+                <Plus className="w-3.5 h-3.5 text-slate-950" />
                 <span>Add Your Resort</span>
               </button>
             </div>

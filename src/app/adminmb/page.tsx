@@ -12,8 +12,67 @@ import {
   MessageSquare, Layers, ShieldCheck, ShieldAlert, Star, Eye, Trash2,
   ToggleLeft, ToggleRight, Coins, Terminal, RefreshCw, BarChart2,
   Edit, Plus, X, Users, Phone, UserCheck, PlusCircle, MapPin, Briefcase, FileText,
-  HardDrive, Database, Server, Smartphone, Zap, Lock, KeyRound, EyeOff, Waves, Compass
+  HardDrive, Database, Server, Smartphone, Zap, Lock, KeyRound, EyeOff, Waves, Compass, Utensils
 } from 'lucide-react';
+
+export interface HomeFeaturedRestaurant {
+  id: string;
+  name: string;
+  category: string;
+  location: string;
+  rating: number;
+  discount: string;
+  image: string;
+  speciality: string;
+  isActive?: boolean;
+}
+
+const DEFAULT_FEATURED_RESTAURANTS: HomeFeaturedRestaurant[] = [
+  {
+    id: 'rest-1',
+    name: 'Citrus Cafe & Resto',
+    category: 'Cafe & Multi-Cuisine',
+    location: 'Boisar West · Station',
+    rating: 4.8,
+    discount: '15% Off + 25% Off',
+    image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&auto=format&fit=crop&q=80',
+    speciality: 'Cold Brew, Pasta & Sizzlers',
+    isActive: true
+  },
+  {
+    id: 'rest-2',
+    name: 'The Daily Dose Cafe',
+    category: 'Coffee, Pizza & Burgers',
+    location: 'Ostwal Empire · Boisar',
+    rating: 4.7,
+    discount: 'Flat 20% Off',
+    image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&auto=format&fit=crop&q=80',
+    speciality: 'Handcrafted Burgers & Shakes',
+    isActive: true
+  },
+  {
+    id: 'rest-3',
+    name: 'Sai Sagar Veg Treat',
+    category: 'Pure Veg & South Indian',
+    location: 'Station Road · Boisar',
+    rating: 4.6,
+    discount: 'Special Thali & Dosa',
+    image: 'https://images.unsplash.com/photo-1613292443284-8d10ef9383fe?w=600&auto=format&fit=crop&q=80',
+    speciality: 'Crispy Butter Masala Dosa',
+    isActive: true
+  },
+  {
+    id: 'rest-4',
+    name: 'Cafe Hashtag & Lounge',
+    category: 'Rooftop Cafe & Mocktails',
+    location: 'Tarapur MIDC Road',
+    rating: 4.9,
+    discount: '10% Off + 25% Off',
+    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&auto=format&fit=crop&q=80',
+    speciality: 'Wood-Fired Pizza & Sizzlers',
+    isActive: true
+  }
+];
 
 const toTitleCase = (str: string) => {
   return str
@@ -113,7 +172,12 @@ interface AdOrder {
 
 export default function AdminPanelPage() {
   const { currentRole, setRole, login, isLoggedIn, loggedInUser, setLoginModalOpen } = useApp();
-  const [isAdminPageUnlocked, setIsAdminPageUnlocked] = useState(false);
+  const [isAdminPageUnlocked, setIsAdminPageUnlocked] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('majh_boisar_adminmb_auth') === 'unlocked';
+    }
+    return false;
+  });
   const [adminPasscode, setAdminPasscode] = useState('');
   const [adminPasscodeError, setAdminPasscodeError] = useState('');
   const [savedAdminPasscode, setSavedAdminPasscode] = useState<string>(() => {
@@ -155,13 +219,116 @@ export default function AdminPanelPage() {
   const [propPlanBuilderPrice, setPropPlanBuilderPrice] = useState('₹1,499/mo');
 
   const [loading, setLoading] = useState(true);
-  const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'queue' | 'hotel_management' | 'resort_management' | 'listings' | 'users' | 'leads' | 'reviews' | 'ad_orders' | 'ad_pricing' | 'categories' | 'logs' | 'deletion_requests' | 'jobs_management' | 'property_management' | 'spam_reports' | 'system_storage'>('queue');
+  const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'queue' | 'home_restaurants' | 'hotel_management' | 'resort_management' | 'listings' | 'users' | 'leads' | 'reviews' | 'ad_orders' | 'ad_pricing' | 'categories' | 'logs' | 'deletion_requests' | 'jobs_management' | 'property_management' | 'spam_reports' | 'system_storage'>('queue');
   const [systemStats, setSystemStats] = useState<any>(null);
   const [loadingStats, setLoadingStats] = useState<boolean>(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [customAdminCategories, setCustomAdminCategories] = useState<string[]>([]);
   const [registeredUsers, setRegisteredUsers] = useState<any[]>([]);
   const [deletionRequests, setDeletionRequests] = useState<DeletionRequest[]>([]);
+
+  // Homepage Featured Restaurants Management States
+  const [adminHomeRestaurants, setAdminHomeRestaurants] = useState<HomeFeaturedRestaurant[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('majh_boisar_featured_restaurants');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return DEFAULT_FEATURED_RESTAURANTS;
+  });
+  const [restaurantModalOpen, setRestaurantModalOpen] = useState(false);
+  const [editingRestaurantId, setEditingRestaurantId] = useState<string | null>(null);
+  const [restoFormName, setRestoFormName] = useState('');
+  const [restoFormCategory, setRestoFormCategory] = useState('Cafe & Multi-Cuisine');
+  const [restoFormLocation, setRestoFormLocation] = useState('Boisar West · Near Station');
+  const [restoFormRating, setRestoFormRating] = useState('4.8');
+  const [restoFormDiscount, setRestoFormDiscount] = useState('15% Off + 25% Off');
+  const [restoFormSpeciality, setRestoFormSpeciality] = useState('Cold Brew, Pasta & Sizzlers');
+  const [restoFormImage, setRestoFormImage] = useState('https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&auto=format&fit=crop&q=80');
+
+  const saveHomeRestaurants = (newList: HomeFeaturedRestaurant[]) => {
+    setAdminHomeRestaurants(newList);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('majh_boisar_featured_restaurants', JSON.stringify(newList));
+    }
+  };
+
+  const handleOpenAddRestaurant = () => {
+    setEditingRestaurantId(null);
+    setRestoFormName('');
+    setRestoFormCategory('Cafe & Multi-Cuisine');
+    setRestoFormLocation('Boisar West · Near Station');
+    setRestoFormRating('4.8');
+    setRestoFormDiscount('15% Off + 25% Off');
+    setRestoFormSpeciality('Cold Brew, Pasta & Sizzlers');
+    setRestoFormImage('https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&auto=format&fit=crop&q=80');
+    setRestaurantModalOpen(true);
+  };
+
+  const handleOpenEditRestaurant = (r: HomeFeaturedRestaurant) => {
+    setEditingRestaurantId(r.id);
+    setRestoFormName(r.name);
+    setRestoFormCategory(r.category || 'Cafe & Multi-Cuisine');
+    setRestoFormLocation(r.location || 'Boisar West');
+    setRestoFormRating(String(r.rating || '4.8'));
+    setRestoFormDiscount(r.discount || '');
+    setRestoFormSpeciality(r.speciality || '');
+    setRestoFormImage(r.image || '');
+    setRestaurantModalOpen(true);
+  };
+
+  const handleSaveRestaurant = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!restoFormName.trim()) {
+      alert('Please enter restaurant/cafe name');
+      return;
+    }
+
+    if (editingRestaurantId) {
+      const updated = adminHomeRestaurants.map(r => r.id === editingRestaurantId ? {
+        ...r,
+        name: restoFormName.trim(),
+        category: restoFormCategory.trim(),
+        location: restoFormLocation.trim(),
+        rating: parseFloat(restoFormRating) || 4.5,
+        discount: restoFormDiscount.trim(),
+        speciality: restoFormSpeciality.trim(),
+        image: restoFormImage.trim() || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&auto=format&fit=crop&q=80'
+      } : r);
+      saveHomeRestaurants(updated);
+    } else {
+      const newResto: HomeFeaturedRestaurant = {
+        id: `rest-${Date.now()}`,
+        name: restoFormName.trim(),
+        category: restoFormCategory.trim(),
+        location: restoFormLocation.trim(),
+        rating: parseFloat(restoFormRating) || 4.8,
+        discount: restoFormDiscount.trim(),
+        speciality: restoFormSpeciality.trim(),
+        image: restoFormImage.trim() || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&auto=format&fit=crop&q=80',
+        isActive: true
+      };
+      saveHomeRestaurants([...adminHomeRestaurants, newResto]);
+    }
+
+    setRestaurantModalOpen(false);
+  };
+
+  const handleDeleteHomeRestaurant = (id: string, name: string) => {
+    if (confirm(`Are you sure you want to remove "${name}" from homepage dining section?`)) {
+      const updated = adminHomeRestaurants.filter(r => r.id !== id);
+      saveHomeRestaurants(updated);
+    }
+  };
+
+  const handleToggleHomeRestaurantActive = (id: string) => {
+    const updated = adminHomeRestaurants.map(r => r.id === id ? { ...r, isActive: !r.isActive } : r);
+    saveHomeRestaurants(updated);
+  };
 
   // Admin Search & Multi-Select States
   const [adminBizSearchQuery, setAdminBizSearchQuery] = useState('');
@@ -2089,6 +2256,7 @@ export default function AdminPanelPage() {
             <div className="flex gap-1 border-b border-slate-200 pb-px overflow-x-auto no-scrollbar -mx-1 px-1">
               {[
                 { val: 'queue', label: `Pending Approvals (${pendingVerifications + pendingSpecialists.length + pendingHotels.length})`, icon: <ShieldCheck className="w-3.5 h-3.5" />, highlight: (pendingVerifications + pendingSpecialists.length + pendingHotels.length) > 0 },
+                { val: 'home_restaurants', label: `Home Dining & Cafes (${adminHomeRestaurants.length})`, icon: <Utensils className="w-3.5 h-3.5 text-orange-600" /> },
                 { val: 'hotel_management', label: `Hotels & Resorts (${adminHotelsList.length + adminResortsList.length})`, icon: <Building2 className="w-3.5 h-3.5 text-amber-500" />, highlight: pendingHotels.length > 0 },
                 { val: 'listings', label: `Directory Listings (${businesses.length})`, icon: <Building className="w-3.5 h-3.5" /> },
                 { val: 'users', label: `Registered Users (${registeredUsers.length})`, icon: <Users className="w-3.5 h-3.5 text-teal-600" /> },
@@ -2322,6 +2490,321 @@ export default function AdminPanelPage() {
                   </div>
 
                 </div>
+              </div>
+            )}
+
+            {/* Tab Content: Dedicated Homepage Dining & Cafes Section */}
+            {activeAdminTab === 'home_restaurants' && (
+              <div className="bg-white border border-slate-200 p-4 sm:p-6 rounded-2xl space-y-5 shadow-xs text-left">
+                {/* Header & Add Button */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-150 pb-4">
+                  <div>
+                    <h3 className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                      <Utensils className="w-4 h-4 text-orange-600" />
+                      <span>Homepage Dining &amp; Cafes Manager ({adminHomeRestaurants.length})</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">
+                      Directly add, edit, toggle, and manage the restaurants and cafes featured in the &quot;Hi Foodie, Dine in Boisar!&quot; homepage section.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleOpenAddRestaurant}
+                    className="bg-orange-600 hover:bg-orange-700 active:scale-95 text-white text-xs font-black px-4 py-2 rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5 self-start sm:self-auto shrink-0"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add Restaurant to Homepage</span>
+                  </button>
+                </div>
+
+                {/* Restaurants Grid Cards */}
+                {adminHomeRestaurants.length === 0 ? (
+                  <div className="py-16 text-center border-2 border-dashed border-slate-200 rounded-2xl">
+                    <Utensils className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-slate-600">No restaurants added yet.</p>
+                    <p className="text-xs text-slate-400 mt-1">Click &quot;Add Restaurant to Homepage&quot; to feature top eateries!</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {adminHomeRestaurants.map((resto) => (
+                      <div
+                        key={resto.id}
+                        className={`bg-white border rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between ${
+                          resto.isActive !== false ? 'border-orange-200/80' : 'border-slate-200 opacity-60'
+                        }`}
+                      >
+                        <div>
+                          {/* Image & Ribbon */}
+                          <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-900">
+                            <img
+                              src={resto.image}
+                              alt={resto.name}
+                              className="w-full h-full object-cover"
+                            />
+                            {resto.discount && (
+                              <div className="absolute bottom-2 left-2">
+                                <span className="bg-gradient-to-r from-red-600 to-orange-600 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-sm">
+                                  % {resto.discount}
+                                </span>
+                              </div>
+                            )}
+                            <div className="absolute top-2 right-2">
+                              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full shadow-xs ${
+                                resto.isActive !== false ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-200'
+                              }`}>
+                                {resto.isActive !== false ? '● Live on Home' : '○ Hidden'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Content Details */}
+                          <div className="p-3.5 space-y-1 text-left">
+                            <div className="flex items-start justify-between gap-1.5">
+                              <h4 className="text-xs font-black text-slate-900 leading-tight truncate">
+                                {resto.name}
+                              </h4>
+                              <span className="bg-emerald-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded shrink-0 flex items-center gap-0.5">
+                                <span>★</span>
+                                <span>{resto.rating}</span>
+                              </span>
+                            </div>
+
+                            <p className="text-[10.5px] text-orange-950 font-bold truncate">
+                              {resto.category}
+                            </p>
+
+                            <p className="text-[10px] text-slate-500 font-medium truncate">
+                              📍 {resto.location}
+                            </p>
+
+                            <p className="text-[9.5px] font-bold text-teal-700 truncate">
+                              ✨ {resto.speciality}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Actions Toolbar */}
+                        <div className="p-3 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleHomeRestaurantActive(resto.id)}
+                            className={`text-[10px] font-black px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
+                              resto.isActive !== false
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                            }`}
+                          >
+                            {resto.isActive !== false ? 'Active' : 'Disabled'}
+                          </button>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditRestaurant(resto)}
+                              className="p-1.5 text-slate-600 hover:text-teal-700 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 transition-all cursor-pointer"
+                              title="Edit Restaurant"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteHomeRestaurant(resto.id, resto.name)}
+                              className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg border border-transparent hover:border-rose-200 transition-all cursor-pointer"
+                              title="Delete from Homepage"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add / Edit Restaurant Modal */}
+                {restaurantModalOpen && (
+                  <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+                    <div className="bg-white rounded-3xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto text-left">
+                      <div className="flex items-center justify-between border-b border-slate-150 pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-orange-600 text-base">
+                            <Utensils className="w-4 h-4" />
+                          </span>
+                          <div>
+                            <h4 className="text-sm font-black text-slate-900">
+                              {editingRestaurantId ? 'Edit Homepage Restaurant' : 'Add Restaurant to Homepage'}
+                            </h4>
+                            <p className="text-[10.5px] text-slate-500 font-medium">
+                              Featured in &quot;Hi Foodie, Dine in Boisar!&quot; section
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setRestaurantModalOpen(false)}
+                          className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <form onSubmit={handleSaveRestaurant} className="space-y-3.5">
+                        {/* Name */}
+                        <div>
+                          <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                            Restaurant / Cafe Name *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Citrus Cafe & Resto"
+                            value={restoFormName}
+                            onChange={(e) => setRestoFormName(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500"
+                          />
+                        </div>
+
+                        {/* Category & Rating in Row */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                              Category / Cuisine
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Cafe & Multi-Cuisine"
+                              value={restoFormCategory}
+                              onChange={(e) => setRestoFormCategory(e.target.value)}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                              Rating (Stars)
+                            </label>
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="1"
+                              max="5"
+                              value={restoFormRating}
+                              onChange={(e) => setRestoFormRating(e.target.value)}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Location & Discount Badge in Row */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                              Location / Area
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Boisar West · Station"
+                              value={restoFormLocation}
+                              onChange={(e) => setRestoFormLocation(e.target.value)}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                              Offer / Ribbon Badge
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. 15% Off + 25% Off"
+                              value={restoFormDiscount}
+                              onChange={(e) => setRestoFormDiscount(e.target.value)}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Speciality */}
+                        <div>
+                          <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                            Speciality / Popular Dishes
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Cold Brew, Pasta & Sizzlers"
+                            value={restoFormSpeciality}
+                            onChange={(e) => setRestoFormSpeciality(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500"
+                          />
+                        </div>
+
+                        {/* Image URL */}
+                        <div>
+                          <label className="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">
+                            Food / Cafe Image URL
+                          </label>
+                          <input
+                            type="url"
+                            placeholder="https://images.unsplash.com/..."
+                            value={restoFormImage}
+                            onChange={(e) => setRestoFormImage(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500"
+                          />
+
+                          {/* Quick Preset Images */}
+                          <div className="flex flex-wrap gap-1.5 mt-2">
+                            <span className="text-[10px] text-slate-400 font-bold self-center">Presets:</span>
+                            {[
+                              { label: '☕ Cafe Ambience', url: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&auto=format&fit=crop&q=80' },
+                              { label: '🍔 Burgers & Cafe', url: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&auto=format&fit=crop&q=80' },
+                              { label: '🍲 Veg Thali / Dosa', url: 'https://images.unsplash.com/photo-1613292443284-8d10ef9383fe?w=600&auto=format&fit=crop&q=80' },
+                              { label: '🍕 Pizza & Dining', url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&auto=format&fit=crop&q=80' }
+                            ].map((preset) => (
+                              <button
+                                key={preset.label}
+                                type="button"
+                                onClick={() => setRestoFormImage(preset.url)}
+                                className="text-[9.5px] font-bold bg-slate-100 hover:bg-orange-50 hover:text-orange-700 border border-slate-200 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                              >
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Image Preview */}
+                        {restoFormImage && (
+                          <div className="relative aspect-[16/9] w-full rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
+                            <img src={restoFormImage} alt="Preview" className="w-full h-full object-cover" />
+                            {restoFormDiscount && (
+                              <span className="absolute bottom-2 left-2 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded shadow">
+                                % {restoFormDiscount}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Submit Actions */}
+                        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-150">
+                          <button
+                            type="button"
+                            onClick={() => setRestaurantModalOpen(false)}
+                            className="px-4 py-2 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-100 cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-black px-5 py-2 rounded-xl transition-all cursor-pointer shadow-xs"
+                          >
+                            {editingRestaurantId ? 'Save Changes' : 'Add Restaurant'}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

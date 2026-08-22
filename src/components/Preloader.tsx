@@ -7,19 +7,13 @@ export default function Preloader() {
   const [fade, setFade] = useState(false);
 
   useEffect(() => {
-    // Only show quick micro-preloader on initial mount without blocking the user
-    const timer1 = setTimeout(() => {
-      setFade(true);
-    }, 150);
-
-    const timer2 = setTimeout(() => {
+    // Non-blocking instant fade out
+    setFade(true);
+    const timer = setTimeout(() => {
       setShow(false);
-    }, 300);
+    }, 60);
 
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   if (!show) return null;

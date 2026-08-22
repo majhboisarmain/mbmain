@@ -71,12 +71,13 @@ export interface BookItem {
 export interface TempoDriver {
   id: string;
   driverName: string;
-  vehicleType: 'Chota Hathi (Tata Ace)' | '3-Wheel Auto Tempo' | 'Pickup 8ft' | 'Eeco Luggage';
+  vehicleType: 'Packers & Movers' | 'Chota Hathi (Tata Ace)' | '3-Wheel Auto Tempo' | 'Pickup 8ft' | 'Eeco Luggage';
   phone: string;
   standLocation: string;
   rateEstimate: string;
   availability: string;
   image: string;
+  services?: string[];
 }
 
 export interface HomeTechnician {
@@ -522,8 +523,64 @@ export const BOISAR_MARKETPLACE: UsedItem[] = [];
 // 6. STUDENT TEXTBOOK & EXAM NOTE EXCHANGE (FEATURE 9)
 export const BOOK_EXCHANGE_ITEMS: BookItem[] = [];
 
-// 7. CHOTA HATHI & LUGGAGE TEMPO HELPLINE (FEATURE 10)
-export const TEMPO_DRIVERS: TempoDriver[] = [];
+// 7. PACKERS & MOVERS, CHOTA HATHI & LUGGAGE TEMPO HELPLINE (FEATURE 10)
+export const TEMPO_DRIVERS: TempoDriver[] = [
+  {
+    id: 'tmp-pack-1',
+    driverName: 'Shree Ganesh Packers & Movers',
+    vehicleType: 'Packers & Movers',
+    phone: '7769947217',
+    standLocation: 'Boisar West & Ostwal Empire',
+    rateEstimate: 'Starting ₹1,499 (1BHK / 2BHK Home Shifting)',
+    availability: '24x7 All India & Local Shifting',
+    image: 'https://images.unsplash.com/photo-1600518464441-9154a4dea21b?w=600&auto=format&fit=crop&q=80',
+    services: ['Complete House Shifting', 'Packing & Loading', 'Furniture Protection', 'Local & Outstation']
+  },
+  {
+    id: 'tmp-pack-2',
+    driverName: 'Om Sai Safe Movers & Transport',
+    vehicleType: 'Packers & Movers',
+    phone: '7769947217',
+    standLocation: 'Tarapur MIDC & Boisar Station',
+    rateEstimate: 'Starting ₹1,999 (Flat & Office Relocation)',
+    availability: 'Daily 7 AM - 10 PM',
+    image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&auto=format&fit=crop&q=80',
+    services: ['Home Relocation', 'Office Goods Shift', 'Heavy Machinery Move', 'Door-to-Door']
+  },
+  {
+    id: 'tmp-ace-1',
+    driverName: 'Ramesh Patil (Tata Ace Chota Hathi)',
+    vehicleType: 'Chota Hathi (Tata Ace)',
+    phone: '7769947217',
+    standLocation: 'Boisar Station Auto-Tempo Stand',
+    rateEstimate: 'Starting ₹350 Local / Per KM ₹25',
+    availability: '24/7 Available for Hire',
+    image: 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=600&auto=format&fit=crop&q=80',
+    services: ['Tata Ace 1 Ton Payload', 'Shop Goods Delivery', 'Luggage & Furniture Transfer']
+  },
+  {
+    id: 'tmp-pick-1',
+    driverName: 'Balaji 8ft Bolero Pickup',
+    vehicleType: 'Pickup 8ft',
+    phone: '7769947217',
+    standLocation: 'Tarapur MIDC Gate No. 1',
+    rateEstimate: 'Starting ₹600 Local / Per KM ₹30',
+    availability: '6 AM - 11 PM Daily',
+    image: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&auto=format&fit=crop&q=80',
+    services: ['8ft Long Body Pickup', 'Industrial Material Delivery', 'Heavy Timber & Pipes']
+  },
+  {
+    id: 'tmp-auto-1',
+    driverName: 'Deepak Yadav (3-Wheeler Goods Auto)',
+    vehicleType: '3-Wheel Auto Tempo',
+    phone: '7769947217',
+    standLocation: 'Katkar Pada / Station Market',
+    rateEstimate: 'Starting ₹250 Quick Drop',
+    availability: 'Daily 8 AM - 9 PM',
+    image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600&auto=format&fit=crop&q=80',
+    services: ['Small Cargo & Boxes', 'Grocery & Market Goods', 'Quick Narrow Lane Reach']
+  }
+];
 
 // 8. HOME REPAIR TECHNICIANS (FEATURE 11)
 export const HOME_TECHNICIANS: HomeTechnician[] = [];

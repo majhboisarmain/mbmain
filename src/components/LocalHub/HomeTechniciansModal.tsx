@@ -22,7 +22,7 @@ interface ServiceCategory {
   iconBg: string;
   iconColor: string;
   borderColor: string;
-  iconType: 'ac' | 'plumber' | 'electrician' | 'carpenter' | 'painter' | 'cleaning' | 'pest' | 'movers' | 'more' | 'ro' | 'appliance' | 'cctv' | 'solar' | 'mason' | 'mechanic';
+  iconType: 'ac' | 'plumber' | 'electrician' | 'carpenter' | 'painter' | 'cleaning' | 'pest' | 'movers' | 'more' | 'ro' | 'appliance' | 'cctv' | 'solar' | 'mason' | 'mechanic' | 'maid';
 }
 
 interface PopularService {
@@ -49,22 +49,26 @@ interface ServiceProvider {
   image: string;
 }
 
-// 9 Categories matching the user reference screenshot
+// 9 Most-Used Core Categories
 const SERVICE_CATEGORIES: ServiceCategory[] = [
-  { id: 'ac', name: 'AC Service', query: 'AC Repair', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', borderColor: 'border-emerald-200', iconType: 'ac' },
-  { id: 'plumber', name: 'Plumbers', query: 'Plumber', iconBg: 'bg-blue-50', iconColor: 'text-blue-600', borderColor: 'border-blue-200', iconType: 'plumber' },
-  { id: 'electrician', name: 'Electricians', query: 'Electrician', iconBg: 'bg-amber-50', iconColor: 'text-amber-600', borderColor: 'border-amber-200', iconType: 'electrician' },
-  { id: 'carpenter', name: 'Carpenters', query: 'Carpenter', iconBg: 'bg-amber-100/70', iconColor: 'text-amber-800', borderColor: 'border-amber-300', iconType: 'carpenter' },
-  { id: 'painter', name: 'Painters', query: 'Painter', iconBg: 'bg-indigo-50', iconColor: 'text-indigo-600', borderColor: 'border-indigo-200', iconType: 'painter' },
-  { id: 'cleaning', name: 'Cleaning', query: 'Deep Cleaning', iconBg: 'bg-teal-50', iconColor: 'text-teal-600', borderColor: 'border-teal-200', iconType: 'cleaning' },
-  { id: 'pest', name: 'Pest Control', query: 'Pest Control', iconBg: 'bg-sky-50', iconColor: 'text-sky-600', borderColor: 'border-sky-200', iconType: 'pest' },
-  { id: 'movers', name: 'Packers & Movers', query: 'Packers & Movers', iconBg: 'bg-orange-50', iconColor: 'text-orange-600', borderColor: 'border-orange-200', iconType: 'movers' },
-  { id: 'more', name: 'More Services', query: 'Home Services', iconBg: 'bg-purple-50', iconColor: 'text-purple-600', borderColor: 'border-purple-200', iconType: 'more' },
+  { id: 'maid', name: 'House Maid', query: 'House Maid', iconBg: 'bg-pink-50', iconColor: 'text-pink-600', borderColor: 'border-pink-200', iconType: 'maid' as any },
+  { id: 'electrician', name: 'Electricians', query: 'Electrician', iconBg: 'bg-amber-50', iconColor: 'text-amber-600', borderColor: 'border-amber-200', iconType: 'electrician' as any },
+  { id: 'plumber', name: 'Plumbers', query: 'Plumber', iconBg: 'bg-blue-50', iconColor: 'text-blue-600', borderColor: 'border-blue-200', iconType: 'plumber' as any },
+  { id: 'ac', name: 'AC Service', query: 'AC Repair', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', borderColor: 'border-emerald-200', iconType: 'ac' as any },
+  { id: 'cook', name: 'Cook / Chef', query: 'Cook', iconBg: 'bg-amber-50', iconColor: 'text-amber-600', borderColor: 'border-amber-200', iconType: 'cook' as any },
+  { id: 'driver', name: 'Car Driver', query: 'Car Driver', iconBg: 'bg-indigo-50', iconColor: 'text-indigo-600', borderColor: 'border-indigo-200', iconType: 'driver' as any },
+  { id: 'carpenter', name: 'Carpenters', query: 'Carpenter', iconBg: 'bg-amber-100/70', iconColor: 'text-amber-800', borderColor: 'border-amber-300', iconType: 'carpenter' as any },
+  { id: 'painter', name: 'Painters', query: 'Painter', iconBg: 'bg-indigo-50', iconColor: 'text-indigo-600', borderColor: 'border-indigo-200', iconType: 'painter' as any },
+  { id: 'more', name: 'More Services', query: 'Home Services', iconBg: 'bg-purple-50', iconColor: 'text-purple-600', borderColor: 'border-purple-200', iconType: 'more' as any },
 ];
 
 // Expanded list for "More Services"
 const EXTENDED_CATEGORIES: ServiceCategory[] = [
-  { id: 'maid', name: 'House Maid & Cook', query: 'House Maid', iconBg: 'bg-pink-50', iconColor: 'text-pink-600', borderColor: 'border-pink-200', iconType: 'maid' as any },
+  { id: 'babysitter', name: 'Babysitter', query: 'Babysitter', iconBg: 'bg-purple-50', iconColor: 'text-purple-600', borderColor: 'border-purple-200', iconType: 'babysitter' as any },
+  { id: 'deepclean', name: 'Deep Clean', query: 'Deep Clean', iconBg: 'bg-teal-50', iconColor: 'text-teal-600', borderColor: 'border-teal-200', iconType: 'deepclean' as any },
+  { id: 'pest', name: 'Pest Control', query: 'Pest Control', iconBg: 'bg-sky-50', iconColor: 'text-sky-600', borderColor: 'border-sky-200', iconType: 'pest' as any },
+  { id: 'movers', name: 'Packers & Movers', query: 'Packers & Movers', iconBg: 'bg-orange-50', iconColor: 'text-orange-600', borderColor: 'border-orange-200', iconType: 'movers' as any },
+  { id: 'elderly', name: 'Elderly Care', query: 'Elderly Care', iconBg: 'bg-rose-50', iconColor: 'text-rose-600', borderColor: 'border-rose-200', iconType: 'elderly' as any },
   { id: 'ro', name: 'RO & Water Purifier', query: 'RO Purifier', iconBg: 'bg-cyan-50', iconColor: 'text-cyan-600', borderColor: 'border-cyan-200', iconType: 'ro' as any },
   { id: 'appliance', name: 'Washing Machine & Fridge', query: 'Appliance Repair', iconBg: 'bg-rose-50', iconColor: 'text-rose-600', borderColor: 'border-rose-200', iconType: 'appliance' as any },
   { id: 'cctv', name: 'CCTV & Security', query: 'CCTV', iconBg: 'bg-slate-100', iconColor: 'text-slate-700', borderColor: 'border-slate-300', iconType: 'cctv' as any },

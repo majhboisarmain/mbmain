@@ -55,14 +55,10 @@ export default function TravelsModal({ isOpen, onClose }: TravelsModalProps) {
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+      onClose();
+      router.push('/hire-vehicle');
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+  }, [isOpen, onClose, router]);
 
   if (!isOpen) return null;
 

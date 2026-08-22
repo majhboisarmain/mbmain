@@ -10,6 +10,7 @@ import Preloader from "@/components/Preloader";
 
 import NetworkStatusListener from "@/components/NetworkStatusListener";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import ScrollToTopOnNav from "@/components/ScrollToTopOnNav";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -198,6 +199,99 @@ const siteNavigationJsonLd = {
   ]
 };
 
+const localBusinessDirectoryJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "Majh Boisar — Boisar Local Search Engine & City Directory",
+  "image": "https://majhboisar.in/majh-boisar-mb-logo.png",
+  "@id": "https://majhboisar.in",
+  "url": "https://majhboisar.in",
+  "telephone": "+919022388123",
+  "priceRange": "₹ - ₹₹₹",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Boisar West & East, Tarapur MIDC",
+    "addressLocality": "Boisar",
+    "addressRegion": "Maharashtra",
+    "postalCode": "401501",
+    "addressCountry": "IN"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 19.8037,
+    "longitude": 72.7554
+  },
+  "areaServed": [
+    { "@type": "City", "name": "Boisar" },
+    { "@type": "AdministrativeArea", "name": "Tarapur MIDC" },
+    { "@type": "AdministrativeArea", "name": "Palghar" },
+    { "@type": "AdministrativeArea", "name": "Kelwa Beach" },
+    { "@type": "AdministrativeArea", "name": "Dahanu" },
+    { "@type": "AdministrativeArea", "name": "Ostwal Empire" },
+    { "@type": "AdministrativeArea", "name": "Boisar Station" }
+  ],
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    "opens": "00:00",
+    "closes": "23:59"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.9",
+    "reviewCount": "4850",
+    "bestRating": "5",
+    "worstRating": "1"
+  }
+};
+
+const localFaqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Majh Boisar (माझं बोईसर)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Majh Boisar (majhboisar.in) is Boisar's #1 official local search engine and verified business directory. It connects Boisar residents with 800+ verified doctors, hospitals, hotels, resorts, housemaids, electricians, plumbers, real estate flats, and daily Tarapur MIDC jobs."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How to book hourly hotels and night stays in Boisar?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "You can browse verified hotels near Boisar Railway Station and Tarapur MIDC directly on Majh Boisar Hotels portal (majhboisar.in/hotels) with transparent 3-hour, 6-hour, and overnight rates with instant hotel WhatsApp confirmation."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How to hire verified house maids and home cooks in Boisar?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Visit Majh Boisar Home Services (majhboisar.in/services) to find background-verified house maids, cooks, babysitters, and cleaning helpers across Boisar West, Boisar East, and Ostwal Empire."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Where can I find direct jobs in Tarapur MIDC & Boisar?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Majh Boisar Jobs portal (majhboisar.in/jobs) updates direct hiring vacancies daily for chemical plants, engineering companies, pharma units, office admin, sales, and delivery jobs in Tarapur MIDC and Boisar."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How to list my shop or business on Majh Boisar?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Shop owners and service professionals can list their business for free on Majh Boisar by visiting majhboisar.in and clicking 'List My Business' to reach over 50,000+ local Boisar customers."
+      }
+    }
+  ]
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -209,6 +303,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <link rel="preload" as="image" href="/majh-boisar-mb-logo.png" />
+        <link rel="preload" as="image" href="/imagess/ChatGPT Image Aug 15, 2026, 08_23_55 PM.png" fetchPriority="high" />
+        <link rel="preload" as="image" href="/imagess/ChatGPT Image Jul 20, 2026, 03_14_16 PM.png" fetchPriority="high" />
+        <link rel="preload" as="image" href="/imagess/ChatGPT Image Jul 20, 2026, 03_41_37 PM.png" fetchPriority="high" />
       </head>
       <body className="min-h-full bg-slate-50 text-slate-800 font-sans antialiased flex flex-col">
         <script
@@ -222,6 +319,14 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(siteNavigationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessDirectoryJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(localFaqJsonLd) }}
         />
         {/* Google Analytics GA4 */}
         <Script
@@ -261,6 +366,9 @@ export default function RootLayout({
         />
         <LanguageProvider>
           <AppProvider>
+            <Suspense fallback={null}>
+              <ScrollToTopOnNav />
+            </Suspense>
             <ServiceWorkerRegister />
             <NetworkStatusListener />
             <div className="w-full min-h-screen flex flex-col relative">

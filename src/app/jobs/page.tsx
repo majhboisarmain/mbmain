@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useApp } from '@/context/AppContext';
 import { 
   Search, Briefcase, MapPin, Building2, Phone, MessageSquare, 
   PlusCircle, CheckCircle2, ArrowRight
@@ -29,6 +30,7 @@ interface Job {
 }
 
 export default function JobsBoard() {
+  const { isLoggedIn, setLoginModalOpen, showToast, loggedInUser } = useApp();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -43,6 +45,23 @@ export default function JobsBoard() {
   const [postLocation, setPostLocation] = useState('Boisar');
   const [postType, setPostType] = useState('Full Time');
   const [postDesc, setPostDesc] = useState('');
+
+  // Pre-fill phone if logged in
+  useEffect(() => {
+    if (showPostModal && loggedInUser) {
+      if (!postCompany) setPostCompany(loggedInUser.name || '');
+      if (!postPhone) setPostPhone(loggedInUser.phone || '');
+    }
+  }, [showPostModal, loggedInUser]);
+
+  const handleOpenPostModal = () => {
+    if (!isLoggedIn) {
+      setLoginModalOpen(true);
+      showToast('Please login with your mobile number to post a job vacancy.', 'info', 4000);
+      return;
+    }
+    setShowPostModal(true);
+  };
 
   const fetchJobs = async () => {
     try {
@@ -85,82 +104,102 @@ export default function JobsBoard() {
 
   const handlePostJobWhatsApp = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!postTitle || !postCompany || !postPhone) {
+      alert('Please fill all required fields (Company, Job Title, Mobile Number).');
+      return;
+    }
+    const adminPhone = '919022388123';
     const msg = encodeURIComponent(
-      `Hello Majh Boisar! 👋\nI want to post a new job vacancy:\n\nCompany: ${postCompany}\nJob Title: ${postTitle}\nLocation: ${postLocation}\nType: ${postType}\nSalary: ${postSalary}\nContact: ${postPhone}\nDetails: ${postDesc}`
+      `*New Job Vacancy Submission on Majh Boisar* 💼\n\n` +
+      `🏢 *Company / Shop:* ${postCompany}\n` +
+      `📌 *Job Title:* ${postTitle}\n` +
+      `💰 *Salary:* ${postSalary || 'Negotiable'}\n` +
+      `📍 *Location:* ${postLocation}\n` +
+      `⏳ *Type:* ${postType}\n` +
+      `📞 *HR Contact:* ${postPhone}\n` +
+      `📝 *Details:* ${postDesc || 'Immediate joining in Boisar.'}\n\n` +
+      `Please verify and list this vacancy on the Majh Boisar portal.`
     );
-    window.open(`https://wa.me/917769947217?text=${msg}`, '_blank');
+    window.open(`https://wa.me/${adminPhone}?text=${msg}`, '_blank');
     setShowPostModal(false);
   };
+
+  useEffect(() => {
+    if (showPostModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showPostModal]);
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans pb-20 text-left text-slate-900">
 
       {/* Clean Professional Header (Clean White & Slate theme) */}
-      <div className="bg-white border-b border-slate-200 py-5 px-4 sm:px-6 shadow-2xs">
-        <div className="max-w-4xl mx-auto space-y-3.5">
+      <div className="bg-white border-b border-slate-200 py-2.5 sm:py-3 px-3 sm:px-6 shadow-2xs">
+        <div className="max-w-4xl mx-auto space-y-2">
           
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-2">
             <div>
-              <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
+              <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
                 Jobs in Boisar &amp; Tarapur MIDC
               </h1>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-                Explore verified vacancies in factories, offices, shops, hotels &amp; hospitals.
+              <p className="text-[11px] text-slate-500 font-medium">
+                Verified factory, office, hospital &amp; shop vacancies
               </p>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setShowPostModal(true)}
-              className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer shrink-0"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>Post a Job</span>
-            </button>
+            <span className="text-[10px] font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
+              ✓ Direct HR Contact
+            </span>
           </div>
 
-          {/* Search Box */}
-          <form onSubmit={handleSearch} className="bg-slate-50 border border-slate-200 focus-within:border-slate-400 focus-within:bg-white p-1 rounded-xl shadow-2xs flex items-center gap-2 transition-all">
-            <div className="flex-1 flex items-center pl-2.5 gap-2">
-              <Search className="w-4 h-4 text-slate-400 shrink-0" />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search job title, skill (e.g. Accounts, Supervisor, Receptionist)..."
-                className="w-full text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none bg-transparent"
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-lg transition-all cursor-pointer shrink-0"
-            >
-              Search
-            </button>
-          </form>
-
-          {/* Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none text-xs">
-            {['All', 'Full Time', 'Part Time'].map((type) => (
+          {/* Search Box & Filters in compact single row */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <form onSubmit={handleSearch} className="flex-1 bg-slate-50 border border-slate-200 focus-within:border-slate-400 focus-within:bg-white p-0.5 rounded-xl shadow-2xs flex items-center gap-1.5 transition-all">
+              <div className="flex-1 flex items-center pl-2.5 gap-2 min-w-0">
+                <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search job title, skill (e.g. Accounts, Supervisor, ITI)..."
+                  className="w-full text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none bg-transparent"
+                />
+              </div>
               <button
-                key={type}
-                onClick={() => setTypeFilter(type)}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${
-                  typeFilter === type
-                    ? 'bg-slate-900 text-white shadow-2xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+                type="submit"
+                className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-1.5 rounded-lg transition-all cursor-pointer shrink-0"
               >
-                {type}
+                Search
               </button>
-            ))}
+            </form>
+
+            {/* Filter Pills */}
+            <div className="flex items-center gap-1 shrink-0 text-xs">
+              {['All', 'Full Time', 'Part Time'].map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setTypeFilter(type)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                    typeFilter === type
+                      ? 'bg-slate-900 text-white shadow-2xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
           </div>
 
         </div>
       </div>
 
       {/* Main Jobs Listing Section */}
-      <div className="max-w-4xl mx-auto px-3 sm:px-6 mt-4 space-y-3">
+      <div className="max-w-4xl mx-auto px-3 sm:px-6 mt-2.5 sm:mt-3 space-y-2.5">
         
         {/* Count Bar */}
         <div className="flex items-center justify-between text-xs font-bold text-slate-600 px-1">
@@ -241,23 +280,23 @@ export default function JobsBoard() {
           ))}
 
           {jobs.length === 0 && (
-            <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-8 sm:p-10 text-center my-2 space-y-3 shadow-2xs">
-              <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-center mx-auto text-2xl shadow-inner">
+            <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-8 text-center my-2 space-y-3 shadow-2xs">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center mx-auto text-2xl shadow-2xs">
                 💼
               </div>
-              <div>
-                <h4 className="text-base font-black text-slate-900">No Job Openings Listed Yet</h4>
-                <p className="text-xs text-slate-500 font-medium max-w-md mx-auto mt-1">
-                  Are you a factory in Tarapur MIDC, hotel, school, clinic, or local shop in Boisar looking for staff? Be the first to post a vacancy!
+              <div className="space-y-1">
+                <h4 className="text-sm font-black text-slate-900">No Job Openings Listed Yet</h4>
+                <p className="text-xs text-slate-500 font-medium max-w-sm mx-auto">
+                  Are you an employer or shop owner hiring staff in Boisar? Post your vacancy for free!
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => setShowPostModal(true)}
-                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl cursor-pointer shadow-md transition-all inline-flex items-center gap-1.5"
+                onClick={handleOpenPostModal}
+                className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-md transition-all cursor-pointer"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>➕ Post a Job Vacancy (100% Free)</span>
+                <span>+ Post a Job Vacancy in Boisar</span>
               </button>
             </div>
           )}
@@ -273,7 +312,7 @@ export default function JobsBoard() {
           </div>
           <button
             type="button"
-            onClick={() => setShowPostModal(true)}
+            onClick={handleOpenPostModal}
             className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer shrink-0"
           >
             Post a Vacancy

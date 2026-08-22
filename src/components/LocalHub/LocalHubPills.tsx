@@ -33,25 +33,13 @@ export default function LocalHubPills() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Cards sorted in a logical, user-friendly order with Home Services prominently placed
+  // Cards sorted to highlight fresh utilities not shown in the top section
   const localCards = [
     {
-      id: 'technicians',
-      title: 'Home Services',
-      image: '/imagess/home servvies pill.png',
-      onClick: () => router.push('/services')
-    },
-    {
-      id: 'resorts',
-      title: 'Resorts & Pool Villas',
-      image: '/imagess/resort booking.png',
-      onClick: () => router.push('/resorts')
-    },
-    {
-      id: 'hotels',
-      title: 'Hotel & Hourly Stay',
-      image: '/imagess/hotel booking.png',
-      onClick: () => router.push('/hotels')
+      id: 'blood',
+      title: 'Blood Donors',
+      image: '/imagess/blood donor.png',
+      onClick: () => router.push('/blood-donation')
     },
     {
       id: 'emergency',
@@ -60,16 +48,28 @@ export default function LocalHubPills() {
       onClick: () => setEmergencyOpen(true)
     },
     {
-      id: 'blood',
-      title: 'Blood Donors',
-      image: '/imagess/blood donor.png',
-      onClick: () => router.push('/blood-donation')
-    },
-    {
       id: 'bus',
       title: 'Bus Timetable',
       image: '/imagess/bus time tble.png',
       onClick: () => setBusOpen(true)
+    },
+    {
+      id: 'books',
+      title: 'Books Exchange',
+      image: '/imagess/book exchnges.png',
+      onClick: () => setBookOpen(true)
+    },
+    {
+      id: 'events',
+      title: 'Events & Weddings',
+      image: '/imagess/events.png',
+      onClick: () => setEventsOpen(true)
+    },
+    {
+      id: 'tempo',
+      title: 'Packers & Movers Tempo',
+      image: '/imagess/tempo servies.png',
+      onClick: () => router.push('/hire-vehicle?category=tempo')
     },
     {
       id: 'turf',
@@ -78,10 +78,10 @@ export default function LocalHubPills() {
       onClick: () => setTurfOpen(true)
     },
     {
-      id: 'events',
-      title: 'Events & Jobs',
-      image: '/imagess/events.png',
-      onClick: () => setEventsOpen(true)
+      id: 'offers',
+      title: 'Shop Offers',
+      image: '/imagess/shop offer.png',
+      onClick: () => setOffersOpen(true)
     },
     {
       id: 'marketplace',
@@ -90,22 +90,34 @@ export default function LocalHubPills() {
       onClick: () => setMarketplaceOpen(true)
     },
     {
-      id: 'tempo',
-      title: 'Chota Hathi Tempo',
-      image: '/imagess/tempo servies.png',
-      onClick: () => setTempoOpen(true)
+      id: 'jobs',
+      title: 'Jobs in Boisar & MIDC',
+      image: '/imagess/carrers jobs.png',
+      onClick: () => router.push('/jobs')
     },
     {
-      id: 'offers',
-      title: 'Shop Offers',
-      image: '/imagess/shop offer.png',
-      onClick: () => setOffersOpen(true)
+      id: 'hotels',
+      title: 'Hotel & Hourly Stay',
+      image: '/imagess/hotel booking.png',
+      onClick: () => router.push('/hotels')
     },
     {
-      id: 'books',
-      title: 'Books Exchange',
-      image: '/imagess/book exchnges.png',
-      onClick: () => setBookOpen(true)
+      id: 'resorts',
+      title: 'Resorts & Pool Villas',
+      image: '/imagess/resort booking.png',
+      onClick: () => router.push('/resorts')
+    },
+    {
+      id: 'travels',
+      title: 'Hire Vehicle & Travels',
+      image: '/imagess/travels.png',
+      onClick: () => router.push('/hire-vehicle')
+    },
+    {
+      id: 'home-services',
+      title: 'Home Services',
+      image: '/imagess/home servvies pill.png',
+      onClick: () => router.push('/services')
     }
   ];
 
@@ -136,15 +148,18 @@ export default function LocalHubPills() {
   return (
     <>
       <div id="trending-search-section" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-6 mb-6">
-        <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow">
-
+        <div 
+          style={{ background: 'linear-gradient(135deg, #f0fdf9 0%, #e6f7f6 40%, #edf6ff 100%)' }}
+          className="border border-teal-200/90 rounded-3xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden text-left"
+        >
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+          <div className="flex items-center justify-between border-b border-teal-200/60 pb-3 mb-4">
             <div className="flex items-center gap-2">
-              <h3 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider">
+              <span className="h-4 w-1 rounded-full bg-teal-600"></span>
+              <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider">
                 Trending Searches Near You
               </h3>
-              <span className="bg-rose-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider scale-90 animate-pulse">
+              <span className="bg-rose-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider scale-90 animate-pulse shadow-xs">
                 NEW
               </span>
             </div>
@@ -152,14 +167,14 @@ export default function LocalHubPills() {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => handleManualScroll('left')}
-                className="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 flex items-center justify-center cursor-pointer transition-all border border-slate-200"
+                className="h-8 w-8 rounded-full bg-white/90 hover:bg-white active:scale-95 text-slate-700 hover:text-teal-900 flex items-center justify-center cursor-pointer transition-all border border-teal-200/80 shadow-2xs"
                 title="Scroll Left"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={() => handleManualScroll('right')}
-                className="h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 flex items-center justify-center cursor-pointer transition-all border border-slate-200"
+                className="h-8 w-8 rounded-full bg-white/90 hover:bg-white active:scale-95 text-slate-700 hover:text-teal-900 flex items-center justify-center cursor-pointer transition-all border border-teal-200/80 shadow-2xs"
                 title="Scroll Right"
               >
                 <ChevronRight className="w-4 h-4" />

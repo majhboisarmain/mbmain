@@ -154,6 +154,17 @@ export default function Navbar() {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileMenuOpen]);
+
   const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
 
   useEffect(() => {
@@ -222,7 +233,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 overflow-visible">
+      <header className="sticky top-0 z-[150] bg-white border-b border-slate-200 overflow-visible">
         <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 h-13 sm:h-14 flex items-center justify-between gap-2 sm:gap-4 overflow-visible">
 
           {/* Logo Section */}
@@ -822,158 +833,220 @@ export default function Navbar() {
             {mounted && !isLoggedIn && (
               <button
                 onClick={() => setLoginModalOpen(true)}
-                className="relative live-glow-teal btn-teal text-[10.5px] font-black px-3 py-1.5 rounded-lg cursor-pointer hover:shadow-md active:scale-95 transition-all flex items-center gap-1.5"
+                className="bg-[#e62238] hover:bg-[#cc1b30] active:scale-95 text-white text-[11px] font-black px-3.5 py-1.5 rounded-xl shadow-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
               >
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-80"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                </span>
+                <User className="w-3.5 h-3.5 text-white" />
                 <span>{t('nav.login')}</span>
               </button>
             )}
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 cursor-pointer"
+              aria-label="Toggle Navigation Menu"
+              className="p-1.5 rounded-lg text-slate-700 hover:text-teal-700 hover:bg-slate-100 cursor-pointer shrink-0 transition-colors z-20"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-6 h-6 text-slate-900" /> : <Menu className="w-6 h-6 text-slate-900" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Nav Drawer (Clean, Full & Functional) */}
+        {/* Mobile Nav Drawer (Clean, Compact & Sleek) */}
         {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-x-0 top-13 sm:top-14 bottom-0 bg-white z-[999] overflow-y-auto p-4 space-y-3 shadow-2xl text-left border-t border-slate-200 animate-in slide-in-from-top-2 duration-150">
+          <div className="md:hidden fixed inset-x-0 top-[52px] sm:top-[56px] bottom-0 bg-white z-[9999] overflow-y-auto p-3 space-y-2 shadow-2xl text-left border-t border-slate-200 animate-in slide-in-from-top-2 duration-150">
+            <div className="max-w-md mx-auto space-y-2">
             
+            {/* User Profile Header if Logged In */}
+            {isLoggedIn && (
+              <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200/80 rounded-xl p-2 flex items-center justify-between shadow-2xs">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                    {userName ? userName.charAt(0).toUpperCase() : 'U'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[11.5px] font-black text-slate-900 truncate">Hi, {userName || 'User'}</p>
+                    <p className="text-[9.5px] text-teal-700 font-extrabold truncate">{loggedInUser?.phone || 'Verified User'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditName(loggedInUser?.name || userName || '');
+                      setEditEmail(loggedInUser?.email || '');
+                      setSettingsSuccess('');
+                      setSettingsModalOpen(true);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-[9.5px] font-black text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                  >
+                    ⚙️ Settings
+                  </button>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-[9.5px] font-black text-rose-600 bg-white border border-rose-200 hover:bg-rose-50 px-2 py-1 rounded-lg transition-colors cursor-pointer"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* 1. App Download & Quick Action */}
             <Link
               href="/download-app"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-black text-teal-900 bg-teal-50 hover:bg-teal-100 transition-colors border border-teal-200 shadow-2xs"
+              className="flex items-center justify-between px-3 py-1.5 rounded-xl text-[11px] font-black text-teal-900 bg-teal-50 hover:bg-teal-100 transition-colors border border-teal-200 shadow-2xs"
             >
-              <div className="flex items-center gap-2.5">
-                <span className="text-base">📱</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm">📱</span>
                 <span>Install Mobile App</span>
               </div>
-              <span className="bg-teal-600 text-white text-[9px] font-black px-2 py-0.5 rounded-md uppercase">APK</span>
+              <span className="bg-teal-600 text-white text-[8.5px] font-black px-1.5 py-0.2 rounded uppercase">APK</span>
             </Link>
 
             {/* 2. Main Navigation Links */}
-            <div className="space-y-1 bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block px-2 py-1">
+            <div className="space-y-0.5 bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block px-1.5 py-0.5">
                 Explore Boisar
               </span>
 
               <Link
                 href="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-base">🏠</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🏠</span>
                   <span>Home / City Directory</span>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                <ChevronRight className="w-3 h-3 text-slate-400" />
               </Link>
 
               <Link
                 href="/hotels"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-white hover:text-purple-700 transition-colors"
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-purple-700 transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-base">🏨</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🏨</span>
                   <span>Hourly Hotels &amp; Day-Stay</span>
                 </div>
-                <span className="text-[9.5px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.2 rounded">3h · 6h</span>
+                <span className="text-[8.5px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.2 rounded">3h · 6h</span>
               </Link>
 
               <Link
                 href="/resorts"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-base">🏊</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🏊</span>
                   <span>Resorts &amp; Pool Villas</span>
                 </div>
-                <span className="text-[9.5px] bg-teal-100 text-teal-800 font-bold px-1.5 py-0.2 rounded">Day &amp; Night</span>
+                <span className="text-[8.5px] bg-teal-100 text-teal-800 font-bold px-1.5 py-0.2 rounded">Day &amp; Night</span>
               </Link>
 
               <Link
                 href="/jobs"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-white hover:text-emerald-700 transition-colors"
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-emerald-700 transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-base">💼</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">💼</span>
                   <span>Jobs in Boisar &amp; MIDC</span>
                 </div>
-                <span className="text-[9.5px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded">Hiring</span>
+                <span className="text-[8.5px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded">Hiring</span>
+              </Link>
+
+              <Link
+                href="/creators"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-rose-700 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🌟</span>
+                  <span>Content Creators &amp; Influencers</span>
+                </div>
+                <span className="text-[8.5px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.2 rounded">New</span>
+              </Link>
+
+              <Link
+                href="/hire-vehicle"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-blue-700 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🚗</span>
+                  <span>Hire Vehicle (Car, Auto, Bus, Tempo)</span>
+                </div>
+                <span className="text-[8.5px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.2 rounded">Cab/Auto</span>
               </Link>
             </div>
 
             {/* 3. Business & Partner Section */}
-            <div className="space-y-1 bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block px-2 py-1">
+            <div className="space-y-0.5 bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block px-1.5 py-0.5">
                 For Business &amp; Owners
               </span>
 
               <Link
                 href="/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-base">🏪</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🏪</span>
                   <span>{hasRegisteredBusiness ? 'My Business Dashboard' : 'Register Your Business'}</span>
                 </div>
-                <span className="text-[9.5px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.2 rounded">Free</span>
+                <span className="text-[8.5px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.2 rounded">Free</span>
               </Link>
 
               <Link
                 href="/advertise"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
+                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-base">📢</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">📢</span>
                   <span>Promote / Advertise Business</span>
                 </div>
-                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                <ChevronRight className="w-3 h-3 text-slate-400" />
               </Link>
 
               {isLoggedIn && currentRole === 'Admin' && (
                 <Link
                   href="/adminmb"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
+                  className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-base">🛡️</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">🛡️</span>
                     <span>Admin Control Panel</span>
                   </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  <ChevronRight className="w-3 h-3 text-slate-400" />
                 </Link>
               )}
             </div>
 
             {/* 4. Support & Direct WhatsApp */}
-            <div className="pt-1">
+            <div>
               <a
                 href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar%20Support,"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-all shadow-xs cursor-pointer"
+                className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11.5px] font-black transition-all shadow-xs cursor-pointer"
               >
-                <MessageSquare className="w-4 h-4" />
+                <MessageSquare className="w-3.5 h-3.5" />
                 <span>Chat on WhatsApp Support</span>
               </a>
             </div>
 
             {/* 5. Account & Auth Footer */}
-            <div className="pt-2 border-t border-slate-200">
+            <div className="pt-1.5 border-t border-slate-200">
               {isLoggedIn ? (
                 <div className="flex items-center justify-between gap-2">
                   <button
@@ -985,7 +1058,7 @@ export default function Navbar() {
                       setSettingsModalOpen(true);
                       setMobileMenuOpen(false);
                     }}
-                    className="flex-1 text-center py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all cursor-pointer"
+                    className="flex-1 text-center py-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold transition-all cursor-pointer"
                   >
                     ⚙️ Settings
                   </button>
@@ -995,7 +1068,7 @@ export default function Navbar() {
                       logout();
                       setMobileMenuOpen(false);
                     }}
-                    className="flex-1 text-center py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-black border border-rose-200 transition-all cursor-pointer"
+                    className="flex-1 text-center py-1.5 px-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-black border border-rose-200 transition-all cursor-pointer"
                   >
                     🚪 Logout
                   </button>
@@ -1007,13 +1080,14 @@ export default function Navbar() {
                     setMobileMenuOpen(false);
                     setLoginModalOpen(true);
                   }}
-                  className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black transition-all cursor-pointer text-center shadow-xs"
+                  className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11.5px] font-black transition-all cursor-pointer text-center shadow-xs"
                 >
                   Sign In / Register Account
                 </button>
               )}
             </div>
 
+            </div>
           </div>
         )}
 

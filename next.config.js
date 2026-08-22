@@ -12,6 +12,40 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/home-services',
+        destination: '/services',
+        permanent: true,
+      },
+      {
+        source: '/technicians',
+        destination: '/services',
+        permanent: true,
+      },
+      {
+        source: '/maids',
+        destination: '/services',
+        permanent: true,
+      },
+      {
+        source: '/travels',
+        destination: '/hire-vehicle',
+        permanent: true,
+      },
+      {
+        source: '/vehicles',
+        destination: '/hire-vehicle',
+        permanent: true,
+      },
+      {
+        source: '/influencers',
+        destination: '/creators',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

@@ -91,10 +91,10 @@ interface AdCampaign {
 }
 
 const rawCategories = [
-  "Wholesalers & Bulk Distributors", "Retailers & Local Shops", "Snacks & Farsan Shops", "Digital Marketing", "Fabrication", "Mobile Repair", "Washing", "Dry Cleaning", "Jewellery", "Restaurants", "Doctors", "Grocery Shops", "Plumbers", "Electricians", "Medical Stores", "Beauty Parlours", "Hair Salons", "Hardware Shops", "AC Service", "Coaching Classes", "Real Estate Agents", "Painters", "House Cleaning", "Carpenters", "Dry Cleaners", "Diagnostic Labs", "Influencers",
+  "Restaurants", "Doctors", "Grocery Shops", "Jewellery", "Digital Marketing", "Dance Classes", "Coaching Classes", "Beauty Parlours",
+  "Wholesalers & Bulk Distributors", "Retailers & Local Shops", "Snacks & Farsan Shops", "Fabrication", "Mobile Repair", "Washing", "Dry Cleaning", "Medical Stores", "Hair Salons", "Hardware Shops", "Real Estate Agents", "Diagnostic Labs", "Influencers",
   "Hospitals", "Clinics", "Dentists", "Physiotherapists", "Eye Hospitals", "Skin Clinics", "Veterinary Clinics",
-  "Painters", "Pest Control", "RO Service", "CCTV Installation", "Interior Designers",
-  "Architects", "Civil Contractors", "Building Contractors", "Fabricators", "Steel Fabricators", "Aluminium Fabricators", "Glass Dealers", "Tile Dealers", "Marble Dealers", "Granite Dealers",
+  "Interior Designers", "Architects", "Civil Contractors", "Building Contractors", "Fabricators", "Steel Fabricators", "Aluminium Fabricators", "Glass Dealers", "Tile Dealers", "Marble Dealers", "Granite Dealers",
   "Paint Shops", "Cement Dealers", "Sand Suppliers", "Brick Suppliers", "Plywood Dealers", "Electrical Shops", "Lighting Stores", "Sanitary Ware", "Bathroom Fittings",
   "Cafes", "Fast Food", "Chinese Restaurants", "South Indian Restaurants", "North Indian Restaurants", "Pizza Shops", "Burger Shops", "Sweet Shops", "Bakery",
   "Cake Shops", "Ice Cream Parlours", "Tea Stalls", "Juice Centres", "Tiffin Services", "Catering Services", "Banquet Halls", "Cloud Kitchens", "Hotels", "Resorts",
@@ -114,7 +114,220 @@ const rawCategories = [
   "Videographers", "DJ Services", "Neon Sign Shop", "Atta Chakki", "Rice Mill", "Scrap Dealer", "Kabadi Shop", "Locksmith", "Opticians", "Water Purifier Dealers"
 ];
 
+export interface HomeFeaturedRestaurant {
+  id: string;
+  name: string;
+  category: string;
+  location: string;
+  rating: number;
+  discount: string;
+  image: string;
+  speciality: string;
+  isActive?: boolean;
+}
+
+export const DEFAULT_FEATURED_RESTAURANTS: HomeFeaturedRestaurant[] = [
+  {
+    id: 'rest-1',
+    name: 'Citrus Cafe & Resto',
+    category: 'Cafe & Multi-Cuisine',
+    location: 'Boisar West · Station',
+    rating: 4.8,
+    discount: '15% Off + 25% Off',
+    image: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&auto=format&fit=crop&q=80',
+    speciality: 'Cold Brew, Pasta & Sizzlers',
+    isActive: true
+  },
+  {
+    id: 'rest-2',
+    name: 'The Daily Dose Cafe',
+    category: 'Coffee, Pizza & Burgers',
+    location: 'Ostwal Empire · Boisar',
+    rating: 4.7,
+    discount: 'Flat 20% Off',
+    image: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=600&auto=format&fit=crop&q=80',
+    speciality: 'Handcrafted Burgers & Shakes',
+    isActive: true
+  },
+  {
+    id: 'rest-3',
+    name: 'Sai Sagar Veg Treat',
+    category: 'Pure Veg & South Indian',
+    location: 'Station Road · Boisar',
+    rating: 4.6,
+    discount: 'Special Thali & Dosa',
+    image: 'https://images.unsplash.com/photo-1613292443284-8d10ef9383fe?w=600&auto=format&fit=crop&q=80',
+    speciality: 'Crispy Butter Masala Dosa',
+    isActive: true
+  },
+  {
+    id: 'rest-4',
+    name: 'Cafe Hashtag & Lounge',
+    category: 'Rooftop Cafe & Mocktails',
+    location: 'Tarapur MIDC Road',
+    rating: 4.9,
+    discount: '10% Off + 25% Off',
+    image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&auto=format&fit=crop&q=80',
+    speciality: 'Wood-Fired Pizza & Sizzlers',
+    isActive: true
+  }
+];
+
 import { specialProfiles } from '@/lib/mockProfiles';
+
+export interface PortalSearchPill {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: string;
+  badge: string;
+  targetUrl: string;
+  actionType: 'url' | 'modal';
+  keywords: string[];
+}
+
+export const QUICK_PORTAL_PILLS: PortalSearchPill[] = [
+  {
+    id: 'housemaid',
+    title: 'House Maid, Cook & Babysitters',
+    subtitle: 'Verified Home Maids, Cooking Bai & Cleaning Helpers',
+    icon: '🧹',
+    badge: 'Home Services',
+    targetUrl: '/services?filter=Maid',
+    actionType: 'url',
+    keywords: ['maid', 'housemaid', 'cook', 'cooking', 'kamwali', 'bai', 'cleaner', 'cleaning', 'babysitter', 'jhadu', 'bartan', 'home service', 'helper']
+  },
+  {
+    id: 'driver',
+    title: 'Driver on Demand & Cab Hire',
+    subtitle: 'Local Boisar, Palghar & Outstation Car Drivers',
+    icon: '🚗',
+    badge: 'Travels Portal',
+    targetUrl: '/hire-vehicle',
+    actionType: 'url',
+    keywords: ['driver', 'chauffeur', 'car driver', 'tempo driver', 'cab', 'taxi', 'travels', 'ride']
+  },
+  {
+    id: 'travels',
+    title: 'Travels (Bus, Cab & Tempo Hire)',
+    subtitle: 'Daily Bus Timetables, Car & Tempo Rentals',
+    icon: '🚌',
+    badge: 'City Travels',
+    targetUrl: '/hire-vehicle',
+    actionType: 'url',
+    keywords: ['travel', 'travels', 'bus', 'tempo', 'cab', 'taxi', 'transport', 'vehicle', 'car rental', 'van', 'auto', 'hire vehicle']
+  },
+  {
+    id: 'electrician',
+    title: 'Electricians & Home Wiring',
+    subtitle: 'Wiring, Switchboard, Light & Fan Repair at Home',
+    icon: '⚡',
+    badge: 'Home Services',
+    targetUrl: '/services?filter=Electrician',
+    actionType: 'url',
+    keywords: ['electrician', 'bijli', 'wiring', 'switchboard', 'light repair', 'fan repair', 'inverter', 'short circuit']
+  },
+  {
+    id: 'plumber',
+    title: 'Plumbers & Leakage Repair',
+    subtitle: 'Tap, Pipe Fitting, Bathroom & Water Tank Cleaning',
+    icon: '🔧',
+    badge: 'Home Services',
+    targetUrl: '/services?filter=Plumber',
+    actionType: 'url',
+    keywords: ['plumber', 'nal', 'pipe', 'leakage', 'bathroom repair', 'tap', 'water tank', 'geyser repair']
+  },
+  {
+    id: 'ac_service',
+    title: 'AC Repair & Servicing',
+    subtitle: 'AC Wet Cleaning, Gas Refill & Installation',
+    icon: '❄️',
+    badge: 'Home Services',
+    targetUrl: '/services?filter=AC%20Service',
+    actionType: 'url',
+    keywords: ['ac', 'air conditioner', 'ac repair', 'ac service', 'cooling', 'gas filling', 'ac cleaning']
+  },
+  {
+    id: 'hotel',
+    title: 'Hotel Booking in Boisar',
+    subtitle: 'Hourly & Nightly Stays near Station & MIDC',
+    icon: '🏨',
+    badge: 'Stay Portal',
+    targetUrl: '/hotels',
+    actionType: 'url',
+    keywords: ['hotel', 'room', 'stay', 'lodge', 'hourly stay', 'night stay', 'couple friendly', 'hotel booking', 'rooms']
+  },
+  {
+    id: 'resort',
+    title: 'Resort & Villa Booking',
+    subtitle: 'Weekend Getaways, Pool Villas & Farmhouse Stays',
+    icon: '🏖️',
+    badge: 'Staycation',
+    targetUrl: '/resorts',
+    actionType: 'url',
+    keywords: ['resort', 'villa', 'pool', 'staycation', 'bungalow', 'farmhouse', 'weekend stay', 'resort booking']
+  },
+  {
+    id: 'jobs',
+    title: 'Jobs & Vacancies in Boisar',
+    subtitle: 'MIDC Factory, Office, Retail & Sales Vacancies',
+    icon: '💼',
+    badge: 'Careers',
+    targetUrl: '/jobs',
+    actionType: 'url',
+    keywords: ['job', 'jobs', 'vacancy', 'vacancies', 'naukri', 'work', 'hiring', 'career', 'recruitment', 'factory job', 'office job', 'delivery']
+  },
+  {
+    id: 'creators',
+    title: 'Hire an Influencer / Creator',
+    subtitle: 'Boisar Instagrammers, Bloggers & Reel Creators',
+    icon: '📸',
+    badge: 'Influencers',
+    targetUrl: '/creators',
+    actionType: 'url',
+    keywords: ['influencer', 'creator', 'instagram', 'reels', 'blogger', 'model', 'promotion', 'collab', 'creators']
+  },
+  {
+    id: 'turf',
+    title: 'Sports Turf & Game Zone',
+    subtitle: 'Box Cricket Turf, Football & Gaming Arena',
+    icon: '🏏',
+    badge: 'Sports Hub',
+    targetUrl: 'modal:turf',
+    actionType: 'modal',
+    keywords: ['turf', 'cricket', 'box cricket', 'football', 'game zone', 'ground', 'sports club', 'gaming']
+  },
+  {
+    id: 'offers',
+    title: 'Shop Offers & Deals in Boisar',
+    subtitle: 'Local Store Discounts, Coupons & Sale Alerts',
+    icon: '🏷️',
+    badge: 'City Deals',
+    targetUrl: 'modal:offers',
+    actionType: 'modal',
+    keywords: ['offer', 'offers', 'discount', 'sale', 'deal', 'deals', 'coupon', 'coupons', 'discount coupon']
+  },
+  {
+    id: 'marketplace',
+    title: 'Used Items Marketplace (Buy & Sell)',
+    subtitle: 'Second Hand Mobiles, Bikes, Furniture & Electronics',
+    icon: '🛒',
+    badge: 'Marketplace',
+    targetUrl: 'modal:marketplace',
+    actionType: 'modal',
+    keywords: ['used', 'second hand', 'purana', 'sell', 'buy', 'olx', 'resell', 'used phone', 'used bike', 'used furniture', 'marketplace']
+  },
+  {
+    id: 'blood_emergency',
+    title: '24/7 Emergency & Blood Donors',
+    subtitle: 'Police, Fire, Ambulance, Hospitals & Blood Bank',
+    icon: '🚨',
+    badge: 'Emergency',
+    targetUrl: 'modal:emergency',
+    actionType: 'modal',
+    keywords: ['blood', 'blood donor', 'emergency', 'ambulance', 'hospital', 'police', 'fire', 'icu', 'doctor', 'helpline']
+  }
+];
 
 const subServicesMap: Record<string, string[]> = {
   "Doctors": ["General Physician", "Pediatrician", "Gynaecologist", "Cardiologist", "Orthopedic", "Dermatologist", "ENT Specialist"],
@@ -545,11 +758,31 @@ export default function HomeClient() {
     return {};
   });
 
+  // Featured Restaurants on Homepage (Admin Managed)
+  const [featuredRestaurants, setFeaturedRestaurants] = useState<HomeFeaturedRestaurant[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('majh_boisar_featured_restaurants');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return DEFAULT_FEATURED_RESTAURANTS;
+  });
+
   useEffect(() => {
     const handleStorageChange = () => {
       try {
         const saved = localStorage.getItem('majh_boisar_property_custom_ads');
         if (saved) setPropertyCustomAds(JSON.parse(saved));
+
+        const savedRestos = localStorage.getItem('majh_boisar_featured_restaurants');
+        if (savedRestos) {
+          const parsed = JSON.parse(savedRestos);
+          if (Array.isArray(parsed) && parsed.length > 0) setFeaturedRestaurants(parsed);
+        }
       } catch (e) {}
     };
     window.addEventListener('storage', handleStorageChange);
@@ -587,11 +820,9 @@ export default function HomeClient() {
       return;
     }
 
-    if (!q && !cat && !modal) return;
-
-    // Direct brand match for Ganesh Travels
-    if (q.includes('ganesh') || q.includes('travel')) {
-      setPortraitTravelsOpen(true);
+    // Direct brand match for Ganesh Travels / Cab / Travels
+    if (q.includes('ganesh') || q.includes('travel') || q.includes('cab') || q.includes('auto') || q.includes('taxi')) {
+      router.push('/hire-vehicle');
       return;
     }
 
@@ -814,6 +1045,17 @@ export default function HomeClient() {
   // INSTANT LIVE SEARCH AUTOCOMPLETE STATE & COMPUTATIONS
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
+  // 1. Matching Portal Pills (e.g. Housemaid, Driver, Travels, AC Service, Hotel, Resort, Jobs, Turf, etc.)
+  const matchingPortals = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return [];
+    return QUICK_PORTAL_PILLS.filter(pill => {
+      if (pill.title.toLowerCase().includes(q)) return true;
+      if (pill.subtitle.toLowerCase().includes(q)) return true;
+      return pill.keywords.some(k => q.includes(k) || k.includes(q));
+    }).slice(0, 4);
+  }, [searchQuery]);
+
   const matchingCategories = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const suggestions = getCategorySearchSuggestions(searchQuery, 8);
@@ -1004,24 +1246,66 @@ export default function HomeClient() {
       cta: "Book Hotel / Hourly Stay",
       category: "Hotels",
       action: "hotel_booking",
+      targetUrl: "/hotels",
       image: "/imagess/ChatGPT Image Aug 15, 2026, 08_23_55 PM.png",
       showTextOverlay: false
     },
     {
-      label: "Looking for ?",
-      title: "Interior Designers",
-      cta: "Get Best Quotes",
-      category: "Interior Designers",
-      image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1200&q=80"
+      label: "Verified Experts · Quick Visit",
+      title: "Home Services & Domestic Helpers",
+      cta: "Book Services & Helpers",
+      category: "Home Services",
+      action: "home_services",
+      targetUrl: "/services",
+      image: "/imagess/ChatGPT Image Aug 22, 2026, 04_12_53 PM.png",
+      showTextOverlay: false,
+      scaleClass: "scale-[1.05] lg:scale-[1.10]"
     },
     {
       label: "24x7 Emergency & Care",
       title: "Hospitals & ICU in Boisar",
       cta: "View Hospitals & Clinics",
       category: "Hospitals",
-      image: "/imagess/hospital_boisar_wide.jpg"
+      action: "hospitals",
+      targetUrl: "/search?category=Hospitals",
+      image: "/imagess/hosptials cousrel new.png",
+      showTextOverlay: false
     }
   ]);
+
+  // Carousel Touch Swipe & Autoplay Handling
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+  const minSwipeDistance = 35;
+
+  const onCarouselTouchStart = (e: React.TouchEvent) => {
+    setTouchEndX(null);
+    setTouchStartX(e.targetTouches[0].clientX);
+  };
+
+  const onCarouselTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const onCarouselTouchEnd = () => {
+    if (touchStartX === null || touchEndX === null) return;
+    const distance = touchStartX - touchEndX;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    if (isLeftSwipe) {
+      setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+    } else if (isRightSwipe) {
+      setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+    }
+  };
+
+  useEffect(() => {
+    if (!isSlidePlaying || slides.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [isSlidePlaying, slides.length]);
 
   // Fetch dynamic ads from backend & localStorage
   useEffect(() => {
@@ -1234,25 +1518,14 @@ export default function HomeClient() {
   // Sub-category Promo Blocks (Expanded with rich local daily utility services)
   const promoSections = [
     {
-      title: "Repairs & Services",
-      accentColor: "teal",
-      tagline: "Fix & Maintain",
+      title: "Wedding & Events",
+      accentColor: "rose",
+      tagline: "Celebrate & Plan",
       items: [
-        { label: "AC Service", image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=300&q=80", query: "AC Service" },
-        { label: "Plumbers & Leakage", image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=300&q=80", query: "Plumbers" },
-        { label: "Electricians & Wiring", image: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=300&q=80", query: "Electricians" },
-        { label: "Carpenters & Painters", image: "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?auto=format&fit=crop&w=300&q=80", query: "Carpenters" }
-      ]
-    },
-    {
-      title: "Daily Needs",
-      accentColor: "amber",
-      tagline: "Essential Utilities",
-      items: [
-        { label: "Grocery Stores", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=300&q=80", query: "Grocery" },
-        { label: "Maid & House Help", image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=300&q=80", query: "House Cleaning" },
-        { label: "Tiffin & Catering", image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80", query: "Caterers" },
-        { label: "Pest Control", image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=300&q=80", query: "Pest Control" }
+        { label: "Banquet Halls", image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=300&q=80", query: "Banquet Hall" },
+        { label: "Photographers", image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=300&q=80", query: "Photographers" },
+        { label: "Caterers & Decor", image: "https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=300&q=80", query: "Caterers" },
+        { label: "Bridal & Suit Wear", image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=300&q=80", query: "Bridal" }
       ]
     },
     {
@@ -1267,14 +1540,25 @@ export default function HomeClient() {
       ]
     },
     {
-      title: "Wedding & Events",
-      accentColor: "rose",
-      tagline: "Celebrate & Plan",
+      title: "Daily Needs",
+      accentColor: "amber",
+      tagline: "Essential Utilities",
       items: [
-        { label: "Banquet Halls", image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=300&q=80", query: "Banquet Hall" },
-        { label: "Photographers", image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=300&q=80", query: "Photographers" },
-        { label: "Caterers & Decor", image: "https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=300&q=80", query: "Caterers" },
-        { label: "Bridal & Suit Wear", image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=300&q=80", query: "Bridal" }
+        { label: "Grocery Stores", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=300&q=80", query: "Grocery" },
+        { label: "Maid & House Help", image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=300&q=80", query: "House Cleaning" },
+        { label: "Tiffin & Catering", image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80", query: "Caterers" },
+        { label: "Pest Control", image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=300&q=80", query: "Pest Control" }
+      ]
+    },
+    {
+      title: "Repairs & Services",
+      accentColor: "teal",
+      tagline: "Fix & Maintain",
+      items: [
+        { label: "AC Service", image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=300&q=80", query: "AC Service" },
+        { label: "Plumbers & Leakage", image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=300&q=80", query: "Plumbers" },
+        { label: "Electricians & Wiring", image: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=300&q=80", query: "Electricians" },
+        { label: "Carpenters & Painters", image: "https://images.unsplash.com/photo-1581858726788-75bc0f6a952d?auto=format&fit=crop&w=300&q=80", query: "Carpenters" }
       ]
     }
   ];
@@ -1362,8 +1646,8 @@ export default function HomeClient() {
     }
   };
 
-  // Filter lists dynamically based on category selection
-  const displayedCategories = isCategoriesExpanded ? categories : categories.slice(0, 16);
+  // Filter lists dynamically based on category selection (Top 8 curated business categories by default)
+  const displayedCategories = isCategoriesExpanded ? categories : categories.slice(0, 8);
 
   if (isPageLoading) {
     return (
@@ -1407,25 +1691,25 @@ export default function HomeClient() {
       
       {/* 1. Hero Search Panel */}
       <div 
-        className="relative border-b border-slate-100 py-6 sm:py-10 overflow-visible bg-cover bg-no-repeat bg-center z-30"
+        className="relative border-b border-slate-150 py-7 sm:py-11 overflow-visible bg-cover bg-no-repeat bg-center z-30"
         style={{ backgroundImage: "url('/hero-bg.png')" }}
       >
-        {/* Large watermark MB Logo centered in the background */}
+        {/* Large watermark MB Logo centered in the background - clear and prominent */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 overflow-hidden">
           <img loading="lazy" decoding="async" 
             src="/majh-boisar-mb-logo.png" 
             alt="Watermark MB" 
-            className="h-24 sm:h-32 w-auto object-contain opacity-[0.16] transform select-none" 
+            className="h-36 sm:h-48 md:h-56 w-auto object-contain opacity-[0.30] select-none" 
           />
         </div>
         
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-10 overflow-visible">
 
           {/* Search Inputs Bar */}
-          <div className="max-w-md mx-auto flex items-center justify-center gap-2 relative z-50">
+          <div className="max-w-lg mx-auto flex items-center justify-center gap-2 sm:gap-2.5 relative z-50">
             {/* Location Selector (MapPin Circle Button with select overlay) */}
-            <div className="relative h-10 w-10 rounded-full flex items-center justify-center bg-white border border-slate-200 shadow-md hover:border-teal-500/30 transition-all duration-300 shrink-0 group">
-              <MapPin className="w-4.5 h-4.5 text-rose-500 group-hover:scale-110 transition-transform" />
+            <div className="relative h-11 w-11 rounded-full flex items-center justify-center bg-white border border-slate-200 shadow-md hover:border-rose-400 hover:shadow-lg transition-all duration-300 shrink-0 group cursor-pointer">
+              <MapPin className="w-5 h-5 text-rose-500 group-hover:scale-110 transition-transform" />
               <select
                 value={selectedLocation}
                 onChange={(e) => setSelectedLocation(e.target.value)}
@@ -1441,12 +1725,10 @@ export default function HomeClient() {
             </div>
 
             {/* Keyword Search Input & Button (Pill Container) */}
-            <div className="bg-white border border-slate-200 shadow-md rounded-full p-1 flex items-center gap-2 flex-1">
-              <div className="flex items-center gap-2 px-3 py-1 w-full">
-                {loading && searchQuery ? (
+            <div className="bg-white border border-slate-200/90 shadow-[0_6px_25px_rgb(0,0,0,0.07)] hover:border-teal-400/70 focus-within:border-teal-500 focus-within:ring-4 focus-within:ring-teal-500/10 rounded-full p-1.5 flex items-center gap-2 flex-1 transition-all duration-300">
+              <div className="flex items-center gap-2 px-3 sm:px-4 py-1 w-full">
+                {loading && searchQuery && (
                   <div className="w-3.5 h-3.5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin shrink-0" />
-                ) : (
-                  <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 )}
                 <input
                   type="text"
@@ -1464,33 +1746,75 @@ export default function HomeClient() {
                     }
                   }}
                   placeholder={t('nav.search_placeholder')}
-                  className="bg-transparent border-0 text-xs focus:outline-none w-full text-slate-800 placeholder-slate-400 font-extrabold"
+                  className="bg-transparent border-0 text-xs sm:text-[13px] focus:outline-none w-full text-slate-800 placeholder:text-slate-400 font-extrabold"
                 />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="p-1 rounded-full hover:bg-slate-100 text-slate-450 shrink-0">
+                  <button onClick={() => setSearchQuery('')} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 shrink-0 cursor-pointer">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
 
-              {/* Submit Button (Only Search Icon) */}
+              {/* Submit Button (Prominent Teal Round Button with Search Icon) */}
               <button
                 onClick={() => {
                   setIsSearchFocused(false);
                   fetchBusinesses();
                 }}
-                className="h-8 w-8 rounded-full btn-teal hover:scale-105 active:scale-95 text-white flex items-center justify-center shrink-0 shadow-md cursor-pointer transition-transform mr-0.5"
+                className="h-9 w-9 rounded-full bg-[#0d9488] hover:bg-[#0f766e] active:scale-95 text-white flex items-center justify-center shrink-0 shadow-md cursor-pointer transition-all mr-0.5"
                 title="Search Directory"
               >
-                <Search className="w-3.5 h-3.5 text-white" />
+                <Search className="w-4 h-4 text-white" />
               </button>
             </div>
 
             {/* Live Instant Search Suggestions Dropdown */}
             {searchQuery.trim().length > 0 && isSearchFocused && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 z-50 overflow-hidden text-left animate-in fade-in zoom-in-95 duration-150 max-h-[380px] overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 z-50 overflow-hidden text-left animate-in fade-in zoom-in-95 duration-150 max-h-[400px] overflow-y-auto">
                 
-                {/* 1. Matching Categories Section */}
+                {/* 1. Direct Matching City Portals & Pills (Housemaid, Driver, Travels, AC Service, etc.) */}
+                {matchingPortals.length > 0 && (
+                  <div className="p-2 border-b border-slate-150 bg-teal-50/50">
+                    <div className="text-[9px] font-black uppercase tracking-wider text-teal-800 px-3 py-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">⚡ Quick City Portals &amp; Services</span>
+                      <span className="text-[8px] bg-teal-200/80 text-teal-900 px-1.5 py-0.2 rounded font-black">1-Tap Direct</span>
+                    </div>
+                    <div className="space-y-1 mt-0.5">
+                      {matchingPortals.map((portal) => (
+                        <div
+                          key={portal.id}
+                          onClick={() => {
+                            setIsSearchFocused(false);
+                            setSearchQuery('');
+                            if (portal.actionType === 'modal') {
+                              if (portal.id === 'turf') setPortraitTurfOpen(true);
+                              else if (portal.id === 'offers') setPortraitOffersOpen(true);
+                              else if (portal.id === 'marketplace') setPortraitMarketplaceOpen(true);
+                              else if (portal.id === 'blood_emergency') router.push('/search?category=Hospitals');
+                            } else {
+                              router.push(portal.targetUrl);
+                            }
+                          }}
+                          className="px-3 py-2 rounded-xl bg-white hover:bg-teal-100/70 border border-teal-150/80 cursor-pointer flex items-center justify-between transition-all group shadow-2xs"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className="text-xl shrink-0 group-hover:scale-110 transition-transform">{portal.icon}</span>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-xs font-black text-slate-900 group-hover:text-teal-900 truncate">{portal.title}</p>
+                                <span className="bg-teal-600 text-white text-[8px] font-black px-1.5 py-0.2 rounded shrink-0">{portal.badge}</span>
+                              </div>
+                              <p className="text-[10px] text-slate-500 font-medium truncate">{portal.subtitle}</p>
+                            </div>
+                          </div>
+                          <span className="text-[11px] text-teal-700 font-black shrink-0 ml-2 group-hover:translate-x-0.5 transition-transform">Open →</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Matching Categories Section */}
                 {matchingCategories.length > 0 && (
                   <div className="p-2 border-b border-slate-100">
                     <div className="text-[9px] font-black uppercase tracking-wider text-slate-400 px-3 py-1 flex items-center gap-1">
@@ -1617,15 +1941,30 @@ export default function HomeClient() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
           {/* Main Ad Banner Carousel (Left Side - 6 cols, 1:1 ratio) */}
           <div className="lg:col-span-6">
-            <div className="relative w-full h-[220px] sm:h-[280px] lg:h-[312px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-[#1c0836] group">
+            <div 
+              onTouchStart={onCarouselTouchStart}
+              onTouchMove={onCarouselTouchMove}
+              onTouchEnd={onCarouselTouchEnd}
+              onMouseEnter={() => setIsSlidePlaying(false)}
+              onMouseLeave={() => setIsSlidePlaying(true)}
+              className="relative w-full aspect-[2.1/1] sm:aspect-[2.1/1] lg:aspect-auto lg:h-[312px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-[#1c0836] group touch-pan-y select-none"
+            >
               {/* Main Slide Image & Click Trigger */}
               <div 
                 onClick={() => {
                   const activeSlide = slides[currentSlide];
-                  if (activeSlide.action === 'hotel_booking' || activeSlide.category === 'Hotels') {
+                  if (activeSlide.action === 'home_services' || activeSlide.category === 'Home Services' || activeSlide.targetUrl === '/services') {
+                    router.push('/services');
+                  } else if (activeSlide.action === 'hotel_booking' || activeSlide.category === 'Hotels' || activeSlide.targetUrl === '/hotels') {
                     router.push('/hotels');
+                  } else if (activeSlide.action === 'hospitals' || activeSlide.category === 'Hospitals' || activeSlide.targetUrl === '/search?category=Hospitals') {
+                    router.push('/search?category=Hospitals');
                   } else if (activeSlide.targetUrl && activeSlide.targetUrl !== '#') {
-                    window.open(activeSlide.targetUrl, '_blank');
+                    if (activeSlide.targetUrl.startsWith('/')) {
+                      router.push(activeSlide.targetUrl);
+                    } else {
+                      window.open(activeSlide.targetUrl, '_blank');
+                    }
                   } else if (activeSlide.category) {
                     router.push(`/search?category=${encodeURIComponent(activeSlide.category)}`);
                   }
@@ -1636,10 +1975,13 @@ export default function HomeClient() {
               </div>
               
               {slides[currentSlide].image ? (
-                <img loading="lazy" decoding="async" 
+                <img 
+                  loading="eager" 
+                  fetchPriority="high"
+                  decoding="sync" 
                   src={slides[currentSlide].image} 
                   alt={slides[currentSlide].title} 
-                  className={`w-full h-full ${slides[currentSlide].showTextOverlay === false ? 'object-contain' : 'object-cover'} object-center transition-all duration-700`}
+                  className="w-full h-full object-cover object-center"
                 />
               ) : null}
               
@@ -1671,10 +2013,18 @@ export default function HomeClient() {
                     onClick={(e) => {
                       e.stopPropagation();
                       const activeSlide = slides[currentSlide];
-                      if (activeSlide.action === 'hotel_booking' || activeSlide.category === 'Hotels') {
+                      if (activeSlide.action === 'home_services' || activeSlide.category === 'Home Services' || activeSlide.targetUrl === '/services') {
+                        router.push('/services');
+                      } else if (activeSlide.action === 'hotel_booking' || activeSlide.category === 'Hotels' || activeSlide.targetUrl === '/hotels') {
                         router.push('/hotels');
+                      } else if (activeSlide.action === 'hospitals' || activeSlide.category === 'Hospitals' || activeSlide.targetUrl === '/search?category=Hospitals') {
+                        router.push('/search?category=Hospitals');
                       } else if (activeSlide.targetUrl && activeSlide.targetUrl !== '#') {
-                        window.open(activeSlide.targetUrl, '_blank');
+                        if (activeSlide.targetUrl.startsWith('/')) {
+                          router.push(activeSlide.targetUrl);
+                        } else {
+                          window.open(activeSlide.targetUrl, '_blank');
+                        }
                       } else {
                         router.push(`/search?category=${encodeURIComponent(activeSlide.category)}`);
                       }
@@ -1689,17 +2039,17 @@ export default function HomeClient() {
               {/* Navigation Arrows */}
               <button
                 onClick={() => setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1))}
-                className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center cursor-pointer transition-colors z-20"
+                className="absolute left-1.5 sm:left-2 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center cursor-pointer transition-colors z-20"
                 title="Previous Slide"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
               <button
                 onClick={() => setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1))}
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center cursor-pointer transition-colors z-20"
+                className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center cursor-pointer transition-colors z-20"
                 title="Next Slide"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
 
               {/* Dots Indicator */}
@@ -1726,12 +2076,15 @@ export default function HomeClient() {
               {/* Promo Card 1 - Real Estate */}
               <div
                 onClick={() => { setActiveSpecialCategory('properties'); setSelectedProfile(null); }}
-                className="flex-1 min-h-[135px] sm:min-h-[160px] lg:min-h-0 lg:h-full rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all cursor-pointer group relative border border-slate-200"
+                className="flex-1 min-h-[135px] sm:min-h-[160px] lg:min-h-0 lg:h-full rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group relative border border-slate-200"
               >
                 <img
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="sync"
                   src="/imagess/ChatGPT Image Jul 20, 2026, 03_14_16 PM.png"
                   alt="Find Property in Boisar"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover"
                 />
                 {/* subtle label */}
                 <div className="absolute bottom-2 left-2">
@@ -1742,12 +2095,15 @@ export default function HomeClient() {
               {/* Promo Card 2 - Careers */}
               <Link
                 href="/jobs"
-                className="flex-1 min-h-[135px] sm:min-h-[160px] lg:min-h-0 lg:h-full rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all cursor-pointer group relative border border-slate-200 block"
+                className="flex-1 min-h-[135px] sm:min-h-[160px] lg:min-h-0 lg:h-full rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group relative border border-slate-200 block"
               >
                 <img
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="sync"
                   src="/imagess/ChatGPT Image Jul 20, 2026, 03_41_37 PM.png"
                   alt="Looking for a Job in Boisar?"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover"
                 />
                 {/* subtle label */}
                 <div className="absolute bottom-2 left-2">
@@ -1760,102 +2116,177 @@ export default function HomeClient() {
         </div>
       </div>
 
-      {/* 3. Grid of Category Blocks */}
-      <div className="section-alt-a mt-4 sm:mt-12 py-6 sm:py-10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
-          <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-            <span className="h-4 w-1 rounded-full bg-teal-600"></span>
-            <span>{t('hero.explore_categories')}</span>
-          </h2>
-          <button
-            onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
-            className="text-xs font-black text-teal-650 hover:underline cursor-pointer"
-          >
-            {isCategoriesExpanded ? 'View Less' : `View All ${categories.length}+`}
-          </button>
-        </div>
-
-        <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-10 gap-2 sm:gap-3">
-          {displayedCategories.map((cat) => (
-            <div
-              key={cat.name}
-              onClick={() => router.push(`/search?category=${encodeURIComponent(cat.name)}`)}
-              className="cat-pill rounded-lg p-2 text-center flex flex-col items-center justify-start gap-1.5 cursor-pointer hover:scale-[1.02] transition-all bg-white border border-slate-100 hover:border-teal-200 shadow-sm"
+      {/* 3. Grid of Category Blocks (Top 8 Business Categories by default) */}
+      <div className="section-alt-a mt-4 sm:mt-8 py-5 sm:py-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-3.5">
+          <div className="flex items-center justify-between border-b border-slate-200/60 pb-2.5">
+            <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <span className="h-4 w-1 rounded-full bg-teal-600"></span>
+              <span>{t('hero.explore_categories')}</span>
+            </h2>
+            <button
+              onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
+              className="text-xs font-black text-teal-650 hover:underline cursor-pointer"
             >
-              <div className={`p-1.5 sm:p-2 rounded-lg border ${cat.bgClass} flex items-center justify-center shrink-0`}>
-                <div className="scale-75 sm:scale-90 origin-center">{cat.icon}</div>
+              {isCategoriesExpanded ? 'View Less' : `View All ${categories.length}+`}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
+            {displayedCategories.map((cat) => (
+              <div
+                key={cat.name}
+                onClick={() => router.push(`/search?category=${encodeURIComponent(cat.name)}`)}
+                className="cat-pill rounded-xl p-2 sm:p-2.5 text-center flex flex-col items-center justify-start gap-1.5 cursor-pointer hover:scale-[1.03] transition-all bg-white border border-slate-100 hover:border-teal-200 shadow-2xs group"
+              >
+                <div className={`p-2 sm:p-2.5 rounded-xl border ${cat.bgClass} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
+                  <div className="scale-85 sm:scale-95 origin-center">{cat.icon}</div>
+                </div>
+                <span className="text-[9.5px] sm:text-[10px] font-bold text-slate-700 leading-tight tracking-wider truncate w-full px-0.5">{cat.name}</span>
               </div>
-              <span className="text-[9px] font-bold text-slate-700 leading-tight tracking-wider truncate w-full px-0.5">{cat.name}</span>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* 4. Foodie & Dining Portal (Hi Foodie, Dine in Boisar!) */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6">
+        <div 
+          style={{ background: 'linear-gradient(135deg, #fff7ee 0%, #ffeedd 50%, #fef4e8 100%)' }}
+          className="rounded-3xl border border-orange-200/90 p-4 sm:p-5 shadow-sm space-y-3 text-left relative overflow-hidden"
+        >
+          {/* Subtle ambient decorative accents */}
+          <div className="absolute -top-12 -right-12 w-44 h-44 bg-orange-400/15 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute -bottom-12 -left-12 w-44 h-44 bg-amber-400/15 rounded-full blur-3xl pointer-events-none"></div>
+
+          {/* Top Greeting Header - Compact & Clean */}
+          <div className="flex items-center justify-between gap-2 border-b border-orange-200/60 pb-2 relative z-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xl shrink-0">🍕</span>
+              <div>
+                <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
+                  Hi Foodie, Dine in Boisar!
+                </h3>
+                <p className="text-[10px] sm:text-[11px] text-orange-950/70 font-bold leading-tight">
+                  Top Cafes, Family Dining &amp; Fast Food
+                </p>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => router.push('/search?category=Restaurants')}
+              className="text-[11px] sm:text-xs font-black text-orange-800 hover:text-orange-950 flex items-center gap-1 cursor-pointer shrink-0 group bg-white/90 px-3 py-1 rounded-xl border border-orange-200 shadow-2xs hover:bg-white transition-all"
+            >
+              <span>See all</span>
+              <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+            </button>
+          </div>
+
+          {/* Quick Meal Type Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory relative z-1">
+            {[
+              { id: 'lunch', label: 'Lunch', icon: '🍲', query: 'Thali' },
+              { id: 'dinner', label: 'Dinner', icon: '🥘', query: 'Dinner' },
+              { id: 'fastfood', label: 'Fast Food', icon: '🍔', query: 'Fast Food' },
+              { id: 'nearme', label: 'Near Me', icon: '📍', query: 'Restaurants' },
+              { id: 'breakfast', label: 'Breakfast', icon: '🥞', query: 'Breakfast' },
+              { id: 'cafes', label: 'Cafes', icon: '☕', query: 'Cafe' },
+              { id: 'sweets', label: 'Sweets & Bakery', icon: '🍰', query: 'Bakery' }
+            ].map(meal => (
+              <button
+                key={meal.id}
+                onClick={() => router.push(`/search?query=${encodeURIComponent(meal.query)}`)}
+                className="snap-start shrink-0 bg-white hover:bg-orange-50 border border-orange-200/90 hover:border-orange-400 rounded-xl px-3 py-1.5 flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs group active:scale-95"
+              >
+                <span className="text-sm group-hover:scale-110 transition-transform">{meal.icon}</span>
+                <span className="text-[11px] font-black text-slate-800 group-hover:text-orange-950 whitespace-nowrap">{meal.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Restaurants & Cafes Cards Grid (Live Admin Managed) */}
+          <div className="pt-1 relative z-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+              {featuredRestaurants.filter(r => r.isActive !== false).map((resto) => (
+                <div
+                  key={resto.id}
+                  onClick={() => router.push(`/search?category=Restaurants`)}
+                  className="bg-white border border-orange-100 hover:border-orange-400 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between text-left"
+                >
+                  <div>
+                    {/* Food Photo Container */}
+                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-900">
+                      <img
+                        src={resto.image}
+                        alt={resto.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      {/* Offer Badge Ribbon */}
+                      {resto.discount && (
+                        <div className="absolute bottom-1.5 left-1.5">
+                          <span className="bg-gradient-to-r from-red-600 to-orange-600 text-white text-[8.5px] sm:text-[9px] font-black px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1">
+                            <span>%</span>
+                            <span>{resto.discount}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Details */}
+                    <div className="p-2 sm:p-2.5 space-y-0.5">
+                      <div className="flex items-start justify-between gap-1">
+                        <h5 className="text-[11.5px] sm:text-xs font-black text-slate-900 group-hover:text-orange-700 leading-tight truncate">
+                          {resto.name}
+                        </h5>
+                        <span className="bg-emerald-600 text-white text-[8.5px] font-black px-1 py-0.2 rounded shrink-0 flex items-center gap-0.5">
+                          <span>★</span>
+                          <span>{resto.rating}</span>
+                        </span>
+                      </div>
+
+                      <p className="text-[9.5px] text-slate-500 font-medium truncate">
+                        {resto.location}
+                      </p>
+                      
+                      <p className="text-[9px] font-bold text-orange-800 truncate">
+                        {resto.speciality}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
       </div>
 
-      {/* 7 Special Category Portrait Cards */}
-      {/* 3. Portrait Style Action Cards Grid (Trending Quick Portals) */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8">
+      {/* 3. Portrait Style Action Cards Grid (Trending Quick Portals - Sorted by Priority) */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-6 sm:mt-9">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5 mb-3">
+          <h2 className="text-xs sm:text-[13px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap min-w-0">
+            <span className="h-4 w-1 rounded-full bg-teal-600 shrink-0"></span>
+            <span>Trending Quick Portals &amp; Hubs</span>
+          </h2>
+          <span className="text-[9.5px] sm:text-[10.5px] font-bold text-slate-400 whitespace-nowrap shrink-0">1-Tap Direct Access</span>
+        </div>
+
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-9 gap-2.5 sm:gap-3.5">
 
-          {/* Card 1: Influencers */}
+          {/* 1. Home Services */}
           <div
-            onClick={() => { setActiveSpecialCategory('influencers'); setSelectedProfile(null); }}
+            onClick={() => router.push('/services')}
             className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-teal-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
           >
             <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/hire a influcer.png" alt="Influencers"
+              <img src="/imagess/home servvies pill.png" alt="Home Services"
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             </div>
           </div>
 
-          {/* Card 2: Domestic Help (Maid) */}
+          {/* 2. Travels (Bus + Cab + Tempo) */}
           <div
-            onClick={() => { setActiveSpecialCategory('helpers'); setSelectedProfile(null); }}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-amber-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/hire a maid.png" alt="Domestic Help"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* Card 3: Home Technicians */}
-          <div
-            onClick={() => setPortraitTechOpen(true)}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/home technician.png" alt="Home Technicians"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* Card 4: Used Items */}
-          <div
-            onClick={() => setPortraitMarketplaceOpen(true)}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-emerald-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/used items.png" alt="Used Items"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* Card 5: Shop Offers */}
-          <div
-            onClick={() => setPortraitOffersOpen(true)}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-rose-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/shop offer.png" alt="Shop Offers"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* Card 6: Travels (Bus + Cab + Tempo) */}
-          <div
-            onClick={() => setPortraitTravelsOpen(true)}
+            onClick={() => router.push('/hire-vehicle')}
             className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-orange-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
           >
             <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
@@ -1864,29 +2295,7 @@ export default function HomeClient() {
             </div>
           </div>
 
-          {/* Card 7: Sports Turf & Game Zone */}
-          <div
-            onClick={() => setPortraitTurfOpen(true)}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-indigo-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/turf game.png" alt="Sports Turf & Game Zone"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* Card 8: Hotel Booking */}
-          <div
-            onClick={() => router.push('/hotels')}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-purple-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/hotel booking.png" alt="Hotel Booking"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* Card 9: Resort & Villa Booking (Full Page Portal) */}
+          {/* 3. Resort & Villa Booking */}
           <div
             onClick={() => router.push('/resorts')}
             className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-emerald-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
@@ -1900,6 +2309,72 @@ export default function HomeClient() {
                 }}
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
               />
+            </div>
+          </div>
+
+          {/* 4. Hotel Booking */}
+          <div
+            onClick={() => router.push('/hotels')}
+            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-purple-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
+          >
+            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
+              <img src="/imagess/hotel booking.png" alt="Hotel Booking"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            </div>
+          </div>
+
+          {/* 5. Jobs in Boisar */}
+          <div
+            onClick={() => router.push('/jobs')}
+            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-blue-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
+          >
+            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
+              <img src="/imagess/carrers jobs.png" alt="Jobs in Boisar"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            </div>
+          </div>
+
+          {/* 6. Influencers & Creators */}
+          <div
+            onClick={() => router.push('/creators')}
+            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-rose-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
+          >
+            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
+              <img src="/imagess/hire a influcer.png" alt="Influencers"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            </div>
+          </div>
+
+          {/* 7. Sports Turf & Game Zone */}
+          <div
+            onClick={() => setPortraitTurfOpen(true)}
+            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-indigo-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
+          >
+            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
+              <img src="/imagess/turf game.png" alt="Sports Turf & Game Zone"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            </div>
+          </div>
+
+          {/* 8. Shop Offers */}
+          <div
+            onClick={() => setPortraitOffersOpen(true)}
+            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-amber-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
+          >
+            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
+              <img src="/imagess/shop offer.png" alt="Shop Offers"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            </div>
+          </div>
+
+          {/* 9. Used Items (Marketplace) */}
+          <div
+            onClick={() => setPortraitMarketplaceOpen(true)}
+            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-emerald-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
+          >
+            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
+              <img src="/imagess/used items.png" alt="Used Items"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             </div>
           </div>
 

@@ -12,13 +12,14 @@ interface TempoHelplineModalProps {
 export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineModalProps) {
   const [driverList, setDriverList] = useState<TempoDriver[]>(TEMPO_DRIVERS);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<string>('All');
 
   // Form states
   const [driverName, setDriverName] = useState('');
-  const [vehicleType, setVehicleType] = useState<'Chota Hathi (Tata Ace)' | '3-Wheel Auto Tempo' | 'Pickup 8ft' | 'Eeco Luggage'>('Chota Hathi (Tata Ace)');
+  const [vehicleType, setVehicleType] = useState<'Packers & Movers' | 'Chota Hathi (Tata Ace)' | '3-Wheel Auto Tempo' | 'Pickup 8ft' | 'Eeco Luggage'>('Packers & Movers');
   const [phone, setPhone] = useState('');
-  const [standLocation, setStandLocation] = useState('Boisar Station Stand');
-  const [rateEstimate, setRateEstimate] = useState('Starting ₹350 / Call for Per KM rate');
+  const [standLocation, setStandLocation] = useState('Boisar West & Ostwal');
+  const [rateEstimate, setRateEstimate] = useState('Starting ₹1,499 (1BHK Shifting) / Call for Quote');
   const [availability, setAvailability] = useState('24/7 Available');
   const [image, setImage] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -54,14 +55,15 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!driverName.trim() || !phone.trim()) {
-      alert("Please enter Driver / Business Name and Contact Phone!");
+      alert("Please enter Business / Driver Name and Contact Phone!");
       return;
     }
 
-    const defaultImg = vehicleType.includes('Tata Ace') ? 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&auto=format&fit=crop&q=80'
+    const defaultImg = vehicleType.includes('Packers') ? 'https://images.unsplash.com/photo-1600518464441-9154a4dea21b?w=600&auto=format&fit=crop&q=80'
+      : vehicleType.includes('Tata Ace') ? 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&auto=format&fit=crop&q=80'
       : vehicleType.includes('Pickup') ? 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&auto=format&fit=crop&q=80'
-        : vehicleType.includes('Auto') ? 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600&auto=format&fit=crop&q=80'
-          : 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?w=600&auto=format&fit=crop&q=80';
+      : vehicleType.includes('Auto') ? 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600&auto=format&fit=crop&q=80'
+      : 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?w=600&auto=format&fit=crop&q=80';
 
     const newDriver: TempoDriver = {
       id: `tmp-custom-${Date.now()}`,
@@ -86,7 +88,7 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
       localStorage.setItem('majh_boisar_tempo_list', JSON.stringify([newDriver, ...customOnly]));
     }
 
-    setSuccessMsg('Tempo driver registered successfully!');
+    setSuccessMsg('Packers & Movers / Tempo registered successfully!');
     setTimeout(() => {
       setSuccessMsg('');
       setShowAddForm(false);
@@ -95,6 +97,11 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
       setImage('');
     }, 1500);
   };
+
+  const filteredDrivers = driverList.filter((d) => {
+    if (selectedFilter === 'All') return true;
+    return d.vehicleType.toLowerCase().includes(selectedFilter.toLowerCase());
+  });
 
   return (
     <div className="fixed inset-0 z-[500] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-200">
@@ -116,10 +123,10 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
             </div>
             <div className="min-w-0">
               <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight truncate">
-                Chota Hathi &amp; Tempo Helpline
+                Packers &amp; Movers, Chota Hathi &amp; Tempo Helpline
               </h3>
               <p className="text-[10.5px] sm:text-xs text-slate-500 font-medium truncate">
-                Direct call with Tata Ace, 8ft Pickup &amp; goods auto drivers
+                Verified house shifting, Tata Ace, 8ft Pickup &amp; goods tempo in Boisar
               </p>
             </div>
           </div>
@@ -129,9 +136,34 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
             className="bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-black text-xs px-3 py-1.5 rounded-xl shadow-2xs transition-all flex items-center gap-1 cursor-pointer shrink-0 ml-auto whitespace-nowrap"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>{showAddForm ? 'View List' : 'Register Tempo'}</span>
+            <span>{showAddForm ? 'View List' : '+ Register Service'}</span>
           </button>
         </div>
+
+        {/* Filter Tabs */}
+        {!showAddForm && (
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-2 scrollbar-none shrink-0">
+            {[
+              { id: 'All', label: `All (${driverList.length})` },
+              { id: 'Packers & Movers', label: '📦 Packers & Movers' },
+              { id: 'Tata Ace', label: '🚚 Chota Hathi (Tata Ace)' },
+              { id: 'Pickup 8ft', label: '🛻 8ft Pickup Bolero' },
+              { id: 'Auto', label: '🛺 3-Wheel Goods Auto' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedFilter(tab.id)}
+                className={`px-3 py-1 rounded-full text-xs font-black transition-all cursor-pointer whitespace-nowrap border ${
+                  selectedFilter === tab.id
+                    ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-2xs'
+                    : 'bg-slate-50 hover:bg-amber-50 text-slate-700 border-slate-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Inline Add Tempo Driver Form */}
         {showAddForm ? (
@@ -163,16 +195,17 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[10px] text-slate-600 font-extrabold uppercase mb-1">Vehicle Type *</label>
+                      <label className="block text-[10px] text-slate-600 font-extrabold uppercase mb-1">Service / Vehicle Type *</label>
                       <select
                         value={vehicleType}
                         onChange={e => setVehicleType(e.target.value as any)}
                         className="w-full bg-white border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500"
                       >
-                        <option value="Chota Hathi (Tata Ace)">Chota Hathi (Tata Ace)</option>
-                        <option value="Pickup 8ft">Pickup 8ft (Bolero / Maxi)</option>
-                        <option value="3-Wheel Auto Tempo">3-Wheel Auto Tempo</option>
-                        <option value="Eeco Luggage">Eeco Luggage</option>
+                        <option value="Packers & Movers">📦 Packers & Movers (House / Office Shifting)</option>
+                        <option value="Chota Hathi (Tata Ace)">🚚 Chota Hathi (Tata Ace)</option>
+                        <option value="Pickup 8ft">🛻 Pickup 8ft (Bolero / Maxi)</option>
+                        <option value="3-Wheel Auto Tempo">🛺 3-Wheel Goods Auto Tempo</option>
+                        <option value="Eeco Luggage">🚐 Eeco Luggage</option>
                       </select>
                     </div>
 
@@ -283,7 +316,7 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
           /* Drivers Grid (1 Column on Mobile, 2 on Tablet, 3 on Desktop) */
           <div className="flex-1 overflow-y-auto pr-1">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {driverList.map(tp => (
+              {filteredDrivers.map(tp => (
                 <div
                   key={tp.id}
                   className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md hover:border-amber-300 transition-all flex flex-col justify-between group"
@@ -310,16 +343,33 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
                   {/* Details */}
                   <div className="p-3.5 flex-1 flex flex-col justify-between">
                     <div>
-                      <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-snug mb-1.5 truncate">
-                        {tp.driverName}
-                      </h4>
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <h4 className="text-xs sm:text-sm font-black text-slate-900 leading-snug truncate">
+                          {tp.driverName}
+                        </h4>
+                        <span className="bg-emerald-50 text-emerald-700 text-[8.5px] font-black px-1.5 py-0.2 rounded border border-emerald-200 shrink-0">
+                          ✓ Verified
+                        </span>
+                      </div>
 
-                      <div className="space-y-1 text-[10px] text-slate-500 font-bold mb-3">
+                      <div className="space-y-1 text-[10px] text-slate-500 font-bold mb-2">
                         <span className="flex items-center gap-1 truncate">
                           <MapPin className="w-3 h-3 text-rose-500 shrink-0" /> Stand: {tp.standLocation}
                         </span>
-                        <span className="block text-slate-900 font-black">Est. Rate: {tp.rateEstimate}</span>
+                        <span className="block text-slate-900 font-black text-[11px] text-amber-700">
+                          💰 {tp.rateEstimate}
+                        </span>
                       </div>
+
+                      {tp.services && tp.services.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {tp.services.map((srv, sIdx) => (
+                            <span key={sIdx} className="bg-slate-100 text-slate-700 text-[9px] font-extrabold px-1.5 py-0.5 rounded">
+                              {srv}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Contact Action Buttons */}
@@ -329,11 +379,11 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
                         className="flex-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 font-black text-xs py-2 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <Phone className="w-3.5 h-3.5" />
-                        <span>Call Driver</span>
+                        <span>Call Now</span>
                       </a>
 
                       <a
-                        href={`https://wa.me/91${tp.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${tp.driverName}, I need tempo luggage service in Boisar. Please share per KM rates!`)}`}
+                        href={`https://wa.me/91${tp.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${tp.driverName}, I need ${tp.vehicleType} shifting/transport service in Boisar. Please share available timings & rate quote!`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-extrabold text-xs py-2 rounded-xl text-center shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
@@ -346,11 +396,11 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
                 </div>
               ))}
 
-              {driverList.length === 0 && (
+              {filteredDrivers.length === 0 && (
                 <div className="col-span-full bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-8 text-center my-4">
                   <Truck className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                  <h4 className="text-sm font-black text-slate-700">No Tempo Drivers Listed Yet</h4>
-                  <p className="text-xs text-slate-500 font-medium mt-1">Local Tata Ace / Chota Hathi tempo drivers can register their contact number soon.</p>
+                  <h4 className="text-sm font-black text-slate-700">No Service Providers Found for this Category</h4>
+                  <p className="text-xs text-slate-500 font-medium mt-1">Select another tab or register your transport profile now.</p>
                 </div>
               )}
             </div>

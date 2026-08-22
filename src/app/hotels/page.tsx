@@ -809,23 +809,18 @@ export default function HotelsPage() {
           </div>
         )}
 
-        {/* Bottom Banner: Add Your Hotel (Positioned below results & empty state) */}
+        {/* Bottom Banner: Add Your Hotel (Slim & Compact) */}
         <div 
           style={{ background: 'linear-gradient(135deg, #180630 0%, #2b0c50 50%, #120424 100%)', color: '#ffffff' }}
-          className="rounded-3xl p-5 sm:p-6 mt-8 border border-amber-400/40 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 text-left"
+          className="rounded-2xl p-3.5 sm:p-4 mt-6 border border-amber-400/30 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 text-left"
         >
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center justify-center text-xl shrink-0">
-              <Building2 className="w-6 h-6 text-amber-300" />
-            </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-black text-white leading-tight">
-                Are you a Hotel, Lodge, or Resort Owner in Boisar?
-              </h3>
-              <p className="text-xs text-purple-200 font-medium mt-0.5">
-                List your rooms on Majh Boisar and get instant hourly day-stay &amp; night bookings.
-              </p>
-            </div>
+          <div className="space-y-0.5">
+            <h3 className="text-xs sm:text-sm font-black text-white">
+              Are you a Hotel or Lodge Owner in Boisar?
+            </h3>
+            <p className="text-[10.5px] text-purple-200">
+              List your rooms on Majh Boisar and get instant hourly day-stay &amp; night bookings.
+            </p>
           </div>
 
           <button
@@ -838,9 +833,9 @@ export default function HotelsPage() {
               }
               setIsAddHotelOpen(true);
             }}
-            className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-6 py-3 rounded-2xl shadow-md transition-all cursor-pointer flex items-center gap-1.5 shrink-0 uppercase tracking-wider active:scale-95 whitespace-nowrap"
+            className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-4 py-2 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1 shrink-0 active:scale-95 whitespace-nowrap"
           >
-            <Plus className="w-4 h-4 text-slate-950" />
+            <Plus className="w-3.5 h-3.5 text-slate-950" />
             <span>Add Your Hotel</span>
           </button>
         </div>
