@@ -10,11 +10,12 @@ import {
   Search, ArrowUpDown, Bed, Bath, Utensils, Waves, Check,
   Clock, Shield, Heart, Navigation, Award, Coffee, Flame, Wifi,
   Plus, SlidersHorizontal, Ticket, Upload, Camera, Trash2,
-  CheckSquare, Square
+  CheckSquare, Square, QrCode
 } from 'lucide-react';
 import { resortsData, ResortVilla } from '@/lib/resortsData';
 import { useApp } from '@/context/AppContext';
 import StaycationTabSwitcher from '@/components/StaycationTabSwitcher';
+import BusinessQRStandeeModal from '@/components/BusinessQRStandeeModal';
 
 function ResortsPageContent() {
   const router = useRouter();
@@ -31,6 +32,8 @@ function ResortsPageContent() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'recommended' | 'price_low' | 'price_high' | 'rating'>('recommended');
   const [selectedResort, setSelectedResort] = useState<ResortVilla | null>(null);
+  const [isStandeeModalOpen, setIsStandeeModalOpen] = useState(false);
+  const [standeeResort, setStandeeResort] = useState<ResortVilla | null>(null);
 
   // List Your Resort Modal State
   const [isListModalOpen, setIsListModalOpen] = useState(false);
@@ -560,6 +563,19 @@ function ResortsPageContent() {
                       </div>
 
                       <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setStandeeResort(resort);
+                            setIsStandeeModalOpen(true);
+                          }}
+                          className="w-9 h-9 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                          title="Download Official Resort QR Standee"
+                        >
+                          <QrCode className="w-4 h-4 text-amber-700" />
+                        </button>
+
                         <button
                           type="button"
                           onClick={(e) => {
@@ -1467,6 +1483,30 @@ function ResortsPageContent() {
 
           </div>
         </div>
+      )}
+
+      {/* Official Resort Printable QR Standee Modal */}
+      {standeeResort && (
+        <BusinessQRStandeeModal
+          isOpen={isStandeeModalOpen}
+          onClose={() => {
+            setIsStandeeModalOpen(false);
+            setStandeeResort(null);
+          }}
+          business={{
+            id: standeeResort.id,
+            name: standeeResort.name,
+            category: standeeResort.type || 'Beach Resort & Pool Villa',
+            location: `${standeeResort.area} · ${standeeResort.location}`,
+            phone: standeeResort.phone,
+            whatsapp: standeeResort.whatsapp,
+            rating: standeeResort.rating,
+            reviewsCount: standeeResort.reviewsCount,
+            tagline: standeeResort.tagline,
+            customUrl: typeof window !== 'undefined' ? `${window.location.origin}/resorts?id=${standeeResort.id}` : `https://majhboisar.in/resorts?id=${standeeResort.id}`,
+            customOffer: `🏊 Private Pool Villa & Day-Picnic Packages • ₹${standeeResort.pricePerNight?.toLocaleString('en-IN')}/night`
+          }}
+        />
       )}
 
     </div>

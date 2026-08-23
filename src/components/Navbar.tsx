@@ -7,9 +7,10 @@ import { useApp, Role } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
 import LoginModal from './LoginModal';
 import MyHotelPassesModal from './MyHotelPassesModal';
+import QRScannerModal from './QRScannerModal';
 import {
   Search, MapPin, User, Shield, Briefcase, ChevronDown, Check,
-  Menu, X, LogOut, Building, Layers, HelpCircle, MessageSquare, ChevronRight, Smartphone, Download, Ticket, Plus
+  Menu, X, LogOut, Building, Layers, HelpCircle, MessageSquare, ChevronRight, Smartphone, Download, Ticket, Plus, QrCode
 } from 'lucide-react';
 
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
@@ -57,6 +58,7 @@ export default function Navbar() {
 
   const [navSearchQuery, setNavSearchQuery] = useState('');
   const [navLocation, setNavLocation] = useState('All');
+  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
 
   const [isNavSearchFocused, setIsNavSearchFocused] = useState(false);
   const [navMatchingBusinesses, setNavMatchingBusinesses] = useState<any[]>([]);
@@ -297,10 +299,19 @@ export default function Navbar() {
                         <X className="w-3 h-3" />
                       </button>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => setIsQRScannerOpen(true)}
+                      className="p-1 rounded-full hover:bg-teal-50 text-slate-400 hover:text-teal-700 transition-colors cursor-pointer shrink-0"
+                      title="Scan Majh Boisar Shop QR Standee"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                   <button
                     type="submit"
                     className="h-7 w-7 rounded-full btn-teal text-white flex items-center justify-center shrink-0 shadow-sm cursor-pointer hover:scale-102 active:scale-98 transition-all mr-0.5"
+                    title="Search Directory"
                   >
                     <Search className="w-3 h-3 text-white" />
                   </button>
@@ -462,7 +473,7 @@ export default function Navbar() {
                       <button
                         onClick={() => {
                           setHelpDropdownOpen(false);
-                          alert("Raise a Complaint: Please email complaint@majhboisar.in with the listing or dispute details.");
+                          alert("Raise a Complaint: Please email majhboisar@gmail.com with the listing or dispute details.");
                         }}
                         className="flex items-center gap-2.5 w-full text-slate-655 hover:text-slate-800 transition-colors text-left text-xs font-bold p-1 hover:bg-slate-50 rounded-lg cursor-pointer"
                       >
@@ -496,24 +507,8 @@ export default function Navbar() {
                         <div className="flex items-center gap-2 text-slate-600 text-xs font-bold p-1">
                           <span className="text-slate-400 text-sm">✉️</span>
                           <div className="flex flex-col">
-                            <span className="text-[9px] text-slate-400 leading-none">Support</span>
-                            <a href="mailto:support@majhboisar.in" className="text-[11px] text-slate-800 font-black mt-0.5 hover:text-teal-600">support@majhboisar.in</a>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-slate-600 text-xs font-bold p-1">
-                          <span className="text-slate-400 text-sm">📝</span>
-                          <div className="flex flex-col">
-                            <span className="text-[9px] text-slate-400 leading-none">Complaints</span>
-                            <a href="mailto:complaint@majhboisar.in" className="text-[11px] text-slate-800 font-black mt-0.5 hover:text-teal-600">complaint@majhboisar.in</a>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-slate-600 text-xs font-bold p-1">
-                          <span className="text-slate-400 text-sm">📢</span>
-                          <div className="flex flex-col">
-                            <span className="text-[9px] text-slate-400 leading-none">Advertise</span>
-                            <a href="mailto:advertise@majhboisar.in" className="text-[11px] text-slate-800 font-black mt-0.5 hover:text-teal-600">advertise@majhboisar.in</a>
+                            <span className="text-[9px] text-slate-400 leading-none">Official Support &amp; Help</span>
+                            <a href="mailto:majhboisar@gmail.com" className="text-[11px] text-slate-800 font-black mt-0.5 hover:text-teal-600">majhboisar@gmail.com</a>
                           </div>
                         </div>
 
@@ -755,7 +750,7 @@ export default function Navbar() {
                       <button
                         onClick={() => {
                           setHelpDropdownOpen(false);
-                          showToast("Raise a Complaint: Please email complaint@majhboisar.in with details.", "info", 5000);
+                          showToast("Raise a Complaint: Please email majhboisar@gmail.com with details.", "info", 5000);
                         }}
                         className="flex items-center gap-2.5 w-full text-slate-700 hover:text-slate-900 text-xs font-bold p-2 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors"
                       >
@@ -789,8 +784,8 @@ export default function Navbar() {
                         <div className="flex items-center gap-2.5 p-2 bg-slate-50 border border-slate-150 rounded-xl">
                           <span className="text-base">✉️</span>
                           <div className="flex flex-col">
-                            <span className="text-[9px] text-slate-400 font-bold uppercase">Support Email</span>
-                            <a href="mailto:support@majhboisar.in" className="text-xs text-slate-900 font-black hover:text-teal-600">support@majhboisar.in</a>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase">Official Email</span>
+                            <a href="mailto:majhboisar@gmail.com" className="text-xs text-slate-900 font-black hover:text-teal-600">majhboisar@gmail.com</a>
                           </div>
                         </div>
 
@@ -894,20 +889,7 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* 1. App Download & Quick Action */}
-            <Link
-              href="/download-app"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-between px-3 py-1.5 rounded-xl text-[11px] font-black text-teal-900 bg-teal-50 hover:bg-teal-100 transition-colors border border-teal-200 shadow-2xs"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-sm">📱</span>
-                <span>Install Mobile App</span>
-              </div>
-              <span className="bg-teal-600 text-white text-[8.5px] font-black px-1.5 py-0.2 rounded uppercase">APK</span>
-            </Link>
-
-            {/* 2. Main Navigation Links */}
+            {/* 1. Main Navigation Links */}
             <div className="space-y-0.5 bg-slate-50 p-2 rounded-xl border border-slate-200">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block px-1.5 py-0.5">
                 Explore Boisar
@@ -920,7 +902,7 @@ export default function Navbar() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm">🏠</span>
-                  <span>Home / City Directory</span>
+                  <span>Home</span>
                 </div>
                 <ChevronRight className="w-3 h-3 text-slate-400" />
               </Link>
@@ -932,7 +914,7 @@ export default function Navbar() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm">🏨</span>
-                  <span>Hourly Hotels &amp; Day-Stay</span>
+                  <span>Hourly Hotels</span>
                 </div>
                 <span className="text-[8.5px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.2 rounded">3h · 6h</span>
               </Link>
@@ -944,7 +926,7 @@ export default function Navbar() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm">🏊</span>
-                  <span>Resorts &amp; Pool Villas</span>
+                  <span>Resorts &amp; Villas</span>
                 </div>
                 <span className="text-[8.5px] bg-teal-100 text-teal-800 font-bold px-1.5 py-0.2 rounded">Day &amp; Night</span>
               </Link>
@@ -956,7 +938,7 @@ export default function Navbar() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm">💼</span>
-                  <span>Jobs in Boisar &amp; MIDC</span>
+                  <span>Jobs in Boisar</span>
                 </div>
                 <span className="text-[8.5px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded">Hiring</span>
               </Link>
@@ -968,7 +950,7 @@ export default function Navbar() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm">🌟</span>
-                  <span>Content Creators &amp; Influencers</span>
+                  <span>Creators &amp; Influencers</span>
                 </div>
                 <span className="text-[8.5px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.2 rounded">New</span>
               </Link>
@@ -980,13 +962,13 @@ export default function Navbar() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm">🚗</span>
-                  <span>Hire Vehicle (Car, Auto, Bus, Tempo)</span>
+                  <span>Vehicle Rentals</span>
                 </div>
                 <span className="text-[8.5px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.2 rounded">Cab/Auto</span>
               </Link>
             </div>
 
-            {/* 3. Business & Partner Section */}
+            {/* 2. Business & Partner Section */}
             <div className="space-y-0.5 bg-slate-50 p-2 rounded-xl border border-slate-200">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block px-1.5 py-0.5">
                 For Business &amp; Owners
@@ -999,7 +981,7 @@ export default function Navbar() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm">🏪</span>
-                  <span>{hasRegisteredBusiness ? 'My Business Dashboard' : 'Register Your Business'}</span>
+                  <span>{hasRegisteredBusiness ? 'Business Dashboard' : 'List Your Business'}</span>
                 </div>
                 <span className="text-[8.5px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.2 rounded">Free</span>
               </Link>
@@ -1011,7 +993,7 @@ export default function Navbar() {
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm">📢</span>
-                  <span>Promote / Advertise Business</span>
+                  <span>Advertise With Us</span>
                 </div>
                 <ChevronRight className="w-3 h-3 text-slate-400" />
               </Link>
@@ -1280,6 +1262,12 @@ export default function Navbar() {
       <MyHotelPassesModal
         isOpen={isHotelPassesModalOpen}
         onClose={() => setIsHotelPassesModalOpen(false)}
+      />
+
+      {/* In-App Shop & Standee QR Scanner Modal */}
+      <QRScannerModal
+        isOpen={isQRScannerOpen}
+        onClose={() => setIsQRScannerOpen(false)}
       />
     </>
   );

@@ -110,7 +110,7 @@ export default function PrivacyPolicyPage() {
               <p><strong>How to request deletion:</strong></p>
               <ul className="list-disc pl-5 space-y-1">
                 <li><strong>In-App / Self-Service:</strong> If listed as a Blood Donor, click "Unlist Me" on the Blood Donation page. For businesses or jobs, use the Delete option inside your Dashboard.</li>
-                <li><strong>Email Request:</strong> Send an email from your registered email or mentioning your registered mobile number to <strong className="text-rose-700 underline">support@majhboisar.in</strong> or <strong className="text-rose-700 underline">privacy@majhboisar.in</strong> with the subject <em>"Delete My Account"</em>.</li>
+                <li><strong>Email Request:</strong> Send an email mentioning your registered mobile number to <strong className="text-rose-700 underline">majhboisar@gmail.com</strong> with the subject <em>"Delete My Account"</em>.</li>
               </ul>
               <p className="pt-1 text-[11px] text-rose-800 font-medium">
                 Upon receiving your request, all personal data, listing assets, and login records will be permanently deleted from our database within <strong>48 to 72 hours</strong>.
@@ -142,7 +142,7 @@ export default function PrivacyPolicyPage() {
               <p className="text-slate-900 font-black">🏢 Majh Boisar Media &amp; City Directory</p>
               <p>👤 <strong>Grievance Officer:</strong> Data Privacy Desk</p>
               <p>📍 <strong>Registered Address:</strong> Boisar, Palghar District, Maharashtra, India - 401501</p>
-              <p>✉️ <strong>Official Email:</strong> support@majhboisar.in | privacy@majhboisar.in</p>
+              <p>✉️ <strong>Official Email:</strong> majhboisar@gmail.com</p>
               <p>🌐 <strong>Website:</strong> https://majhboisar.in</p>
             </div>
           </div>

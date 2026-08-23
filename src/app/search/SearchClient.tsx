@@ -139,13 +139,18 @@ export default function SearchClient() {
       const res = await fetch(url);
       const data = await res.json();
 
-      // Apply client-side sorting if needed
+      // Apply client-side sorting if needed (Featured / Premium always top)
       let resultData = [...data];
-      if (sortBy === 'rating') {
-        resultData.sort((a, b) => b.rating - a.rating);
-      } else if (sortBy === 'popularity') {
-        resultData.sort((a, b) => (b.views || b.reviewCount) - (a.views || a.reviewCount));
-      }
+      resultData.sort((a, b) => {
+        if (a.premium && !b.premium) return -1;
+        if (!a.premium && b.premium) return 1;
+        if (sortBy === 'rating') {
+          return (b.rating || 0) - (a.rating || 0);
+        } else if (sortBy === 'popularity') {
+          return ((b.views || 0) + (b.reviewCount || 0)) - ((a.views || 0) + (a.reviewCount || 0));
+        }
+        return 0;
+      });
 
       setBusinesses(resultData);
     } catch (e) {
@@ -268,91 +273,48 @@ export default function SearchClient() {
               href={topBannerAd.targetUrl || (topBannerAd.businessId ? `/business/${topBannerAd.businessId}` : 'https://wa.me/917769947217?text=Hello%20Majh%20Boisar!%20I%20want%20to%20advertise%20my%20business.')} 
               target={topBannerAd.targetUrl ? "_blank" : "_self"} 
               rel={topBannerAd.targetUrl ? "noopener noreferrer" : ""} 
-              className="block w-full h-28 sm:h-36 md:h-44 max-h-[180px] relative overflow-hidden bg-slate-950 group flex items-center justify-center"
+              className="block w-full h-20 sm:h-28 md:h-32 max-h-[140px] relative overflow-hidden bg-slate-950 group flex items-center justify-center"
             >
               <img 
                 src={topBannerAd.image} 
                 className="w-full h-full object-contain group-hover:scale-[1.01] transition-transform duration-500" 
                 alt={topBannerAd.title || topBannerAd.businessName || "Sponsored Ad"} 
               />
-              <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded shadow-sm z-30">
+              <div className="absolute top-1.5 right-2 bg-black/60 backdrop-blur-sm text-white text-[7.5px] font-black uppercase tracking-wider px-1 py-0.5 rounded shadow-sm z-30">
                 AD
               </div>
             </a>
-          ) : (
-            /* Fallback Text Banner (When no image is uploaded) */
-            <>
-              {/* Overlay gradient */}
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(20,184,166,0.15),transparent_40%)]"></div>
-              
-              {/* AD Badge */}
-              <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded shadow-sm z-30">
-                AD
-              </div>
-
-              {/* Main content grid */}
-              <div className="relative z-10 w-full h-full flex flex-col sm:flex-row items-center justify-between px-4 sm:px-8 py-3.5 sm:py-5 gap-2 sm:gap-3">
-                {/* Left Column */}
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 sm:h-14 sm:w-14 bg-white/10 rounded-xl flex items-center justify-center border border-white/20 shrink-0 shadow-lg overflow-hidden">
-                    <span className="text-2xl sm:text-3xl drop-shadow-lg">📢</span>
-                  </div>
-                  <div className="text-left">
-                    <span className="bg-[#fcba03] text-slate-900 text-[8px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-wider block w-max mb-1 shadow-sm">
-                      GROW YOUR BUSINESS
-                    </span>
-                    <h3 className="text-base sm:text-xl font-black text-white leading-tight drop-shadow-sm pr-6">
-                      MAJH BOISAR
-                    </h3>
-                    <p className="text-[9px] sm:text-xs text-teal-100 font-medium mt-0.5">
-                      Reach 50,000+ local customers every month!
-                    </p>
-                  </div>
-                </div>
-                {/* Center Call to Action */}
-                <div className="hidden lg:flex flex-col text-center space-y-1">
-                  <span className="text-[10px] sm:text-xs font-black text-teal-200/80 uppercase tracking-widest">
-                    Want More Customers?
-                  </span>
-                  <span className="text-xs sm:text-sm font-black text-[#fcba03] mt-0.5 uppercase tracking-wide">
-                    Get Featured Here!
-                  </span>
-                </div>
-                {/* Right Column Button */}
-                <a
-                  href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar!%20I%20want%20to%20advertise%20my%20business%20on%20your%20website."
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-teal-500 hover:bg-teal-400 text-white font-black text-[10px] sm:text-xs px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer text-center whitespace-nowrap border border-teal-400/50"
-                >
-                  Contact For Ads
-                </a>
-              </div>
-            </>
-          )}
+          ) : null}
         </div>
       </div>
 
-      {/* 3. Main Search Body */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+      {/* 3. Main Search Body - Compact & Clean */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-2 sm:mt-3">
 
         {/* Search Metadata & Header */}
-        <div className="mb-2">
-          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-            Palghar &gt; Boisar directory &gt; {urlCategory || 'Local Services'} in Boisar
-          </p>
-          <h1 className="text-base sm:text-lg font-black text-slate-800 tracking-tight leading-none">
-            {urlCategory || 'Local Services'} in Boisar, Palghar
-          </h1>
+        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-2">
+          <div>
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+              Palghar &gt; Boisar &gt; {urlCategory || 'Local Services'}
+            </p>
+            <h1 className="text-sm sm:text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
+              <span>{urlCategory || 'Local Services'} in Boisar, Palghar</span>
+              {!loading && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                  {businesses.length} {businesses.length === 1 ? 'Listing' : 'Listings'}
+                </span>
+              )}
+            </h1>
+          </div>
         </div>
 
-        {/* Filters Row - Scrollable on mobile */}
-        <div className="flex items-center gap-1.5 mb-4 border-b border-slate-200/60 pb-2 overflow-x-auto whitespace-nowrap scrollbar-hide scroll-smooth">
+        {/* Filters Row - Compact scrollable row */}
+        <div className="flex items-center gap-1.5 mb-2.5 border-b border-slate-200/60 pb-1.5 overflow-x-auto whitespace-nowrap scrollbar-hide scroll-smooth">
           {/* GPS Near Me (1 km) button */}
           <button
             onClick={detectLocation}
             disabled={gettingLocation}
-            className={`px-2.5 py-1.5 rounded-md border text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
+            className={`px-2.5 py-1 rounded-md border text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
               userCoords
                 ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
                 : 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100'
@@ -367,7 +329,7 @@ export default function SearchClient() {
             <select
               value={sortBy}
               onChange={(e: any) => setSortBy(e.target.value)}
-              className="bg-white border border-slate-200 text-slate-700 text-[10px] font-bold px-2 py-1.5 rounded-md shadow-sm focus:outline-none cursor-pointer"
+              className="bg-white border border-slate-200 text-slate-700 text-[10px] font-bold px-2 py-1 rounded-md shadow-2xs focus:outline-none cursor-pointer"
             >
               <option value="none">Sort by</option>
               <option value="rating">Top Rated</option>
@@ -377,9 +339,9 @@ export default function SearchClient() {
 
           <button
             onClick={() => setFilterRating(!filterRating)}
-            className={`px-2 py-1.5 rounded-md border text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${filterRating
+            className={`px-2 py-1 rounded-md border text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${filterRating
                 ? 'bg-teal-50 border-teal-500 text-teal-700 shadow-sm'
-                : 'bg-white border-slate-200 text-slate-655 hover:border-slate-300'
+                : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
               }`}
           >
             <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
@@ -388,9 +350,9 @@ export default function SearchClient() {
 
           <button
             onClick={() => setFilterVerified(!filterVerified)}
-            className={`px-2 py-1.5 rounded-md border text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${filterVerified
+            className={`px-2 py-1 rounded-md border text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${filterVerified
                 ? 'bg-teal-50 border-teal-500 text-teal-700 shadow-sm'
-                : 'bg-white border-slate-200 text-slate-655 hover:border-slate-300'
+                : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
               }`}
           >
             <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />
@@ -398,51 +360,46 @@ export default function SearchClient() {
           </button>
 
           <button
-            onClick={() => alert("Monsoon Deals offer discount coupons applied!")}
-            className="px-2 py-1.5 rounded-md border bg-white border-slate-200 text-slate-655 hover:border-slate-300 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
+            onClick={() => alert("Special offers and discounts are active on verified listings.")}
+            className="px-2 py-1 rounded-md border bg-white border-slate-200 text-slate-600 hover:border-slate-300 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
           >
             <span>% Deals</span>
           </button>
+
+          {/* If userCoords or filter active, show Clear button */}
+          {(userCoords || filterRating || filterVerified || sortBy !== 'none') && (
+            <button
+              onClick={() => {
+                setUserCoords(null);
+                setFilterRating(false);
+                setFilterVerified(false);
+                setSortBy('none');
+              }}
+              className="text-[10px] text-rose-600 hover:underline font-bold ml-1 cursor-pointer shrink-0"
+            >
+              Reset Filters
+            </button>
+          )}
         </div>
 
-        {/* Location Status Notification Banner - Ultra Clean & Compact */}
+        {/* Location Status Banner (Only when GPS active or error) */}
         {userCoords ? (
-          businesses.some(b => b.distanceKm !== null && b.distanceKm !== undefined && b.distanceKm <= 1.0) ? (
-            <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center justify-between mb-3 shadow-2xs">
-              <span className="flex items-center gap-1 truncate">
-                📍 Showing businesses near you (1 km)
-              </span>
-              <button onClick={() => setUserCoords(null)} className="text-[10px] text-emerald-700 hover:underline font-bold cursor-pointer shrink-0 ml-2">
-                Clear
-              </button>
-            </div>
-          ) : (
-            <div className="bg-amber-50/80 border border-amber-200 text-amber-900 px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center justify-between mb-3 shadow-2xs">
-              <span className="flex items-center gap-1 truncate">
-                📍 Showing all Boisar listings
-              </span>
-              <button onClick={() => setUserCoords(null)} className="text-[10px] text-amber-800 hover:underline font-bold cursor-pointer shrink-0 ml-2">
-                Clear
-              </button>
-            </div>
-          )
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 px-2.5 py-0.5 rounded-md text-[10.5px] font-bold flex items-center justify-between mb-2.5 shadow-2xs">
+            <span className="flex items-center gap-1 truncate">
+              📍 Showing listings sorted by distance from your location (1 km)
+            </span>
+            <button onClick={() => setUserCoords(null)} className="text-[10px] text-emerald-700 hover:underline font-bold cursor-pointer shrink-0 ml-2">
+              Clear
+            </button>
+          </div>
         ) : locationError ? (
-          <div className="bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center justify-between mb-3">
+          <div className="bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-0.5 rounded-md text-[10.5px] font-medium flex items-center justify-between mb-2.5">
             <span>⚠️ {locationError}</span>
             <button onClick={detectLocation} className="text-[10px] text-teal-700 underline font-bold cursor-pointer shrink-0 ml-2">
               Try Again
             </button>
           </div>
-        ) : (
-          <div className="bg-slate-50 border border-slate-200 text-slate-600 px-2.5 py-1 rounded-lg text-[11px] font-medium flex items-center justify-between mb-3 shadow-2xs">
-            <span className="flex items-center gap-1 truncate">
-              🔥 Top rated & popular listings in Boisar
-            </span>
-            <button onClick={detectLocation} className="text-[10px] text-teal-700 font-bold hover:underline cursor-pointer flex items-center gap-0.5 shrink-0 ml-2">
-              <MapPin className="w-3 h-3 text-teal-600" /> Near Me (1 km)
-            </button>
-          </div>
-        )}
+        ) : null}
 
         {/* Main Grid Layout (8 cols for listings, 4 cols for sidebar) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -467,92 +424,87 @@ export default function SearchClient() {
               </div>
             ) : businesses.length > 0 ? (
               // Active Listings
-              businesses.map((business) => (
-                <div
-                  key={business.id}
-                  onClick={() => router.push(`/business/${business.id}`)}
-                  className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-5 flex flex-row gap-3 sm:gap-4 shadow-sm hover:shadow-md hover:border-teal-500/35 transition-all duration-200 relative group cursor-pointer"
-                >
-                  {/* Left Column: Business Image */}
-                  <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-xl overflow-hidden shrink-0 border border-slate-100 shadow-inner bg-slate-50 relative mt-0 sm:mt-0 flex items-center justify-center">
-                    <img
-                      src={business.image || '/majh-boisar-mb-logo.png'}
-                      alt=""
-                      aria-hidden="true"
-                      className="absolute inset-0 w-full h-full object-cover blur-sm opacity-20 scale-110 pointer-events-none"
-                    />
-                    <img
-                      src={business.image || '/majh-boisar-mb-logo.png'}
-                      alt={business.name}
-                      onError={(e) => { (e.target as HTMLImageElement).src = '/majh-boisar-mb-logo.png'; }}
-                      className="relative z-10 w-full h-full object-contain p-1 group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
+              businesses.map((business) => {
+                const displayAddress = business.address.toLowerCase().includes((business.location || '').toLowerCase())
+                  ? business.address
+                  : `${business.address}${business.location ? `, ${business.location}` : ''}`;
 
-                  {/* Middle Column: Business Information Details */}
-                  <div className="flex-1 flex flex-col justify-start">
-                    <div className="space-y-1 text-left">
-
-                      {/* Name Header with Thumb-up icon */}
-                      <h3 className="font-extrabold text-sm sm:text-base text-slate-800 leading-tight flex items-center gap-1.5 hover:text-teal-650 transition-colors">
-                        <span className="text-teal-605">👍</span>
-                        <Link href={`/business/${business.id}`} onClick={(e) => e.stopPropagation()}>
-                          {business.name}
-                        </Link>
-                      </h3>
-
-                      {/* Rating block & Tag pills */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="inline-flex items-center gap-0.5 bg-emerald-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded">
-                          <span>{business.rating}</span>
-                          <Star className="w-2.5 h-2.5 fill-white text-white" />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400">
-                          {business.reviewCount} Ratings
-                        </span>
-                        {/* Created by Admin Badge */}
-                        {((business as any).subscription === 'Admin Created' || (business as any).createdBy === 'Admin' || (business as any).postedBy === 'Admin' || (business.description && business.description.includes('[Created by Admin]'))) && (
-                          <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-xs border border-amber-300">
-                            👑 Created by Admin
-                          </span>
-                        )}
-                        {business.views != null && business.views > 0 && (
-                          <span className="bg-amber-50 border border-amber-200 text-amber-700 text-[8px] font-black px-1.5 py-0.5 rounded uppercase">
-                            👁️ {business.views.toLocaleString()} visits
-                          </span>
-                        )}
-                        {business.distanceKm != null && business.distanceKm <= 1.0 ? (
-                          <span className="bg-emerald-100 border border-emerald-300 text-emerald-800 text-[8px] font-black px-1.5 py-0.5 rounded uppercase">
-                            📍 {business.distanceKm} km (Near You)
-                          </span>
-                        ) : business.distanceKm != null ? (
-                          <span className="bg-slate-100 border border-slate-200 text-slate-600 text-[8px] font-medium px-1.5 py-0.5 rounded">
-                            📍 {business.distanceKm} km away
-                          </span>
-                        ) : null}
+                return (
+                  <div
+                    key={business.id}
+                    onClick={() => router.push(`/business/${business.id}`)}
+                    className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs hover:shadow-md hover:border-teal-500/40 transition-all duration-200 relative group cursor-pointer flex flex-col gap-2.5"
+                  >
+                    {/* Top Row: Left Image + Right Details */}
+                    <div className="flex flex-row gap-3 sm:gap-4 items-start">
+                      {/* Left Column: Business Image */}
+                      <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0 border border-slate-100 shadow-2xs bg-slate-50 relative flex items-center justify-center">
+                        <img
+                          src={business.image || '/majh-boisar-mb-logo.png'}
+                          alt=""
+                          aria-hidden="true"
+                          className="absolute inset-0 w-full h-full object-cover blur-xs opacity-20 scale-110 pointer-events-none"
+                        />
+                        <img
+                          src={business.image || '/majh-boisar-mb-logo.png'}
+                          alt={business.name}
+                          onError={(e) => { (e.target as HTMLImageElement).src = '/majh-boisar-mb-logo.png'; }}
+                          className="relative z-10 w-full h-full object-contain p-1 group-hover:scale-105 transition-transform duration-300"
+                        />
                       </div>
 
-                      {/* Address Location block */}
-                      <p className="text-[10.5px] sm:text-xs text-slate-700 font-bold flex items-start gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
-                        <span>{business.address}, {business.location}</span>
-                      </p>
+                      {/* Right Column: Business Information Details */}
+                      <div className="flex-1 min-w-0 space-y-1 text-left">
+                        {/* Name Header */}
+                        <h3 className="font-black text-xs sm:text-base text-slate-800 leading-snug hover:text-teal-700 transition-colors line-clamp-2">
+                          <Link href={`/business/${business.id}`} onClick={(e) => e.stopPropagation()}>
+                            {business.name}
+                          </Link>
+                        </h3>
 
-                      {/* Pill tags of services */}
-                      <div className="flex flex-wrap gap-1 mt-2.5">
-                        <span className="bg-slate-50 border border-slate-150 text-slate-500 text-[8px] font-black px-2 py-0.5 rounded-full">
-                          {business.category}
-                        </span>
-                        {business.services?.slice(0, 2).map((srv) => (
-                          <span key={srv.id} className="bg-teal-50 border border-teal-100 text-teal-600 text-[8px] font-black px-2 py-0.5 rounded-full">
-                            {srv.name}
+                        {/* Rating block & Tag pills */}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <div className="inline-flex items-center gap-0.5 bg-emerald-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-2xs">
+                            <span>{business.rating}</span>
+                            <Star className="w-2.5 h-2.5 fill-white text-white" />
+                          </div>
+                          <span className="text-[10px] font-bold text-slate-400">
+                            {business.reviewCount} Ratings
                           </span>
-                        ))}
+                          {business.views != null && business.views > 0 && (
+                            <span className="bg-amber-50 border border-amber-200 text-amber-700 text-[8px] font-black px-1.5 py-0.5 rounded uppercase">
+                              👁️ {business.views.toLocaleString()} visits
+                            </span>
+                          )}
+                          {business.distanceKm != null && (
+                            <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-[8px] font-black px-1.5 py-0.5 rounded">
+                              📍 {business.distanceKm} km
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Address Location block */}
+                        <p className="text-[10.5px] sm:text-xs text-slate-600 font-medium flex items-start gap-1 line-clamp-2">
+                          <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
+                          <span>{displayAddress}</span>
+                        </p>
+
+                        {/* Pill tags of services */}
+                        <div className="flex flex-wrap gap-1 pt-0.5">
+                          <span className="bg-slate-100 border border-slate-200 text-slate-700 text-[8.5px] font-bold px-2 py-0.5 rounded-md">
+                            {business.category}
+                          </span>
+                          {business.services?.slice(0, 2).map((srv) => (
+                            <span key={srv.id} className="bg-teal-50 border border-teal-200/70 text-teal-700 text-[8.5px] font-bold px-2 py-0.5 rounded-md">
+                              {srv.name}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Action buttons row at the bottom */}
-                    <div className="flex flex-row items-center gap-1 sm:gap-1.5 mt-3 sm:mt-4 w-full">
+                    {/* Bottom Row: Action Buttons Full-Width Strip */}
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2 pt-2 border-t border-slate-100 w-full">
                       {/* Phone button */}
                       <a
                         href={isLoggedIn ? `tel:${business.phone}` : '#'}
@@ -563,10 +515,10 @@ export default function SearchClient() {
                             setLoginModalOpen(true);
                           }
                         }}
-                        className="bg-[#09843c] hover:bg-[#07682f] text-white font-extrabold text-[8.5px] sm:text-[10px] px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-md flex items-center justify-center gap-1 transition-all shadow-sm hover:scale-102 cursor-pointer flex-1 sm:flex-none shrink-0 min-w-0"
+                        className="bg-[#09843c] hover:bg-[#07682f] text-white font-black text-[9.5px] sm:text-xs px-2 py-1.5 rounded-lg flex items-center justify-center gap-1 transition-all shadow-2xs hover:scale-[1.02] cursor-pointer"
                       >
-                        <Phone className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white shrink-0" />
-                        <span className="truncate">{isLoggedIn ? business.phone : 'Show Number'}</span>
+                        <Phone className="w-3 h-3 text-white shrink-0" />
+                        <span className="truncate">{isLoggedIn ? business.phone : 'Call'}</span>
                       </a>
 
                       {/* WhatsApp button */}
@@ -580,9 +532,9 @@ export default function SearchClient() {
                             setLoginModalOpen(true);
                           }
                         }}
-                        className="bg-white border border-[#09843c] text-[#09843c] font-extrabold text-[8.5px] sm:text-[10px] px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-md flex items-center justify-center gap-1 transition-all hover:bg-emerald-50/50 cursor-pointer flex-1 sm:flex-none shrink-0 min-w-0"
+                        className="bg-white border border-[#09843c] text-[#09843c] font-black text-[9.5px] sm:text-xs px-2 py-1.5 rounded-lg flex items-center justify-center gap-1 transition-all hover:bg-emerald-50 cursor-pointer shadow-2xs"
                       >
-                        <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-[#09843c] shrink-0" viewBox="0 0 24 24">
+                        <svg className="w-3 h-3 fill-[#09843c] shrink-0" viewBox="0 0 24 24">
                           <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.965C16.48 2.016 14.005 1.002 11.995 1.002 6.559 1.002 2.135 5.372 2.131 10.801c-.001 1.76.46 3.479 1.336 5.003L2.5 21.53l5.837-1.526-.69.41z" />
                         </svg>
                         <span className="truncate">WhatsApp</span>
@@ -592,19 +544,22 @@ export default function SearchClient() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (!isLoggedIn) {
+                            setLoginModalOpen(true);
+                            return;
+                          }
                           setEnquiryBusiness(business);
                           setEnquiryModalOpen(true);
                         }}
-                        className="bg-[#0076db] hover:bg-[#0062b8] text-white font-extrabold text-[8.5px] sm:text-[10px] px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-md flex items-center justify-center gap-1 transition-all shadow-sm hover:scale-102 cursor-pointer flex-1 sm:flex-none shrink-0 min-w-0"
+                        className="bg-[#0076db] hover:bg-[#0062b8] text-white font-black text-[9.5px] sm:text-xs px-2 py-1.5 rounded-lg flex items-center justify-center gap-1 transition-all shadow-2xs hover:scale-[1.02] cursor-pointer"
                       >
-                        <Mail className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white shrink-0" />
+                        <Mail className="w-3 h-3 text-white shrink-0" />
                         <span className="truncate">Enquiry</span>
                       </button>
                     </div>
-
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               // Empty search state
               <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 text-center shadow-2xs space-y-3">

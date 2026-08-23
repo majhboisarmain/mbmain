@@ -123,7 +123,7 @@ export default function TermsOfServicePage() {
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-1 font-bold text-[11.5px] sm:text-xs text-slate-700">
               <p className="text-slate-900 font-black">🏢 Majh Boisar Support &amp; Legal Desk</p>
               <p>📍 <strong>Address:</strong> Boisar, Palghar, Maharashtra, India - 401501</p>
-              <p>✉️ <strong>Email:</strong> support@majhboisar.in | legal@majhboisar.in</p>
+              <p>✉️ <strong>Email:</strong> majhboisar@gmail.com</p>
               <p>🌐 <strong>Website:</strong> https://majhboisar.in</p>
             </div>
           </div>

@@ -249,7 +249,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-hidden animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[650] flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-hidden animate-in fade-in duration-200">
       <div className="w-[96%] sm:w-full max-w-[620px] h-[58dvh] max-h-[58dvh] sm:h-[65vh] sm:max-h-[65vh] bg-slate-50 flex flex-col rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200">
         
         {/* Header */}

@@ -22,20 +22,17 @@ export const metadata: Metadata = {
   title: "Majh Boisar — Boisar's #1 City Directory & Local Search Engine",
   description: "Official Boisar city directory & local search engine. Find 800+ verified Doctors, Shops, Real Estate Properties, Tempo Helplines, Tarapur MIDC Jobs, Blood Donors & Services in Boisar, Palghar.",
   keywords: [
-    "majh boisar", "majha boisar", "maza boisar", "majhboisar", "majhaboisar", "माझं बोईसर", "माझा बोईसर", "बोईसर", "boisar portal", "boisar city directory", "boisar info",
+    "majh boisar", "majha boisar", "maza boisar", "majhe boisar", "maze boisar", "majhboisar", "majhaboisar", "mazaboisar", "boisar majh", "boisar maza", "boisar majha", "boisar city",
+    "माझं बोईसर", "माझा बोईसर", "माझे बोईसर", "बोईसर माझं", "बोईसर", "boisar portal", "boisar city directory", "boisar info", "boisar local search",
+    "gym near me", "gym in boisar", "best gym in boisar", "fitness center boisar", "protein shop in boisar", "protein and supplements boisar",
     "resorts in boisar", "resorts near boisar", "kelwa beach resort", "kelve beach resort", "dahanu resort", "private pool villa boisar", "palghar resorts", "day picnic resorts near boisar", "weekend resorts near mumbai", "farmhouse on rent in boisar", "waterpark resort near boisar",
-    "boisar hotel", "hotels in boisar", "best hotel in boisar", "couple friendly hotel in boisar", "hourly hotels in boisar", "rooms in boisar", "hotel near boisar railway station", "hotel in tarapur midc", "freesia hotel boisar", "sarovar residency boisar", "budget hotel boisar",
-    "properties in boisar", "flats in boisar", "1 bhk in boisar", "1 bhk flat in boisar", "2 bhk in boisar", "2 bhk flat in boisar", "flats for sale in boisar", "flat for rent in boisar", "house for sale in boisar", "plots in boisar", "real estate agent in boisar", "boisar real estate", "ostwal empire flats",
-    "boisar local directory", "shops in boisar", "doctors in boisar", "hospitals in boisar",
-    "ca in boisar", "gst consultant in boisar", "itr filing boisar", "trademark registration boisar",
-    "shop act licence boisar", "gumasta license boisar", "fssai food license boisar", "business consultancy boisar",
+    "boisar hotel", "hotels in boisar", "best hotel in boisar", "couple friendly hotel in boisar", "hourly hotels in boisar", "rooms in boisar", "hotel near boisar railway station", "hotel in tarapur midc", "budget hotel boisar", "lodge in boisar",
+    "properties in boisar", "flats in boisar", "1 bhk in boisar", "1 bhk flat in boisar", "2 bhk in boisar", "2 bhk flat in boisar", "flats for sale in boisar", "flat for rent in boisar", "plots in boisar", "real estate agent in boisar", "boisar real estate", "ostwal empire flats",
+    "boisar local directory", "shops in boisar", "doctors in boisar", "hospitals in boisar", "clinics in boisar", "pathology lab boisar", "medical store boisar",
     "tarapur midc jobs", "boisar midc job fair", "jobs in boisar", "urgent vacancy in tarapur", "chemical company jobs in tarapur", "tempo service near me", "tempo services in boisar",
-    "chota hathi tempo boisar", "tempo helpline boisar", "car rental in boisar", "travels near me in boisar",
-    "bus timetable boisar", "used items in boisar", "second hand bike boisar", "used furniture boisar",
-    "used mobile buy sell boisar", "student book exchange boisar", "old books in boisar", "10th 12th guides boisar",
-    "home technician near me", "ac repair in boisar", "electrician near me in boisar", "plumber near me in boisar",
-    "coaching classes in boisar", "restaurants in boisar", "beauty parlour in boisar", "gym near me in boisar",
-    "sports turf near me", "game zone in boisar", "boisar blood donors", "blood bank in boisar", "boisar helpline", "tarapur midc directory"
+    "chota hathi tempo boisar", "tempo helpline boisar", "car rental in boisar", "travels near me in boisar", "cab booking boisar", "auto rickshaw boisar",
+    "restaurants in boisar", "food delivery boisar", "best cafe in boisar", "pure veg food boisar", "dhaba in boisar",
+    "blood donation in boisar", "boisar blood donors", "emergency blood boisar", "blood bank in boisar", "boisar helpline", "tarapur midc directory"
   ],
   authors: [{ name: "Majh Boisar" }],
   creator: "Majh Boisar",
@@ -60,10 +57,10 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   openGraph: {
-    title: "Majh Boisar (माझं बोईसर) — #1 Local City Directory & Search Engine",
-    description: "Official Majh Boisar (Majha Boisar) local search engine. Find 800+ verified shops, resorts, hotels, doctors, Tarapur MIDC jobs, properties & blood donors in Boisar, Palghar.",
+    title: "Majh Boisar (माझं बोईसर / Majha Boisar) — #1 City Directory & Search Engine",
+    description: "Official Majh Boisar (Majha Boisar / Maza Boisar) local search engine. Find 800+ verified shops, gyms, resorts, hotels, doctors, Tarapur MIDC jobs, properties & blood donors in Boisar, Palghar.",
     url: "https://majhboisar.in",
-    siteName: "Majh Boisar (माझं बोईसर)",
+    siteName: "Majh Boisar (माझं बोईसर / Majha Boisar)",
     locale: "en_IN",
     type: "website",
     images: [
@@ -77,8 +74,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Majh Boisar (माझं बोईसर) — Boisar's #1 City Portal",
-    description: "Search 800+ verified local shops, resorts, hotels, doctors, tempo helplines, flats & MIDC jobs in Boisar.",
+    title: "Majh Boisar (माझं बोईसर / Majha Boisar) — Boisar's #1 City Portal",
+    description: "Search 800+ verified local shops, gyms, resorts, hotels, doctors, tempo helplines, flats & MIDC jobs in Boisar.",
     images: ["/hero-bg.png"],
   },
   robots: {
@@ -108,12 +105,21 @@ const websiteJsonLd = {
     "Majh Boisar", 
     "Majha Boisar", 
     "Maza Boisar", 
+    "Majhe Boisar",
+    "Maze Boisar",
     "MajhBoisar", 
+    "MajhaBoisar",
+    "MazaBoisar",
     "माझं बोईसर", 
     "माझा बोईसर", 
+    "माझे बोईसर",
+    "बोईसर माझं",
     "बोईसर", 
-    "Majh Boisar Directory", 
-    "Boisar City Search",
+    "Boisar Majh",
+    "Boisar Maza",
+    "Boisar Majha",
+    "Boisar City Directory", 
+    "Boisar Local Search",
     "Boisar Portal"
   ],
   "url": "https://majhboisar.in",
@@ -122,7 +128,7 @@ const websiteJsonLd = {
     "target": "https://majhboisar.in/search?query={search_term_string}",
     "query-input": "required name=search_term_string"
   },
-  "description": "Official Majh Boisar (Majha Boisar / माझं बोईसर) city directory and local search engine. Find resorts, hotels, tempo services, Tarapur MIDC jobs, properties, blood donors, and 800+ businesses in Boisar & Palghar."
+  "description": "Official Majh Boisar (Majha Boisar / Maza Boisar / माझं बोईसर) city directory and local search engine. Find gyms, resorts, hotels, tempo services, Tarapur MIDC jobs, properties, blood donors, and 800+ businesses in Boisar & Palghar."
 };
 
 const organizationJsonLd = {
@@ -403,7 +409,7 @@ export default function RootLayout({
                     <span className="text-slate-300">•</span>
                     <a href="/advertise" className="hover:text-teal-600 transition-colors">Advertise</a>
                     <span className="text-slate-300">•</span>
-                    <a href="mailto:support@majhboisar.in" className="hover:text-teal-600 transition-colors">Help &amp; Support</a>
+                    <a href="mailto:majhboisar@gmail.com" className="hover:text-teal-600 transition-colors">Help &amp; Support</a>
                     <span className="text-slate-300">•</span>
                     <a href="/privacy" className="hover:text-teal-600 transition-colors">Privacy Policy</a>
                     <span className="text-slate-300">•</span>

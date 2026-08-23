@@ -280,24 +280,16 @@ export default function JobsBoard() {
           ))}
 
           {jobs.length === 0 && (
-            <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-8 text-center my-2 space-y-3 shadow-2xs">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center mx-auto text-2xl shadow-2xs">
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 text-center space-y-2.5 shadow-2xs">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 text-slate-400 flex items-center justify-center mx-auto text-xl">
                 💼
               </div>
               <div className="space-y-1">
-                <h4 className="text-sm font-black text-slate-900">No Job Openings Listed Yet</h4>
-                <p className="text-xs text-slate-500 font-medium max-w-sm mx-auto">
-                  Are you an employer or shop owner hiring staff in Boisar? Post your vacancy for free!
+                <h4 className="text-sm font-black text-slate-800">No Job Openings Available Right Now</h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  New job vacancies for Tarapur MIDC &amp; Boisar are updated regularly. Check back shortly!
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={handleOpenPostModal}
-                className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-md transition-all cursor-pointer"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span>+ Post a Job Vacancy in Boisar</span>
-              </button>
             </div>
           )}
         </div>

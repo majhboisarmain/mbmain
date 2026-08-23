@@ -13,8 +13,10 @@ import {
   Building, Eye, Phone, MessageSquare, ClipboardCheck, Sparkles,
   ArrowUpRight, Plus, Trash2, Check, X, ShieldAlert, Award, Star,
   TrendingUp, Activity, Layers, Coins, Globe, Clock, Mail, MapPin,
-  FileText, ArrowRight, ArrowLeft, Briefcase, Trophy, Gamepad2, Edit, Search, Lock, Unlock
+  FileText, ArrowRight, ArrowLeft, Briefcase, Trophy, Gamepad2, Edit, Search, Lock, Unlock, QrCode,
+  Utensils, Bell, Receipt, Printer, Volume2, VolumeX, Coffee
 } from 'lucide-react';
+import BusinessQRStandeeModal from '@/components/BusinessQRStandeeModal';
 const toTitleCase = (str: string) => {
   return str
     .toLowerCase()
@@ -94,12 +96,29 @@ function DashboardContent() {
   const tabParam = searchParams?.get('tab');
   const hotelIdParam = searchParams?.get('hotelId');
   const hotelNameParam = searchParams?.get('hotelName');
+  const bizIdParam = searchParams?.get('bizId') || searchParams?.get('id') || searchParams?.get('businessId');
+
+  const isAdminAuth = Boolean(
+    currentRole === 'Admin' ||
+    loggedInUser?.email === 'admin@majhboisar.in' ||
+    loggedInUser?.email === 'majhboisar@gmail.com' ||
+    loggedInUser?.phone === '9999999999' ||
+    loggedInUser?.phone === '9307294733' ||
+    (loggedInUser?.phone || '').replace(/\D/g, '').endsWith('9307294733') ||
+    (loggedInUser?.name || '').toLowerCase().includes('admin') ||
+    (typeof window !== 'undefined' && (
+      sessionStorage.getItem('majh_boisar_adminmb_auth') === 'unlocked' ||
+      localStorage.getItem('majh_boisar_role') === 'Admin' ||
+      localStorage.getItem('majh_boisar_admin_logged_in') === 'true'
+    ))
+  );
 
   const [businessesList, setBusinessesList] = useState<{ id: number; name: string; category?: string }[]>([]);
-  const [selectedId, setSelectedId] = useState<number>(1);
+  const [selectedId, setSelectedId] = useState<number>(bizIdParam ? Number(bizIdParam) : 1);
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'hotel_bookings' | 'turf_bookings' | 'leads' | 'catalog' | 'reviews' | 'settings' | 'subscription' | 'jobs' | 'property_leads'>(
+  const [isStandeeModalOpen, setIsStandeeModalOpen] = useState(false);
+  const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'hotel_bookings' | 'turf_bookings' | 'kitchen_orders' | 'leads' | 'catalog' | 'reviews' | 'settings' | 'subscription' | 'jobs' | 'property_leads'>(
     (tabParam as any) || (hotelIdParam || hotelNameParam ? 'hotel_bookings' : 'analytics')
   );
 
@@ -167,7 +186,7 @@ function DashboardContent() {
   }, [hotelIdParam, hotelNameParam, currentRole, loggedInUser]);
 
   useEffect(() => {
-    if (tabParam && ['analytics', 'hotel_bookings', 'turf_bookings', 'leads', 'catalog', 'reviews', 'settings', 'subscription', 'jobs', 'property_leads'].includes(tabParam)) {
+    if (tabParam && ['analytics', 'hotel_bookings', 'turf_bookings', 'kitchen_orders', 'leads', 'catalog', 'reviews', 'settings', 'subscription', 'jobs', 'property_leads'].includes(tabParam)) {
       setActiveSubTab(tabParam as any);
     }
   }, [tabParam]);
@@ -883,6 +902,212 @@ function DashboardContent() {
     }
   };
 
+  // ── LIVE KITCHEN ORDER & TABLE KDS STATE FOR RESTAURANTS / CAFES ──
+  const [kitchenAudioEnabled, setKitchenAudioEnabled] = useState(true);
+  const [kitchenOrdersFilter, setKitchenOrdersFilter] = useState<'all' | 'dinein' | 'delivery' | 'new' | 'cooking' | 'ready' | 'history'>('all');
+  const [newManualOrderTable, setNewManualOrderTable] = useState('1');
+  const [newManualOrderDiner, setNewManualOrderDiner] = useState('');
+  const [newManualOrderItems, setNewManualOrderItems] = useState('');
+  const [newManualOrderAmount, setNewManualOrderAmount] = useState('');
+  const [newManualOrderNotes, setNewManualOrderNotes] = useState('');
+  const [isManualOrderModalOpen, setIsManualOrderModalOpen] = useState(false);
+
+  const defaultKitchenOrders: any[] = [
+    {
+      id: 'ORD-301',
+      tableNumber: '3',
+      customerName: 'Rahul Sharma',
+      customerPhone: '9823456789',
+      time: 'Just now',
+      timestamp: Date.now() - 120000,
+      items: [
+        { name: 'Peri-Peri Paneer Sizzler', count: 1, price: 280, isVeg: true, done: true },
+        { name: 'Hazelnut Cold Coffee', count: 2, price: 140, isVeg: true, done: false },
+        { name: 'Alfredo White Sauce Pasta', count: 1, price: 220, isVeg: true, done: false }
+      ],
+      totalAmount: 780,
+      status: 'cooking',
+      notes: 'Less spicy, please serve coffee first!'
+    },
+    {
+      id: 'ORD-302',
+      tableNumber: '1',
+      customerName: 'Priya & Friends',
+      customerPhone: '9022388123',
+      time: '3m ago',
+      timestamp: Date.now() - 180000,
+      items: [
+        { name: 'Mysore Masala Dosa', count: 2, price: 110, isVeg: true, done: false },
+        { name: 'Filter Coffee', count: 2, price: 40, isVeg: true, done: false }
+      ],
+      totalAmount: 300,
+      status: 'new',
+      notes: 'Extra coconut chutney'
+    },
+    {
+      id: 'ORD-303',
+      tableNumber: '5',
+      customerName: 'Aman Verma',
+      customerPhone: '9307294733',
+      time: '12m ago',
+      timestamp: Date.now() - 720000,
+      items: [
+        { name: 'Monster Cheese Volcano Burger', count: 1, price: 180, isVeg: true, done: true },
+        { name: 'Peri Peri Loaded Fries', count: 1, price: 120, isVeg: true, done: true },
+        { name: 'Oreo Nutella Freakshake', count: 1, price: 160, isVeg: true, done: true }
+      ],
+      totalAmount: 460,
+      status: 'ready',
+      notes: 'Extra tissue papers & ketchup'
+    },
+    {
+      id: 'ORD-300',
+      tableNumber: '2',
+      customerName: 'Vikas Gupta',
+      customerPhone: '9876543210',
+      time: '35m ago',
+      timestamp: Date.now() - 2100000,
+      items: [
+        { name: 'Special Gujarati Unlimited Thali', count: 2, price: 180, isVeg: true, done: true },
+        { name: 'Sweet Lassi', count: 2, price: 60, isVeg: true, done: true }
+      ],
+      totalAmount: 480,
+      status: 'completed',
+      notes: 'Paid via GPay QR at Table'
+    }
+  ];
+
+  const [kitchenOrdersList, setKitchenOrdersList] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(`majh_boisar_kitchen_orders_${selectedId}`);
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) {}
+      }
+    }
+    return defaultKitchenOrders;
+  });
+
+  // Live Kitchen Orders Listener & Notification Sound Alert
+  useEffect(() => {
+    const handleNewFoodOrder = (event?: any) => {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem(`majh_boisar_kitchen_orders_${selectedId}`);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            setKitchenOrdersList(parsed);
+          } catch (e) {}
+        }
+        playKitchenChime();
+        if (event?.detail) {
+          const ord = event.detail;
+          const typeLabel = ord.orderType === 'delivery' ? '🛵 Home Delivery' : `🪑 ${ord.tableNumber ? `Table #${ord.tableNumber}` : 'Table'}`;
+          showToast(`🔔 New Food Order Received! ${typeLabel} • ${ord.customerName || 'Customer'} (₹${ord.totalAmount})`, 'success', 6000);
+        }
+      }
+    };
+
+    window.addEventListener('majh_boisar_new_food_order', handleNewFoodOrder);
+    window.addEventListener('storage', handleNewFoodOrder);
+    return () => {
+      window.removeEventListener('majh_boisar_new_food_order', handleNewFoodOrder);
+      window.removeEventListener('storage', handleNewFoodOrder);
+    };
+  }, [selectedId]);
+
+  const saveKitchenOrders = (orders: any[]) => {
+    setKitchenOrdersList(orders);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`majh_boisar_kitchen_orders_${selectedId}`, JSON.stringify(orders));
+    }
+  };
+
+  const playKitchenChime = () => {
+    if (!kitchenAudioEnabled) return;
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.6);
+    } catch (e) {}
+  };
+
+  const handleUpdateOrderStatus = (orderId: string, newStatus: 'new' | 'cooking' | 'ready' | 'completed') => {
+    const updated = kitchenOrdersList.map(o => {
+      if (o.id === orderId) {
+        return { ...o, status: newStatus };
+      }
+      return o;
+    });
+    saveKitchenOrders(updated);
+    if (newStatus === 'cooking') showToast('👨‍🍳 Order sent to Chef — In Kitchen!', 'info');
+    else if (newStatus === 'ready') showToast('🍽️ Food is Ready to Serve to Table!', 'success');
+    else if (newStatus === 'completed') showToast('🧾 Table Bill Closed & Cleared!', 'success');
+  };
+
+  const handleToggleDishDone = (orderId: string, dishIdx: number) => {
+    const updated = kitchenOrdersList.map(o => {
+      if (o.id === orderId) {
+        const newItems = o.items.map((it: any, i: number) => i === dishIdx ? { ...it, done: !it.done } : it);
+        return { ...o, items: newItems };
+      }
+      return o;
+    });
+    saveKitchenOrders(updated);
+  };
+
+  const handleCreateManualOrder = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newManualOrderTable.trim() || !newManualOrderItems.trim()) {
+      alert('Please fill Table number and ordered items.');
+      return;
+    }
+
+    const parsedItems: any[] = [];
+    newManualOrderItems.split(/[,\n]+/).forEach(itemStr => {
+      const trimmed = itemStr.trim();
+      if (!trimmed) return;
+      const parts = trimmed.split(/[-–:]/);
+      const name = parts[0]?.trim() || trimmed;
+      const price = parts[1]?.trim() ? parseInt(parts[1].replace(/\D/g, ''), 10) || 120 : 120;
+      parsedItems.push({ name, count: 1, price, isVeg: true, done: false });
+    });
+
+    const calcTotal = parsedItems.reduce((sum, it) => sum + it.price * it.count, 0);
+
+    const newOrder = {
+      id: `ORD-${Math.floor(100 + Math.random() * 900)}`,
+      tableNumber: newManualOrderTable.trim(),
+      customerName: newManualOrderDiner.trim() || 'Walk-in Diner',
+      customerPhone: '',
+      time: 'Just now',
+      timestamp: Date.now(),
+      items: parsedItems,
+      totalAmount: parseInt(newManualOrderAmount, 10) || calcTotal || 350,
+      status: 'new',
+      notes: newManualOrderNotes.trim()
+    };
+
+    const updated = [newOrder, ...kitchenOrdersList];
+    saveKitchenOrders(updated);
+    playKitchenChime();
+    setIsManualOrderModalOpen(false);
+    setNewManualOrderTable('1');
+    setNewManualOrderDiner('');
+    setNewManualOrderItems('');
+    setNewManualOrderAmount('');
+    setNewManualOrderNotes('');
+    showToast(`🔔 New Order added for Table #${newOrder.tableNumber}!`, 'success');
+  };
+
   // ── FULL HOTEL PROFILE & PHOTO GALLERY STATE FOR DASHBOARD ──
   const [hotelProfileName, setHotelProfileName] = useState('Freesia by Express Inn');
   const [hotelProfileCategory, setHotelProfileCategory] = useState('Luxury Resort');
@@ -1577,7 +1802,7 @@ function DashboardContent() {
 
   // Fetch list of businesses to select from
   const fetchBusinessesList = async () => {
-    if (!isLoggedIn) {
+    if (!isLoggedIn && !isAdminAuth) {
       setLoading(false);
       return;
     }
@@ -1590,10 +1815,7 @@ function DashboardContent() {
         return;
       }
 
-      const isAdmin = currentRole === 'Admin' || 
-        loggedInUser?.email === 'admin@majhboisar.in' || 
-        loggedInUser?.phone === '9999999999' || 
-        (loggedInUser?.name || '').toLowerCase().includes('admin');
+      const isAdmin = isAdminAuth;
 
       if (isAdmin) {
         const hotelItems = getAllHotels().map((h, i) => ({
@@ -1610,6 +1832,15 @@ function DashboardContent() {
         ];
 
         setBusinessesList(combined);
+
+        if (bizIdParam) {
+          const targetId = Number(bizIdParam);
+          const matchBiz = combined.find((b: any) => b.id === targetId);
+          if (matchBiz) {
+            setSelectedId(matchBiz.id);
+            return;
+          }
+        }
 
         if (hotelIdParam || hotelNameParam) {
           const matchHotel = combined.find((b: any) => 
@@ -1657,17 +1888,30 @@ function DashboardContent() {
           if (currentRole === 'User') {
             setRole('BusinessOwner');
           }
-          const latestId = savedIds.length > 0 ? savedIds[savedIds.length - 1] : myBizList[myBizList.length - 1].id;
-          const isValidCurrent = selectedId && myBizList.some((b: any) => b.id === selectedId);
-          const targetId = isValidCurrent ? selectedId : (myBizList.some((b: any) => b.id === latestId) ? latestId : myBizList[0].id);
-          setSelectedId(targetId);
-        } else if (data.length > 0 && (hasRegisteredBusiness || currentRole === 'BusinessOwner')) {
-          setBusinessesList(data.slice(0, 5).map((b: any) => ({ id: b.id, name: b.name, category: b.category })));
-          setSelectedId(data[0].id);
+
+          if (bizIdParam) {
+            const targetId = Number(bizIdParam);
+            const foundParamBiz = myBizList.find((b: any) => b.id === targetId);
+            if (foundParamBiz) {
+              setSelectedId(foundParamBiz.id);
+            } else {
+              showToast('🔒 Access Restricted: You can only view and manage your own registered business listings.', 'error');
+              setSelectedId(myBizList[0].id);
+            }
+          } else {
+            const latestId = savedIds.length > 0 ? savedIds[savedIds.length - 1] : myBizList[myBizList.length - 1].id;
+            const isValidCurrent = selectedId && myBizList.some((b: any) => b.id === selectedId);
+            const targetId = isValidCurrent ? selectedId : (myBizList.some((b: any) => b.id === latestId) ? latestId : myBizList[0].id);
+            setSelectedId(targetId);
+          }
         } else {
+          if (bizIdParam) {
+            showToast('🔒 Access Restricted: Only the verified owner or Super Admin can access this business dashboard.', 'error');
+          }
           setBusinessesList([]);
           setSelectedId(0);
           setBusiness(null);
+          setHasRegisteredBusiness(false);
         }
       }
     } catch (e) {
@@ -1681,6 +1925,14 @@ function DashboardContent() {
     if (!selectedId || selectedId === 0) {
       setBusiness(null);
       setLoading(false);
+      return;
+    }
+
+    // Security Gate: If not admin, ensure selectedId belongs to the user's authorized businesses
+    if (!isAdminAuth && businessesList.length > 0 && !businessesList.some(b => b.id === selectedId)) {
+      setBusiness(null);
+      setLoading(false);
+      showToast('🔒 Access Denied: You do not have permission to view or edit this business dashboard.', 'error');
       return;
     }
 
@@ -1752,6 +2004,13 @@ function DashboardContent() {
     try {
       const res = await fetch(`/api/businesses/${selectedId}`);
       if (!res.ok) {
+        if (isAdminAuth) {
+          const allH = getAllHotels();
+          if (allH.length > 0) {
+            setSelectedId(99000);
+            return;
+          }
+        }
         setBusiness(null);
         setLoading(false);
         return;
@@ -1818,16 +2077,16 @@ function DashboardContent() {
   };
 
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn || isAdminAuth) {
       fetchBusinessesList();
     }
-  }, [isLoggedIn, currentRole]);
+  }, [isLoggedIn, currentRole, isAdminAuth, bizIdParam]);
 
   useEffect(() => {
-    if (isLoggedIn && selectedId) {
+    if ((isLoggedIn || isAdminAuth) && selectedId) {
       fetchBusinessData();
     }
-  }, [selectedId, isLoggedIn]);
+  }, [selectedId, isLoggedIn, isAdminAuth]);
 
   // Edit profile settings details submission
   const handleUpdateProfileSubmit = async (e: React.FormEvent) => {
@@ -2223,6 +2482,9 @@ function DashboardContent() {
       // Fetch the user's businesses and switch to their new listing
       await fetchBusinessesList();
       setSelectedId(createdObj.id);
+
+      // Auto-open Official Printable QR Standee for the business owner!
+      setIsStandeeModalOpen(true);
     } catch (err: any) {
       setCreateBizError(err.message || 'Error occurred while creating business listing.');
     } finally {
@@ -2230,8 +2492,8 @@ function DashboardContent() {
     }
   };
 
-  // 1. Render unauthorized view if not logged in
-  if (!isLoggedIn) {
+  // 1. Render unauthorized view if not logged in and not admin
+  if (!isLoggedIn && !isAdminAuth) {
     return (
       <div className="flex-1 bg-[#f8fafc] flex flex-col items-center justify-center py-20 px-4 text-slate-800">
         <div className="max-w-md w-full bg-white border border-slate-200 p-8 rounded-3xl text-center space-y-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 text-left">
@@ -2257,7 +2519,7 @@ function DashboardContent() {
 
   // 2. If logged in but has NO registered business, show the inline Business Registration Wizard
   //    This is triggered when user clicks "Register Your Business" in the navbar.
-  if (isLoggedIn && !hasRegisteredBusiness && currentRole !== 'Admin' && !specialProfile) {
+  if (isLoggedIn && !hasRegisteredBusiness && currentRole !== 'Admin' && !isAdminAuth && !specialProfile) {
     return (
       <div className="min-h-screen bg-[#f8fafc] py-12 text-slate-800">
         <div className="max-w-xl mx-auto px-4">
@@ -3549,8 +3811,19 @@ function DashboardContent() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 text-xs shrink-0">
-                    <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2 sm:gap-3 text-xs shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setIsStandeeModalOpen(true)}
+                      className="bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-black text-[10.5px] px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95"
+                      title="Download Official Printable QR Standee for Your Counter"
+                    >
+                      <QrCode className="w-3.5 h-3.5 text-amber-700" />
+                      <span className="hidden sm:inline">Official</span>
+                      <span>QR Standee</span>
+                    </button>
+
+                    <div className="hidden sm:flex items-center gap-1">
                       <Award className="w-3.5 h-3.5 text-rose-500" />
                       <span className="text-[10px] text-slate-400 font-bold">Plan:</span>
                       <strong className="text-rose-600 font-black text-[11px] uppercase">{business.subscription}</strong>
@@ -3584,8 +3857,25 @@ function DashboardContent() {
                     bizNameLower.includes('resort')
                   );
 
+                  const isFoodBusiness = !isHospital && (
+                    bizCatLower.includes('restaurant') ||
+                    bizCatLower.includes('cafe') ||
+                    bizCatLower.includes('food') ||
+                    bizCatLower.includes('dining') ||
+                    bizCatLower.includes('dhaba') ||
+                    bizCatLower.includes('pizza') ||
+                    bizCatLower.includes('bakery') ||
+                    bizCatLower.includes('seafood') ||
+                    bizCatLower.includes('hotel / food') ||
+                    bizNameLower.includes('cafe') ||
+                    bizNameLower.includes('restaurant') ||
+                    bizNameLower.includes('food') ||
+                    bizNameLower.includes('dhaba')
+                  );
+
                   const tabsList = [
                     { val: 'analytics', label: 'Analytics', icon: <Activity className="w-3.5 h-3.5" /> },
+                    ...(isFoodBusiness ? [{ val: 'kitchen_orders', label: `🍽️ Kitchen KDS (${kitchenOrdersList.filter(o => o.status !== 'completed').length})`, icon: <Utensils className="w-3.5 h-3.5 text-orange-600" /> }] : []),
                     ...(isHotelBusiness ? [{ val: 'hotel_bookings', label: `🏨 Hotel Bookings (${hotelBookingsList.length})`, icon: <Building className="w-3.5 h-3.5" /> }] : []),
                     ...(isTurfBusiness ? [{ val: 'turf_bookings', label: `⚽ Turf Bookings (${turfBookingsList.length})`, icon: <Trophy className="w-3.5 h-3.5" /> }] : []),
                     { val: 'leads', label: `Leads (${(business.leads || []).length})`, icon: <ClipboardCheck className="w-3.5 h-3.5" /> },
@@ -3614,6 +3904,561 @@ function DashboardContent() {
                     </div>
                   );
                 })()}
+
+                {/* ── SUBTAB CONTENT: 🍽️ LIVE KITCHEN KDS & TABLE ORDERS DASHBOARD ── */}
+                {activeSubTab === 'kitchen_orders' && (
+                  <div className="space-y-5 text-left animate-fade-in">
+                    
+                    {/* Header Controls */}
+                    <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-2xs space-y-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                            <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight flex items-center gap-2">
+                              <span>🍽️ Live Kitchen Display System (KDS)</span>
+                            </h2>
+                          </div>
+                          <p className="text-xs text-slate-500 font-medium">
+                            Real-time table orders from Tabletop QR Standees, Chef KOT tickets &amp; Bill settlements
+                          </p>
+                        </div>
+
+                        {/* Top Action Buttons */}
+                        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+                          {/* Audio Bell Toggle */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setKitchenAudioEnabled(!kitchenAudioEnabled);
+                              if (!kitchenAudioEnabled) playKitchenChime();
+                            }}
+                            className={`px-3 py-2 rounded-xl text-xs font-black border transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs ${
+                              kitchenAudioEnabled 
+                                ? 'bg-amber-50 text-amber-900 border-amber-300' 
+                                : 'bg-slate-50 text-slate-500 border-slate-200'
+                            }`}
+                            title="Toggle sound chime on new orders"
+                          >
+                            {kitchenAudioEnabled ? <Volume2 className="w-3.5 h-3.5 text-amber-600" /> : <VolumeX className="w-3.5 h-3.5 text-slate-400" />}
+                            <span>Sound: {kitchenAudioEnabled ? 'ON' : 'OFF'}</span>
+                          </button>
+
+                          {/* Print Table QR Standees */}
+                          <button
+                            type="button"
+                            onClick={() => setIsStandeeModalOpen(true)}
+                            className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                          >
+                            <QrCode className="w-3.5 h-3.5" />
+                            <span>Print Table QRs</span>
+                          </button>
+
+                          {/* Add Manual Order */}
+                          <button
+                            type="button"
+                            onClick={() => setIsManualOrderModalOpen(true)}
+                            className="bg-slate-900 hover:bg-black text-white font-black text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                          >
+                            <Plus className="w-3.5 h-3.5 text-amber-400" />
+                            <span>+ New Table Order</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 4 Summary Metric Counters */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                        <div className="bg-amber-50/80 border border-amber-200 p-3 rounded-2xl">
+                          <span className="text-[9.5px] font-black text-amber-900 uppercase tracking-wider block">Active Dine-In</span>
+                          <span className="text-xl font-black text-amber-950 mt-0.5 block">
+                            🪑 {kitchenOrdersList.filter(o => o.status !== 'completed' && o.orderType !== 'delivery').length} Tables
+                          </span>
+                        </div>
+
+                        <div className="bg-emerald-50/80 border border-emerald-200 p-3 rounded-2xl">
+                          <span className="text-[9.5px] font-black text-emerald-900 uppercase tracking-wider block">Home Delivery</span>
+                          <span className="text-xl font-black text-emerald-950 mt-0.5 block">
+                            🛵 {kitchenOrdersList.filter(o => o.status !== 'completed' && o.orderType === 'delivery').length} Orders
+                          </span>
+                        </div>
+
+                        <div className="bg-blue-50/80 border border-blue-200 p-3 rounded-2xl">
+                          <span className="text-[9.5px] font-black text-blue-900 uppercase tracking-wider block">Cooking / In Kitchen</span>
+                          <span className="text-xl font-black text-blue-950 mt-0.5 block">
+                            👨‍🍳 {kitchenOrdersList.filter(o => o.status === 'cooking').length} Orders
+                          </span>
+                        </div>
+
+                        <div className="bg-purple-50/80 border border-purple-200 p-3 rounded-2xl">
+                          <span className="text-[9.5px] font-black text-purple-800 uppercase tracking-wider block">Today&apos;s Food Revenue</span>
+                          <span className="text-xl font-black text-purple-950 mt-0.5 block">
+                            ₹{kitchenOrdersList.reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Filter Switcher Tabs */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                      {[
+                        { id: 'all', label: 'All Active Orders', count: kitchenOrdersList.filter(o => o.status !== 'completed').length },
+                        { id: 'dinein', label: '🪑 Dine-In', count: kitchenOrdersList.filter(o => o.status !== 'completed' && o.orderType !== 'delivery').length },
+                        { id: 'delivery', label: '🛵 Home Delivery', count: kitchenOrdersList.filter(o => o.status !== 'completed' && o.orderType === 'delivery').length },
+                        { id: 'new', label: '🟡 New / Unattended', count: kitchenOrdersList.filter(o => o.status === 'new').length },
+                        { id: 'cooking', label: '👨‍🍳 Cooking in Kitchen', count: kitchenOrdersList.filter(o => o.status === 'cooking').length },
+                        { id: 'ready', label: '🟢 Ready to Dispatch', count: kitchenOrdersList.filter(o => o.status === 'ready').length },
+                        { id: 'history', label: '🧾 Recent Completed Orders', count: kitchenOrdersList.filter(o => o.status === 'completed').length },
+                      ].map((tab) => {
+                        const isSelected = kitchenOrdersFilter === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            onClick={() => setKitchenOrdersFilter(tab.id as any)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap border shrink-0 ${
+                              isSelected
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-xs scale-102'
+                                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span>{tab.label}</span>
+                            <span className={`ml-1.5 text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                              {tab.count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* ── KITCHEN DISPLAY ORDER CARDS (ACTIVE ORDERS) ── */}
+                    {kitchenOrdersFilter !== 'history' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {kitchenOrdersList
+                          .filter(order => {
+                            if (order.status === 'completed') return false;
+                            if (kitchenOrdersFilter === 'dinein') return order.orderType !== 'delivery';
+                            if (kitchenOrdersFilter === 'delivery') return order.orderType === 'delivery';
+                            if (kitchenOrdersFilter === 'new') return order.status === 'new';
+                            if (kitchenOrdersFilter === 'cooking') return order.status === 'cooking';
+                            if (kitchenOrdersFilter === 'ready') return order.status === 'ready';
+                            return true;
+                          })
+                          .map((order) => {
+                            const isNew = order.status === 'new';
+                            const isCooking = order.status === 'cooking';
+                            const isReady = order.status === 'ready';
+                            const isDelivery = order.orderType === 'delivery';
+
+                            return (
+                              <div
+                                key={order.id}
+                                className={`bg-white rounded-3xl border-2 overflow-hidden shadow-md flex flex-col justify-between transition-all ${
+                                  isNew 
+                                    ? 'border-amber-400 ring-2 ring-amber-400/20' 
+                                    : isCooking 
+                                    ? 'border-blue-400' 
+                                    : 'border-emerald-500'
+                                }`}
+                              >
+                                <div>
+                                  {/* Card Header with Table # / Delivery & Status Badge */}
+                                  <div className={`p-3.5 flex items-center justify-between text-white ${
+                                    isDelivery
+                                      ? 'bg-gradient-to-r from-emerald-700 to-teal-800'
+                                      : isNew 
+                                      ? 'bg-gradient-to-r from-amber-600 to-yellow-600' 
+                                      : isCooking 
+                                      ? 'bg-gradient-to-r from-blue-700 to-indigo-700' 
+                                      : 'bg-gradient-to-r from-emerald-600 to-teal-700'
+                                  }`}>
+                                    <div className="flex items-center gap-2">
+                                      <span className={`font-black text-xs px-2.5 py-1 rounded-xl shadow-xs ${
+                                        isDelivery ? 'bg-amber-300 text-slate-950' : 'bg-white text-slate-950'
+                                      }`}>
+                                        {isDelivery ? '🛵 HOME DELIVERY' : `🪑 TABLE #${order.tableNumber || '1'}`}
+                                      </span>
+                                      <span className="text-[11px] font-bold opacity-90 truncate max-w-[120px]">
+                                        {order.customerName || 'Customer'}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[10px] font-black bg-black/30 backdrop-blur-md px-2 py-0.5 rounded-lg text-white">
+                                        {order.time}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Delivery Address & Contact Row */}
+                                  {isDelivery && order.deliveryAddress && (
+                                    <div className="bg-emerald-50 border-b border-emerald-200 px-3.5 py-2 space-y-1 text-xs">
+                                      <div className="flex items-start gap-1.5 text-emerald-950">
+                                        <span className="shrink-0 mt-0.5">📍</span>
+                                        <span className="font-bold leading-tight">{order.deliveryAddress}</span>
+                                      </div>
+                                      {order.customerPhone && (
+                                        <div className="flex items-center justify-between pt-1">
+                                          <span className="font-mono text-[11px] text-emerald-800 font-bold">
+                                            📞 +91 {order.customerPhone}
+                                          </span>
+                                          <div className="flex items-center gap-1">
+                                            <a
+                                              href={`tel:${order.customerPhone}`}
+                                              className="bg-emerald-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-md hover:bg-emerald-800"
+                                            >
+                                              Call
+                                            </a>
+                                            <a
+                                              href={`https://wa.me/91${order.customerPhone}?text=${encodeURIComponent(`Hi ${order.customerName}, your food order from ${business?.name || 'Restaurant'} is being prepared!`)}`}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="bg-[#25D366] text-white text-[10px] font-bold px-2 py-0.5 rounded-md hover:bg-[#20bd5a]"
+                                            >
+                                              WhatsApp
+                                            </a>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Special Chef Note / Instructions */}
+                                  {order.notes && (
+                                    <div className="bg-amber-50 border-b border-amber-200 px-3.5 py-1.5 flex items-center gap-1.5 text-[11px] font-extrabold text-amber-950">
+                                      <span>📝</span>
+                                      <span className="truncate">Note: {order.notes}</span>
+                                    </div>
+                                  )}
+
+                                  {/* Dish Checklist for Cook / Kitchen */}
+                                  <div className="p-3.5 space-y-2">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
+                                      Items to Prepare ({order.items.length})
+                                    </span>
+
+                                    <div className="space-y-1.5">
+                                      {order.items.map((it: any, idx: number) => (
+                                        <div
+                                          key={idx}
+                                          onClick={() => handleToggleDishDone(order.id, idx)}
+                                          className={`p-2 rounded-xl border flex items-center justify-between gap-2 text-xs transition-all cursor-pointer ${
+                                            it.done 
+                                              ? 'bg-slate-100/80 border-slate-200 text-slate-400 line-through opacity-70' 
+                                              : 'bg-slate-50 border-slate-200/90 text-slate-900 font-bold hover:bg-slate-100'
+                                          }`}
+                                        >
+                                          <div className="flex items-center gap-2 min-w-0">
+                                            <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center text-[9px] shrink-0 font-black ${
+                                              it.done ? 'bg-emerald-600 text-white border-emerald-600' : 'border-slate-400 bg-white'
+                                            }`}>
+                                              {it.done && '✓'}
+                                            </span>
+                                            <span className="truncate">{it.name}</span>
+                                          </div>
+                                          <span className="font-black text-slate-950 shrink-0 bg-white px-2 py-0.5 rounded-lg border border-slate-200 text-[11px]">
+                                            x {it.count}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+
+                                    {/* Total Bill Preview */}
+                                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                                      <span className="text-slate-500 font-bold">Total Bill:</span>
+                                      <span className="font-black text-slate-950 text-sm">₹{order.totalAmount}</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Order Action Transition Controls */}
+                                <div className="p-3 bg-slate-50 border-t border-slate-100 space-y-1.5">
+                                  {isNew && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateOrderStatus(order.id, 'cooking')}
+                                      className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs py-2.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                                    >
+                                      <span>👨‍🍳 Start Cooking (Send to Chef)</span>
+                                    </button>
+                                  )}
+
+                                  {isCooking && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateOrderStatus(order.id, 'ready')}
+                                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-2.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                                    >
+                                      <span>🍽️ Food Ready / Serve Table</span>
+                                    </button>
+                                  )}
+
+                                  {isReady && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateOrderStatus(order.id, 'completed')}
+                                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-2.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                                    >
+                                      <Receipt className="w-3.5 h-3.5" />
+                                      <span>🧾 Bill Paid &amp; Clear Table</span>
+                                    </button>
+                                  )}
+
+                                  <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const printContent = `
+                                          <html>
+                                          <head><title>KOT Ticket - Table ${order.tableNumber}</title>
+                                          <style>
+                                            body { font-family: monospace; padding: 20px; text-align: center; }
+                                            .header { font-size: 16px; font-weight: bold; border-bottom: 2px dashed #000; padding-bottom: 8px; margin-bottom: 12px; }
+                                            .item { display: flex; justify-content: space-between; font-size: 14px; margin: 6px 0; }
+                                            .footer { border-top: 2px dashed #000; margin-top: 12px; padding-top: 8px; font-weight: bold; }
+                                          </style>
+                                          </head>
+                                          <body>
+                                            <div class="header">
+                                              <h2>${business?.name || 'Restaurant'}</h2>
+                                              <h3>TABLE #${order.tableNumber}</h3>
+                                              <p>Time: ${order.time} | Order: ${order.id}</p>
+                                            </div>
+                                            <div style="text-align:left;">
+                                              ${order.items.map((it: any) => `<div class="item"><span>${it.name} x ${it.count}</span><span>₹${it.price * it.count}</span></div>`).join('')}
+                                            </div>
+                                            <div class="footer">
+                                              <p>TOTAL BILL: ₹${order.totalAmount}</p>
+                                              ${order.notes ? `<p>Note: ${order.notes}</p>` : ''}
+                                            </div>
+                                          </body>
+                                          </html>
+                                        `;
+                                        const win = window.open('', '', 'width=400,height=600');
+                                        if (win) {
+                                          win.document.write(printContent);
+                                          win.document.close();
+                                          win.print();
+                                        }
+                                      }}
+                                      className="bg-white hover:bg-slate-100 text-slate-700 font-black text-[10.5px] py-1.5 rounded-lg border border-slate-200 flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                                    >
+                                      <Printer className="w-3 h-3 text-slate-500" />
+                                      <span>Print KOT</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const phone = order.customerPhone || business?.whatsapp || '9307294733';
+                                        const text = `Hi ${order.customerName || 'Diner'},\nYour order at Table #${order.tableNumber} (${business?.name}) is currently *${order.status === 'new' ? 'received' : order.status === 'cooking' ? 'being prepared in the kitchen' : 'ready and served'}*.\n\nTotal Bill: ₹${order.totalAmount}\nThank you!`;
+                                        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(text)}`, '_blank');
+                                      }}
+                                      className="bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#128C7E] font-black text-[10.5px] py-1.5 rounded-lg border border-[#25D366]/30 flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                                    >
+                                      <MessageSquare className="w-3 h-3 text-[#25D366]" />
+                                      <span>WhatsApp</span>
+                                    </button>
+                                  </div>
+                                </div>
+
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
+
+                    {/* ── RECENT COMPLETED ORDERS & TABLE BILL HISTORY ── */}
+                    {kitchenOrdersFilter === 'history' && (
+                      <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                          <div>
+                            <h3 className="font-black text-sm text-slate-900">Recent Completed Table Bills</h3>
+                            <p className="text-[11px] text-slate-500 font-medium">History of today's settled dine-in QR orders</p>
+                          </div>
+                          <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-black px-3 py-1 rounded-xl">
+                            {kitchenOrdersList.filter(o => o.status === 'completed').length} Settled Tables
+                          </span>
+                        </div>
+
+                        <div className="divide-y divide-slate-100">
+                          {kitchenOrdersList.filter(o => o.status === 'completed').length === 0 ? (
+                            <div className="py-8 text-center space-y-1">
+                              <span className="text-2xl block">🍽️</span>
+                              <p className="text-xs font-black text-slate-700">No completed orders yet today.</p>
+                              <p className="text-[11px] text-slate-400">When you clear tables, their settled bills will archive here.</p>
+                            </div>
+                          ) : (
+                            kitchenOrdersList.filter(o => o.status === 'completed').map((order) => (
+                              <div key={order.id} className="py-3 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="bg-slate-900 text-white font-black text-[10px] px-2 py-0.5 rounded-md">
+                                      🪑 TABLE #{order.tableNumber}
+                                    </span>
+                                    <strong className="text-slate-900 font-black">{order.customerName || 'Diner'}</strong>
+                                    <span className="text-[10px] text-slate-400 font-bold">• {order.time}</span>
+                                    <span className="bg-emerald-100 text-emerald-800 text-[9.5px] font-black px-2 py-0.2 rounded-full">
+                                      ✓ Paid &amp; Settled
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-600 font-medium">
+                                    {order.items.map((it: any) => `${it.name} (x${it.count})`).join(', ')}
+                                  </p>
+                                </div>
+
+                                <div className="flex items-center gap-3 shrink-0">
+                                  <span className="font-black text-sm text-slate-950">₹{order.totalAmount}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const printContent = `
+                                        <html>
+                                        <head><title>Receipt - Table ${order.tableNumber}</title>
+                                        <style>
+                                          body { font-family: monospace; padding: 20px; text-align: center; }
+                                          .header { font-size: 16px; font-weight: bold; border-bottom: 2px dashed #000; padding-bottom: 8px; margin-bottom: 12px; }
+                                          .item { display: flex; justify-content: space-between; font-size: 14px; margin: 6px 0; }
+                                          .footer { border-top: 2px dashed #000; margin-top: 12px; padding-top: 8px; font-weight: bold; }
+                                        </style>
+                                        </head>
+                                        <body>
+                                          <div class="header">
+                                            <h2>${business?.name || 'Restaurant'}</h2>
+                                            <h3>FINAL BILL RECEIPT</h3>
+                                            <p>TABLE #${order.tableNumber} | Order: ${order.id}</p>
+                                            <p>Status: PAID VIA UPI / CASH</p>
+                                          </div>
+                                          <div style="text-align:left;">
+                                            ${order.items.map((it: any) => `<div class="item"><span>${it.name} x ${it.count}</span><span>₹${it.price * it.count}</span></div>`).join('')}
+                                          </div>
+                                          <div class="footer">
+                                            <p>TOTAL PAID: ₹${order.totalAmount}</p>
+                                            <p>Thank you for dining with us!</p>
+                                          </div>
+                                        </body>
+                                        </html>
+                                      `;
+                                      const win = window.open('', '', 'width=400,height=600');
+                                      if (win) {
+                                        win.document.write(printContent);
+                                        win.document.close();
+                                        win.print();
+                                      }
+                                    }}
+                                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10.5px] px-2.5 py-1.5 rounded-lg border border-slate-200 flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <Printer className="w-3 h-3" />
+                                    <span>Print Receipt</span>
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── MODAL: MANUAL TABLE ORDER ENTRY ── */}
+                    {isManualOrderModalOpen && (
+                      <div className="fixed inset-0 z-[700] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-3 sm:p-4 animate-in fade-in duration-200 text-left">
+                        <div className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl p-5 sm:p-6 space-y-4">
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl">🛎️</span>
+                              <div>
+                                <h3 className="text-sm font-black text-slate-900">Create Table Order</h3>
+                                <p className="text-[10px] text-slate-500 font-bold">Punch in walk-in or counter order to kitchen</p>
+                              </div>
+                            </div>
+                            <button onClick={() => setIsManualOrderModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-700">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          <form onSubmit={handleCreateManualOrder} className="space-y-3">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-600 uppercase mb-1">Table Number *</label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={newManualOrderTable}
+                                  onChange={e => setNewManualOrderTable(e.target.value)}
+                                  placeholder="e.g. 1, 2, Cabin 3"
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-black text-slate-900 outline-none focus:border-orange-500"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-600 uppercase mb-1">Diner Name</label>
+                                <input
+                                  type="text"
+                                  value={newManualOrderDiner}
+                                  onChange={e => setNewManualOrderDiner(e.target.value)}
+                                  placeholder="e.g. Rohan"
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-orange-500"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-black text-slate-600 uppercase mb-1">Ordered Dishes * (Comma separated)</label>
+                              <textarea
+                                required
+                                rows={2}
+                                value={newManualOrderItems}
+                                onChange={e => setNewManualOrderItems(e.target.value)}
+                                placeholder="e.g. Masala Dosa - 110, Filter Coffee - 40"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-900 outline-none focus:border-orange-500"
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-600 uppercase mb-1">Total Bill (₹)</label>
+                                <input
+                                  type="number"
+                                  value={newManualOrderAmount}
+                                  onChange={e => setNewManualOrderAmount(e.target.value)}
+                                  placeholder="Auto or enter"
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-orange-500"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-black text-slate-600 uppercase mb-1">Chef Note</label>
+                                <input
+                                  type="text"
+                                  value={newManualOrderNotes}
+                                  onChange={e => setNewManualOrderNotes(e.target.value)}
+                                  placeholder="e.g. Less spicy"
+                                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-orange-500"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                              <button
+                                type="button"
+                                onClick={() => setIsManualOrderModalOpen(false)}
+                                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                className="px-5 py-2 rounded-xl text-xs font-black text-white bg-slate-900 hover:bg-black shadow-md cursor-pointer transition-all active:scale-95"
+                              >
+                                Send Order to Kitchen 🚀
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+                )}
 
                 {/* ── SUBTAB CONTENT: 🏨 HOTEL ROOM & DESK BOOKING MANAGEMENT ── */}
                 {activeSubTab === 'hotel_bookings' && (() => {
@@ -8111,6 +8956,15 @@ function DashboardContent() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Official Printable QR Standee Modal for Dashboard */}
+      {business && (
+        <BusinessQRStandeeModal
+          isOpen={isStandeeModalOpen}
+          onClose={() => setIsStandeeModalOpen(false)}
+          business={business}
+        />
       )}
 
     </div>

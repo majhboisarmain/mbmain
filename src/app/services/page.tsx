@@ -1185,40 +1185,25 @@ const isMatchingRole = (roleStr: string, catStr: string) => {
 
             {/* Fallback Empty State if category has no profiles yet */}
             {filteredDomesticHelpers.length === 0 && filteredProviders.length === 0 && (
-              <div className="bg-white rounded-3xl border border-dashed border-slate-200 p-8 text-center space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto">
+              <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-10 text-center space-y-2.5 shadow-2xs">
+                <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 text-slate-400 flex items-center justify-center mx-auto">
                   <Wrench className="w-6 h-6" />
                 </div>
-                <h4 className="text-sm font-black text-slate-800">
-                  No Verified {selectedCategory} Profiles Listed Yet
-                </h4>
-                <p className="text-xs text-slate-500 max-w-md mx-auto">
-                  Be the first to list your {selectedCategory} profile on Majh Boisar and get direct customer calls with zero commission.
-                </p>
-                <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
-                  <button
-                    onClick={() => {
-                      setHelperRole(selectedCategory);
-                      const preset = ROLE_PRESETS[selectedCategory];
-                      if (preset) {
-                        setHelperTiming(preset.timingDefault);
-                        setHelperSalary(preset.rateDefault);
-                        setHelperLocation(preset.locationDefault);
-                        setHelperExp(preset.expDefault);
-                      }
-                      setShowHelperModal(true);
-                    }}
-                    className="bg-pink-600 hover:bg-pink-700 active:scale-95 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>+ Register as {selectedCategory}</span>
-                  </button>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-black text-slate-800">
+                    No {selectedCategory} Profiles Available
+                  </h4>
+                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                    Try searching other services or check back shortly for updated local provider contacts.
+                  </p>
+                </div>
+                <div className="pt-1">
                   <button
                     onClick={() => router.push(`/search?category=${encodeURIComponent(selectedCategory)}`)}
-                    className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-black text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+                    className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-black text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
                   >
                     <Search className="w-3.5 h-3.5" />
-                    <span>Search Directory</span>
+                    <span>Search in City Directory</span>
                   </button>
                 </div>
               </div>

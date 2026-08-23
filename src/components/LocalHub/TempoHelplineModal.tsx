@@ -397,10 +397,10 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
               ))}
 
               {filteredDrivers.length === 0 && (
-                <div className="col-span-full bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-8 text-center my-4">
-                  <Truck className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                  <h4 className="text-sm font-black text-slate-700">No Service Providers Found for this Category</h4>
-                  <p className="text-xs text-slate-500 font-medium mt-1">Select another tab or register your transport profile now.</p>
+                <div className="col-span-full bg-white border border-slate-200 rounded-2xl p-6 text-center my-3 shadow-2xs space-y-1.5">
+                  <Truck className="w-8 h-8 text-slate-400 mx-auto mb-1" />
+                  <h4 className="text-sm font-black text-slate-800">No Transport Drivers Available in this Category</h4>
+                  <p className="text-xs text-slate-500 font-medium max-w-sm mx-auto">Select another vehicle category to view available drivers across Boisar.</p>
                 </div>
               )}
             </div>

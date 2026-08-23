@@ -438,23 +438,16 @@ function HireVehicleContent() {
               ))}
             </div>
           ) : (
-            <div className="border-2 border-dashed border-slate-200 rounded-3xl p-8 sm:p-12 text-center space-y-3 bg-white">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto shadow-2xs">
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 text-center space-y-2.5 shadow-2xs">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-200">
                 <Car className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-sm font-black text-slate-900">No Vehicles Listed in this Category Yet</h4>
+                <h4 className="text-sm font-black text-slate-800">No Vehicles Listed in this Category</h4>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  Be the first driver or transport owner to list your vehicle in Boisar with 0% commission!
+                  Try selecting another vehicle category or check back shortly for updated local listings.
                 </p>
               </div>
-              <button
-                onClick={handleOpenAddModal}
-                className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-md transition-all cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ Register Your Vehicle / Cab / Auto</span>
-              </button>
             </div>
           )}
         </div>

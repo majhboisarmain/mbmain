@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import { BOISAR_HOTELS } from '@/lib/hotelsData';
 import { resortsData, ResortVilla } from '@/lib/resortsData';
+import { BOISAR_FOOD_DIRECTORY, FoodItem } from '@/lib/foodDiningData';
 import {
   Building, Building2, CheckCircle, AlertCircle, Sparkles, ClipboardCheck,
   MessageSquare, Layers, ShieldCheck, ShieldAlert, Star, Eye, Trash2,
@@ -171,7 +172,7 @@ interface AdOrder {
 }
 
 export default function AdminPanelPage() {
-  const { currentRole, setRole, login, isLoggedIn, loggedInUser, setLoginModalOpen } = useApp();
+  const { currentRole, setRole, login, isLoggedIn, loggedInUser, setLoginModalOpen, showToast } = useApp();
   const [isAdminPageUnlocked, setIsAdminPageUnlocked] = useState(() => {
     if (typeof window !== 'undefined') {
       return sessionStorage.getItem('majh_boisar_adminmb_auth') === 'unlocked';
@@ -250,10 +251,57 @@ export default function AdminPanelPage() {
   const [restoFormSpeciality, setRestoFormSpeciality] = useState('Cold Brew, Pasta & Sizzlers');
   const [restoFormImage, setRestoFormImage] = useState('https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&auto=format&fit=crop&q=80');
 
+  // Directory Food Items State
+  const [restoFilterTab, setRestoFilterTab] = useState<'all' | 'live_home'>('all');
+  const [restoSearchQuery, setRestoSearchQuery] = useState('');
+
+  const allDirectoryRestaurants = useMemo(() => {
+    let customList: FoodItem[] = [];
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('majh_boisar_custom_food_items');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) customList = parsed;
+        }
+      } catch (e) {}
+    }
+    return [...customList, ...BOISAR_FOOD_DIRECTORY];
+  }, [adminHomeRestaurants]);
+
   const saveHomeRestaurants = (newList: HomeFeaturedRestaurant[]) => {
     setAdminHomeRestaurants(newList);
     if (typeof window !== 'undefined') {
       localStorage.setItem('majh_boisar_featured_restaurants', JSON.stringify(newList));
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
+
+  const handleToggleRestaurantHomepageDisplay = (foodItem: FoodItem | HomeFeaturedRestaurant) => {
+    const existingIndex = adminHomeRestaurants.findIndex(r => r.id === foodItem.id || r.name.toLowerCase() === foodItem.name.toLowerCase());
+    let updated: HomeFeaturedRestaurant[];
+
+    if (existingIndex >= 0) {
+      const isCurrentlyActive = adminHomeRestaurants[existingIndex].isActive !== false;
+      const nextActive = !isCurrentlyActive;
+      updated = adminHomeRestaurants.map((r, idx) => idx === existingIndex ? { ...r, isActive: nextActive } : r);
+      saveHomeRestaurants(updated);
+      showToast(nextActive ? `✅ "${foodItem.name}" is now Live on Homepage Display!` : `○ "${foodItem.name}" is now Hidden from Homepage.`, nextActive ? 'success' : 'info', 4000);
+    } else {
+      const newHomeResto: HomeFeaturedRestaurant = {
+        id: foodItem.id || `rest-${Date.now()}`,
+        name: foodItem.name,
+        category: (foodItem as any).categoryLabel || foodItem.category || 'Dining',
+        location: foodItem.location || 'Boisar',
+        rating: foodItem.rating || 4.8,
+        discount: (foodItem as any).discount || 'Special Offers',
+        image: foodItem.image || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&auto=format&fit=crop&q=80',
+        speciality: (foodItem as any).speciality || 'Quality Food & Fast Delivery',
+        isActive: true
+      };
+      updated = [newHomeResto, ...adminHomeRestaurants];
+      saveHomeRestaurants(updated);
+      showToast(`🎉 "${foodItem.name}" added & Live on Homepage Display!`, 'success', 4000);
     }
   };
 
@@ -654,6 +702,70 @@ export default function AdminPanelPage() {
     logEvent(`Deleted deletion request record #${reqId}`);
   };
 
+  const refreshUsers = async () => {
+    try {
+      // 1. Fetch centralized registered users from DB
+      let serverUsers: any[] = [];
+      try {
+        const res = await fetch('/api/users');
+        if (res.ok) {
+          const d = await res.json();
+          if (d && Array.isArray(d.users)) serverUsers = d.users;
+        }
+      } catch (apiErr) {
+        console.warn('Could not fetch from /api/users:', apiErr);
+      }
+
+      // 2. Fetch local storage cached users and merge
+      let list: any[] = [...serverUsers];
+      if (typeof window !== 'undefined') {
+        const savedUsers = localStorage.getItem('majh_boisar_registered_users');
+        if (savedUsers) {
+          try {
+            const parsed = JSON.parse(savedUsers);
+            if (Array.isArray(parsed)) {
+              parsed.forEach((localU: any) => {
+                const cleanLocal = (localU.phone || '').replace(/\D/g, '');
+                if (cleanLocal && !list.some(u => (u.phone || '').replace(/\D/g, '').endsWith(cleanLocal.slice(-10)))) {
+                  list.push(localU);
+                }
+              });
+            }
+          } catch (e) {}
+        }
+
+        // 3. Check current active session user
+        const savedSingleUser = localStorage.getItem('majh_boisar_user');
+        if (savedSingleUser) {
+          try {
+            const single = JSON.parse(savedSingleUser);
+            if (single && single.phone) {
+              const cleanSingle = single.phone.replace(/\D/g, '');
+              const exists = list.some((u: any) => u.phone?.replace(/\D/g, '').endsWith(cleanSingle.slice(-10)));
+              if (!exists && cleanSingle.length > 0) {
+                list.unshift({
+                  id: Date.now(),
+                  name: single.name || 'Registered Citizen',
+                  phone: cleanSingle,
+                  email: single.email || `${cleanSingle}@majhboisar.in`,
+                  role: 'Active User',
+                  joinedDate: new Date().toISOString().split('T')[0],
+                  status: 'Active'
+                });
+              }
+            }
+          } catch (e) {}
+        }
+
+        localStorage.setItem('majh_boisar_registered_users', JSON.stringify(list));
+      }
+
+      setRegisteredUsers(list);
+    } catch (e) {
+      console.error('Error refreshing users in adminmb:', e);
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedCats = localStorage.getItem('majh_boisar_admin_categories');
@@ -661,18 +773,14 @@ export default function AdminPanelPage() {
         try { setCustomAdminCategories(JSON.parse(savedCats)); } catch (e) { }
       }
 
-      const savedUsers = localStorage.getItem('majh_boisar_registered_users');
-      if (savedUsers) {
-        try {
-          const parsed = JSON.parse(savedUsers);
-          setRegisteredUsers(Array.isArray(parsed) && parsed.length > 0 ? parsed : defaultUsersList);
-        } catch (e) {
-          setRegisteredUsers(defaultUsersList);
-        }
-      } else {
-        setRegisteredUsers(defaultUsersList);
-        localStorage.setItem('majh_boisar_registered_users', JSON.stringify(defaultUsersList));
-      }
+      refreshUsers();
+      window.addEventListener('storage', refreshUsers);
+      window.addEventListener('majh_boisar_user_registered', refreshUsers);
+
+      return () => {
+        window.removeEventListener('storage', refreshUsers);
+        window.removeEventListener('majh_boisar_user_registered', refreshUsers);
+      };
     }
   }, []);
 
@@ -1827,13 +1935,18 @@ export default function AdminPanelPage() {
     }
   };
 
-  const handleDeleteRegisteredUser = (id: number, name: string) => {
+  const handleDeleteRegisteredUser = async (id: number, name: string) => {
     if (!confirm(`Are you sure you want to remove user "${name}" from registered users list?`)) return;
     const updated = registeredUsers.filter(u => u.id !== id);
     setRegisteredUsers(updated);
     if (typeof window !== 'undefined') {
       localStorage.setItem('majh_boisar_registered_users', JSON.stringify(updated));
     }
+    fetch('/api/users', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userIds: [id] })
+    }).catch(e => console.warn('Could not delete user from server:', e));
     logEvent(`Deleted registered user: ${name}`);
   };
 
@@ -1905,16 +2018,22 @@ export default function AdminPanelPage() {
     setSelectedUserIds(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
   };
 
-  const handleBulkDeleteUsers = () => {
+  const handleBulkDeleteUsers = async () => {
     if (selectedUserIds.length === 0) return;
     if (!confirm(`Are you sure you want to delete ${selectedUserIds.length} selected user accounts?`)) return;
-    const updated = registeredUsers.filter((u: any) => !selectedUserIds.includes(u.id));
+    const toDeleteIds = [...selectedUserIds];
+    const updated = registeredUsers.filter((u: any) => !toDeleteIds.includes(u.id));
     setRegisteredUsers(updated);
     if (typeof window !== 'undefined') {
       localStorage.setItem('majh_boisar_registered_users', JSON.stringify(updated));
     }
+    fetch('/api/users', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userIds: toDeleteIds })
+    }).catch(e => console.warn('Could not bulk delete users from server:', e));
     setSelectedUserIds([]);
-    alert(`🎉 Successfully deleted ${selectedUserIds.length} user accounts.`);
+    alert(`🎉 Successfully deleted ${toDeleteIds.length} user accounts.`);
   };
 
   const handleVerifySpecialist = (category: string, id: number, currentVerified: boolean) => {
@@ -2052,7 +2171,10 @@ export default function AdminPanelPage() {
         if (typeof window !== 'undefined') {
           sessionStorage.removeItem('admin_failed_attempts');
           sessionStorage.removeItem('admin_lockout_until');
+          sessionStorage.setItem('majh_boisar_adminmb_auth', 'unlocked');
+          localStorage.setItem('majh_boisar_role', 'Admin');
         }
+        setRole('Admin');
         setIsAdminPageUnlocked(true);
         setAdminPasscodeError('');
       } else {
@@ -2501,10 +2623,10 @@ export default function AdminPanelPage() {
                   <div>
                     <h3 className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                       <Utensils className="w-4 h-4 text-orange-600" />
-                      <span>Homepage Dining &amp; Cafes Manager ({adminHomeRestaurants.length})</span>
+                      <span>Homepage Dining &amp; Cafes Manager ({adminHomeRestaurants.filter(r => r.isActive !== false).length} Live on Home / {allDirectoryRestaurants.length} Total Listed)</span>
                     </h3>
                     <p className="text-xs text-slate-500 font-medium mt-0.5">
-                      Directly add, edit, toggle, and manage the restaurants and cafes featured in the &quot;Hi Foodie, Dine in Boisar!&quot; homepage section.
+                      Toggle &quot;Show on Homepage Display&quot; for any listed restaurant in Boisar to feature it directly in the &quot;Hi Foodie, Dine in Boisar!&quot; homepage section.
                     </p>
                   </div>
 
@@ -2514,113 +2636,185 @@ export default function AdminPanelPage() {
                     className="bg-orange-600 hover:bg-orange-700 active:scale-95 text-white text-xs font-black px-4 py-2 rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5 self-start sm:self-auto shrink-0"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Add Restaurant to Homepage</span>
+                    <span>+ Add Custom Restaurant</span>
                   </button>
                 </div>
 
-                {/* Restaurants Grid Cards */}
-                {adminHomeRestaurants.length === 0 ? (
-                  <div className="py-16 text-center border-2 border-dashed border-slate-200 rounded-2xl">
-                    <Utensils className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-sm font-bold text-slate-600">No restaurants added yet.</p>
-                    <p className="text-xs text-slate-400 mt-1">Click &quot;Add Restaurant to Homepage&quot; to feature top eateries!</p>
+                {/* Filter Tabs & Search Bar */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+                    <button
+                      type="button"
+                      onClick={() => setRestoFilterTab('all')}
+                      className={`text-xs font-black px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                        restoFilterTab === 'all'
+                          ? 'bg-slate-900 text-white shadow-xs'
+                          : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      🌟 All Listed Restaurants ({allDirectoryRestaurants.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRestoFilterTab('live_home')}
+                      className={`text-xs font-black px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                        restoFilterTab === 'live_home'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-white text-emerald-700 hover:bg-emerald-50 border border-emerald-200'
+                      }`}
+                    >
+                      🔥 Currently Live on Homepage ({adminHomeRestaurants.filter(r => r.isActive !== false).length})
+                    </button>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {adminHomeRestaurants.map((resto) => (
-                      <div
-                        key={resto.id}
-                        className={`bg-white border rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between ${
-                          resto.isActive !== false ? 'border-orange-200/80' : 'border-slate-200 opacity-60'
-                        }`}
+
+                  <div className="relative flex-1 max-w-sm">
+                    <input
+                      type="text"
+                      value={restoSearchQuery}
+                      onChange={(e) => setRestoSearchQuery(e.target.value)}
+                      placeholder="🔍 Search restaurant by name, area, cuisine..."
+                      className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-orange-500 placeholder-slate-400"
+                    />
+                    {restoSearchQuery && (
+                      <button
+                        onClick={() => setRestoSearchQuery('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
                       >
-                        <div>
-                          {/* Image & Ribbon */}
-                          <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-900">
-                            <img
-                              src={resto.image}
-                              alt={resto.name}
-                              className="w-full h-full object-cover"
-                            />
-                            {resto.discount && (
-                              <div className="absolute bottom-2 left-2">
-                                <span className="bg-gradient-to-r from-red-600 to-orange-600 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-sm">
-                                  % {resto.discount}
-                                </span>
-                              </div>
-                            )}
-                            <div className="absolute top-2 right-2">
-                              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full shadow-xs ${
-                                resto.isActive !== false ? 'bg-emerald-500 text-white' : 'bg-slate-700 text-slate-200'
-                              }`}>
-                                {resto.isActive !== false ? '● Live on Home' : '○ Hidden'}
-                              </span>
-                            </div>
-                          </div>
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
 
-                          {/* Content Details */}
-                          <div className="p-3.5 space-y-1 text-left">
-                            <div className="flex items-start justify-between gap-1.5">
-                              <h4 className="text-xs font-black text-slate-900 leading-tight truncate">
-                                {resto.name}
-                              </h4>
-                              <span className="bg-emerald-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded shrink-0 flex items-center gap-0.5">
-                                <span>★</span>
-                                <span>{resto.rating}</span>
-                              </span>
-                            </div>
+                {/* Restaurants Grid Cards */}
+                {(() => {
+                  const displayList = allDirectoryRestaurants.filter((resto: any) => {
+                    const isLive = adminHomeRestaurants.some(r => (r.id === resto.id || r.name.toLowerCase() === resto.name.toLowerCase()) && r.isActive !== false);
+                    if (restoFilterTab === 'live_home' && !isLive) return false;
+                    if (!restoSearchQuery.trim()) return true;
+                    const q = restoSearchQuery.toLowerCase();
+                    return resto.name.toLowerCase().includes(q) ||
+                      (resto.location && resto.location.toLowerCase().includes(q)) ||
+                      (resto.category && resto.category.toLowerCase().includes(q)) ||
+                      (resto.speciality && resto.speciality.toLowerCase().includes(q));
+                  });
 
-                            <p className="text-[10.5px] text-orange-950 font-bold truncate">
-                              {resto.category}
-                            </p>
+                  if (displayList.length === 0) {
+                    return (
+                      <div className="py-16 text-center border-2 border-dashed border-slate-200 rounded-2xl">
+                        <Utensils className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                        <p className="text-sm font-bold text-slate-600">No restaurants match your filter.</p>
+                        <p className="text-xs text-slate-400 mt-1">Try resetting the search query or switch back to &quot;All Listed Restaurants&quot;.</p>
+                      </div>
+                    );
+                  }
 
-                            <p className="text-[10px] text-slate-500 font-medium truncate">
-                              📍 {resto.location}
-                            </p>
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {displayList.map((resto: any) => {
+                        const matchingFeatured = adminHomeRestaurants.find(r => r.id === resto.id || r.name.toLowerCase() === resto.name.toLowerCase());
+                        const isLiveOnHome = matchingFeatured ? matchingFeatured.isActive !== false : false;
 
-                            <p className="text-[9.5px] font-bold text-teal-700 truncate">
-                              ✨ {resto.speciality}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Actions Toolbar */}
-                        <div className="p-3 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleHomeRestaurantActive(resto.id)}
-                            className={`text-[10px] font-black px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
-                              resto.isActive !== false
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                                : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                        return (
+                          <div
+                            key={resto.id}
+                            className={`bg-white border rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between ${
+                              isLiveOnHome ? 'border-emerald-300 ring-2 ring-emerald-500/20' : 'border-slate-200'
                             }`}
                           >
-                            {resto.isActive !== false ? 'Active' : 'Disabled'}
-                          </button>
+                            <div>
+                              {/* Image & Ribbon */}
+                              <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-900">
+                                <img
+                                  src={resto.image || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&auto=format&fit=crop&q=80'}
+                                  alt={resto.name}
+                                  className="w-full h-full object-cover"
+                                />
+                                {(resto.discount || (matchingFeatured && matchingFeatured.discount)) && (
+                                  <div className="absolute bottom-2 left-2">
+                                    <span className="bg-gradient-to-r from-red-600 to-orange-600 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-sm">
+                                      % {resto.discount || matchingFeatured?.discount}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="absolute top-2 right-2">
+                                  <span className={`text-[9.5px] font-black px-2 py-0.5 rounded-full shadow-xs ${
+                                    isLiveOnHome ? 'bg-emerald-500 text-white' : 'bg-slate-700/90 text-slate-200'
+                                  }`}>
+                                    {isLiveOnHome ? '● Live on Homepage' : '○ Not on Homepage'}
+                                  </span>
+                                </div>
+                              </div>
 
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEditRestaurant(resto)}
-                              className="p-1.5 text-slate-600 hover:text-teal-700 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 transition-all cursor-pointer"
-                              title="Edit Restaurant"
-                            >
-                              <Edit className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteHomeRestaurant(resto.id, resto.name)}
-                              className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg border border-transparent hover:border-rose-200 transition-all cursor-pointer"
-                              title="Delete from Homepage"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                              {/* Content Details */}
+                              <div className="p-3.5 space-y-1 text-left">
+                                <div className="flex items-start justify-between gap-1.5">
+                                  <h4 className="text-xs font-black text-slate-900 leading-tight truncate">
+                                    {resto.name}
+                                  </h4>
+                                  <span className="bg-emerald-600 text-white text-[9px] font-black px-1.5 py-0.2 rounded shrink-0 flex items-center gap-0.5">
+                                    <span>★</span>
+                                    <span>{resto.rating || 4.8}</span>
+                                  </span>
+                                </div>
+
+                                <p className="text-[10.5px] text-orange-950 font-bold truncate">
+                                  {resto.categoryLabel || resto.category || 'Cafe & Dining'}
+                                </p>
+
+                                <p className="text-[10px] text-slate-500 font-medium truncate">
+                                  📍 {resto.location || 'Boisar'}
+                                </p>
+
+                                <p className="text-[9.5px] font-bold text-teal-700 truncate">
+                                  ✨ {resto.speciality || 'Quality Dining in Boisar'}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* 1-Click Show on Homepage Display Action Button */}
+                            <div className="p-3 border-t border-slate-100 bg-slate-50/70 flex flex-col gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleRestaurantHomepageDisplay(resto)}
+                                className={`w-full text-xs font-black py-2 px-3 rounded-xl border transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs ${
+                                  isLiveOnHome
+                                    ? 'bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white border-emerald-600'
+                                    : 'bg-orange-600 hover:bg-orange-700 active:scale-98 text-white border-orange-600'
+                                }`}
+                              >
+                                {isLiveOnHome ? (
+                                  <>
+                                    <CheckCircle className="w-3.5 h-3.5 text-white" />
+                                    <span>✅ Live on Display (Click to Hide)</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Eye className="w-3.5 h-3.5 text-white" />
+                                    <span>👁️ Show on Homepage Display</span>
+                                  </>
+                                )}
+                              </button>
+
+                              <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/60 text-[10px] text-slate-500 font-bold">
+                                <span>{isLiveOnHome ? 'Active on Homepage' : 'Hidden from Homepage'}</span>
+                                {matchingFeatured && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenEditRestaurant(matchingFeatured)}
+                                    className="text-teal-700 hover:underline cursor-pointer"
+                                  >
+                                    Edit Details
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
 
                 {/* Add / Edit Restaurant Modal */}
                 {restaurantModalOpen && (
@@ -3777,9 +3971,23 @@ export default function AdminPanelPage() {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">
-                    <UserCheck className="w-4 h-4 text-emerald-600" />
-                    <span>{registeredUsers.length} Active Accounts</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        refreshUsers();
+                        logEvent('Manually refreshed registered users directory from server.');
+                        showToast('🔄 Registered users list refreshed from server database!', 'success');
+                      }}
+                      className="flex items-center gap-1 bg-white hover:bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 shadow-2xs transition-all cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 text-teal-600" />
+                      <span>Refresh Users</span>
+                    </button>
+                    <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700">
+                      <UserCheck className="w-4 h-4 text-emerald-600" />
+                      <span>{registeredUsers.length} Active Accounts</span>
+                    </div>
                   </div>
                 </div>
 

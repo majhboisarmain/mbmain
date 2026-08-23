@@ -7,20 +7,21 @@ export default function Preloader() {
   const [fade, setFade] = useState(false);
 
   useEffect(() => {
-    // Non-blocking instant fade out
-    setFade(true);
-    const timer = setTimeout(() => {
-      setShow(false);
-    }, 60);
+    // Non-blocking fast fade out
+    const fadeTimer = setTimeout(() => setFade(true), 120);
+    const hideTimer = setTimeout(() => setShow(false), 350);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(hideTimer);
+    };
   }, []);
 
   if (!show) return null;
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white transition-opacity duration-300 ${fade ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white transition-opacity duration-250 ease-out pointer-events-none ${fade ? 'opacity-0' : 'opacity-100'}`}
     >
       <div className="flex flex-col items-center justify-center gap-6">
         {/* Logo — uses the local MB icon logo */}

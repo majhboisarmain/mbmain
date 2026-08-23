@@ -344,7 +344,7 @@ export default function LocalMarketplaceModal({ isOpen, onClose }: LocalMarketpl
               <div className="col-span-full bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-8 text-center my-4">
                 <ShoppingBag className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                 <h4 className="text-sm font-black text-slate-700">No Used Items Listed Yet</h4>
-                <p className="text-xs text-slate-500 font-medium mt-1">Be the first to list a second-hand item for sale in Boisar!</p>
+                <p className="text-xs text-slate-500 font-medium mt-1">Post second-hand household items, bikes, furniture &amp; books for local Boisar buyers.</p>
                 <button
                   onClick={() => setShowAddForm(true)}
                   className="mt-3 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-4 py-2 rounded-xl transition-all shadow-xs cursor-pointer"

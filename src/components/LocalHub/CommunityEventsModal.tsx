@@ -334,7 +334,7 @@ export default function CommunityEventsModal({ isOpen, onClose }: CommunityEvent
             {filteredEvents.length === 0 && (
               <div className="col-span-full bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-8 text-center my-4">
                 <h4 className="text-sm font-black text-slate-700">No Events or Notices Posted Yet</h4>
-                <p className="text-xs text-slate-500 font-medium mt-1">Be the first to post a job fair, tournament, or community notice in Boisar!</p>
+                <p className="text-xs text-slate-500 font-medium mt-1">Post upcoming community events, sports tournaments, job fairs &amp; announcements in Boisar.</p>
                 <button
                   onClick={() => setShowAddForm(true)}
                   className="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs px-4 py-2 rounded-xl transition-all shadow-xs cursor-pointer"

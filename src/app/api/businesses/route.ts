@@ -77,33 +77,33 @@ export async function GET(request: NextRequest) {
     if (query) {
       const cleanQuery = query.toLowerCase().trim();
       const rawTokens = cleanQuery.split(/\s+/).filter(t => t.length > 0);
-      const filteredTokens = rawTokens.filter(t => !['in', 'near', 'me', 'boisar', 'tarapur', 'palghar', 'best', 'top', 'service', 'services'].includes(t));
-      const searchTokens = filteredTokens.length > 0 ? filteredTokens : rawTokens;
-
+      const filteredTokens = rawTokens.filter(t => !['in', 'near', 'me', 'boisar', 'tarapur', 'palghar', 'best', 'top', 'service', 'services', 'majh', 'majha', 'maza', 'majhe', 'maze', 'mazaa', 'majhaa', 'माझं', 'माझा', 'माझे', 'बोईसर'].includes(t));
       const expandedTerms = expandCategorySearchTerms(query);
       const orConditions: any[] = [];
 
-      searchTokens.forEach(st => {
-        orConditions.push({ name: { contains: st } });
-        orConditions.push({ description: { contains: st } });
-        orConditions.push({ category: { contains: st } });
-        orConditions.push({ address: { contains: st } });
-        orConditions.push({
-          services: {
-            some: {
-              name: { contains: st }
+      if (filteredTokens.length > 0) {
+        filteredTokens.forEach(st => {
+          orConditions.push({ name: { contains: st } });
+          orConditions.push({ description: { contains: st } });
+          orConditions.push({ category: { contains: st } });
+          orConditions.push({ address: { contains: st } });
+          orConditions.push({
+            services: {
+              some: {
+                name: { contains: st }
+              }
             }
-          }
+          });
         });
-      });
 
-      expandedTerms.forEach(term => {
-        orConditions.push({ category: { contains: term.toLowerCase() } });
-        orConditions.push({ name: { contains: term.toLowerCase() } });
-      });
+        expandedTerms.forEach(term => {
+          orConditions.push({ category: { contains: term.toLowerCase() } });
+          orConditions.push({ name: { contains: term.toLowerCase() } });
+        });
 
-      if (orConditions.length > 0) {
-        where.OR = orConditions;
+        if (orConditions.length > 0) {
+          where.OR = orConditions;
+        }
       }
     }
 
@@ -119,9 +119,9 @@ export async function GET(request: NextRequest) {
         faqs: true
       },
       orderBy: [
-        { views: 'desc' },
+        { premium: 'desc' },
         { rating: 'desc' },
-        { premium: 'desc' }
+        { views: 'desc' }
       ]
     });
 
@@ -143,7 +143,10 @@ export async function GET(request: NextRequest) {
         description: cleanDescription,
         image: cover,
         gallery: parts.slice(1),
-        distanceKm
+        distanceKm,
+        rating: b.reviews && b.reviews.length > 0
+          ? Math.round((b.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / b.reviews.length) * 10) / 10
+          : b.rating
       };
     });
 

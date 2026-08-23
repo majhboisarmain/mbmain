@@ -390,24 +390,16 @@ function CreatorsPageContent() {
               ))}
             </div>
           ) : (
-            <div className="border-2 border-dashed border-slate-200 rounded-3xl p-8 sm:p-12 text-center space-y-3 bg-white">
-              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto shadow-2xs">
+            <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 text-center space-y-2.5 shadow-2xs">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-200">
                 <Camera className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-sm font-black text-slate-900">No Creators Listed in this Category Yet</h4>
+                <h4 className="text-sm font-black text-slate-800">No Creators Listed in this Category</h4>
                 <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  Are you a local content creator or influencer in Boisar? Join now to receive direct paid brand deals and cafe invites!
+                  Try exploring all categories or check back shortly for verified local creator profiles.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={handleOpenAddModal}
-                className="inline-flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 active:scale-95 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-md transition-all cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ Join as Creator / Influencer</span>
-              </button>
             </div>
           )}
         </div>

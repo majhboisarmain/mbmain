@@ -7,9 +7,10 @@ import { useApp } from '@/context/AppContext';
 import {
   Phone, MessageSquare, MapPin, Clock, Star,
   CheckCircle, ArrowLeft, Send, Sparkles, AlertCircle, ShoppingBag,
-  ChevronRight, ChevronLeft, User, Heart, Share2, Info, X, Bookmark, Copy, Edit3, Mail, Building2
+  ChevronRight, ChevronLeft, User, Heart, Share2, Info, X, Bookmark, Copy, Edit3, Mail, Building2, QrCode
 } from 'lucide-react';
 import { specialProfiles } from '@/lib/mockProfiles';
+import BusinessQRStandeeModal from '@/components/BusinessQRStandeeModal';
 
 interface Review {
   id: number;
@@ -79,7 +80,7 @@ interface Business {
 export default function BusinessDetailsPage() {
   const params = useParams();
   const router = useRouter();
-  const { currentRole, isLoggedIn, setLoginModalOpen, showToast } = useApp();
+  const { currentRole, isLoggedIn, loggedInUser, setLoginModalOpen, showToast } = useApp();
 
   const idStr = params.id as string;
   const businessId = parseInt(idStr);
@@ -91,6 +92,15 @@ export default function BusinessDetailsPage() {
   // Bookmark and Share state
   const [isFavorite, setIsFavorite] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isStandeeModalOpen, setIsStandeeModalOpen] = useState(false);
+
+  const isOwnerOrAdmin = Boolean(
+    isLoggedIn && (
+      currentRole === 'Admin' ||
+      (loggedInUser?.phone && business?.phone && loggedInUser.phone.replace(/\D/g, '') === business.phone.replace(/\D/g, '')) ||
+      (loggedInUser?.phone && (business as any)?.createdBy && loggedInUser.phone.replace(/\D/g, '') === (business as any).createdBy.replace(/\D/g, ''))
+    )
+  );
 
   // Gallery Lightbox state
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -528,7 +538,13 @@ export default function BusinessDetailsPage() {
                 </a>
 
                 <button
-                  onClick={() => setEnquiryModalOpen(true)}
+                  onClick={() => {
+                    if (!isLoggedIn) {
+                      setLoginModalOpen(true);
+                      return;
+                    }
+                    setEnquiryModalOpen(true);
+                  }}
                   className="px-3 sm:px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-black text-xs flex items-center justify-center gap-1.5 sm:gap-2 transition-all shadow-xs cursor-pointer"
                 >
                   <Mail className="w-3.5 h-3.5 text-white shrink-0" />
@@ -573,6 +589,17 @@ export default function BusinessDetailsPage() {
                     )}
                   </button>
 
+                  {isOwnerOrAdmin && (
+                    <button
+                      onClick={() => setIsStandeeModalOpen(true)}
+                      className="px-2.5 py-1.5 border border-amber-300 bg-amber-50 hover:bg-amber-100/90 text-amber-900 rounded-xl transition-all cursor-pointer shadow-2xs active:scale-95 flex items-center gap-1.5 text-xs font-black shrink-0"
+                      title="Business Owner Only: Download Official QR Standee"
+                    >
+                      <QrCode className="w-3.5 h-3.5 text-amber-700" />
+                      <span className="text-[11px]">QR Standee</span>
+                    </button>
+                  )}
+
                   {business.instagram && (
                     <a href={business.instagram} target="_blank" className="p-1.5 border border-slate-200 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all shadow-2xs active:scale-95 flex items-center justify-center cursor-pointer group shrink-0" title="Instagram">
                       <svg className="w-3.5 h-3.5 text-slate-500 group-hover:text-[#E1306C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -613,23 +640,23 @@ export default function BusinessDetailsPage() {
         </div>
       </div>
 
-      {/* 3. Main Detail Tabs and columns grid (More Generous Top Spacing) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-7 sm:mt-8">
+      {/* 3. Main Detail Tabs and columns grid */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6">
 
-        {/* Navigation Tab Menu */}
-        <div className="mb-5 flex gap-1.5 overflow-x-auto whitespace-nowrap bg-white p-1.5 rounded-2xl border border-slate-200 shadow-2xs w-full scroll-smooth">
+        {/* Navigation Tab Menu - Compact & Clean on Mobile */}
+        <div className="mb-4 flex gap-1 sm:gap-1.5 overflow-x-auto whitespace-nowrap bg-white p-1 sm:p-1.5 rounded-xl sm:rounded-2xl border border-slate-200 shadow-2xs w-full scrollbar-hide scroll-smooth">
           {([
             { id: 'overview', label: 'Overview' },
             { id: 'catalog', label: 'Products & Services' },
-            { id: 'reviews', label: 'User Reviews' },
+            { id: 'reviews', label: 'Reviews' },
             { id: 'faqs', label: 'FAQs' }
           ] as const).map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap ${activeTab === tab.id
-                  ? 'bg-teal-700 text-white shadow-2xs'
-                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${activeTab === tab.id
+                  ? 'bg-teal-700 text-white shadow-xs font-black'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
             >
               {tab.label}
@@ -723,20 +750,13 @@ export default function BusinessDetailsPage() {
 
               // 1. Featured Products Component
               const renderProducts = () => (
-                <div key="products-sec" className="bg-white border border-slate-200 p-5 sm:p-6 rounded-3xl shadow-sm space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center font-bold text-base">
-                        🛍️
-                      </div>
-                      <div>
-                        <h4 className="font-black text-sm text-slate-900 uppercase tracking-wider">Featured Products</h4>
-                        <p className="text-[11px] text-slate-500 font-medium">Available retail &amp; wholesale inventory</p>
-                      </div>
-                    </div>
-                    <span className="bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-black px-2.5 py-1 rounded-full">
-                      {business.products.length} {business.products.length === 1 ? 'Product' : 'Products'}
-                    </span>
+                <div key="products-sec" className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <h4 className="font-black text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
+                      <span>📦</span>
+                      <span>Products ({business.products.length})</span>
+                    </h4>
+                    <span className="text-[10.5px] text-slate-500 font-medium">Available stock</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
@@ -817,20 +837,13 @@ export default function BusinessDetailsPage() {
 
               // 2. Offered Services Component
               const renderServices = () => (
-                <div key="services-sec" className="bg-white border border-slate-200 p-5 sm:p-6 rounded-3xl shadow-sm space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center font-bold text-base">
-                        🛠️
-                      </div>
-                      <div>
-                        <h4 className="font-black text-sm text-slate-900 uppercase tracking-wider">Offered Services Directory</h4>
-                        <p className="text-[11px] text-slate-500 font-medium">Professional services &amp; expert consultations</p>
-                      </div>
-                    </div>
-                    <span className="bg-teal-50 border border-teal-200 text-teal-700 text-[10px] font-black px-2.5 py-1 rounded-full">
-                      {business.services.length} {business.services.length === 1 ? 'Service' : 'Services'}
-                    </span>
+                <div key="services-sec" className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <h4 className="font-black text-xs sm:text-sm text-slate-900 flex items-center gap-1.5">
+                      <span>🛠️</span>
+                      <span>Services ({business.services.length})</span>
+                    </h4>
+                    <span className="text-[10.5px] text-slate-500 font-medium">Verified local rates</span>
                   </div>
 
                   <div className="space-y-2.5 pt-1">
@@ -1031,7 +1044,7 @@ export default function BusinessDetailsPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-405 font-bold text-center py-6">No user reviews yet. Be the first to share your experience!</p>
+                    <p className="text-xs text-slate-400 font-medium text-center py-6">No user reviews submitted yet.</p>
                   )}
                 </div>
 
@@ -1163,7 +1176,13 @@ export default function BusinessDetailsPage() {
               <p className="text-[10px] text-slate-350 leading-tight mb-4">Send your requirements directly to {business.name} for quotation details.</p>
 
               <button
-                onClick={() => setEnquiryModalOpen(true)}
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    setLoginModalOpen(true);
+                    return;
+                  }
+                  setEnquiryModalOpen(true);
+                }}
                 className="w-full bg-teal-600 hover:bg-teal-500 text-white font-black text-xs py-2.5 rounded-xl transition-all shadow-md active:scale-98 cursor-pointer flex items-center justify-center gap-1 uppercase tracking-wider"
               >
                 <span>Send Requirement</span>
@@ -1292,6 +1311,15 @@ export default function BusinessDetailsPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Official Printable QR Standee Modal */}
+      {business && (
+        <BusinessQRStandeeModal
+          isOpen={isStandeeModalOpen}
+          onClose={() => setIsStandeeModalOpen(false)}
+          business={business}
+        />
       )}
 
     </div>

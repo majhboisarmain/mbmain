@@ -45,7 +45,8 @@ import {
   Car,
   Tv,
   Zap,
-  CheckSquare
+  CheckSquare,
+  QrCode
 } from 'lucide-react';
 import { BOISAR_HOTELS, HotelItem, getHotelBySlugOrId, recordHotelClick, calculateStayWindow } from '@/lib/hotelsData';
 import { useApp } from '@/context/AppContext';

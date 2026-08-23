@@ -5266,7 +5266,18 @@ const COMMON_SYNONYMS: Record<string, string[]> = {
   "consultancy": ["CA, GST & Business Consultancy", "Business Consultants"],
   "consultant": ["CA, GST & Business Consultancy", "Business Consultants"],
   "msme": ["CA, GST & Business Consultancy", "Business Consultants"],
-  "udyam": ["CA, GST & Business Consultancy", "Business Consultants"]
+  "udyam": ["CA, GST & Business Consultancy", "Business Consultants"],
+  "dance": ["Dance Classes", "Dance & Music Classes", "Zumba Classes"],
+  "dance class": ["Dance Classes", "Dance & Music Classes"],
+  "dance classes": ["Dance Classes", "Dance & Music Classes"],
+  "dance classes in boisar": ["Dance Classes", "Dance & Music Classes"],
+  "dance academy": ["Dance Classes", "Dance & Music Classes"],
+  "music": ["Music Classes", "Dance & Music Classes", "Guitar Classes", "Singing Classes"],
+  "music class": ["Music Classes", "Dance & Music Classes"],
+  "music classes": ["Music Classes", "Dance & Music Classes"],
+  "blood": ["Blood Donors", "Blood Banks", "Blood Donation Centers"],
+  "blood donor": ["Blood Donors", "Blood Banks"],
+  "blood donation": ["Blood Donors", "Blood Banks", "Blood Donation Centers"]
 };
 
 /**

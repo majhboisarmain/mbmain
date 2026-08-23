@@ -52,7 +52,7 @@ export default function AdModal({ isOpen, onClose, highlightedPackageName }: AdM
   const currentPackages = tab === 'website' ? websitePackages : autoRickshawPackages;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 text-left">
+    <div className="fixed inset-0 z-[650] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 text-left">
       <div className="fixed inset-0" onClick={onClose} />
       
       {/* Modal Card */}

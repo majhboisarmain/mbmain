@@ -162,25 +162,51 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('majh_boisar_role');
       localStorage.removeItem('majh_boisar_has_business');
 
-      // Append to registered users list for Admin Panel tracking
+      // Append to registered users list for Admin Panel tracking & Central DB
       try {
         const cleanPhone = phone.replace(/\D/g, '');
         const existingUsersStr = localStorage.getItem('majh_boisar_registered_users');
-        const existingUsers = existingUsersStr ? JSON.parse(existingUsersStr) : [];
-        const alreadyExists = existingUsers.some((u: any) => u.phone?.replace(/\D/g, '') === cleanPhone);
+        const existingUsers: any[] = existingUsersStr ? JSON.parse(existingUsersStr) : [];
+        const existingIndex = existingUsers.findIndex((u: any) => u.phone?.replace(/\D/g, '').endsWith(cleanPhone.slice(-10)));
 
-        if (!alreadyExists && cleanPhone.length > 0) {
+        if (existingIndex >= 0) {
+          existingUsers[existingIndex] = {
+            ...existingUsers[existingIndex],
+            name: name || existingUsers[existingIndex].name || 'Registered Citizen',
+            email: email || existingUsers[existingIndex].email || `${cleanPhone}@majhboisar.in`,
+            lastLogin: new Date().toISOString()
+          };
+          localStorage.setItem('majh_boisar_registered_users', JSON.stringify(existingUsers));
+        } else if (cleanPhone.length > 0) {
           const newUserRecord = {
             id: Date.now(),
-            name,
+            name: name || 'Registered Citizen',
             phone: cleanPhone,
             email: email || `${cleanPhone}@majhboisar.in`,
             role: 'Registered User',
             joinedDate: new Date().toISOString().split('T')[0],
+            lastLogin: new Date().toISOString(),
             status: 'Active'
           };
           localStorage.setItem('majh_boisar_registered_users', JSON.stringify([newUserRecord, ...existingUsers]));
         }
+
+        // Post to central backend database
+        if (cleanPhone.length > 0) {
+          fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: name || 'Registered Citizen',
+              phone: cleanPhone,
+              email: email || `${cleanPhone}@majhboisar.in`,
+              role: 'Registered User'
+            })
+          }).catch((err) => console.warn('Could not post user to /api/users:', err));
+        }
+
+        window.dispatchEvent(new CustomEvent('majh_boisar_user_registered'));
+        window.dispatchEvent(new Event('storage'));
       } catch (e) {
         console.error("Error updating registered users list", e);
       }

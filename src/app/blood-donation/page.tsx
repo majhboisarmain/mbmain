@@ -51,11 +51,12 @@ const EMERGENCY_BLOOD_BANKS = [
 ];
 
 export default function BloodDonationPage() {
-  const { isLoggedIn, loggedInUser, setLoginModalOpen } = useApp();
+  const { isLoggedIn, loggedInUser, currentRole, setLoginModalOpen } = useApp();
   const [donors, setDonors] = useState<Donor[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingDonors, setLoadingDonors] = useState(true);
+  const [localMyDonorId, setLocalMyDonorId] = useState<string | null>(null);
   
   // Modals
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
@@ -70,13 +71,26 @@ export default function BloodDonationPage() {
 
   const userPhoneDigits = loggedInUser?.phone ? loggedInUser.phone.replace(/\D/g, '') : '';
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      setLocalMyDonorId(localStorage.getItem('majh_boisar_my_donor_id'));
+    }
+    fetchDonors();
+  }, []);
+
   const myDonorProfile = useMemo(() => {
-    if (!userPhoneDigits) return null;
     return donors.find(d => {
-      const dPhone = (d.phone || '').replace(/\D/g, '');
-      return dPhone && (dPhone.endsWith(userPhoneDigits) || userPhoneDigits.endsWith(dPhone));
+      if (localMyDonorId && String(d.id) === String(localMyDonorId)) return true;
+      if (userPhoneDigits) {
+        const dPhone = (d.phone || '').replace(/\D/g, '');
+        if (dPhone && (dPhone.endsWith(userPhoneDigits.slice(-10)) || userPhoneDigits.endsWith(dPhone.slice(-10)))) {
+          return true;
+        }
+      }
+      return false;
     });
-  }, [donors, userPhoneDigits]);
+  }, [donors, userPhoneDigits, localMyDonorId]);
 
   const fetchDonors = async () => {
     setLoadingDonors(true);
@@ -92,13 +106,6 @@ export default function BloodDonationPage() {
       setLoadingDonors(false);
     }
   };
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    }
-    fetchDonors();
-  }, []);
   
   const handleOpenRegisterModal = () => {
     if (!isLoggedIn) {
@@ -142,6 +149,11 @@ export default function BloodDonationPage() {
       if (res.ok) {
         const newDonor = await res.json();
         setDonors(prev => [newDonor, ...prev]);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('majh_boisar_my_donor_id', String(newDonor.id));
+          localStorage.setItem('majh_boisar_my_donor_phone', String(newDonor.phone));
+          setLocalMyDonorId(String(newDonor.id));
+        }
         setRegisterModalOpen(false);
         setNewName("");
         setNewPhone("");
@@ -158,14 +170,19 @@ export default function BloodDonationPage() {
   };
 
   const handleRemoveDonor = async (donorId: number, donorName: string) => {
-    if (!confirm(`Are you sure you want to remove "${donorName}" from the Blood Donors list?`)) return;
+    if (!confirm(`Are you sure you want to unlist and remove "${donorName}" from the Blood Donors list?`)) return;
     try {
       const res = await fetch(`/api/blood-donors?id=${donorId}`, {
         method: 'DELETE'
       });
       if (res.ok) {
         setDonors(prev => prev.filter(d => d.id !== donorId));
-        alert("Your donor profile has been unlisted.");
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('majh_boisar_my_donor_id');
+          localStorage.removeItem('majh_boisar_my_donor_phone');
+          setLocalMyDonorId(null);
+        }
+        alert("✅ Your donor profile has been unlisted successfully.");
       } else {
         alert("Failed to unlist profile. Please try again.");
       }
@@ -308,10 +325,15 @@ export default function BloodDonationPage() {
         {/* ── 3. Donors Grid ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filteredDonors.map(donor => {
-            const isMyDonor = Boolean(userPhoneDigits && (
-              (donor.phone || '').replace(/\D/g, '').endsWith(userPhoneDigits) || 
-              userPhoneDigits.endsWith((donor.phone || '').replace(/\D/g, ''))
-            ));
+            const isMyDonor = Boolean(
+              myDonorProfile?.id === donor.id ||
+              (localMyDonorId && String(donor.id) === String(localMyDonorId)) ||
+              (userPhoneDigits && (
+                (donor.phone || '').replace(/\D/g, '').endsWith(userPhoneDigits.slice(-10)) || 
+                userPhoneDigits.endsWith((donor.phone || '').replace(/\D/g, '').slice(-10))
+              ))
+            );
+            const isAdmin = currentRole === 'Admin';
 
             return (
               <div 
@@ -348,12 +370,12 @@ export default function BloodDonationPage() {
                       </div>
                     </div>
 
-                    {isMyDonor && (
+                    {(isMyDonor || isAdmin) && (
                       <button
                         type="button"
                         onClick={() => handleRemoveDonor(donor.id, donor.name)}
-                        className="p-1 text-slate-400 hover:text-red-600 transition-colors"
-                        title="Remove profile"
+                        className="p-1 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                        title={isMyDonor ? "Unlist my donor profile" : "Admin: Remove donor"}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -389,9 +411,8 @@ export default function BloodDonationPage() {
                 🩸
               </div>
               <div>
-                <h3 className="text-sm font-black text-slate-800">No Donors Listed for this Selection</h3>
                 <p className="text-xs text-slate-500 font-medium max-w-md mx-auto mt-0.5">
-                  Use the top buttons to register your profile as a voluntary blood donor or contact official 24x7 blood banks in emergency.
+                  Select another blood group filter or contact official 24x7 blood banks listed below in an emergency.
                 </p>
               </div>
               {(selectedGroup !== 'All' || searchQuery) && (

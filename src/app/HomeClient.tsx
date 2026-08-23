@@ -16,7 +16,6 @@ import { useApp } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
 import AdModal from '@/components/AdModal';
 import PostPropertyModal from '@/components/PostPropertyModal';
-import LocalHubPills from '@/components/LocalHub/LocalHubPills';
 import LocalMarketplaceModal from '@/components/LocalHub/LocalMarketplaceModal';
 import LocalOffersModal from '@/components/LocalHub/LocalOffersModal';
 import TempoHelplineModal from '@/components/LocalHub/TempoHelplineModal';
@@ -29,6 +28,7 @@ import CommunityEventsModal from '@/components/LocalHub/CommunityEventsModal';
 import HotelBookingModal from '@/components/LocalHub/HotelBookingModal';
 import ResortVillaModal from '@/components/LocalHub/ResortVillaModal';
 import ReportModal from '@/components/ReportModal';
+import AppDownloadBanner from '@/components/AppDownloadBanner';
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
 
 const toTitleCase = (str: string) => {
@@ -91,27 +91,16 @@ interface AdCampaign {
 }
 
 const rawCategories = [
-  "Restaurants", "Doctors", "Grocery Shops", "Jewellery", "Digital Marketing", "Dance Classes", "Coaching Classes", "Beauty Parlours",
-  "Wholesalers & Bulk Distributors", "Retailers & Local Shops", "Snacks & Farsan Shops", "Fabrication", "Mobile Repair", "Washing", "Dry Cleaning", "Medical Stores", "Hair Salons", "Hardware Shops", "Real Estate Agents", "Diagnostic Labs", "Influencers",
-  "Hospitals", "Clinics", "Dentists", "Physiotherapists", "Eye Hospitals", "Skin Clinics", "Veterinary Clinics",
-  "Interior Designers", "Architects", "Civil Contractors", "Building Contractors", "Fabricators", "Steel Fabricators", "Aluminium Fabricators", "Glass Dealers", "Tile Dealers", "Marble Dealers", "Granite Dealers",
-  "Paint Shops", "Cement Dealers", "Sand Suppliers", "Brick Suppliers", "Plywood Dealers", "Electrical Shops", "Lighting Stores", "Sanitary Ware", "Bathroom Fittings",
-  "Cafes", "Fast Food", "Chinese Restaurants", "South Indian Restaurants", "North Indian Restaurants", "Pizza Shops", "Burger Shops", "Sweet Shops", "Bakery",
-  "Cake Shops", "Ice Cream Parlours", "Tea Stalls", "Juice Centres", "Tiffin Services", "Catering Services", "Banquet Halls", "Cloud Kitchens", "Hotels", "Resorts",
-  "Travel Agencies", "Tour Operators", "Car Rentals", "Bike Rentals", "Taxi Services", "Packers & Movers", "Courier Services", "Driving Schools", "Petrol Pumps", "EV Charging Stations",
-  "Car Garage", "Bike Garage", "Car Repair", "Bike Repair", "Tyre Dealers", "Wheel Alignment", "Auto Spare Parts", "Car Accessories", "Bike Accessories", "Battery Dealers",
-  "Mobile Shops", "Laptop Repair", "Computer Shops", "Computer Repair", "Printer Repair", "Electronics Shops", "Appliance Repair", "TV Repair", "Camera Repair",
-  "Jewellery Shops", "Artificial Jewellery", "Watch Shops", "Gift Shops", "Toy Shops", "Sports Shops", "Book Stores", "Stationery Shops", "Flower Shops", "Pet Shops",
-  "Pet Food Stores", "Aquarium Shops", "Garment Showrooms", "Mens Wear", "Ladies Wear", "Kids Wear", "Footwear Stores", "Bag Shops", "Cosmetic Stores", "Perfume Shops",
-  "Furniture Dealers", "Mattress Shops", "Modular Kitchen", "Kitchenware Shops", "Plastic Goods", "Disposable Items", "Packaging Material", "Sign Board Shops", "Radium Shop", "Flex Printing",
-  "Digital Printing", "Offset Printing", "Photocopy Centre", "Cyber Cafe", "Xerox Centre", "Graphic Designers", "Web Designers", "Digital Marketing", "SEO Agency", "CA",
-  "GST Consultant", "Tax Consultant", "Lawyers", "Insurance Agents", "Loan Consultants", "Banks", "ATMs", "Real Estate Agents", "Property Dealers", "Builders",
-  "Developers", "PG", "Hostels", "Schools", "Colleges", "Tuition Classes", "Computer Institutes", "Music Classes", "Dance Classes",
-  "Yoga Classes", "Martial Arts", "Play Schools", "Libraries", "Spa", "Massage Centres", "Tattoo Studios", "Bridal Makeup",
-  "Mehendi Artists", "Solar Panel Dealers", "Generator Dealers", "Machinery Dealers", "Industrial Tools", "Safety Equipment", "Seed Dealers", "Fertilizer Shops", "Pesticide Dealers", "Tractor Dealers",
-  "Feed Stores", "Milk Dairy", "Chicken Shop", "Fish Shop", "Meat Shop", "Fruit Shop", "Vegetable Shop", "General Store", "Kirana Store", "Supermarket",
-  "Laundry", "Tailors", "Gas Agency", "Water Suppliers", "Borewell Drillers", "Tent House", "Event Organisers", "Wedding Planners", "Photographers",
-  "Videographers", "DJ Services", "Neon Sign Shop", "Atta Chakki", "Rice Mill", "Scrap Dealer", "Kabadi Shop", "Locksmith", "Opticians", "Water Purifier Dealers"
+  "Protein & Supplements", "Gyms & Fitness Centers", "Pathology & Diagnostic Labs", "Salon & Beauty Parlour", "Clothing & Fashion",
+  "Photographers & Videographers", "Dance & Music Classes", "Travel Agencies & Tours", "Medical Stores & Pharmacy", "CA & Tax Consultants",
+  "Doctors & Specialists", "Baby & Mother Care", "Eye Care & Opticians", "Restaurants & Dining", "Cafes & Bakeries", "Street Food & Snacks",
+  "Grocery & Supermarkets", "Dairy & Milk Products", "Meat & Poultry", "Fruits & Vegetables", "Real Estate & Properties",
+  "Hotels & Lodging", "Resorts & Villas", "PG & Hostels", "Home Services & Repairs", "Electricians & Wiring",
+  "Plumbers & Sanitation", "Carpenters & Furniture", "Painters & Waterproofing", "AC Service & Cooling", "Pest Control Services",
+  "Beauty Parlours & Salons", "Spa & Wellness", "Yoga & Martial Arts", "Schools & Colleges", "Coaching & Tuitions",
+  "Jewellery & Ornaments", "Footwear & Shoes", "Electronics & Home Appliances", "Mobile Shops & Repair", "Computer & Laptop Services",
+  "Hardware & Building Material", "Interior Designers & Decor", "Steel & Aluminium Fabrication", "Automobile Garages & Repair", "Car & Bike Rentals",
+  "Packers & Movers", "Event Organisers & Decor", "Catering & Tiffin Services", "Digital Marketing & IT", "Hospitals & Emergency"
 ];
 
 export interface HomeFeaturedRestaurant {
@@ -318,14 +307,24 @@ export const QUICK_PORTAL_PILLS: PortalSearchPill[] = [
     keywords: ['used', 'second hand', 'purana', 'sell', 'buy', 'olx', 'resell', 'used phone', 'used bike', 'used furniture', 'marketplace']
   },
   {
-    id: 'blood_emergency',
-    title: '24/7 Emergency & Blood Donors',
-    subtitle: 'Police, Fire, Ambulance, Hospitals & Blood Bank',
+    id: 'blood_donors',
+    title: 'Voluntary Blood Donors & Blood Banks',
+    subtitle: 'O+, A+, B+, AB+, O- Voluntary Donors in Boisar',
+    icon: '🩸',
+    badge: 'Blood Donors',
+    targetUrl: '/blood-donation',
+    actionType: 'url',
+    keywords: ['blood', 'blood donor', 'blood donation', 'raktadan', 'blood bank', 'o+', 'b+', 'a+', 'ab+', 'o-', 'b-', 'blood group', 'donor']
+  },
+  {
+    id: 'emergency_helpline',
+    title: '24/7 Emergency Helplines',
+    subtitle: 'Police, Fire, Ambulance, Hospitals & ICU',
     icon: '🚨',
     badge: 'Emergency',
     targetUrl: 'modal:emergency',
     actionType: 'modal',
-    keywords: ['blood', 'blood donor', 'emergency', 'ambulance', 'hospital', 'police', 'fire', 'icu', 'doctor', 'helpline']
+    keywords: ['emergency', 'ambulance', 'hospital emergency', 'police', 'fire', 'icu', 'helpline', 'police station']
   }
 ];
 
@@ -461,30 +460,116 @@ function getCategoryIcon(name: string) {
 function getCategoryBgClass(name: string) {
   const lowercase = name.toLowerCase();
   if (lowercase.includes('influencer') || lowercase.includes('creator') || lowercase.includes('blogger')) {
-    return 'bg-indigo-50 border-indigo-100 text-indigo-600';
+    return 'bg-indigo-100/70 border-indigo-200/60 text-indigo-700';
   }
   if (lowercase.includes('doctor') || lowercase.includes('dentist') || lowercase.includes('physio') || lowercase.includes('skin') || lowercase.includes('eye')) {
-    return 'bg-teal-50 border-teal-100 text-teal-600';
+    return 'bg-teal-100/70 border-teal-200/60 text-teal-700';
   }
   if (lowercase.includes('hospital') || lowercase.includes('clinic') || lowercase.includes('medical') || lowercase.includes('lab') || lowercase.includes('diagnostic')) {
-    return 'bg-rose-50 border-rose-100 text-rose-600';
+    return 'bg-rose-100/70 border-rose-200/60 text-rose-700';
   }
   if (lowercase.includes('plumber') || lowercase.includes('carpenter') || lowercase.includes('repair') || lowercase.includes('garage') || lowercase.includes('spare') || lowercase.includes('service')) {
-    return 'bg-sky-50 border-sky-100 text-sky-600';
+    return 'bg-sky-100/70 border-sky-200/60 text-sky-700';
   }
   if (lowercase.includes('electrician') || lowercase.includes('electrical') || lowercase.includes('battery') || lowercase.includes('solar') || lowercase.includes('generator')) {
-    return 'bg-amber-50 border-amber-100 text-amber-600';
+    return 'bg-amber-100/70 border-amber-200/60 text-amber-700';
   }
   if (lowercase.includes('restaurant') || lowercase.includes('cafe') || lowercase.includes('food') || lowercase.includes('pizza') || lowercase.includes('burger') || lowercase.includes('sweet') || lowercase.includes('tiffin') || lowercase.includes('catering') || lowercase.includes('bakery') || lowercase.includes('cake') || lowercase.includes('ice cream') || lowercase.includes('tea') || lowercase.includes('juice') || lowercase.includes('kitchen')) {
-    return 'bg-red-50 border-red-100 text-red-600';
+    return 'bg-orange-100/70 border-orange-200/60 text-orange-700';
   }
   if (lowercase.includes('school') || lowercase.includes('college') || lowercase.includes('coaching') || lowercase.includes('tuition') || lowercase.includes('class') || lowercase.includes('institute') || lowercase.includes('academy') || lowercase.includes('library')) {
-    return 'bg-indigo-50 border-indigo-100 text-indigo-600';
+    return 'bg-purple-100/70 border-purple-200/60 text-purple-700';
   }
   if (lowercase.includes('beauty') || lowercase.includes('parlour') || lowercase.includes('salon') || lowercase.includes('spa') || lowercase.includes('massage') || lowercase.includes('makeup') || lowercase.includes('mehendi') || lowercase.includes('tattoo')) {
-    return 'bg-pink-50 border-pink-100 text-pink-600';
+    return 'bg-pink-100/70 border-pink-200/60 text-pink-700';
   }
-  return 'bg-slate-50 border-slate-200 text-slate-600';
+  if (lowercase.includes('real estate') || lowercase.includes('property') || lowercase.includes('bank') || lowercase.includes('atm') || lowercase.includes('loan') || lowercase.includes('ca') || lowercase.includes('gst') || lowercase.includes('lawyer')) {
+    return 'bg-cyan-100/70 border-cyan-200/60 text-cyan-700';
+  }
+  if (lowercase.includes('travel') || lowercase.includes('transport') || lowercase.includes('rental') || lowercase.includes('taxi') || lowercase.includes('truck') || lowercase.includes('courier')) {
+    return 'bg-amber-100/70 border-amber-200/60 text-amber-700';
+  }
+  if (lowercase.includes('grocery') || lowercase.includes('shop') || lowercase.includes('store') || lowercase.includes('supermarket') || lowercase.includes('dairy')) {
+    return 'bg-emerald-100/70 border-emerald-200/60 text-emerald-700';
+  }
+  if (lowercase.includes('jewel') || lowercase.includes('garment') || lowercase.includes('wear') || lowercase.includes('cloth') || lowercase.includes('shopping')) {
+    return 'bg-fuchsia-100/70 border-fuchsia-200/60 text-fuchsia-700';
+  }
+  return 'bg-slate-100/80 border-slate-200/60 text-slate-700';
+}
+
+const CATEGORY_IMAGE_MAP: Record<string, string> = {
+  "Protein & Supplements": "https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?auto=format&fit=crop&w=360&q=80",
+  "Gyms & Fitness Centers": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=260&q=80",
+  "Pathology & Diagnostic Labs": "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=260&q=80",
+  "Salon & Beauty Parlour": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=260&q=80",
+  "Medical Stores & Pharmacy": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=260&q=80",
+  "Doctors & Specialists": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=260&q=80",
+  "Hospitals & Emergency": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=260&q=80",
+  "Baby & Mother Care": "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=260&q=80",
+  "Eye Care & Opticians": "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?auto=format&fit=crop&w=260&q=80",
+  "Restaurants & Dining": "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=260&q=80",
+  "Cafes & Bakeries": "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=260&q=80",
+  "Street Food & Snacks": "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=260&q=80",
+  "Dentists & Dental Clinics": "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=260&q=80",
+  "Grocery & Supermarkets": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=260&q=80",
+  "Dairy & Milk Products": "https://images.unsplash.com/photo-1528750997573-59b89d56f4f7?auto=format&fit=crop&w=260&q=80",
+  "Meat & Poultry": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=260&q=80",
+  "Fruits & Vegetables": "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=260&q=80",
+  "Real Estate & Properties": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=260&q=80",
+  "Hotels & Lodging": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=260&q=80",
+  "Resorts & Villas": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=260&q=80",
+  "PG & Hostels": "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=260&q=80",
+  "Home Services & Repairs": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=260&q=80",
+  "Electricians & Wiring": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=260&q=80",
+  "Plumbers & Sanitation": "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=260&q=80",
+  "Carpenters & Furniture": "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=260&q=80",
+  "Painters & Waterproofing": "https://images.unsplash.com/photo-1562259949-e8e7689d7828?auto=format&fit=crop&w=260&q=80",
+  "AC Service & Cooling": "https://images.unsplash.com/photo-1614633833026-06204c66e2c3?auto=format&fit=crop&w=260&q=80",
+  "Pest Control Services": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=260&q=80",
+  "Beauty Parlours & Salons": "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=260&q=80",
+  "Spa & Wellness": "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=260&q=80",
+  "Gyms & Fitness": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=260&q=80",
+  "Yoga & Martial Arts": "https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=260&q=80",
+  "Schools & Colleges": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=260&q=80",
+  "Dance & Music Classes": "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&w=360&q=80",
+  "Dance Classes & Music": "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&w=360&q=80",
+  "Dance Classes": "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&w=360&q=80",
+  "Music & Dance Classes": "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&w=360&q=80",
+  "Jewellery & Ornaments": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=260&q=80",
+  "Clothing & Fashion": "https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=260&q=80",
+  "Footwear & Shoes": "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=260&q=80",
+  "Electronics & Home Appliances": "https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=260&q=80",
+  "Mobile Shops & Repair": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=260&q=80",
+  "Computer & Laptop Services": "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=260&q=80",
+  "Hardware & Building Material": "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=260&q=80",
+  "Interior Designers & Decor": "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=260&q=80",
+  "Steel & Aluminium Fabrication": "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=260&q=80",
+  "Automobile Garages & Repair": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=260&q=80",
+  "Car & Bike Rentals": "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=260&q=80",
+  "Travel Agencies & Tours": "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=260&q=80",
+  "Packers & Movers": "https://images.unsplash.com/photo-1600518464441-9154a4dea21b?auto=format&fit=crop&w=260&q=80",
+  "Event Organisers & Decor": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=260&q=80",
+  "Photographers & Videographers": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=260&q=80",
+  "Catering & Tiffin Services": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=260&q=80",
+  "Digital Marketing & IT": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=260&q=80",
+  "CA & Tax Consultants": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=260&q=80",
+  "Lawyers & Legal Advisors": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=260&q=80",
+  "Pet Shops & Vet Clinics": "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=260&q=80"
+};
+
+function getCategoryImage(name: string): string {
+  if (CATEGORY_IMAGE_MAP[name]) {
+    return CATEGORY_IMAGE_MAP[name];
+  }
+  const lowercase = name.toLowerCase();
+  for (const [catName, imgUrl] of Object.entries(CATEGORY_IMAGE_MAP)) {
+    const words = catName.toLowerCase().split(/[ &]+/);
+    if (words.some(w => w.length > 3 && lowercase.includes(w))) {
+      return imgUrl;
+    }
+  }
+  return "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=260&q=80";
 }
 
 export default function HomeClient() {
@@ -1277,10 +1362,27 @@ export default function HomeClient() {
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
   const minSwipeDistance = 35;
+  const [slideTimerKey, setSlideTimerKey] = useState<number>(0);
+
+  const handleNextSlide = () => {
+    setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+    setSlideTimerKey((k) => k + 1);
+  };
+
+  const handlePrevSlide = () => {
+    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+    setSlideTimerKey((k) => k + 1);
+  };
+
+  const handleSelectSlide = (idx: number) => {
+    setCurrentSlide(idx);
+    setSlideTimerKey((k) => k + 1);
+  };
 
   const onCarouselTouchStart = (e: React.TouchEvent) => {
     setTouchEndX(null);
     setTouchStartX(e.targetTouches[0].clientX);
+    setIsSlidePlaying(false);
   };
 
   const onCarouselTouchMove = (e: React.TouchEvent) => {
@@ -1288,24 +1390,28 @@ export default function HomeClient() {
   };
 
   const onCarouselTouchEnd = () => {
-    if (touchStartX === null || touchEndX === null) return;
+    if (touchStartX === null || touchEndX === null) {
+      setIsSlidePlaying(true);
+      return;
+    }
     const distance = touchStartX - touchEndX;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
     if (isLeftSwipe) {
-      setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+      handleNextSlide();
     } else if (isRightSwipe) {
-      setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+      handlePrevSlide();
     }
+    setTimeout(() => setIsSlidePlaying(true), 2500);
   };
 
   useEffect(() => {
     if (!isSlidePlaying || slides.length <= 1) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
-    }, 4500);
+    }, 5500);
     return () => clearInterval(timer);
-  }, [isSlidePlaying, slides.length]);
+  }, [isSlidePlaying, slides.length, slideTimerKey]);
 
   // Fetch dynamic ads from backend & localStorage
   useEffect(() => {
@@ -1512,7 +1618,8 @@ export default function HomeClient() {
   const categories = [...rawCategories, ...dynamicCategories].map(name => ({
     name,
     icon: getCategoryIcon(name),
-    bgClass: getCategoryBgClass(name)
+    bgClass: getCategoryBgClass(name),
+    image: getCategoryImage(name)
   }));
 
   // Sub-category Promo Blocks (Expanded with rich local daily utility services)
@@ -1563,16 +1670,7 @@ export default function HomeClient() {
     }
   ];
 
-  // Trending Searches Near You
-  const trendingSearches = [
-    { name: "Cafes & Hangouts", count: "18 Spots", icon: "☕", image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=400&q=80", cat: "Cafes", gradient: "from-amber-500/20 to-orange-600/20" },
-    { name: "Gyms & Fitness", count: "12 Centres", icon: "💪", image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=400&q=80", cat: "Gyms", gradient: "from-blue-500/20 to-indigo-600/20" },
-    { name: "Parks & Turf", count: "8 Locations", icon: "🌳", image: "https://images.unsplash.com/photo-1518002054494-3a6f94352e9d?auto=format&fit=crop&w=400&q=80", cat: "Parks", gradient: "from-emerald-500/20 to-teal-600/20" },
-    { name: "Street Food", count: "35 Stalls", icon: "🍔", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=400&q=80", cat: "Street Food", gradient: "from-rose-500/20 to-red-600/20" },
-    { name: "Apparel Shops", count: "22 Stores", icon: "👗", image: "https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=400&q=80", cat: "Clothing", gradient: "from-purple-500/20 to-fuchsia-600/20" },
-    { name: "Real Estate", count: "15 Agents", icon: "🏢", image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=400&q=80", cat: "Real Estate Agents", gradient: "from-sky-500/20 to-cyan-600/20" },
-    { name: "Salons & Spa", count: "14 Parlours", icon: "✂️", image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=80", cat: "Salons", gradient: "from-pink-500/20 to-rose-600/20" },
-  ];
+
 
   const fetchBusinesses = () => {
     let url = `/search?`;
@@ -1648,43 +1746,6 @@ export default function HomeClient() {
 
   // Filter lists dynamically based on category selection (Top 8 curated business categories by default)
   const displayedCategories = isCategoriesExpanded ? categories : categories.slice(0, 8);
-
-  if (isPageLoading) {
-    return (
-      <div className="min-h-screen pb-16 font-sans animate-pulse" style={{background: 'var(--bg-page)'}}>
-        {/* Skeleton Hero Search Panel */}
-        <div className="relative border-b border-slate-100 py-6 sm:py-10 bg-slate-200 h-[100px] sm:h-[130px]"></div>
-
-        {/* Skeleton Carousel & Side Promos */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            <div className="lg:col-span-8">
-              <div className="relative h-48 sm:h-64 w-full rounded-2xl bg-slate-200"></div>
-            </div>
-            <div className="lg:col-span-4">
-              <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 sm:gap-4 h-full">
-                <div className="w-full h-full min-h-[120px] bg-slate-200 rounded-2xl"></div>
-                <div className="w-full h-full min-h-[120px] bg-slate-200 rounded-2xl"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Skeleton Popular Categories */}
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-10 sm:mt-12">
-          <div className="h-6 w-48 bg-slate-200 rounded mb-6 mx-auto"></div>
-          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-x-2 gap-y-5 sm:gap-y-6">
-            {[...Array(16)].map((_, i) => (
-              <div key={i} className="flex flex-col items-center gap-2">
-                <div className="w-[50px] h-[50px] sm:w-[60px] sm:h-[60px] rounded-2xl bg-slate-200"></div>
-                <div className="w-16 h-3 bg-slate-200 rounded mt-1"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen pb-16 text-slate-800 font-sans" style={{background: 'var(--bg-page)'}}>
@@ -2038,28 +2099,37 @@ export default function HomeClient() {
 
               {/* Navigation Arrows */}
               <button
-                onClick={() => setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1))}
-                className="absolute left-1.5 sm:left-2 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center cursor-pointer transition-colors z-20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrevSlide();
+                }}
+                className="absolute left-1.5 sm:left-2 top-1/2 -translate-y-1/2 h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-black/50 hover:bg-black/80 active:scale-95 text-white flex items-center justify-center cursor-pointer transition-all z-30 shadow-md"
                 title="Previous Slide"
               >
-                <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <ChevronLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               </button>
               <button
-                onClick={() => setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1))}
-                className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 h-6 w-6 sm:h-7 sm:w-7 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center cursor-pointer transition-colors z-20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNextSlide();
+                }}
+                className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-black/50 hover:bg-black/80 active:scale-95 text-white flex items-center justify-center cursor-pointer transition-all z-30 shadow-md"
                 title="Next Slide"
               >
-                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <ChevronRight className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               </button>
 
               {/* Dots Indicator */}
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20">
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30">
                 {slides.map((_, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setCurrentSlide(idx)}
-                    className={`h-1 rounded-full transition-all duration-300 cursor-pointer ${
-                      currentSlide === idx ? 'bg-white w-4' : 'bg-white/40 w-1.5'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectSlide(idx);
+                    }}
+                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                      currentSlide === idx ? 'bg-white w-5 shadow-xs' : 'bg-white/50 w-2 hover:bg-white/80'
                     }`}
                     title={`Go to slide ${idx + 1}`}
                   />
@@ -2116,36 +2186,52 @@ export default function HomeClient() {
         </div>
       </div>
 
-      {/* 3. Grid of Category Blocks (Top 8 Business Categories by default) */}
-      <div className="section-alt-a mt-4 sm:mt-8 py-5 sm:py-8">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-3.5">
-          <div className="flex items-center justify-between border-b border-slate-200/60 pb-2.5">
-            <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <span className="h-4 w-1 rounded-full bg-teal-600"></span>
-              <span>{t('hero.explore_categories')}</span>
-            </h2>
-            <button
-              onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
-              className="text-xs font-black text-teal-650 hover:underline cursor-pointer"
-            >
-              {isCategoriesExpanded ? 'View Less' : `View All ${categories.length}+`}
-            </button>
+      {/* 3. Grid of Category Blocks (Explore Categories - Popular style compact cards) */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-5 sm:mt-7">
+        <div className="flex items-center justify-between border-b border-slate-200/60 pb-2 mb-3.5">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+                <span className="h-4 w-1 rounded-full bg-teal-600 shrink-0"></span>
+                <span>{t('hero.explore_categories')}</span>
+              </h2>
+            </div>
+            <div className="h-1 w-10 sm:w-12 bg-gradient-to-r from-teal-600 to-emerald-500 rounded-full mt-1"></div>
           </div>
+          <button
+            onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
+            className="text-[10.5px] sm:text-xs font-black text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200/70 px-3 py-1 rounded-full shadow-2xs transition-all cursor-pointer"
+          >
+            {isCategoriesExpanded ? 'View Less ↑' : `View All ${categories.length} Categories ↓`}
+          </button>
+        </div>
 
-          <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3">
-            {displayedCategories.map((cat) => (
-              <div
-                key={cat.name}
-                onClick={() => router.push(`/search?category=${encodeURIComponent(cat.name)}`)}
-                className="cat-pill rounded-xl p-2 sm:p-2.5 text-center flex flex-col items-center justify-start gap-1.5 cursor-pointer hover:scale-[1.03] transition-all bg-white border border-slate-100 hover:border-teal-200 shadow-2xs group"
-              >
-                <div className={`p-2 sm:p-2.5 rounded-xl border ${cat.bgClass} flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform`}>
-                  <div className="scale-85 sm:scale-95 origin-center">{cat.icon}</div>
-                </div>
-                <span className="text-[9.5px] sm:text-[10px] font-bold text-slate-700 leading-tight tracking-wider truncate w-full px-0.5">{cat.name}</span>
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 gap-2 sm:gap-3">
+          {displayedCategories.map((cat) => (
+            <div
+              key={cat.name}
+              onClick={() => router.push(`/search?category=${encodeURIComponent(cat.name)}`)}
+              className="group bg-white rounded-2xl border border-slate-200/80 p-2 sm:p-2.5 shadow-2xs hover:shadow-md hover:border-teal-300/80 transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col items-center justify-between text-center relative"
+            >
+              {/* Inner Pastel Box with Category Photo (Matching Popular Categories) */}
+              <div className={`w-full aspect-square rounded-xl ${cat.bgClass} flex items-center justify-center p-1.5 transition-transform duration-300 group-hover:scale-105 shadow-2xs overflow-hidden`}>
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  loading="lazy"
+                  className="w-full h-full object-cover rounded-lg shadow-2xs group-hover:scale-110 transition-transform duration-500"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/imagess/shop offer.png';
+                  }}
+                />
               </div>
-            ))}
-          </div>
+
+              {/* Title label */}
+              <p className="text-[10px] sm:text-[11px] font-bold text-slate-800 text-center leading-tight mt-1.5 line-clamp-2 group-hover:text-teal-700 transition-colors w-full px-0.5">
+                {cat.name}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -2174,7 +2260,7 @@ export default function HomeClient() {
             </div>
             
             <button
-              onClick={() => router.push('/search?category=Restaurants')}
+              onClick={() => router.push('/food')}
               className="text-[11px] sm:text-xs font-black text-orange-800 hover:text-orange-950 flex items-center gap-1 cursor-pointer shrink-0 group bg-white/90 px-3 py-1 rounded-xl border border-orange-200 shadow-2xs hover:bg-white transition-all"
             >
               <span>See all</span>
@@ -2186,16 +2272,16 @@ export default function HomeClient() {
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory relative z-1">
             {[
               { id: 'lunch', label: 'Lunch', icon: '🍲', query: 'Thali' },
-              { id: 'dinner', label: 'Dinner', icon: '🥘', query: 'Dinner' },
+              { id: 'dinner', label: 'Dinner', icon: '🥘', query: 'Family Dining' },
               { id: 'fastfood', label: 'Fast Food', icon: '🍔', query: 'Fast Food' },
-              { id: 'nearme', label: 'Near Me', icon: '📍', query: 'Restaurants' },
-              { id: 'breakfast', label: 'Breakfast', icon: '🥞', query: 'Breakfast' },
+              { id: 'nearme', label: 'Near Me', icon: '📍', query: 'All' },
+              { id: 'breakfast', label: 'Breakfast', icon: '🥞', query: 'Pure Veg & Thali' },
               { id: 'cafes', label: 'Cafes', icon: '☕', query: 'Cafe' },
-              { id: 'sweets', label: 'Sweets & Bakery', icon: '🍰', query: 'Bakery' }
+              { id: 'sweets', label: 'Sweets & Bakery', icon: '🍰', query: 'Desserts & Bakery' }
             ].map(meal => (
               <button
                 key={meal.id}
-                onClick={() => router.push(`/search?query=${encodeURIComponent(meal.query)}`)}
+                onClick={() => router.push(`/food?category=${encodeURIComponent(meal.query)}`)}
                 className="snap-start shrink-0 bg-white hover:bg-orange-50 border border-orange-200/90 hover:border-orange-400 rounded-xl px-3 py-1.5 flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs group active:scale-95"
               >
                 <span className="text-sm group-hover:scale-110 transition-transform">{meal.icon}</span>
@@ -2210,7 +2296,7 @@ export default function HomeClient() {
               {featuredRestaurants.filter(r => r.isActive !== false).map((resto) => (
                 <div
                   key={resto.id}
-                  onClick={() => router.push(`/search?category=Restaurants`)}
+                  onClick={() => router.push(`/food?id=${resto.id}`)}
                   className="bg-white border border-orange-100 hover:border-orange-400 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between text-left"
                 >
                   <div>
@@ -2271,7 +2357,7 @@ export default function HomeClient() {
           <span className="text-[9.5px] sm:text-[10.5px] font-bold text-slate-400 whitespace-nowrap shrink-0">1-Tap Direct Access</span>
         </div>
 
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-9 gap-2.5 sm:gap-3.5">
+        <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-5 lg:grid-cols-10 gap-2.5 sm:gap-3.5">
 
           {/* 1. Home Services */}
           <div
@@ -2378,100 +2464,19 @@ export default function HomeClient() {
             </div>
           </div>
 
-        </div>
-      </div>
-
-      {/* 4. Sub-category Promo Blocks */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-14">
-        {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="h-1.5 w-6 rounded-full bg-gradient-to-r from-teal-500 to-emerald-500"></span>
-              <span className="text-xs font-black text-teal-600 uppercase tracking-wider">Handpicked Services</span>
+          {/* 10. Blood Donors */}
+          <div
+            onClick={() => router.push('/blood-donation')}
+            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-red-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
+          >
+            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
+              <img src="/imagess/blood donor.png" alt="Blood Donors"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             </div>
-            <h2 className="text-xl md:text-2xl font-black text-slate-800 mt-2 leading-tight">
-              Explore Popular Categories
-            </h2>
           </div>
-          <p className="text-xs text-slate-500 font-medium mt-2 md:mt-0">
-            Find and connect with local trusted professionals near you
-          </p>
-        </div>
 
-        <div className="flex gap-6 overflow-x-auto pb-4 lg:grid lg:grid-cols-4 lg:gap-6 scrollbar-hide snap-x snap-mandatory">
-          {promoSections.map((sect, sIdx) => {
-            const isRepairs = sect.title.toLowerCase().includes('repairs');
-            const isNeeds = sect.title.toLowerCase().includes('needs');
-            const isBeauty = sect.title.toLowerCase().includes('beauty');
-            
-            const accentClass = isRepairs 
-              ? 'border-t-teal-500 bg-teal-50/5' 
-              : isNeeds 
-                ? 'border-t-amber-500 bg-amber-50/5' 
-                : isBeauty 
-                  ? 'border-t-pink-500 bg-pink-50/5' 
-                  : 'border-t-rose-500 bg-rose-50/5';
-
-            const lineClass = isRepairs 
-              ? 'bg-teal-500' 
-              : isNeeds 
-                ? 'bg-amber-500' 
-                : isBeauty 
-                  ? 'bg-pink-500' 
-                  : 'bg-rose-500';
-
-            return (
-              <div 
-                key={sIdx} 
-                className={`w-[62vw] sm:w-[35vw] lg:w-auto shrink-0 snap-start bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-300 border-t-4 ${accentClass} flex flex-col justify-between`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2.5">
-                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                      {sect.title}
-                    </h3>
-                    <span className={`h-1.5 w-6 rounded-full ${lineClass}`}></span>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {sect.items.map((item, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => {
-                          router.push(`/search?query=${encodeURIComponent(item.query)}`);
-                        }}
-                        className="flex items-center gap-3.5 cursor-pointer group rounded-xl bg-slate-50/50 hover:bg-slate-50 border border-transparent hover:border-slate-200/70 p-2 transition-all duration-300"
-                      >
-                        <div className="h-14 w-14 rounded-lg overflow-hidden shrink-0 border border-slate-200 bg-slate-100 relative shadow-inner">
-                          <img loading="lazy" decoding="async" 
-                            src={item.image || undefined} 
-                            alt={item.label} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out" 
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-60 group-hover:opacity-0 transition-opacity duration-300" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="text-[12px] font-black text-slate-700 group-hover:text-teal-600 transition-colors leading-tight">
-                            {item.label}
-                          </h4>
-                          <span className="inline-flex items-center text-[9px] font-bold text-slate-400 mt-1 group-hover:text-teal-600 transition-colors">
-                            View details
-                            <ChevronRight className="w-2.5 h-2.5 ml-0.5 opacity-0 group-hover:opacity-100 translate-x-[-4px] group-hover:translate-x-0 transition-all duration-300" />
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
         </div>
       </div>
-
-      {/* 5. Trending Searches Near You */}
-      <LocalHubPills />
 
       {/* 6. Top Rated Businesses */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-10 top-rated-section">
@@ -2808,16 +2813,15 @@ export default function HomeClient() {
         </div>
       </div>
 
-
-
-
+      {/* 8. Official App Download & QR Scanner Banner (Homepage Only) */}
+      <AppDownloadBanner />
 
       {/* ==================== SPONSOR AD SLOT BUILDER MODAL ==================== */}
       <AdModal isOpen={adModalOpen} onClose={() => setAdModalOpen(false)} />
 
       {/* Interactive Special Booking Panel (Slide-over panel / Drawer) */}
       {activeSpecialCategory && (
-        <div className={`fixed inset-0 z-50 overflow-hidden flex items-center justify-center ${activeSpecialCategory === 'properties' ? 'p-0' : 'p-2 sm:p-4'}`}>
+        <div className={`fixed inset-0 z-[600] overflow-hidden flex items-center justify-center ${activeSpecialCategory === 'properties' ? 'p-0' : 'p-2 sm:p-4'}`}>
           {/* Backdrop */}
           <div 
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
@@ -2829,7 +2833,7 @@ export default function HomeClient() {
           />
           
           {/* Panel Container (Full Page Overlay for Portals) */}
-          <div className="relative bg-slate-50 flex flex-col z-50 transition-all duration-300 overflow-hidden w-full h-full min-h-screen sm:min-h-screen rounded-none duration-300">
+          <div className="relative bg-slate-50 flex flex-col z-10 transition-all duration-300 overflow-hidden w-full h-full min-h-screen sm:min-h-screen rounded-none">
 
             {/* Full Real Estate Portal Navbar Header */}
             {activeSpecialCategory === 'properties' ? (
@@ -3576,9 +3580,8 @@ export default function HomeClient() {
                         return true;
                       }).length === 0 && (
                       <div className="bg-white rounded-2xl p-8 text-center border border-slate-200 shadow-2xs my-4">
-                        <Building className="w-12 h-12 text-slate-300 mx-auto mb-2" />
                         <h3 className="text-sm sm:text-base font-black text-slate-800">No Property Listings Yet</h3>
-                        <p className="text-xs text-slate-500 font-medium mt-1">Be the first to post a property for sale or rent in Boisar!</p>
+                        <p className="text-xs text-slate-500 font-medium mt-1">Post your property for sale or rent to reach genuine buyers across Boisar &amp; Palghar.</p>
                         <button
                           onClick={() => {
                             if (!isLoggedIn) {
@@ -3805,40 +3808,28 @@ export default function HomeClient() {
                       });
 
                       if (filtered.length === 0) {
-                        return (
-                          <div className="col-span-full bg-white border-2 border-dashed border-teal-200 rounded-3xl p-8 sm:p-10 text-center my-2 shadow-xs space-y-3">
-                            <div className="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center mx-auto text-2xl shadow-inner">
+                          <div className="col-span-full bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 text-center my-2 shadow-2xs space-y-2.5">
+                            <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-200">
                               ✨
                             </div>
-                            <div>
-                              <h4 className="text-base font-black text-slate-900">Be The First to Register in Boisar!</h4>
-                              <p className="text-xs text-slate-500 font-medium max-w-md mx-auto mt-1">
-                                No profile listed under "{helperFilterRole}" yet. Register your real verified profile to start getting direct client calls and WhatsApp inquiries across Boisar &amp; Palghar!
+                            <div className="space-y-1">
+                              <h4 className="text-sm font-black text-slate-800">No Profiles Available in this Category</h4>
+                              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                                Try exploring another category or check back shortly for updated verified profiles.
                               </p>
                             </div>
-                            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  window.open(`https://wa.me/917769947217?text=Hello%20Majh%20Boisar%2C%20I%20want%20to%20register%20my%20profile%20under%20${encodeURIComponent(helperFilterRole || 'Special Category')}`, '_blank');
-                                }}
-                                className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 active:scale-98 text-white text-xs font-black rounded-xl cursor-pointer shadow-md transition-all flex items-center gap-1.5"
-                              >
-                                <Sparkles className="w-4 h-4" />
-                                <span>➕ Register / List Your Profile (100% Free)</span>
-                              </button>
-                              {helperFilterRole !== 'All' && (
+                            {helperFilterRole !== 'All' && (
+                              <div className="pt-1">
                                 <button
                                   type="button"
                                   onClick={() => setHelperFilterRole('All')}
-                                  className="px-4 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold rounded-xl cursor-pointer"
+                                  className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 rounded-xl cursor-pointer transition-all"
                                 >
-                                  View All
+                                  View All Categories
                                 </button>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </div>
-                        );
                       }
 
                       return filtered.map((profile: any) => {
@@ -5620,7 +5611,7 @@ export default function HomeClient() {
 
       {/* View Property Enquiries Modal (Compact & Easy to Understand) */}
       {viewEnquiriesModalOpen && (
-        <div className="fixed inset-0 z-[75] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[650] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl max-w-md w-full p-4 sm:p-5 shadow-2xl relative animate-in zoom-in-95 duration-200 border border-slate-200 max-h-[85vh] flex flex-col text-left">
             <button 
               onClick={() => setViewEnquiriesModalOpen(false)}
@@ -5715,7 +5706,7 @@ export default function HomeClient() {
 
       {/* Send Property Enquiry Modal */}
       {enquiryModalProperty && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[650] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl relative animate-in zoom-in-95 duration-200 border border-slate-200">
             <button 
               onClick={() => setEnquiryModalProperty(null)}
