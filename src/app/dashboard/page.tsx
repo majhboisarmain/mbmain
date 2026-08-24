@@ -1493,22 +1493,23 @@ function DashboardContent() {
 
   // Checkout modal states
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
-  const [checkoutPlan, setCheckoutPlan] = useState<'Basic' | 'Pro' | 'OwnerPass' | 'ProAgent' | 'BuilderPass' | null>(null);
+  const [checkoutPlan, setCheckoutPlan] = useState<'Starter' | 'Pro' | 'Basic' | 'OwnerPass' | 'ProAgent' | 'BuilderPass' | null>(null);
   const [couponApplied, setCouponApplied] = useState(false);
   const [paymentMode, setPaymentMode] = useState<'upi' | 'card' | 'net'>('upi');
   const [upiRefId, setUpiRefId] = useState('');
 
   // Plan-based limits
-  const planLimits = {
-    Free: { catalog: 5, photos: 1 },
-    Basic: { catalog: 10, photos: 3 },
-    Pro: { catalog: 20, photos: 5 },
-  } as const;
-  type PlanKey = keyof typeof planLimits;
-  const currentPlan = (business?.subscription ?? 'Free') as PlanKey;
+  const planLimits: Record<string, { catalog: number; photos: number }> = {
+    Free: { catalog: 5, photos: 3 },
+    Starter: { catalog: 15, photos: 10 },
+    Basic: { catalog: 15, photos: 10 },
+    Pro: { catalog: 50, photos: 25 },
+    Enterprise: { catalog: 100, photos: 50 },
+  };
+  const currentPlan = (business?.subscription ?? 'Free');
   const catalogLimit = planLimits[currentPlan]?.catalog ?? 5;
-  const canRespondToReviews = currentPlan === 'Pro';
-  const canAccessLeadInbox = currentPlan === 'Basic' || currentPlan === 'Pro';
+  const canRespondToReviews = currentPlan === 'Pro' || currentPlan === 'Enterprise';
+  const canAccessLeadInbox = currentPlan === 'Starter' || currentPlan === 'Basic' || currentPlan === 'Pro' || currentPlan === 'Enterprise';
 
   // Upgrade nudge banner component (inline)
   const UpgradeNudge = ({ feature, requiredPlan }: { feature: string; requiredPlan: string }) => (
@@ -3614,8 +3615,8 @@ function DashboardContent() {
                         if (businessesList.length >= 1 && currentRole !== 'Admin') {
                           const hasPaidPlan = business?.subscription && business.subscription !== 'Free';
                           if (!hasPaidPlan) {
-                            if (confirm('🔒 MULTI-OUTLET UPGRADE REQUIRED\n\nA single mobile number gets 1 Free business listing.\nTo add a 2nd business or outlet, please upgrade to our Basic Plan (₹99/month).\n\nWould you like to view plans & upgrade now?')) {
-                              setCheckoutPlan('Basic');
+                            if (confirm('🔒 MULTI-OUTLET UPGRADE REQUIRED\n\nA single mobile number gets 1 Free business listing.\nTo add a 2nd business or outlet, please upgrade to our Starter Plan (₹149/month).\n\nWould you like to view plans & upgrade now?')) {
+                              setCheckoutPlan('Starter');
                               setCheckoutModalOpen(true);
                             }
                             return;
@@ -6387,7 +6388,7 @@ function DashboardContent() {
                 {activeSubTab === 'leads' && (
                   <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm space-y-4">
                     {!canAccessLeadInbox ? (
-                      <UpgradeNudge feature="Lead Pipeline Inbox" requiredPlan="Basic (₹99/mo) or Pro (₹149/mo)" />
+                      <UpgradeNudge feature="Lead Pipeline Inbox" requiredPlan="Starter (₹149/mo) or Pro (₹499/mo)" />
                     ) : (
                       <>
 
@@ -6598,8 +6599,8 @@ function DashboardContent() {
                           <div>
                             <p className="text-xs font-black text-amber-800">Product limit reached ({catalogLimit} max on {currentPlan} plan)</p>
                             <p className="text-[10px] text-amber-600 mt-0.5">
-                              {currentPlan === 'Free' ? 'Upgrade to Basic (₹99) for 10 products.' :
-                                currentPlan === 'Basic' ? 'Upgrade to Pro (₹149) for 20 products.' : ''}
+                              {currentPlan === 'Free' ? 'Upgrade to Starter (₹149) for 15 products.' :
+                                currentPlan === 'Starter' ? 'Upgrade to Pro (₹499) for unlimited products.' : ''}
                             </p>
                             {currentPlan !== 'Pro' && (
                               <button onClick={() => setActiveSubTab('subscription')} className="mt-2 text-[10px] font-black text-teal-600 hover:underline cursor-pointer">View Plans →</button>
@@ -6756,8 +6757,8 @@ function DashboardContent() {
                           <div>
                             <p className="text-xs font-black text-amber-800">Service limit reached ({catalogLimit} max on {currentPlan} plan)</p>
                             <p className="text-[10px] text-amber-600 mt-0.5">
-                              {currentPlan === 'Free' ? 'Upgrade to Basic (₹99) for 10 services.' :
-                                currentPlan === 'Basic' ? 'Upgrade to Pro (₹149) for 20 services.' : ''}
+                              {currentPlan === 'Free' ? 'Upgrade to Starter (₹149) for 15 services.' :
+                                currentPlan === 'Starter' ? 'Upgrade to Pro (₹499) for unlimited services.' : ''}
                             </p>
                             {currentPlan !== 'Pro' && (
                               <button onClick={() => setActiveSubTab('subscription')} className="mt-2 text-[10px] font-black text-teal-600 hover:underline cursor-pointer">View Plans →</button>
@@ -8074,7 +8075,7 @@ function DashboardContent() {
                         type="text"
                         value={couponInput}
                         onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                        placeholder="e.g. MAJHBOISAR99"
+                        placeholder="e.g. MAJHBOISAR149"
                         className="flex-1 bg-white border border-teal-200 rounded-xl px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-teal-500 text-slate-800 font-bold"
                       />
                       <button

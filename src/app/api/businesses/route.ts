@@ -290,7 +290,7 @@ export async function POST(request: NextRequest) {
 
         if (existingBusinesses.length >= 1 && (!body.subscription || body.subscription === 'Free')) {
           return NextResponse.json(
-            { error: 'Free plan allows only 1 business listing per mobile number. To register a 2nd business/outlet, please upgrade to our Basic Plan (₹99/month).' },
+            { error: 'Free plan allows only 1 business listing per mobile number. To register a 2nd business/outlet, please upgrade to our Starter Plan (₹149/month).' },
             { status: 400 }
           );
         }
