@@ -199,6 +199,7 @@ model PropertyListing {
   price           String
   description     String?
   images          String?  // Separated by ||gallery_sep||
+  verified        Boolean  @default(false)
   createdAt       DateTime @default(now())
 }
 

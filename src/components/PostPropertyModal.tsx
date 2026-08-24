@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, Camera, Coins, FileText, Check, Upload, Trash2, Star, MessageSquare, Video } from 'lucide-react';
+import { X, CheckCircle, Camera, Coins, FileText, Check, Upload, Trash2, Star, MessageSquare, Video, ShieldCheck } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 
 interface PostPropertyModalProps {
@@ -219,7 +219,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
       if (res.ok) {
         const newProperty = await res.json();
         onAddProperty(newProperty);
-        showToast('Property listed live on DB successfully! 🏢', 'success');
+        showToast('🎉 Property Submitted! Under verification (will be live within 24 hours).', 'success', 6000);
         setStep(4);
       } else {
         alert('Failed to post property listing. Please try again.');
@@ -756,17 +756,21 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
 
             {/* STEP 4: SUCCESS LISTING */}
             {step === 4 && (
-              <div className="flex flex-col items-center justify-center text-center py-10 space-y-4 animate-in zoom-in-95 duration-300">
-                <div className="w-16 h-16 bg-teal-55 text-teal-600 rounded-full flex items-center justify-center shadow-md animate-bounce">
-                  <CheckCircle className="w-10 h-10" />
+              <div className="flex flex-col items-center justify-center text-center py-8 space-y-4 animate-in zoom-in-95 duration-300">
+                <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center shadow-md animate-bounce border-2 border-amber-200">
+                  <ShieldCheck className="w-10 h-10 text-emerald-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-slate-850">Property Listed Successfully!</h3>
-                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Your listing is now live in the Boisar properties section, under the control of your Owner ID.</p>
+                  <h3 className="text-base sm:text-lg font-black text-slate-850">Property Submitted for Verification!</h3>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mt-2 max-w-sm mx-auto">
+                    <p className="text-[11px] font-bold text-amber-900 leading-relaxed">
+                      ⏳ <strong>Review within 24 Hours:</strong> To ensure genuine owner listings and protect against fraudulent brokers, our team is verifying your submission. It will be published live within 24 hours.
+                    </p>
+                  </div>
                 </div>
-                <div className="bg-teal-50/20 border border-teal-100/60 rounded-xl p-4 text-left max-w-md w-full mt-4">
+                <div className="bg-teal-50/20 border border-teal-100/60 rounded-xl p-4 text-left max-w-md w-full mt-2">
                   <span className="text-[9px] font-black text-teal-700 uppercase tracking-widest block mb-2">Listing Summary</span>
-                  <p className="text-xs font-black text-slate-800 leading-snug">{bedrooms} BHK Flat for {forAction === 'Sale' ? 'Sale' : 'Rent'}</p>
+                  <p className="text-xs font-black text-slate-800 leading-snug">{bedrooms && bedrooms !== '0' ? `${bedrooms} BHK ` : ''}{propertyType} for {forAction === 'Sale' ? 'Sale' : 'Rent'}</p>
                   <p className="text-[10px] font-medium text-slate-500 mt-0.5">{projectName || addressLocality || 'Boisar'}, Boisar</p>
                   <div className="flex justify-between items-center border-t border-slate-200/50 pt-2 mt-2">
                     <span className="text-[10px] text-slate-400 font-bold">Price</span>

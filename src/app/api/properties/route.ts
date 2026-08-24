@@ -9,8 +9,24 @@ export async function GET(request: NextRequest) {
     const forAction = searchParams.get('forAction'); // Sale or Rent
     const propertyType = searchParams.get('propertyType');
     const location = searchParams.get('location');
+    const all = searchParams.get('all') === 'true';
+    const phone = searchParams.get('phone');
 
     const where: any = {};
+    if (!all) {
+      if (phone) {
+        // User querying their own properties
+        const last7 = phone.replace(/\D/g, '').slice(-7);
+        where.OR = [
+          { contactPhone: { contains: last7 } },
+          { whatsappPhone: { contains: last7 } }
+        ];
+      } else {
+        // Public visitor only sees admin-verified approved properties
+        where.verified = true;
+      }
+    }
+
     if (forAction) {
       where.forAction = forAction;
     }
@@ -39,6 +55,7 @@ export async function GET(request: NextRequest) {
         name: p.contactName,
         phone: p.contactPhone,
         whatsapp: p.whatsappPhone || p.contactPhone,
+        verified: p.verified
       };
     });
 
@@ -87,6 +104,7 @@ export async function POST(request: NextRequest) {
         price,
         description: description || null,
         images: galleryUrls.join('||gallery_sep||'),
+        verified: false // Requires Super Admin approval before going live
       },
     });
 
@@ -102,11 +120,34 @@ export async function POST(request: NextRequest) {
       name: property.contactName,
       phone: property.contactPhone,
       whatsapp: property.whatsappPhone || property.contactPhone,
+      verified: false
     };
 
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
     return internalServerErrorResponse('/api/properties POST', error);
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) return badRequestResponse('Property ID is required');
+
+    const body = await request.json();
+    const updated = await prisma.propertyListing.update({
+      where: { id: parseInt(id) },
+      data: {
+        ...(body.verified !== undefined && { verified: body.verified }),
+        ...(body.price !== undefined && { price: body.price }),
+        ...(body.description !== undefined && { description: body.description }),
+      }
+    });
+
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    return internalServerErrorResponse('/api/properties PUT', error);
   }
 }
 

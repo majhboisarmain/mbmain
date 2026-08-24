@@ -1073,18 +1073,12 @@ export default function HomeClient() {
         const res = await fetch('/api/properties');
         if (res.ok) {
           const dbProperties = await res.json();
-          if (Array.isArray(dbProperties) && dbProperties.length > 0) {
+          if (Array.isArray(dbProperties)) {
+            const verifiedProps = dbProperties.filter((p: any) => p.verified !== false);
             setProfilesState(prev => {
-              const currentProps = prev.properties || [];
-              const merged = [...dbProperties];
-              for (const cp of currentProps) {
-                if (!merged.some(m => m.id === cp.id)) {
-                  merged.push(cp);
-                }
-              }
               const nextState = {
                 ...prev,
-                properties: merged
+                properties: verifiedProps
               };
               if (typeof window !== 'undefined') {
                 localStorage.setItem('majh_boisar_special_profiles', JSON.stringify(nextState));
@@ -5860,15 +5854,9 @@ export default function HomeClient() {
         isOpen={postPropertyModalOpen} 
         onClose={() => setPostPropertyModalOpen(false)} 
         onAddProperty={(newProp) => {
-          const updated = {
-            ...profilesState,
-            properties: [newProp, ...(profilesState.properties || [])]
-          };
-          setProfilesState(updated);
-          localStorage.setItem('majh_boisar_special_profiles', JSON.stringify(updated));
           localStorage.setItem('majh_boisar_user_has_posted_property', 'true');
           const existing = JSON.parse(localStorage.getItem('majh_boisar_user_properties') || '[]');
-          localStorage.setItem('majh_boisar_user_properties', JSON.stringify([newProp, ...existing]));
+          localStorage.setItem('majh_boisar_user_properties', JSON.stringify([newProp, ...existing.filter((e: any) => e.id !== newProp.id)]));
         }}
       />
 

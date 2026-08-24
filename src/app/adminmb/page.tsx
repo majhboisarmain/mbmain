@@ -1340,10 +1340,37 @@ export default function AdminPanelPage() {
         console.log("Error fetching reports for admin:", err);
       }
 
+      try {
+        const propRes = await fetch('/api/properties?all=true');
+        if (propRes.ok) {
+          const dbProps = await propRes.json();
+          if (Array.isArray(dbProps)) {
+            setSpecialProfiles((prev: any) => {
+              const nextState = {
+                ...prev,
+                properties: dbProps
+              };
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('majh_boisar_special_profiles', JSON.stringify(nextState));
+              }
+              return nextState;
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching db properties for admin:", err);
+      }
+
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('majh_boisar_special_profiles');
         if (saved) {
-          setSpecialProfiles(JSON.parse(saved));
+          try {
+            const parsed = JSON.parse(saved);
+            setSpecialProfiles((prev: any) => ({
+              ...parsed,
+              ...prev
+            }));
+          } catch {}
         }
       }
     } catch (e) {
@@ -2031,7 +2058,19 @@ export default function AdminPanelPage() {
     alert(`🎉 Successfully deleted ${toDeleteIds.length} user accounts.`);
   };
 
-  const handleVerifySpecialist = (category: string, id: number, currentVerified: boolean) => {
+  const handleVerifySpecialist = async (category: string, id: number, currentVerified: boolean) => {
+    if (category === 'properties') {
+      try {
+        await fetch(`/api/properties?id=${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ verified: !currentVerified })
+        });
+      } catch (err) {
+        console.error('Error updating property verification:', err);
+      }
+    }
+
     const list = specialProfiles[category] || [];
     const updatedList = list.map((p: any) => {
       if (p.id === id) {
@@ -2052,8 +2091,18 @@ export default function AdminPanelPage() {
     logEvent(`Toggled verification of Specialist ID: ${id} to ${!currentVerified}`);
   };
 
-  const handleDeleteSpecialist = (category: string, id: number) => {
-    if (!confirm('Are you sure you want to delete this specialist profile?')) return;
+  const handleDeleteSpecialist = async (category: string, id: number) => {
+    if (!confirm('Are you sure you want to reject/delete this listing?')) return;
+    if (category === 'properties') {
+      try {
+        await fetch(`/api/properties?id=${id}`, {
+          method: 'DELETE'
+        });
+      } catch (err) {
+        console.error('Error deleting property:', err);
+      }
+    }
+
     const list = specialProfiles[category] || [];
     const updatedList = list.filter((p: any) => p.id !== id);
 
@@ -2522,12 +2571,21 @@ export default function AdminPanelPage() {
                               <h5 className="font-extrabold text-slate-800">{p.name}</h5>
                               <p className="text-[10px] text-slate-500 mt-0.5">{p.category} ({p.catKey}) • {p.phone}</p>
                             </div>
-                            <button
-                              onClick={() => handleVerifySpecialist(p.catKey, p.id, false)}
-                              className="bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-extrabold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shadow-xs shrink-0"
-                            >
-                              Approve
-                            </button>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                onClick={() => handleVerifySpecialist(p.catKey, p.id, false)}
+                                className="bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-extrabold px-3 py-1.5 rounded-lg transition-colors cursor-pointer shadow-xs"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSpecialist(p.catKey, p.id)}
+                                className="bg-rose-50 hover:bg-rose-100 text-rose-600 text-[10px] font-extrabold px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer border border-rose-200"
+                                title="Reject & Delete Listing"
+                              >
+                                ✕
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
