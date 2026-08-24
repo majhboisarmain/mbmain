@@ -1066,6 +1066,39 @@ export default function HomeClient() {
     return { influencers: [], properties: [], helpers: [], caterers: [] };
   });
 
+  // Fetch live properties from Prisma database on mount
+  useEffect(() => {
+    const fetchPropertiesFromDb = async () => {
+      try {
+        const res = await fetch('/api/properties');
+        if (res.ok) {
+          const dbProperties = await res.json();
+          if (Array.isArray(dbProperties) && dbProperties.length > 0) {
+            setProfilesState(prev => {
+              const currentProps = prev.properties || [];
+              const merged = [...dbProperties];
+              for (const cp of currentProps) {
+                if (!merged.some(m => m.id === cp.id)) {
+                  merged.push(cp);
+                }
+              }
+              const nextState = {
+                ...prev,
+                properties: merged
+              };
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('majh_boisar_special_profiles', JSON.stringify(nextState));
+              }
+              return nextState;
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching live properties in HomeClient:', err);
+      }
+    };
+    fetchPropertiesFromDb();
+  }, []);
 
   // Helper function to update specialist plan subscription
   const updateSpecialistSubscription = (tier: 'Free' | 'Pro' | 'Premium') => {

@@ -263,6 +263,48 @@ function DashboardContent() {
     });
   }, [rawPropertyList, userPhoneDigits]);
 
+  // Fetch live properties from database into dashboard
+  useEffect(() => {
+    const fetchDbProperties = async () => {
+      try {
+        const res = await fetch('/api/properties');
+        if (res.ok) {
+          const dbProps = await res.json();
+          if (Array.isArray(dbProps) && dbProps.length > 0) {
+            const mapped = dbProps.map((p: any) => ({
+              id: p.id,
+              title: `${p.bedrooms && p.bedrooms !== '0' ? p.bedrooms + ' BHK ' : ''}${p.propertyType} for ${p.forAction}`,
+              location: p.addressLocality || p.cityName || 'Boisar',
+              price: p.price,
+              area: p.carpetArea || p.superArea || 'N/A',
+              status: 'Ready to Move',
+              postedBy: p.contactName || p.iAm || 'Owner',
+              phone: p.contactPhone,
+              whatsapp: p.whatsappPhone || p.contactPhone,
+              image: p.avatar || (p.gallery && p.gallery[0]) || ''
+            }));
+
+            setRawPropertyList(prev => {
+              const combined = [...mapped];
+              for (const item of prev) {
+                if (!combined.some(c => c.id === item.id)) {
+                  combined.push(item);
+                }
+              }
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('majh_boisar_user_properties', JSON.stringify(combined));
+              }
+              return combined;
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching properties in dashboard:', err);
+      }
+    };
+    fetchDbProperties();
+  }, [userPhoneDigits]);
+
   const [editingProperty, setEditingProperty] = useState<any | null>(null);
   const [editPropTitle, setEditPropTitle] = useState('');
   const [editPropLocation, setEditPropLocation] = useState('');
