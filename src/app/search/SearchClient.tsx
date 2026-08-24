@@ -447,35 +447,52 @@ export default function SearchClient() {
                     onClick={() => router.push(`/business/${business.id}`)}
                     className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md hover:border-teal-500/40 transition-all duration-200 relative group cursor-pointer flex flex-col text-left"
                   >
-                    {/* Top Section: Main Cover Photo Banner */}
-                    <div className="relative w-full h-44 sm:h-52 bg-slate-900 overflow-hidden flex items-center justify-center">
-                      <img
-                        src={coverImage}
-                        alt=""
-                        aria-hidden="true"
-                        className="absolute inset-0 w-full h-full object-cover blur-sm opacity-35 scale-110 pointer-events-none"
-                      />
-                      <img
-                        src={coverImage}
-                        alt={business.name}
-                        onError={(e) => { (e.target as HTMLImageElement).src = '/majh-boisar-mb-logo.png'; }}
-                        className="relative z-10 w-full h-full object-contain p-1 group-hover:scale-105 transition-transform duration-300"
-                      />
+                    {/* Top Section: Single Horizontal Photo Reel (Side by Side Scroll) */}
+                    <div 
+                      onClick={(e) => e.stopPropagation()}
+                      className="relative w-full p-2.5 pb-0 bg-slate-50/60"
+                    >
+                      <div className="flex gap-2.5 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-0.5">
+                        {allPhotos.map((imgUrl, pIdx) => (
+                          <div
+                            key={pIdx}
+                            onClick={() => router.push(`/business/${business.id}`)}
+                            className={`${allPhotos.length === 1 ? 'w-full h-44 sm:h-52' : 'w-[75vw] sm:w-64 h-40 sm:h-44'} shrink-0 rounded-2xl overflow-hidden border border-slate-200/90 shadow-2xs relative group/photo bg-slate-900 snap-start cursor-pointer flex items-center justify-center`}
+                          >
+                            <img
+                              src={imgUrl}
+                              alt=""
+                              aria-hidden="true"
+                              className="absolute inset-0 w-full h-full object-cover blur-sm opacity-35 scale-110 pointer-events-none"
+                            />
+                            <img
+                              src={imgUrl}
+                              alt={`${business.name} photo ${pIdx + 1}`}
+                              onError={(e) => { (e.target as HTMLImageElement).src = '/majh-boisar-mb-logo.png'; }}
+                              className="relative z-10 w-full h-full object-contain p-1 group-hover/photo:scale-105 transition-transform duration-300"
+                            />
 
-                      {/* Top Gradient Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-black/30 z-15 pointer-events-none" />
+                            {/* Photo Index Tag if multiple photos */}
+                            {allPhotos.length > 1 && (
+                              <div className="absolute bottom-2 right-2 z-20 bg-black/60 backdrop-blur-xs text-white text-[9px] font-black px-2 py-0.5 rounded-md border border-white/10">
+                                {pIdx + 1}/{allPhotos.length}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
 
-                      {/* Top Badges */}
-                      <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-1.5 pointer-events-none">
+                      {/* Top Badges Overlay */}
+                      <div className="absolute top-4.5 left-4.5 right-4.5 z-20 flex items-center justify-between gap-1.5 pointer-events-none">
                         <div className="flex flex-wrap items-center gap-1.5">
                           {hasHomeDelivery && (
-                            <span className="bg-emerald-600/95 text-white text-[9.5px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md flex items-center gap-1 backdrop-blur-xs">
+                            <span className="bg-emerald-600 text-white text-[9.5px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md flex items-center gap-1 backdrop-blur-xs">
                               <Truck className="w-3 h-3 text-white" />
                               <span>Home Delivery</span>
                             </span>
                           )}
                           {business.verified && (
-                            <span className="bg-teal-700/90 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-xs backdrop-blur-xs flex items-center gap-0.5">
+                            <span className="bg-teal-700 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-xs backdrop-blur-xs flex items-center gap-0.5">
                               <ShieldCheck className="w-2.5 h-2.5" />
                               <span>Verified</span>
                             </span>
@@ -490,44 +507,21 @@ export default function SearchClient() {
                         </div>
                       </div>
 
-                      {/* Bottom Overlay Info (Visits & Distance) */}
-                      <div className="absolute bottom-2 left-2.5 right-2.5 z-20 flex items-center justify-between text-white text-[10px] font-extrabold pointer-events-none">
+                      {/* Bottom Visits / Distance Indicators */}
+                      <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 pt-1.5 px-0.5">
                         {business.views != null && business.views > 0 ? (
-                          <span className="bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded-md text-[9px] text-amber-300 border border-white/10">
+                          <span className="bg-amber-50 border border-amber-200 text-amber-700 text-[8.5px] font-black px-1.5 py-0.5 rounded">
                             👁️ {business.views.toLocaleString()} visits
                           </span>
                         ) : <span />}
 
                         {business.distanceKm != null && (
-                          <span className="bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded-md text-[9px] text-emerald-300 border border-white/10">
+                          <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-[8.5px] font-black px-1.5 py-0.5 rounded">
                             📍 {business.distanceKm} km away
                           </span>
                         )}
                       </div>
                     </div>
-
-                    {/* Gallery Photos Preview Strip (if more than 1 photo available) */}
-                    {allPhotos.length > 1 && (
-                      <div className="px-3 pt-2.5 pb-1 flex gap-2 overflow-x-auto scrollbar-hide bg-slate-50/70 border-b border-slate-100">
-                        {allPhotos.slice(0, 5).map((imgUrl, pIdx) => (
-                          <div
-                            key={pIdx}
-                            className="w-13 h-13 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-slate-200/90 shrink-0 bg-white shadow-2xs relative group/thumb"
-                          >
-                            <img
-                              src={imgUrl}
-                              alt={`Thumbnail ${pIdx + 1}`}
-                              className="w-full h-full object-cover group-hover/thumb:scale-110 transition-transform"
-                            />
-                            {pIdx === 4 && allPhotos.length > 5 && (
-                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-[9px] font-black">
-                                +{allPhotos.length - 5}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
 
                     {/* Middle Section: Business Information Details */}
                     <div className="p-3.5 space-y-2 flex-1">
