@@ -7,7 +7,8 @@ import { useApp } from '@/context/AppContext';
 import {
   Phone, MessageSquare, MapPin, Clock, Star,
   CheckCircle, ArrowLeft, Send, Sparkles, AlertCircle, ShoppingBag,
-  ChevronRight, ChevronLeft, User, Heart, Share2, Info, X, Bookmark, Copy, Edit3, Mail, Building2, QrCode
+  ChevronRight, ChevronLeft, User, Heart, Share2, Info, X, Bookmark, Copy, Edit3, Mail, Building2, QrCode,
+  Truck, Plus, Minus, Trash2, ArrowRight
 } from 'lucide-react';
 import { specialProfiles } from '@/lib/mockProfiles';
 import BusinessQRStandeeModal from '@/components/BusinessQRStandeeModal';
@@ -140,6 +141,93 @@ export default function BusinessDetailsPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewSuccess, setReviewSuccess] = useState(false);
+
+  // Cart & WhatsApp Home Delivery State
+  const [cart, setCart] = useState<{ [id: number]: { id: number; name: string; price: number; count: number; image?: string | null } }>({});
+  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const [orderCustName, setOrderCustName] = useState(loggedInUser?.name || '');
+  const [orderCustPhone, setOrderCustPhone] = useState(loggedInUser?.phone || '');
+  const [orderDeliveryAddress, setOrderDeliveryAddress] = useState('');
+  const [orderDeliveryLandmark, setOrderDeliveryLandmark] = useState('');
+  const [orderDeliveryNotes, setOrderDeliveryNotes] = useState('');
+
+  const cartItems = Object.values(cart);
+  const totalCartCount = cartItems.reduce((sum, item) => sum + item.count, 0);
+  const totalCartPrice = cartItems.reduce((sum, item) => sum + (item.price * item.count), 0);
+
+  const addToCart = (prod: Product) => {
+    const priceNum = parseFloat(prod.price as any) || 0;
+    setCart(prev => {
+      const existing = prev[prod.id];
+      const newCount = existing ? existing.count + 1 : 1;
+      return {
+        ...prev,
+        [prod.id]: {
+          id: prod.id,
+          name: prod.name,
+          price: priceNum,
+          count: newCount,
+          image: prod.image
+        }
+      };
+    });
+    showToast(`Added "${prod.name}" to cart!`, 'success');
+  };
+
+  const updateCartCount = (prodId: number, delta: number) => {
+    setCart(prev => {
+      const existing = prev[prodId];
+      if (!existing) return prev;
+      const newCount = existing.count + delta;
+      if (newCount <= 0) {
+        const next = { ...prev };
+        delete next[prodId];
+        return next;
+      }
+      return {
+        ...prev,
+        [prodId]: { ...existing, count: newCount }
+      };
+    });
+  };
+
+  const handleWhatsAppCheckout = () => {
+    if (!orderCustName.trim() || !orderCustPhone.trim()) {
+      showToast('Please enter your Name and Mobile Number.', 'error');
+      return;
+    }
+    if (!orderDeliveryAddress.trim()) {
+      showToast('Please enter your Delivery Address in Boisar.', 'error');
+      return;
+    }
+
+    const itemsList = cartItems
+      .map((item, idx) => `${idx + 1}. *${item.name}* x ${item.count} = ₹${(item.price * item.count).toLocaleString('en-IN')}`)
+      .join('\n');
+
+    const fullAddress = `${orderDeliveryAddress}${orderDeliveryLandmark ? `, Landmark: ${orderDeliveryLandmark}` : ''}`;
+
+    const message = `🛍️ *NEW HOME DELIVERY ORDER - Majh Boisar*
+━━━━━━━━━━━━━━━━━━━━
+👤 *Customer Name:* ${orderCustName}
+📱 *Phone Number:* ${orderCustPhone}
+📍 *Delivery Address:* ${fullAddress}
+${orderDeliveryNotes ? `📝 *Special Notes:* ${orderDeliveryNotes}\n` : ''}━━━━━━━━━━━━━━━━━━━━
+🛒 *ORDER ITEMS (${totalCartCount}):*
+${itemsList}
+━━━━━━━━━━━━━━━━━━━━
+💰 *TOTAL AMOUNT:* ₹${totalCartPrice.toLocaleString('en-IN')}
+🚚 *Delivery Mode:* Home Delivery in Boisar
+━━━━━━━━━━━━━━━━━━━━
+_Order submitted via MajhBoisar.in_`;
+
+    const targetPhone = (business?.whatsapp || business?.phone || '').replace(/\+/g, '').replace(/\s/g, '');
+    const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, '_blank');
+    setCheckoutModalOpen(false);
+    setCart({});
+    showToast('Order sent to store WhatsApp!', 'success');
+  };
 
   const fetchBusiness = async () => {
     try {
@@ -477,6 +565,12 @@ export default function BusinessDetailsPage() {
                       <span>Verified</span>
                     </span>
                   )}
+                  {(business.subscription === 'Pro' || (business.products && business.products.length > 0)) && (
+                    <span className="bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 shadow-2xs">
+                      <Truck className="w-3 h-3 text-white" />
+                      <span>🛵 Home Delivery Available in Boisar</span>
+                    </span>
+                  )}
                 </div>
 
                 {/* Name */}
@@ -749,77 +843,95 @@ export default function BusinessDetailsPage() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
-                    {business.products.map((prod) => (
-                      <div
-                        key={prod.id}
-                        className="bg-slate-50/70 hover:bg-white border border-slate-200 hover:border-teal-500/40 p-3.5 rounded-2xl flex flex-col justify-between shadow-2xs hover:shadow-md transition-all group"
-                      >
-                        <div className="flex gap-3 items-start">
-                          {/* Item Thumbnail */}
-                          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-slate-200/80 bg-white shrink-0 shadow-2xs flex items-center justify-center relative">
-                            {prod.image ? (
-                              <img
-                                src={prod.image}
-                                alt={prod.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-                            ) : (
-                              <span className="text-xl">📦</span>
-                            )}
-                          </div>
-
-                          {/* Item Details */}
-                          <div className="flex-1 min-w-0 space-y-1">
-                            <div className="flex items-start justify-between gap-1.5">
-                              <h5 className="font-black text-xs sm:text-sm text-slate-900 group-hover:text-teal-700 transition-colors leading-tight truncate">
-                                {prod.name}
-                              </h5>
-                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black px-1.5 py-0.5 rounded-md shrink-0">
-                                {prod.price ? `₹${parseFloat(prod.price as any).toLocaleString('en-IN')}` : 'Best Price'}
-                              </span>
+                    {business.products.map((prod) => {
+                      const inCart = cart[prod.id];
+                      return (
+                        <div
+                          key={prod.id}
+                          className="bg-slate-50/70 hover:bg-white border border-slate-200 hover:border-emerald-500/40 p-3.5 rounded-2xl flex flex-col justify-between shadow-2xs hover:shadow-md transition-all group"
+                        >
+                          <div className="flex gap-3 items-start">
+                            {/* Item Thumbnail */}
+                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-slate-200/80 bg-white shrink-0 shadow-2xs flex items-center justify-center relative">
+                              {prod.image ? (
+                                <img
+                                  src={prod.image}
+                                  alt={prod.name}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                              ) : (
+                                <span className="text-xl">📦</span>
+                              )}
                             </div>
 
-                            <p className="text-[11px] text-slate-500 leading-snug font-medium line-clamp-2">
-                              {prod.description || 'Quality product in stock. Contact for orders.'}
-                            </p>
+                            {/* Item Details */}
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="flex items-start justify-between gap-1.5">
+                                <h5 className="font-black text-xs sm:text-sm text-slate-900 group-hover:text-emerald-700 transition-colors leading-tight truncate">
+                                  {prod.name}
+                                </h5>
+                                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-black px-1.5 py-0.5 rounded-md shrink-0">
+                                  {prod.price ? `₹${parseFloat(prod.price as any).toLocaleString('en-IN')}` : 'Best Price'}
+                                </span>
+                              </div>
+
+                              <p className="text-[11px] text-slate-500 leading-snug font-medium line-clamp-2">
+                                {prod.description || 'Quality product in stock. Order now for Boisar home delivery.'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons: Add to Cart / Counter */}
+                          <div className="pt-2.5 mt-2.5 border-t border-slate-200/60 flex items-center gap-2">
+                            {inCart ? (
+                              <div className="flex-1 flex items-center justify-between bg-emerald-50 border border-emerald-300 rounded-xl px-2 py-1 shadow-2xs">
+                                <button
+                                  onClick={() => updateCartCount(prod.id, -1)}
+                                  className="w-6 h-6 rounded-lg bg-white text-emerald-800 border border-emerald-200 hover:bg-rose-50 hover:text-rose-600 font-black flex items-center justify-center text-xs transition-colors cursor-pointer"
+                                  title="Decrease quantity"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="text-xs font-black text-emerald-900 px-2">
+                                  {inCart.count}
+                                </span>
+                                <button
+                                  onClick={() => updateCartCount(prod.id, 1)}
+                                  className="w-6 h-6 rounded-lg bg-emerald-600 text-white font-black flex items-center justify-center text-xs hover:bg-emerald-700 transition-colors cursor-pointer shadow-xs"
+                                  title="Increase quantity"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => addToCart(prod)}
+                                className="flex-1 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-black text-[10.5px] py-1.5 rounded-xl flex items-center justify-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                <span>Add to Cart</span>
+                              </button>
+                            )}
+
+                            <a
+                              href={isLoggedIn ? `tel:${business.phone}` : '#'}
+                              onClick={(e) => {
+                                if (!isLoggedIn) {
+                                  e.preventDefault();
+                                  setLoginModalOpen(true);
+                                } else {
+                                  trackClick('phoneClicks');
+                                }
+                              }}
+                              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-[10px] p-1.5 rounded-xl flex items-center justify-center transition-colors cursor-pointer"
+                              title="Call Store"
+                            >
+                              <Phone className="w-3.5 h-3.5" />
+                            </a>
                           </div>
                         </div>
-
-                        {/* Action Buttons */}
-                        <div className="pt-2.5 mt-2.5 border-t border-slate-200/60 flex items-center gap-1.5">
-                          <a
-                            href={isLoggedIn ? `https://wa.me/${business.whatsapp}?text=${encodeURIComponent(`Hi ${business.name}, I am interested in buying "${prod.name}" (₹${prod.price || 'quote'}) on Majh Boisar. Is it available?`)}` : '#'}
-                            target={isLoggedIn ? "_blank" : undefined}
-                            onClick={(e) => {
-                              if (!isLoggedIn) {
-                                e.preventDefault();
-                                setLoginModalOpen(true);
-                              } else {
-                                trackClick('whatsappClicks');
-                              }
-                            }}
-                            className="flex-1 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-[10px] py-1.5 rounded-xl flex items-center justify-center gap-1 shadow-2xs transition-all cursor-pointer"
-                          >
-                            <span>💬 Order / Enquire</span>
-                          </a>
-                          <a
-                            href={isLoggedIn ? `tel:${business.phone}` : '#'}
-                            onClick={(e) => {
-                              if (!isLoggedIn) {
-                                e.preventDefault();
-                                setLoginModalOpen(true);
-                              } else {
-                                trackClick('phoneClicks');
-                              }
-                            }}
-                            className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-[10px] p-1.5 rounded-xl flex items-center justify-center transition-colors cursor-pointer"
-                            title="Call Store"
-                          >
-                            <Phone className="w-3.5 h-3.5" />
-                          </a>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -1298,6 +1410,188 @@ export default function BusinessDetailsPage() {
                 )}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 6. Sticky Bottom Floating Cart Bar */}
+      {totalCartCount > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-emerald-200 shadow-2xl p-3 sm:p-4 animate-fade-in text-left">
+          <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shadow-md shrink-0">
+                🛒 {totalCartCount}
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-black text-slate-900 truncate">
+                  Total: ₹{totalCartPrice.toLocaleString('en-IN')}
+                </p>
+                <p className="text-[10px] sm:text-xs text-emerald-700 font-bold flex items-center gap-1 truncate">
+                  <Truck className="w-3 h-3 shrink-0" />
+                  <span>Direct WhatsApp Home Delivery</span>
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setCheckoutModalOpen(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs sm:text-sm font-black px-4 sm:px-6 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md transition-all cursor-pointer shrink-0"
+            >
+              <span>View Order &amp; Address</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 7. WhatsApp Home Delivery Checkout Modal */}
+      {checkoutModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative animate-fade-in max-h-[90vh] overflow-y-auto text-left">
+            <button
+              onClick={() => setCheckoutModalOpen(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 cursor-pointer transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Modal Header */}
+            <div className="mb-4">
+              <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider mb-2">
+                <Truck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Home Delivery in Boisar</span>
+              </div>
+              <h3 className="font-black text-slate-900 text-base sm:text-lg">
+                Order from {business.name}
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                Enter your delivery address to place your order directly on WhatsApp.
+              </p>
+            </div>
+
+            {/* Order Items Review */}
+            <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3.5 mb-4 space-y-2.5">
+              <p className="text-[10.5px] font-black text-slate-600 uppercase tracking-wider">
+                Order Summary ({totalCartCount} {totalCartCount === 1 ? 'item' : 'items'})
+              </p>
+              <div className="divide-y divide-slate-200/60 max-h-40 overflow-y-auto space-y-2 pr-1">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="pt-2 first:pt-0 flex items-center justify-between text-xs">
+                    <div className="min-w-0 pr-2">
+                      <p className="font-bold text-slate-800 truncate">{item.name}</p>
+                      <p className="text-[10px] text-slate-500 font-medium">
+                        ₹{item.price.toLocaleString('en-IN')} x {item.count}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="font-black text-emerald-800">
+                        ₹{(item.price * item.count).toLocaleString('en-IN')}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => updateCartCount(item.id, -1)}
+                          className="w-5 h-5 rounded bg-white border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-600 flex items-center justify-center font-bold text-[10px] cursor-pointer"
+                        >
+                          -
+                        </button>
+                        <span className="text-[11px] font-black px-1">{item.count}</span>
+                        <button
+                          onClick={() => updateCartCount(item.id, 1)}
+                          className="w-5 h-5 rounded bg-emerald-600 text-white flex items-center justify-center font-bold text-[10px] cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t border-slate-200 pt-2 flex items-center justify-between font-black text-xs sm:text-sm text-slate-900">
+                <span>Total Bill:</span>
+                <span className="text-emerald-700">₹{totalCartPrice.toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+
+            {/* Customer Details Form */}
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1">
+                  Customer Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Rahul Sharma"
+                  value={orderCustName}
+                  onChange={(e) => setOrderCustName(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1">
+                  Mobile Number *
+                </label>
+                <input
+                  type="tel"
+                  placeholder="e.g. 9876543210"
+                  value={orderCustPhone}
+                  onChange={(e) => setOrderCustPhone(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider mb-1">
+                  Delivery Address (Boisar) *
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Flat/House No, Building Name, Area in Boisar"
+                  value={orderDeliveryAddress}
+                  onChange={(e) => setOrderDeliveryAddress(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-500 resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[9.5px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                    Landmark (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Near Railway Station"
+                    value={orderDeliveryLandmark}
+                    onChange={(e) => setOrderDeliveryLandmark(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9.5px] font-black text-slate-500 uppercase tracking-wider mb-1">
+                    Notes (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Deliver by 6 PM"
+                    value={orderDeliveryNotes}
+                    onChange={(e) => setOrderDeliveryNotes(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* Submit CTA */}
+              <button
+                type="button"
+                onClick={handleWhatsAppCheckout}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-black text-xs sm:text-sm py-3 rounded-2xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
+              >
+                <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.965C16.48 2.016 14.005 1.002 11.995 1.002 6.559 1.002 2.135 5.372 2.131 10.801c-.001 1.76.46 3.479 1.336 5.003L2.5 21.53l5.837-1.526-.69.41z" />
+                </svg>
+                <span>Confirm &amp; Order on WhatsApp (₹{totalCartPrice.toLocaleString('en-IN')})</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

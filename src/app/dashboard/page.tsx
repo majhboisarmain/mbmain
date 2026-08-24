@@ -2377,7 +2377,7 @@ function DashboardContent() {
           // Record Invoice in Billing History
           const priceMap: Record<string, string> = {
             Starter: '₹149',
-            Pro: '₹499',
+            Pro: '₹349',
             Basic: '₹99',
             Enterprise: '₹999'
           };
@@ -6430,7 +6430,7 @@ function DashboardContent() {
                 {activeSubTab === 'leads' && (
                   <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm space-y-4">
                     {!canAccessLeadInbox ? (
-                      <UpgradeNudge feature="Lead Pipeline Inbox" requiredPlan="Starter (₹149/mo) or Pro (₹499/mo)" />
+                      <UpgradeNudge feature="Lead Pipeline Inbox" requiredPlan="Starter (₹149/mo) or Pro (₹349/mo)" />
                     ) : (
                       <>
 
@@ -6642,7 +6642,7 @@ function DashboardContent() {
                             <p className="text-xs font-black text-amber-800">Product limit reached ({catalogLimit} max on {currentPlan} plan)</p>
                             <p className="text-[10px] text-amber-600 mt-0.5">
                               {currentPlan === 'Free' ? 'Upgrade to Starter (₹149) for 15 products.' :
-                                currentPlan === 'Starter' ? 'Upgrade to Pro (₹499) for unlimited products.' : ''}
+                                currentPlan === 'Starter' ? 'Upgrade to Pro (₹349) for unlimited products & delivery cart.' : ''}
                             </p>
                             {currentPlan !== 'Pro' && (
                               <button onClick={() => setActiveSubTab('subscription')} className="mt-2 text-[10px] font-black text-teal-600 hover:underline cursor-pointer">View Plans →</button>
@@ -6800,7 +6800,7 @@ function DashboardContent() {
                             <p className="text-xs font-black text-amber-800">Service limit reached ({catalogLimit} max on {currentPlan} plan)</p>
                             <p className="text-[10px] text-amber-600 mt-0.5">
                               {currentPlan === 'Free' ? 'Upgrade to Starter (₹149) for 15 services.' :
-                                currentPlan === 'Starter' ? 'Upgrade to Pro (₹499) for unlimited services.' : ''}
+                                currentPlan === 'Starter' ? 'Upgrade to Pro (₹349) for unlimited services.' : ''}
                             </p>
                             {currentPlan !== 'Pro' && (
                               <button onClick={() => setActiveSubTab('subscription')} className="mt-2 text-[10px] font-black text-teal-600 hover:underline cursor-pointer">View Plans →</button>
@@ -7731,18 +7731,18 @@ function DashboardContent() {
                         },
                         {
                           tier: 'Pro',
-                          price: '₹499',
+                          price: '₹349',
                           sub: 'per month',
                           highlight: true,
-                          badge: '⭐ Gold Featured Badge',
+                          badge: '⭐ Gold Featured + Delivery Storefront',
                           perks: [
+                            { icon: '🛵', text: 'WhatsApp Home Delivery Cart & Storefront' },
                             { icon: '👑', text: '#1 Top Priority Featured Ranking' },
                             { icon: '⭐', text: 'Gold "Featured Partner" Badge' },
-                            { icon: '📸', text: 'Unlimited Gallery Photos & Tariffs' },
+                            { icon: '📸', text: 'Unlimited Gallery Photos & Products' },
                             { icon: '📊', text: 'Full Analytics + Weekly Export' },
-                            { icon: '📞', text: 'Unlimited WhatsApp Booking Leads' },
+                            { icon: '📞', text: 'Unlimited Direct WhatsApp Orders & Leads' },
                             { icon: '🗺️', text: 'Priority on Homepage & Search Engine' },
-                            { icon: '🕐', text: 'Custom Hourly Slot Control Panel' },
                             { icon: '💬', text: 'Respond to customer reviews' },
                             { icon: '⚡', text: '0% Commission & VIP Dedicated Support' },
                           ],
@@ -8041,9 +8041,9 @@ function DashboardContent() {
                 if (plan === 'Pro') {
                   return {
                     name: 'Pro Plan',
-                    price: '₹499',
-                    amountNum: 499,
-                    desc: '#1 Top Priority Featured Ranking + Gold Badge + Unlimited Catalog'
+                    price: '₹349',
+                    amountNum: 349,
+                    desc: '#1 Top Priority + Gold Badge + WhatsApp Home Delivery Cart + Unlimited Catalog'
                   };
                 }
                 if (plan === 'Basic') {

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Search, MapPin, CheckCircle, Star, Sparkles, X,
   ChevronRight, ChevronLeft, Phone, Send, Info,
-  Filter, Heart, Award, ShieldCheck, Mail
+  Filter, Heart, Award, ShieldCheck, Mail, ShoppingBag, Truck
 } from 'lucide-react';
 import AdModal from '@/components/AdModal';
 import SportsTurfModal from '@/components/LocalHub/SportsTurfModal';
@@ -26,10 +26,12 @@ interface Business {
   rating: number;
   reviewCount: number;
   image: string;
+  gallery?: string[];
   location: string;
   views?: number;
   distanceKm?: number | null;
   services: { id: number; name: string }[];
+  products?: { id: number; name: string; price: number; image?: string }[];
 }
 
 export default function SearchClient() {
@@ -425,86 +427,148 @@ export default function SearchClient() {
             ) : businesses.length > 0 ? (
               // Active Listings
               businesses.map((business) => {
+                const rawImage = business.image || '/majh-boisar-mb-logo.png';
+                const imageParts = rawImage.split('||gallery_sep||').filter(Boolean);
+                const coverImage = imageParts[0] || '/majh-boisar-mb-logo.png';
+                const galleryPhotos = Array.isArray(business.gallery) && business.gallery.length > 0
+                  ? business.gallery.filter(Boolean)
+                  : imageParts.slice(1);
+                const allPhotos = Array.from(new Set([coverImage, ...galleryPhotos])).filter(Boolean);
+
                 const displayAddress = business.address.toLowerCase().includes((business.location || '').toLowerCase())
                   ? business.address
                   : `${business.address}${business.location ? `, ${business.location}` : ''}`;
+
+                const hasHomeDelivery = business.subscription === 'Pro' || (business.products && business.products.length > 0);
 
                 return (
                   <div
                     key={business.id}
                     onClick={() => router.push(`/business/${business.id}`)}
-                    className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs hover:shadow-md hover:border-teal-500/40 transition-all duration-200 relative group cursor-pointer flex flex-col gap-2.5"
+                    className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md hover:border-teal-500/40 transition-all duration-200 relative group cursor-pointer flex flex-col text-left"
                   >
-                    {/* Top Row: Left Image + Right Details */}
-                    <div className="flex flex-row gap-3 sm:gap-4 items-start">
-                      {/* Left Column: Business Image */}
-                      <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0 border border-slate-100 shadow-2xs bg-slate-50 relative flex items-center justify-center">
-                        <img
-                          src={business.image || '/majh-boisar-mb-logo.png'}
-                          alt=""
-                          aria-hidden="true"
-                          className="absolute inset-0 w-full h-full object-cover blur-xs opacity-20 scale-110 pointer-events-none"
-                        />
-                        <img
-                          src={business.image || '/majh-boisar-mb-logo.png'}
-                          alt={business.name}
-                          onError={(e) => { (e.target as HTMLImageElement).src = '/majh-boisar-mb-logo.png'; }}
-                          className="relative z-10 w-full h-full object-contain p-1 group-hover:scale-105 transition-transform duration-300"
-                        />
+                    {/* Top Section: Main Cover Photo Banner */}
+                    <div className="relative w-full h-44 sm:h-52 bg-slate-900 overflow-hidden flex items-center justify-center">
+                      <img
+                        src={coverImage}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 w-full h-full object-cover blur-sm opacity-35 scale-110 pointer-events-none"
+                      />
+                      <img
+                        src={coverImage}
+                        alt={business.name}
+                        onError={(e) => { (e.target as HTMLImageElement).src = '/majh-boisar-mb-logo.png'; }}
+                        className="relative z-10 w-full h-full object-contain p-1 group-hover:scale-105 transition-transform duration-300"
+                      />
+
+                      {/* Top Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-black/30 z-15 pointer-events-none" />
+
+                      {/* Top Badges */}
+                      <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-1.5 pointer-events-none">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {hasHomeDelivery && (
+                            <span className="bg-emerald-600/95 text-white text-[9.5px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md flex items-center gap-1 backdrop-blur-xs">
+                              <Truck className="w-3 h-3 text-white" />
+                              <span>Home Delivery</span>
+                            </span>
+                          )}
+                          {business.verified && (
+                            <span className="bg-teal-700/90 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-xs backdrop-blur-xs flex items-center gap-0.5">
+                              <ShieldCheck className="w-2.5 h-2.5" />
+                              <span>Verified</span>
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <div className="inline-flex items-center gap-0.5 bg-emerald-600 text-white text-[9.5px] font-black px-1.5 py-0.5 rounded-md shadow-xs">
+                            <span>{business.rating}</span>
+                            <Star className="w-2.5 h-2.5 fill-white text-white" />
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Right Column: Business Information Details */}
-                      <div className="flex-1 min-w-0 space-y-1 text-left">
-                        {/* Name Header */}
-                        <h3 className="font-black text-xs sm:text-base text-slate-800 leading-snug hover:text-teal-700 transition-colors line-clamp-2">
+                      {/* Bottom Overlay Info (Visits & Distance) */}
+                      <div className="absolute bottom-2 left-2.5 right-2.5 z-20 flex items-center justify-between text-white text-[10px] font-extrabold pointer-events-none">
+                        {business.views != null && business.views > 0 ? (
+                          <span className="bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded-md text-[9px] text-amber-300 border border-white/10">
+                            👁️ {business.views.toLocaleString()} visits
+                          </span>
+                        ) : <span />}
+
+                        {business.distanceKm != null && (
+                          <span className="bg-black/60 backdrop-blur-xs px-2 py-0.5 rounded-md text-[9px] text-emerald-300 border border-white/10">
+                            📍 {business.distanceKm} km away
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Gallery Photos Preview Strip (if more than 1 photo available) */}
+                    {allPhotos.length > 1 && (
+                      <div className="px-3 pt-2.5 pb-1 flex gap-2 overflow-x-auto scrollbar-hide bg-slate-50/70 border-b border-slate-100">
+                        {allPhotos.slice(0, 5).map((imgUrl, pIdx) => (
+                          <div
+                            key={pIdx}
+                            className="w-13 h-13 sm:w-14 sm:h-14 rounded-xl overflow-hidden border border-slate-200/90 shrink-0 bg-white shadow-2xs relative group/thumb"
+                          >
+                            <img
+                              src={imgUrl}
+                              alt={`Thumbnail ${pIdx + 1}`}
+                              className="w-full h-full object-cover group-hover/thumb:scale-110 transition-transform"
+                            />
+                            {pIdx === 4 && allPhotos.length > 5 && (
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-[9px] font-black">
+                                +{allPhotos.length - 5}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Middle Section: Business Information Details */}
+                    <div className="p-3.5 space-y-2 flex-1">
+                      {/* Business Name Header */}
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-black text-sm sm:text-base text-slate-900 leading-snug hover:text-teal-700 transition-colors line-clamp-2">
                           <Link href={`/business/${business.id}`} onClick={(e) => e.stopPropagation()}>
                             {business.name}
                           </Link>
                         </h3>
+                        <span className="text-[10px] font-extrabold text-slate-400 shrink-0 mt-0.5">
+                          {business.reviewCount} {business.reviewCount === 1 ? 'Rating' : 'Ratings'}
+                        </span>
+                      </div>
 
-                        {/* Rating block & Tag pills */}
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <div className="inline-flex items-center gap-0.5 bg-emerald-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-2xs">
-                            <span>{business.rating}</span>
-                            <Star className="w-2.5 h-2.5 fill-white text-white" />
-                          </div>
-                          <span className="text-[10px] font-bold text-slate-400">
-                            {business.reviewCount} Ratings
+                      {/* Location Address Block */}
+                      <p className="text-[11px] sm:text-xs text-slate-600 font-medium flex items-start gap-1.5 line-clamp-2">
+                        <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
+                        <span>{displayAddress}</span>
+                      </p>
+
+                      {/* Category & Services Tag Pills */}
+                      <div className="flex flex-wrap gap-1.5 pt-0.5">
+                        <span className="bg-teal-50 border border-teal-200/80 text-teal-800 text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md">
+                          {business.category}
+                        </span>
+                        {business.services?.slice(0, 2).map((srv) => (
+                          <span key={srv.id} className="bg-slate-100 border border-slate-200 text-slate-700 text-[9px] font-bold px-2 py-0.5 rounded-md">
+                            {srv.name}
                           </span>
-                          {business.views != null && business.views > 0 && (
-                            <span className="bg-amber-50 border border-amber-200 text-amber-700 text-[8px] font-black px-1.5 py-0.5 rounded uppercase">
-                              👁️ {business.views.toLocaleString()} visits
-                            </span>
-                          )}
-                          {business.distanceKm != null && (
-                            <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-[8px] font-black px-1.5 py-0.5 rounded">
-                              📍 {business.distanceKm} km
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Address Location block */}
-                        <p className="text-[10.5px] sm:text-xs text-slate-600 font-medium flex items-start gap-1 line-clamp-2">
-                          <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
-                          <span>{displayAddress}</span>
-                        </p>
-
-                        {/* Pill tags of services */}
-                        <div className="flex flex-wrap gap-1 pt-0.5">
-                          <span className="bg-slate-100 border border-slate-200 text-slate-700 text-[8.5px] font-bold px-2 py-0.5 rounded-md">
-                            {business.category}
+                        ))}
+                        {hasHomeDelivery && (
+                          <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <span>⚡ Delivery in Boisar</span>
                           </span>
-                          {business.services?.slice(0, 2).map((srv) => (
-                            <span key={srv.id} className="bg-teal-50 border border-teal-200/70 text-teal-700 text-[8.5px] font-bold px-2 py-0.5 rounded-md">
-                              {srv.name}
-                            </span>
-                          ))}
-                        </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Bottom Row: Action Buttons Full-Width Strip */}
-                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2 pt-2 border-t border-slate-100 w-full">
+                    {/* Bottom Section: Action Buttons Full-Width Strip */}
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2 p-2.5 pt-0 border-t border-slate-100 w-full mt-auto">
                       {/* Phone button */}
                       <a
                         href={isLoggedIn ? `tel:${business.phone}` : '#'}
@@ -515,7 +579,7 @@ export default function SearchClient() {
                             setLoginModalOpen(true);
                           }
                         }}
-                        className="bg-[#09843c] hover:bg-[#07682f] text-white font-black text-[9.5px] sm:text-xs px-2 py-1.5 rounded-lg flex items-center justify-center gap-1 transition-all shadow-2xs hover:scale-[1.02] cursor-pointer"
+                        className="bg-[#09843c] hover:bg-[#07682f] text-white font-black text-[10px] sm:text-xs px-2 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-2xs hover:scale-[1.02] cursor-pointer"
                       >
                         <Phone className="w-3 h-3 text-white shrink-0" />
                         <span className="truncate">{isLoggedIn ? business.phone : 'Call'}</span>
@@ -523,7 +587,7 @@ export default function SearchClient() {
 
                       {/* WhatsApp button */}
                       <a
-                        href={isLoggedIn ? `https://wa.me/${business.whatsapp}` : '#'}
+                        href={isLoggedIn ? `https://wa.me/${business.whatsapp}?text=${encodeURIComponent(`Hi ${business.name}, I found your business on Majh Boisar. I would like to inquire about your services/delivery.`)}` : '#'}
                         target={isLoggedIn ? "_blank" : undefined}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -532,7 +596,7 @@ export default function SearchClient() {
                             setLoginModalOpen(true);
                           }
                         }}
-                        className="bg-white border border-[#09843c] text-[#09843c] font-black text-[9.5px] sm:text-xs px-2 py-1.5 rounded-lg flex items-center justify-center gap-1 transition-all hover:bg-emerald-50 cursor-pointer shadow-2xs"
+                        className="bg-white border border-[#09843c] text-[#09843c] font-black text-[10px] sm:text-xs px-2 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all hover:bg-emerald-50 cursor-pointer shadow-2xs"
                       >
                         <svg className="w-3 h-3 fill-[#09843c] shrink-0" viewBox="0 0 24 24">
                           <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.965C16.48 2.016 14.005 1.002 11.995 1.002 6.559 1.002 2.135 5.372 2.131 10.801c-.001 1.76.46 3.479 1.336 5.003L2.5 21.53l5.837-1.526-.69.41z" />
@@ -540,10 +604,14 @@ export default function SearchClient() {
                         <span className="truncate">WhatsApp</span>
                       </a>
 
-                      {/* Send Enquiry button */}
+                      {/* Order / Enquiry button */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (hasHomeDelivery) {
+                            router.push(`/business/${business.id}?tab=catalog`);
+                            return;
+                          }
                           if (!isLoggedIn) {
                             setLoginModalOpen(true);
                             return;
@@ -551,10 +619,19 @@ export default function SearchClient() {
                           setEnquiryBusiness(business);
                           setEnquiryModalOpen(true);
                         }}
-                        className="bg-[#0076db] hover:bg-[#0062b8] text-white font-black text-[9.5px] sm:text-xs px-2 py-1.5 rounded-lg flex items-center justify-center gap-1 transition-all shadow-2xs hover:scale-[1.02] cursor-pointer"
+                        className={`${hasHomeDelivery ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-[#0076db] hover:bg-[#0062b8]'} text-white font-black text-[10px] sm:text-xs px-2 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-2xs hover:scale-[1.02] cursor-pointer`}
                       >
-                        <Mail className="w-3 h-3 text-white shrink-0" />
-                        <span className="truncate">Enquiry</span>
+                        {hasHomeDelivery ? (
+                          <>
+                            <ShoppingBag className="w-3 h-3 text-white shrink-0" />
+                            <span className="truncate">Order Online</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="w-3 h-3 text-white shrink-0" />
+                            <span className="truncate">Enquiry</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
