@@ -117,18 +117,20 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     showToast(`📱 New OTP sent via SMS to +91 ${mobileNumber}`, 'success', 5000);
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (otpCode !== simulatedOtp) {
       setOtpError('Invalid OTP. Please enter the 6-digit code received on your mobile via SMS.');
       return;
     }
     setOtpError('');
+    setIsLoading(true);
 
     const cleanInputPhone = mobileNumber.replace(/\D/g, '');
 
     // Check if this is the Master Admin Phone: 9307294733
     if (cleanInputPhone.endsWith('9307294733')) {
+      setIsLoading(false);
       setStep('admin_password');
       showToast('🔒 Admin phone verified. Super Admin password is required.', 'info', 4000);
       return;
@@ -145,7 +147,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           const regList = JSON.parse(regStr);
           if (Array.isArray(regList)) {
             const match = regList.find((u: any) => u.phone && u.phone.replace(/\D/g, '').endsWith(cleanInputPhone.slice(-10)));
-            if (match) {
+            if (match && match.name) {
               foundUser = { name: match.name, phone: match.phone, email: match.email };
             }
           }
@@ -156,7 +158,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           const savedUserStr = localStorage.getItem('majh_boisar_user');
           if (savedUserStr) {
             const parsed = JSON.parse(savedUserStr);
-            if (parsed && parsed.phone && parsed.phone.replace(/\D/g, '').endsWith(cleanInputPhone.slice(-10))) {
+            if (parsed && parsed.phone && parsed.phone.replace(/\D/g, '').endsWith(cleanInputPhone.slice(-10)) && parsed.name) {
               foundUser = parsed;
             }
           }
@@ -165,6 +167,26 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         console.error('Error checking existing user in LoginModal:', err);
       }
     }
+
+    // 3. If not found locally in browser, check backend database for cross-device sync
+    if (!foundUser) {
+      try {
+        const res = await fetch('/api/users');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.users)) {
+            const match = data.users.find((u: any) => u.phone && u.phone.replace(/\D/g, '').endsWith(cleanInputPhone.slice(-10)));
+            if (match && match.name) {
+              foundUser = { name: match.name, phone: match.phone, email: match.email };
+            }
+          }
+        }
+      } catch (apiErr) {
+        console.warn('Could not check /api/users in LoginModal:', apiErr);
+      }
+    }
+
+    setIsLoading(false);
 
     if (foundUser && foundUser.name) {
       // Existing user found -> Direct Login without asking for Name/Email again!
