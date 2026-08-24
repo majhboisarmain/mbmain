@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
@@ -17,6 +17,14 @@ const jakarta = Plus_Jakarta_Sans({
   weight: ["400", "500", "600", "700"],
   variable: "--font-jakarta",
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#0f766e",
+};
 
 export const metadata: Metadata = {
   title: "Majh Boisar — Boisar's #1 City Directory & Local Search Engine",
