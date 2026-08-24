@@ -6,12 +6,12 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/dashboard/'],
+        disallow: ['/admin/', '/adminmb/', '/dashboard/'],
       },
       {
         userAgent: ['GPTBot', 'ChatGPT-User', 'Google-Extended', 'PerplexityBot', 'ClaudeBot', 'anthropic-ai', 'cohere-ai'],
         allow: '/',
-        disallow: ['/admin/', '/dashboard/'],
+        disallow: ['/admin/', '/adminmb/', '/dashboard/'],
       }
     ],
     sitemap: 'https://majhboisar.in/sitemap.xml',
