@@ -720,92 +720,7 @@ export default function Navbar() {
 
           {/* Mobile Navigation controls */}
           <div className="flex md:hidden items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Quick Mobile Help Button */}
-            <div className="relative">
-              <button
-                onClick={() => {
-                  setHelpDropdownOpen(!helpDropdownOpen);
-                  setProfileDropdownOpen(false);
-                }}
-                className="flex items-center gap-1 text-[10px] font-black text-teal-700 bg-teal-50 border border-teal-200/80 px-2 py-1 rounded-lg hover:bg-teal-100 transition-colors cursor-pointer"
-              >
-                <HelpCircle className="w-3 h-3 text-teal-600 shrink-0" />
-                <span>Help</span>
-              </button>
-
-              {helpDropdownOpen && (
-                <>
-                  <div className="fixed inset-0 z-[190] bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150" onClick={() => setHelpDropdownOpen(false)} />
-                  <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] max-w-[340px] rounded-2xl border border-slate-200 bg-white p-4.5 shadow-2xl z-[200] animate-in fade-in zoom-in-95 duration-150 text-left">
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                        <h4 className="text-xs font-black text-slate-900 flex items-center gap-1.5 uppercase tracking-wider">
-                          <HelpCircle className="w-4 h-4 text-teal-600" /> Help &amp; Support
-                        </h4>
-                        <button onClick={() => setHelpDropdownOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 cursor-pointer">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          setHelpDropdownOpen(false);
-                          showToast("Raise a Complaint: Please email majhboisar@gmail.com with details.", "info", 5000);
-                        }}
-                        className="flex items-center gap-2.5 w-full text-slate-700 hover:text-slate-900 text-xs font-bold p-2 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors"
-                      >
-                        <span className="text-base">📝</span>
-                        <span>Raise a Complaint</span>
-                      </button>
-
-                      {isLoggedIn && (
-                        <button
-                          onClick={() => {
-                            setHelpDropdownOpen(false);
-                            handleRequestAccountDeletion();
-                          }}
-                          className="flex items-center gap-2.5 w-full text-rose-600 hover:text-rose-800 text-xs font-bold p-2 hover:bg-rose-50 rounded-xl cursor-pointer transition-colors"
-                        >
-                          <span className="text-base">🗑️</span>
-                          <span>Request Account Deletion</span>
-                        </button>
-                      )}
-
-                      <Link
-                        href="/advertise?track=true"
-                        onClick={() => setHelpDropdownOpen(false)}
-                        className="flex items-center gap-2.5 w-full text-slate-700 hover:text-teal-600 text-xs font-bold p-2 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors"
-                      >
-                        <span className="text-base">📊</span>
-                        <span>Track Ad Campaign</span>
-                      </Link>
-
-                      <div className="border-t border-slate-100 pt-2.5 space-y-2">
-                        <div className="flex items-center gap-2.5 p-2 bg-slate-50 border border-slate-150 rounded-xl">
-                          <span className="text-base">✉️</span>
-                          <div className="flex flex-col">
-                            <span className="text-[9px] text-slate-400 font-bold uppercase">Official Email</span>
-                            <a href="mailto:majhboisar@gmail.com" className="text-xs text-slate-900 font-black hover:text-teal-600">majhboisar@gmail.com</a>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            setHelpDropdownOpen(false);
-                            window.open("https://wa.me/917769947217", "_blank");
-                          }}
-                          className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer"
-                        >
-                          <span>💬 Chat on WhatsApp</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Mobile Quick Access: Dashboard (if has business) OR Register Your Business (if logged in, no business) */}
+            {/* Mobile Quick Access: Dashboard icon if has business */}
             {mounted && isLoggedIn && hasRegisteredBusiness && (
               <Link
                 href="/dashboard"
@@ -813,15 +728,6 @@ export default function Navbar() {
               >
                 <Building className="w-3 h-3 text-teal-400 shrink-0" />
                 <span>Dashboard</span>
-              </Link>
-            )}
-            {mounted && isLoggedIn && !hasRegisteredBusiness && (
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-1 bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-xs transition-colors cursor-pointer shrink-0"
-              >
-                <Plus className="w-3 h-3" />
-                <span>Register</span>
               </Link>
             )}
 

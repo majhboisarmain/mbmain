@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import Link from "next/link";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/context/AppContext";
@@ -407,89 +406,29 @@ export default function RootLayout({
                 {children}
               </main>
               <footer className="border-t border-slate-200 bg-white py-5 text-slate-600 text-xs shrink-0">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-                  {/* ── GOOGLE SEO LOCAL KEYWORD CLOUD (Justdial Style) ── */}
-                  <div className="pt-4 border-b border-slate-150 pb-6 text-left space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-black uppercase text-slate-800 tracking-wider">
-                        📍 Popular Searches &amp; Services in Boisar, Palghar
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-bold">
-                        Verified 2026 Directory
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-[11px] text-slate-600">
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-black uppercase text-purple-900 block tracking-wider">🏋️ Fitness &amp; Beauty</span>
-                        <ul className="space-y-1">
-                          <li><Link href="/category/gyms" className="hover:text-purple-900 transition-colors">Gyms in Boisar</Link></li>
-                          <li><Link href="/category/salons" className="hover:text-purple-900 transition-colors">Salons in Boisar</Link></li>
-                          <li><Link href="/category/clothing" className="hover:text-purple-900 transition-colors">Clothing Shops in Boisar</Link></li>
-                          <li><Link href="/category/jewellery" className="hover:text-purple-900 transition-colors">Jewellery in Boisar</Link></li>
-                          <li><Link href="/category/beauty-parlours" className="hover:text-purple-900 transition-colors">Beauty Parlours in Boisar</Link></li>
-                        </ul>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-black uppercase text-purple-900 block tracking-wider">🍕 Food &amp; Stays</span>
-                        <ul className="space-y-1">
-                          <li><Link href="/food" className="hover:text-purple-900 transition-colors">Restaurants in Boisar</Link></li>
-                          <li><Link href="/food" className="hover:text-purple-900 transition-colors">Food Delivery Boisar</Link></li>
-                          <li><Link href="/hotels" className="hover:text-purple-900 transition-colors">Hotels in Boisar</Link></li>
-                          <li><Link href="/hotels" className="hover:text-purple-900 transition-colors">Hourly Stay in Boisar</Link></li>
-                          <li><Link href="/resorts" className="hover:text-purple-900 transition-colors">Resorts near Boisar &amp; Kelwa</Link></li>
-                        </ul>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-black uppercase text-purple-900 block tracking-wider">🩺 Health &amp; Hospitals</span>
-                        <ul className="space-y-1">
-                          <li><Link href="/category/hospital" className="hover:text-purple-900 transition-colors">Hospitals in Boisar</Link></li>
-                          <li><Link href="/category/doctors" className="hover:text-purple-900 transition-colors">Doctors in Boisar</Link></li>
-                          <li><Link href="/category/dentists" className="hover:text-purple-900 transition-colors">Dentists in Boisar</Link></li>
-                          <li><Link href="/category/medical-stores" className="hover:text-purple-900 transition-colors">Medical Stores Boisar</Link></li>
-                          <li><Link href="/blood-donation" className="hover:text-purple-900 transition-colors">Emergency Blood Donors</Link></li>
-                        </ul>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-black uppercase text-purple-900 block tracking-wider">🛠️ Home &amp; Real Estate</span>
-                        <ul className="space-y-1">
-                          <li><Link href="/properties" className="hover:text-purple-900 transition-colors">Flats on Rent in Boisar</Link></li>
-                          <li><Link href="/properties" className="hover:text-purple-900 transition-colors">Real Estate in Boisar</Link></li>
-                          <li><Link href="/category/electricians" className="hover:text-purple-900 transition-colors">Electricians in Boisar</Link></li>
-                          <li><Link href="/category/plumbers" className="hover:text-purple-900 transition-colors">Plumbers in Boisar</Link></li>
-                          <li><Link href="/jobs" className="hover:text-purple-900 transition-colors">Tarapur MIDC Jobs</Link></li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
                   {/* Slim Footer Links Row */}
                   <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-[11px] font-medium text-slate-600">
-                    <Link href="/" className="hover:text-purple-900 transition-colors">Home</Link>
+                    <a href="/" className="hover:text-teal-600 transition-colors">Home</a>
                     <span className="text-slate-300">•</span>
-                    <Link href="/services" className="hover:text-purple-900 transition-colors">All Categories</Link>
+                    <a href="/jobs" className="hover:text-teal-600 transition-colors">Jobs</a>
                     <span className="text-slate-300">•</span>
-                    <Link href="/jobs" className="hover:text-purple-900 transition-colors">Jobs</Link>
+                    <a href="/blood-donation" className="hover:text-teal-600 transition-colors">Blood Donors</a>
                     <span className="text-slate-300">•</span>
-                    <Link href="/blood-donation" className="hover:text-purple-900 transition-colors">Blood Donors</Link>
+                    <a href="/advertise" className="hover:text-teal-600 transition-colors">Advertise</a>
                     <span className="text-slate-300">•</span>
-                    <Link href="/advertise" className="hover:text-purple-900 transition-colors">Advertise</Link>
+                    <a href="mailto:majhboisar@gmail.com" className="hover:text-teal-600 transition-colors">Help &amp; Support</a>
                     <span className="text-slate-300">•</span>
-                    <a href="mailto:majhboisar@gmail.com" className="hover:text-purple-900 transition-colors">Help &amp; Support</a>
+                    <a href="/privacy" className="hover:text-teal-600 transition-colors">Privacy Policy</a>
                     <span className="text-slate-300">•</span>
-                    <Link href="/privacy" className="hover:text-purple-900 transition-colors">Privacy Policy</Link>
-                    <span className="text-slate-300">•</span>
-                    <Link href="/terms" className="hover:text-purple-900 transition-colors">Terms</Link>
+                    <a href="/terms" className="hover:text-teal-600 transition-colors">Terms</a>
                   </div>
 
-                  {/* Copyright & Credit */}
+                  {/* Copyright & Small BuildLabs Credit */}
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-1.5 pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-medium">
                     <p>© 2026 Majh Boisar. All rights reserved.</p>
                     <p>
-                      Official Local City Directory for Boisar, Tarapur MIDC &amp; Palghar.
+                      Developed by <a href="https://buildlabs.in" target="_blank" rel="noopener noreferrer" className="text-slate-500 font-semibold hover:text-teal-600 transition-colors">buildlabs.in</a>
                     </p>
                   </div>
                 </div>

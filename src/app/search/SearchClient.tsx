@@ -34,6 +34,113 @@ interface Business {
   products?: { id: number; name: string; price: number; image?: string }[];
 }
 
+const CATEGORY_STOCK_GALLERY: Record<string, string[]> = {
+  gym: [
+    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=700&auto=format&fit=crop&q=80',
+  ],
+  fitness: [
+    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=700&auto=format&fit=crop&q=80',
+  ],
+  salon: [
+    'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=700&auto=format&fit=crop&q=80',
+  ],
+  cloth: [
+    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?w=700&auto=format&fit=crop&q=80',
+  ],
+  fashion: [
+    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?w=700&auto=format&fit=crop&q=80',
+  ],
+  restaurant: [
+    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=700&auto=format&fit=crop&q=80',
+  ],
+  food: [
+    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=700&auto=format&fit=crop&q=80',
+  ],
+  doctor: [
+    'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1559000357-f6b52ddfbe37?w=700&auto=format&fit=crop&q=80',
+  ],
+  hospital: [
+    'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1512678080530-7760d81faba6?w=700&auto=format&fit=crop&q=80',
+  ],
+  school: [
+    'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=700&auto=format&fit=crop&q=80',
+  ],
+  electronics: [
+    'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1588508065123-287b28e013da?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=700&auto=format&fit=crop&q=80',
+  ],
+  furniture: [
+    'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=700&auto=format&fit=crop&q=80',
+  ],
+  automobile: [
+    'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=700&auto=format&fit=crop&q=80',
+  ],
+  hotel: [
+    'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=700&auto=format&fit=crop&q=80',
+  ],
+  default: [
+    'https://images.unsplash.com/photo-1497366216548-37526070297c?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=700&auto=format&fit=crop&q=80',
+  ]
+};
+
+function getEnrichedPhotos(category: string, image?: string, gallery?: string[]): string[] {
+  const rawImage = image || '';
+  const imageParts = rawImage.split('||gallery_sep||').filter(Boolean);
+  const coverImage = imageParts[0];
+  const galleryPhotos = Array.isArray(gallery) && gallery.length > 0
+    ? gallery.filter(Boolean)
+    : imageParts.slice(1);
+  let all = Array.from(new Set([coverImage, ...galleryPhotos])).filter(Boolean) as string[];
+
+  // Filter out standalone placeholder logo if we have better category photos
+  const catLower = (category || '').toLowerCase();
+  const matchedKey = Object.keys(CATEGORY_STOCK_GALLERY).find(k => catLower.includes(k)) || 'default';
+  const stock = CATEGORY_STOCK_GALLERY[matchedKey] || CATEGORY_STOCK_GALLERY['default'];
+
+  if (all.length === 0 || (all.length === 1 && (all[0] === '/majh-boisar-mb-logo.png' || all[0].includes('mb-logo')))) {
+    return stock;
+  }
+
+  // If only 1 custom photo exists, supplement with 2 category stock photos so side-by-side 3-photo grid shows!
+  if (all.length === 1) {
+    return [all[0], stock[1], stock[2]].filter(Boolean);
+  }
+  if (all.length === 2) {
+    return [all[0], all[1], stock[2]].filter(Boolean);
+  }
+
+  return all;
+}
+
 export default function SearchClient() {
   const { isLoggedIn, setLoginModalOpen } = useApp();
   const searchParams = useSearchParams();
@@ -427,18 +534,11 @@ export default function SearchClient() {
             ) : businesses.length > 0 ? (
               // Active Listings
               businesses.map((business) => {
-                const rawImage = business.image || '/majh-boisar-mb-logo.png';
-                const imageParts = rawImage.split('||gallery_sep||').filter(Boolean);
-                const coverImage = imageParts[0] || '/majh-boisar-mb-logo.png';
-                const galleryPhotos = Array.isArray(business.gallery) && business.gallery.length > 0
-                  ? business.gallery.filter(Boolean)
-                  : imageParts.slice(1);
-                const allPhotos = Array.from(new Set([coverImage, ...galleryPhotos])).filter(Boolean);
-
+                const allPhotos = getEnrichedPhotos(business.category, business.image, (business as any).gallery);
+                const coverImage = allPhotos[0] || '/majh-boisar-mb-logo.png';
                 const displayAddress = business.address.toLowerCase().includes((business.location || '').toLowerCase())
                   ? business.address
                   : `${business.address}${business.location ? `, ${business.location}` : ''}`;
-
                 const hasHomeDelivery = Boolean(business.subscription && business.subscription !== 'Free' && (business as any).hasHomeDelivery !== false);
 
                 return (

@@ -48,21 +48,40 @@ export async function GET(request: NextRequest) {
     if (category && category !== 'All') {
       const categoryTerms = expandCategorySearchTerms(category);
       const cleanCat = category.trim();
-      const singular = cleanCat.endsWith('s') ? cleanCat.slice(0, -1) : cleanCat;
-      const plural = cleanCat.endsWith('s') ? cleanCat : cleanCat + 's';
       
+      // Tokenize compound category names (e.g., "Gyms & Fitness Centers" -> ["gyms", "fitness", "centers"])
+      const subTokens = cleanCat
+        .split(/[\s&/,\-+]+/)
+        .map(t => t.trim())
+        .filter(t => t.length >= 3 && !['and', 'the', 'for', 'all', 'near', 'centers', 'stores', 'shops', 'services'].includes(t.toLowerCase()));
+
+      const tokenVariants: string[] = [];
+      [cleanCat, ...subTokens].forEach(t => {
+        tokenVariants.push(t);
+        if (t.endsWith('s') || t.endsWith('S')) {
+          tokenVariants.push(t.slice(0, -1));
+        } else {
+          tokenVariants.push(t + 's');
+        }
+      });
+
       const allCategoryCandidates = Array.from(new Set([
         cleanCat,
-        singular,
-        plural,
+        ...tokenVariants,
         ...categoryTerms,
         ...categoryTerms.map(t => t.endsWith('s') ? t.slice(0, -1) : t + 's')
       ])).filter(Boolean);
 
+      const categoryOrConditions: any[] = [
+        { category: { in: allCategoryCandidates } },
+        { category: { contains: cleanCat } },
+        ...tokenVariants.map(token => ({ category: { contains: token } })),
+        ...tokenVariants.map(token => ({ name: { contains: token } }))
+      ];
+
       where.OR = [
         ...(where.OR || []),
-        { category: { in: allCategoryCandidates } },
-        { category: { contains: singular } }
+        ...categoryOrConditions
       ];
     }
 

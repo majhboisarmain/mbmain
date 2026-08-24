@@ -56,37 +56,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
-  // High-Intent Local Boisar Search Slugs (Justdial style)
-  const topLocalSlugs = [
-    'gyms-in-boisar',
-    'best-gyms-in-boisar',
-    'salons-in-boisar',
-    'best-salons-in-boisar',
-    'clothing-shops-in-boisar',
-    'restaurants-in-boisar',
-    'best-restaurants-in-boisar',
-    'hotels-in-boisar',
-    'doctors-in-boisar',
-    'hospitals-in-boisar',
-    'dentists-in-boisar',
-    'schools-in-boisar',
-    'plumbers-in-boisar',
-    'electricians-in-boisar',
-    'ac-repair-in-boisar',
-    'car-repair-in-boisar',
-    'real-estate-agents-in-boisar',
-    'coaching-classes-in-boisar',
-    'supermarkets-in-boisar',
-    'jewellery-shops-in-boisar'
-  ];
-
-  const topSlugRoutes = topLocalSlugs.map(slug => ({
-    url: `${baseUrl}/category/${slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'daily' as const,
-    priority: 0.95,
-  }));
-
   const searchCategoryRoutes = allCategories.map((cat) => ({
     url: `${baseUrl}/search?category=${encodeURIComponent(cat)}`,
     lastModified: new Date(),
@@ -134,6 +103,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to fetch jobs for sitemap:', err);
   }
 
-  return [...routes, ...hotelRoutes, ...resortRoutes, ...topSlugRoutes, ...categoryRoutes, ...searchCategoryRoutes, ...businessRoutes, ...jobRoutes];
+  return [...routes, ...hotelRoutes, ...resortRoutes, ...categoryRoutes, ...searchCategoryRoutes, ...businessRoutes, ...jobRoutes];
 }
 

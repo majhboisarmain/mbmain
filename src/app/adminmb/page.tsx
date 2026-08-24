@@ -3489,50 +3489,20 @@ export default function AdminPanelPage() {
                             Customer payments received 100% online on Majh Boisar. Deduct 10% platform commission and dispatch 90% payouts to hotel owners.
                           </p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              try {
-                                const raw = localStorage.getItem('majh_boisar_hotel_bookings');
-                                const list = raw ? JSON.parse(raw) : [];
-                                setAdminHotelBookings(Array.isArray(list) ? list : []);
-                                alert(`Refreshed! Found ${Array.isArray(list) ? list.length : 0} total hotel booking records.`);
-                              } catch (e) {
-                                setAdminHotelBookings([]);
-                                alert('Refreshed! 0 bookings found.');
-                              }
-                            }}
-                            className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-black px-3 py-1.5 rounded-xl transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
-                          >
-                            <RefreshCw className="w-3.5 h-3.5" />
-                            <span>Refresh Ledger</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (confirm('Are you sure you want to reset and clear the Hotel Bookings Ledger to ZERO (0)?')) {
-                                try {
-                                  localStorage.removeItem('majh_boisar_hotel_bookings');
-                                  for (let i = localStorage.length - 1; i >= 0; i--) {
-                                    const key = localStorage.key(i);
-                                    if (key && key.startsWith('majh_boisar_hotel_bookings_')) {
-                                      localStorage.removeItem(key);
-                                    }
-                                  }
-                                } catch (e) {}
-                                setAdminHotelBookings([]);
-                                alert('✅ Hotel Bookings Ledger has been reset to ZERO (0)!');
-                              }
-                            }}
-                            className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-black px-3 py-1.5 rounded-xl transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
-                            title="Reset Hotel Bookings to 0"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                            <span>Reset to 0</span>
-                          </button>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            try {
+                              const raw = localStorage.getItem('majh_boisar_hotel_bookings');
+                              if (raw) setAdminHotelBookings(JSON.parse(raw));
+                            } catch (e) {}
+                            alert(`Refreshed! Found ${adminHotelBookings.length} total hotel booking records.`);
+                          }}
+                          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-black px-3.5 py-1.5 rounded-xl transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                          <span>Refresh Ledger</span>
+                        </button>
                       </div>
 
                       {/* 4 Top Financial Stat Counters */}
@@ -3563,20 +3533,7 @@ export default function AdminPanelPage() {
                       </div>
 
                       {/* Ledger List */}
-                      {adminHotelBookings.length === 0 ? (
-                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 text-center space-y-2">
-                          <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto text-xl font-black">
-                            ✓
-                          </div>
-                          <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                            Hotel Bookings Ledger is Clear (0 Bookings)
-                          </h4>
-                          <p className="text-[11px] text-slate-500 font-medium max-w-sm mx-auto">
-                            All pending hotel settlement ledgers are clear. New guest bookings made on /hotels will appear here in real-time.
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3 pt-2">
+                      <div className="space-y-3 pt-2">
                         {adminHotelBookings.map((booking) => {
                           const gross = Number(booking.totalAmount) || 0;
                           const cut = Math.round(gross * 0.10);
@@ -3677,7 +3634,6 @@ export default function AdminPanelPage() {
                           );
                         })}
                       </div>
-                      )}
                     </div>
                   );
                 })()}
