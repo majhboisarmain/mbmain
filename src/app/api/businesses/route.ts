@@ -331,6 +331,7 @@ export async function POST(request: NextRequest) {
           longitude: body.longitude != null ? parseFloat(body.longitude) : null,
           workingHours: workingHours || '9:00 AM - 9:00 PM',
           subscription: body.subscription || (body.createdBy === 'Admin' ? 'Admin Created' : 'Free'),
+          hasHomeDelivery: body.hasHomeDelivery === true || body.hasHomeDelivery === 'true',
           verified: body.verified !== undefined 
             ? body.verified 
             : (category?.toLowerCase().includes('maid') || category?.toLowerCase().includes('helper') ? false : true),

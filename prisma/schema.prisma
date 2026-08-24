@@ -40,6 +40,7 @@ model Business {
   directionClicks Int       @default(0)
   websiteClicks   Int       @default(0)
   createdBy       String?   // Stores the login phone of the user who registered this business
+  hasHomeDelivery Boolean   @default(false) // Whether store provides home delivery in Boisar
   createdAt       DateTime  @default(now())
   
   leads           Lead[]

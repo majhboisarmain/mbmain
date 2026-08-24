@@ -175,6 +175,7 @@ export async function PUT(
     }
     if (premium !== undefined) data.premium = premium;
     if (verified !== undefined) data.verified = verified;
+    if (body.hasHomeDelivery !== undefined) data.hasHomeDelivery = body.hasHomeDelivery === true || body.hasHomeDelivery === 'true';
     
     // Support setting or incrementing clicks & views
     if (body.views !== undefined) data.views = body.views;

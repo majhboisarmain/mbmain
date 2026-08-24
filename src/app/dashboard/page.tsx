@@ -1510,6 +1510,7 @@ function DashboardContent() {
   const [editWorkingHours, setEditWorkingHours] = useState('');
   const [editImage, setEditImage] = useState('');
   const [editGalleryPhotos, setEditGalleryPhotos] = useState<string[]>([]);
+  const [editHasHomeDelivery, setEditHasHomeDelivery] = useState(false);
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [updateProfileError, setUpdateProfileError] = useState('');
   const [updateProfileSuccess, setUpdateProfileSuccess] = useState(false);
@@ -1635,7 +1636,8 @@ function DashboardContent() {
   const [newBizGalleryInput, setNewBizGalleryInput] = useState('');
   const [newBizGalleryPhotos, setNewBizGalleryPhotos] = useState<string[]>([]);
 
-  // Step 4: Products & Services
+  // Step 4: Products & Services & Home Delivery
+  const [newBizHasHomeDelivery, setNewBizHasHomeDelivery] = useState(false);
   const [newBizProducts, setNewBizProducts] = useState<{name: string; price: string; desc?: string; image?: string}[]>([]);
   const [newBizServices, setNewBizServices] = useState<{name: string; price: string; duration?: string; desc?: string; image?: string}[]>([]);
   const [newBizProdInput, setNewBizProdInput] = useState({name: '', price: '', desc: '', image: ''});
@@ -1861,6 +1863,7 @@ function DashboardContent() {
       setEditWorkingHours(business.workingHours);
       setEditImage(business.image || '');
       setEditGalleryPhotos((business as any).gallery || []);
+      setEditHasHomeDelivery(Boolean((business as any).hasHomeDelivery));
       setUpdateProfileSuccess(false);
       setUpdateProfileError('');
       // Reset edit schedule to defaults when switching business
@@ -2213,7 +2216,8 @@ function DashboardContent() {
           youtube: editYoutube || null,
           workingHours: finalHours,
           image: editImage,
-          gallery: editGalleryPhotos
+          gallery: editGalleryPhotos,
+          hasHomeDelivery: editHasHomeDelivery
         })
       });
 
@@ -2493,6 +2497,7 @@ function DashboardContent() {
           gallery: newBizGalleryPhotos.length > 0 ? newBizGalleryPhotos : undefined,
           latitude: newBizLat || undefined,
           longitude: newBizLng || undefined,
+          hasHomeDelivery: newBizHasHomeDelivery,
           // Save the login phone of the user so we can reliably find their businesses later
           ownerPhone: loggedInUser?.phone || undefined
         })
@@ -7568,6 +7573,30 @@ function DashboardContent() {
                         )}
                       </div>
 
+                      {/* Home Delivery Switch */}
+                      <div className="bg-emerald-50/80 border border-emerald-200 p-4 rounded-2xl flex items-center justify-between gap-3 text-left">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5 font-black text-xs text-emerald-950">
+                            <span>🛵</span>
+                            <span>Do you provide Home Delivery in Boisar?</span>
+                          </div>
+                          <p className="text-[11px] text-emerald-800 font-medium">
+                            Enable WhatsApp online order cart and show &quot;Home Delivery&quot; badge to Boisar shoppers.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setEditHasHomeDelivery(!editHasHomeDelivery)}
+                          className={`px-4 py-2 rounded-xl font-black text-xs transition-all cursor-pointer shadow-xs shrink-0 ${
+                            editHasHomeDelivery
+                              ? 'bg-emerald-600 text-white shadow-md'
+                              : 'bg-white text-slate-700 border border-slate-300'
+                          }`}
+                        >
+                          {editHasHomeDelivery ? '✓ YES (Home Delivery)' : 'NO (Store Pickup)'}
+                        </button>
+                      </div>
+
                       <button
                         type="submit"
                         disabled={updatingProfile}
@@ -8948,6 +8977,30 @@ function DashboardContent() {
                     <p className="text-[11px] text-slate-600">
                       Do you want to add items you sell or services you offer? They will be shown in your <strong>Products &amp; Services</strong> tab.
                     </p>
+                  </div>
+
+                  {/* 🛵 Home Delivery in Boisar Question */}
+                  <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-4 flex items-center justify-between gap-3 text-left shadow-2xs">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5 font-black text-xs text-emerald-950">
+                        <span>🛵</span>
+                        <span>Do you provide Home Delivery in Boisar?</span>
+                      </div>
+                      <p className="text-[11px] text-emerald-800 font-medium">
+                        If Yes, customers can add your products to cart and order directly on WhatsApp!
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setNewBizHasHomeDelivery(!newBizHasHomeDelivery)}
+                      className={`px-4 py-2 rounded-xl font-black text-xs transition-all cursor-pointer shadow-xs shrink-0 ${
+                        newBizHasHomeDelivery
+                          ? 'bg-emerald-600 text-white shadow-md'
+                          : 'bg-white text-slate-700 border border-slate-300'
+                      }`}
+                    >
+                      {newBizHasHomeDelivery ? '✓ YES (Home Delivery)' : 'NO (Pickup Only)'}
+                    </button>
                   </div>
 
                   {/* 1. Products Section */}

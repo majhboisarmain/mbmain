@@ -29,6 +29,7 @@ export const businessSchema = z.object({
   verified: z.boolean().optional(),
   premium: z.boolean().optional(),
   rating: z.union([z.number(), z.string()]).optional().nullable(),
+  hasHomeDelivery: z.boolean().optional(),
   createdBy: z.string().optional().nullable(),
   postedBy: z.string().optional().nullable()
 }).passthrough();

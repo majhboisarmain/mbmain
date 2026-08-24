@@ -528,20 +528,6 @@ function FoodPageContent() {
                   <span>Orders ({myFoodOrders.length})</span>
                 </button>
               )}
-
-              <button
-                onClick={() => {
-                  if (!isLoggedIn) {
-                    setLoginModalOpen(true);
-                    return;
-                  }
-                  setIsListModalOpen(true);
-                }}
-                className="inline-flex items-center gap-1 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 active:scale-95 text-white font-black text-[11px] sm:text-xs px-2.5 sm:px-3 py-1.5 rounded-xl shadow-2xs transition-all cursor-pointer shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5 text-amber-200" />
-                <span>List Joint <span className="hidden sm:inline">(Free)</span></span>
-              </button>
             </div>
           </div>
 
@@ -639,7 +625,7 @@ function FoodPageContent() {
       </div>
 
       {/* ── MAIN FOOD OUTLETS GRID ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-5">
         
         {filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -810,6 +796,38 @@ function FoodPageContent() {
             </button>
           </div>
         )}
+
+        {/* 🍲 List Your Restaurant / Food Joint Banner (Placed at the very bottom) */}
+        <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-orange-200/90 rounded-3xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs mt-8 sm:mt-10 text-left">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-orange-500 text-white flex items-center justify-center text-2xl shrink-0 shadow-sm">
+              👨‍🍳
+            </div>
+            <div>
+              <h4 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
+                Own a Restaurant, Cafe or Food Outlet in Boisar?
+              </h4>
+              <p className="text-xs text-slate-600 font-medium mt-1">
+                List your menu, accept direct WhatsApp delivery orders, and reach 10,000+ local food lovers with 0% commission.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (!isLoggedIn) {
+                setLoginModalOpen(true);
+                return;
+              }
+              setIsListModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 active:scale-95 text-white font-black text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-md transition-all cursor-pointer shrink-0 whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4 text-amber-200" />
+            <span>+ List Your Food Joint (Free)</span>
+          </button>
+        </div>
 
       </div>
 

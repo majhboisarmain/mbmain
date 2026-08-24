@@ -84,7 +84,7 @@ export default function HotelsPage() {
 
   // Quick Booking Drawer / Modal
   const [quickBookHotel, setQuickBookHotel] = useState<HotelItem | null>(null);
-  const [selectedSlotDuration, setSelectedSlotDuration] = useState<'3h' | '6h' | '12h' | 'night'>('3h');
+  const [selectedSlotDuration, setSelectedSlotDuration] = useState<'3h' | '6h' | '12h' | 'day' | 'night'>('3h');
   const [checkInTime, setCheckInTime] = useState('11:00 AM');
   const [bookingDate, setBookingDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [guestName, setGuestName] = useState('');
@@ -146,14 +146,17 @@ export default function HotelsPage() {
   ]);
 
   // AC & Non-AC Room Tariffs for new hotel
+  const [offersHourly, setOffersHourly] = useState(true);
   const [newHotelAc3h, setNewHotelAc3h] = useState('699');
   const [newHotelAc6h, setNewHotelAc6h] = useState('1099');
   const [newHotelAc12h, setNewHotelAc12h] = useState('1599');
+  const [newHotelAcDay, setNewHotelAcDay] = useState('1499');
   const [newHotelAcNight, setNewHotelAcNight] = useState('1899');
 
   const [newHotelNonAc3h, setNewHotelNonAc3h] = useState('499');
   const [newHotelNonAc6h, setNewHotelNonAc6h] = useState('799');
   const [newHotelNonAc12h, setNewHotelNonAc12h] = useState('1199');
+  const [newHotelNonAcDay, setNewHotelNonAcDay] = useState('999');
   const [newHotelNonAcNight, setNewHotelNonAcNight] = useState('1399');
 
   const [hotelRoomsToAdd, setHotelRoomsToAdd] = useState<any[]>([
@@ -307,11 +310,14 @@ export default function HotelsPage() {
     const price = selectedSlotDuration === '3h' ? quickBookHotel.hourlyRate3h
       : selectedSlotDuration === '6h' ? quickBookHotel.hourlyRate6h
       : selectedSlotDuration === '12h' ? quickBookHotel.hourlyRate12h
+      : selectedSlotDuration === 'day' ? (quickBookHotel.dayRate || quickBookHotel.hourlyRate12h || quickBookHotel.nightRate)
       : quickBookHotel.nightRate;
 
-    const calculatedWindow = selectedSlotDuration !== 'night' 
-      ? calculateStayWindow(checkInTime, selectedSlotDuration as any).fullWindowStr 
-      : 'Overnight Check-in';
+    const calculatedWindow = selectedSlotDuration === 'night' 
+      ? 'Overnight Check-in (Night Stay)' 
+      : selectedSlotDuration === 'day'
+      ? 'Full Day Stay'
+      : calculateStayWindow(checkInTime, selectedSlotDuration as any).fullWindowStr;
 
     const ref = `MB-HTL-${Math.floor(100000 + Math.random() * 900000)}`;
     const newBooking = {
@@ -713,49 +719,75 @@ export default function HotelsPage() {
                       </div>
                     </div>
 
-                    {/* Bottom Row: 3 Hourly Slot Pricing Boxes (Exact Reference) */}
-                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2.5 sm:gap-3">
-                      {/* 3 Hrs */}
-                      <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-3 text-center transition-all cursor-pointer">
-                        <span className="text-sm sm:text-base font-black text-slate-900 block">
-                          ₹{hotel.hourlyRate3h}
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-500 block uppercase tracking-wider">
-                          3 Hrs
-                        </span>
-                      </div>
+                    {/* Bottom Row: Pricing Structure (Hourly or Day & Night) */}
+                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2 sm:gap-2.5">
+                      {hotel.offersHourly === false || (hotel.hourlyRate3h === 0 && !hotel.is3hAvailable) ? (
+                        <>
+                          {/* ☀️ Day Stay */}
+                          <div className="flex-1 bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-200 rounded-2xl py-2 px-3 text-center transition-all cursor-pointer">
+                            <span className="text-sm sm:text-base font-black text-emerald-950 block">
+                              ₹{hotel.dayRate || hotel.hourlyRate12h || hotel.nightRate}
+                            </span>
+                            <span className="text-[9.5px] font-bold text-emerald-700 block uppercase tracking-wider">
+                              ☀️ Day Stay
+                            </span>
+                          </div>
 
-                      {/* 6 Hrs */}
-                      <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-3 text-center transition-all cursor-pointer">
-                        {hotel.is6hAvailable ? (
-                          <>
+                          {/* 🌙 Night Stay */}
+                          <div className="flex-1 bg-purple-50/70 hover:bg-purple-100/70 border border-purple-200 rounded-2xl py-2 px-3 text-center transition-all cursor-pointer">
+                            <span className="text-sm sm:text-base font-black text-purple-950 block">
+                              ₹{hotel.nightRate}
+                            </span>
+                            <span className="text-[9.5px] font-bold text-purple-800 block uppercase tracking-wider">
+                              🌙 Night Stay
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {/* 3 Hrs */}
+                          <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
                             <span className="text-sm sm:text-base font-black text-slate-900 block">
-                              ₹{hotel.hourlyRate6h}
+                              ₹{hotel.hourlyRate3h}
                             </span>
-                            <span className="text-[10px] font-bold text-slate-500 block uppercase tracking-wider">
-                              6 Hrs
+                            <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                              3 Hrs
                             </span>
-                          </>
-                        ) : (
-                          <span className="text-xs font-bold text-slate-400 block py-1.5">Unavailable</span>
-                        )}
-                      </div>
+                          </div>
 
-                      {/* 12 Hrs */}
-                      <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-3 text-center transition-all cursor-pointer">
-                        {hotel.is12hAvailable ? (
-                          <>
-                            <span className="text-sm sm:text-base font-black text-slate-900 block">
-                              ₹{hotel.hourlyRate12h}
-                            </span>
-                            <span className="text-[10px] font-bold text-slate-500 block uppercase tracking-wider">
-                              12 Hrs
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-xs font-bold text-slate-400 block py-1.5">Unavailable</span>
-                        )}
-                      </div>
+                          {/* 6 Hrs */}
+                          <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
+                            {hotel.is6hAvailable ? (
+                              <>
+                                <span className="text-sm sm:text-base font-black text-slate-900 block">
+                                  ₹{hotel.hourlyRate6h}
+                                </span>
+                                <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                                  6 Hrs
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-xs font-bold text-slate-400 block py-1.5">Unavailable</span>
+                            )}
+                          </div>
+
+                          {/* 12 Hrs */}
+                          <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
+                            {hotel.is12hAvailable ? (
+                              <>
+                                <span className="text-sm sm:text-base font-black text-slate-900 block">
+                                  ₹{hotel.hourlyRate12h}
+                                </span>
+                                <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                                  12 Hrs
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-xs font-bold text-slate-400 block py-1.5">Unavailable</span>
+                            )}
+                          </div>
+                        </>
+                      )}
 
                       {/* Action buttons */}
                       <div className="flex items-center gap-1.5 pl-1 shrink-0">
@@ -883,30 +915,55 @@ export default function HotelsPage() {
                   <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
                     Select Stay Duration *
                   </label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { id: '3h', label: '3 Hrs', price: quickBookHotel.hourlyRate3h },
-                      { id: '6h', label: '6 Hrs', price: quickBookHotel.hourlyRate6h },
-                      { id: '12h', label: '12 Hrs', price: quickBookHotel.hourlyRate12h },
-                      { id: 'night', label: 'Night', price: quickBookHotel.nightRate }
-                    ].map(slot => (
-                      <button
-                        type="button"
-                        key={slot.id}
-                        onClick={() => setSelectedSlotDuration(slot.id as any)}
-                        className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
-                          selectedSlotDuration === slot.id
-                            ? 'bg-purple-900 text-white font-black border-purple-950 shadow-xs'
-                            : 'bg-slate-50 text-slate-700 font-bold border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        <span className="text-xs block font-black">{slot.label}</span>
-                        <span className={`text-[10px] block mt-0.5 ${selectedSlotDuration === slot.id ? 'text-amber-300' : 'text-purple-900'}`}>
-                          ₹{slot.price}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                  {quickBookHotel.offersHourly === false || (quickBookHotel.hourlyRate3h === 0 && !quickBookHotel.is3hAvailable) ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 'day', label: '☀️ Day Stay (Full Day)', price: quickBookHotel.dayRate || quickBookHotel.hourlyRate12h || quickBookHotel.nightRate },
+                        { id: 'night', label: '🌙 Night Stay (Overnight)', price: quickBookHotel.nightRate }
+                      ].map(slot => (
+                        <button
+                          type="button"
+                          key={slot.id}
+                          onClick={() => setSelectedSlotDuration(slot.id as any)}
+                          className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                            selectedSlotDuration === slot.id || (slot.id === 'night' && selectedSlotDuration !== 'day')
+                              ? 'bg-purple-900 text-white font-black border-purple-950 shadow-xs'
+                              : 'bg-slate-50 text-slate-700 font-bold border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span className="text-xs block font-black">{slot.label}</span>
+                          <span className={`text-[11px] block mt-0.5 ${(selectedSlotDuration === slot.id || (slot.id === 'night' && selectedSlotDuration !== 'day')) ? 'text-amber-300' : 'text-purple-900 font-black'}`}>
+                            ₹{slot.price}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { id: '3h', label: '3 Hrs', price: quickBookHotel.hourlyRate3h },
+                        { id: '6h', label: '6 Hrs', price: quickBookHotel.hourlyRate6h },
+                        { id: '12h', label: '12 Hrs', price: quickBookHotel.hourlyRate12h },
+                        { id: 'night', label: 'Night', price: quickBookHotel.nightRate }
+                      ].map(slot => (
+                        <button
+                          type="button"
+                          key={slot.id}
+                          onClick={() => setSelectedSlotDuration(slot.id as any)}
+                          className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
+                            selectedSlotDuration === slot.id
+                              ? 'bg-purple-900 text-white font-black border-purple-950 shadow-xs'
+                              : 'bg-slate-50 text-slate-700 font-bold border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span className="text-xs block font-black">{slot.label}</span>
+                          <span className={`text-[10px] block mt-0.5 ${selectedSlotDuration === slot.id ? 'text-amber-300' : 'text-purple-900'}`}>
+                            ₹{slot.price}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Date & Time Slot */}
@@ -992,6 +1049,7 @@ export default function HotelsPage() {
                       ₹{selectedSlotDuration === '3h' ? quickBookHotel.hourlyRate3h
                         : selectedSlotDuration === '6h' ? quickBookHotel.hourlyRate6h
                         : selectedSlotDuration === '12h' ? quickBookHotel.hourlyRate12h
+                        : selectedSlotDuration === 'day' ? (quickBookHotel.dayRate || quickBookHotel.hourlyRate12h || quickBookHotel.nightRate)
                         : quickBookHotel.nightRate}
                     </span>
                   </div>
@@ -1111,16 +1169,17 @@ export default function HotelsPage() {
                   ? uploadedGalleryPhotos 
                   : [PRESET_HOTEL_PHOTOS[0], PRESET_HOTEL_PHOTOS[1]];
 
-                const lowest3h = Math.min(Number(newHotelNonAc3h) || 499, Number(newHotelAc3h) || 699);
-                const lowest6h = Math.min(Number(newHotelNonAc6h) || 799, Number(newHotelAc6h) || 1099);
-                const lowest12h = Math.min(Number(newHotelNonAc12h) || 1199, Number(newHotelAc12h) || 1599);
+                const lowest3h = offersHourly ? Math.min(Number(newHotelNonAc3h) || 499, Number(newHotelAc3h) || 699) : 0;
+                const lowest6h = offersHourly ? Math.min(Number(newHotelNonAc6h) || 799, Number(newHotelAc6h) || 1099) : 0;
+                const lowest12h = offersHourly ? Math.min(Number(newHotelNonAc12h) || 1199, Number(newHotelAc12h) || 1599) : 0;
+                const lowestDay = Math.min(Number(newHotelNonAcDay) || 999, Number(newHotelAcDay) || 1499);
                 const lowestNight = Math.min(Number(newHotelNonAcNight) || 1399, Number(newHotelAcNight) || 1899);
 
                 const newHotelItem: HotelItem = {
                   id: `hotel-${Date.now()}`,
                   slug: newHotelForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
                   name: newHotelForm.name,
-                  tagline: newHotelForm.tagline || 'Verified Couple & Day-Stay Hotel in Boisar',
+                  tagline: newHotelForm.tagline || (offersHourly ? 'Verified Couple & Hourly Day-Stay Hotel in Boisar' : 'Verified Day & Night Comfort Stay Hotel in Boisar'),
                   category: newHotelForm.category as any,
                   badge: `♦ ${newHotelForm.category.toUpperCase()}`,
                   offerBadge: 'Special Offer on Majh Boisar',
@@ -1135,10 +1194,13 @@ export default function HotelsPage() {
                   hourlyRate3h: lowest3h,
                   hourlyRate6h: lowest6h,
                   hourlyRate12h: lowest12h,
+                  dayRate: lowestDay,
                   nightRate: lowestNight,
-                  is3hAvailable: true,
-                  is6hAvailable: true,
-                  is12hAvailable: true,
+                  offersHourly: offersHourly,
+                  is3hAvailable: offersHourly,
+                  is6hAvailable: offersHourly,
+                  is12hAvailable: offersHourly,
+                  isDayAvailable: true,
                   isNightAvailable: true,
                   isCoupleFriendly: newHotelForm.isCoupleFriendly,
                   acceptsLocalId: newHotelForm.acceptsLocalId,
@@ -1157,7 +1219,7 @@ export default function HotelsPage() {
                     if (a.includes('Service')) return { name: a, icon: '🛎️' };
                     return { name: a, icon: '✨' };
                   }),
-                  description: newHotelForm.description || 'Verified local hotel listed on Majh Boisar directory offering air-conditioned rooms, swift check-ins, complete privacy, and flexible hourly stays.',
+                  description: newHotelForm.description || 'Verified local hotel listed on Majh Boisar directory offering air-conditioned rooms, swift check-ins, complete privacy, and comfortable stays.',
                   rules: newHotelForm.rulesList,
                   rooms: [
                     {
@@ -1167,9 +1229,10 @@ export default function HotelsPage() {
                       bedType: '1 King Bed',
                       maxGuests: 2,
                       size: '240 sq.ft',
-                      hourly3h: Number(newHotelAc3h) || 699,
-                      hourly6h: Number(newHotelAc6h) || 1099,
-                      hourly12h: Number(newHotelAc12h) || 1599,
+                      hourly3h: offersHourly ? (Number(newHotelAc3h) || 699) : 0,
+                      hourly6h: offersHourly ? (Number(newHotelAc6h) || 1099) : 0,
+                      hourly12h: offersHourly ? (Number(newHotelAc12h) || 1599) : 0,
+                      dayRate: Number(newHotelAcDay) || 1499,
                       nightRate: Number(newHotelAcNight) || 1899,
                       image: gallery[0] || PRESET_HOTEL_PHOTOS[0],
                       amenities: ['AC', 'King Bed', 'Free WiFi', 'Hot Shower', 'Clean Bedding']
@@ -1181,9 +1244,10 @@ export default function HotelsPage() {
                       bedType: '1 Queen Bed',
                       maxGuests: 2,
                       size: '220 sq.ft',
-                      hourly3h: Number(newHotelNonAc3h) || 499,
-                      hourly6h: Number(newHotelNonAc6h) || 799,
-                      hourly12h: Number(newHotelNonAc12h) || 1199,
+                      hourly3h: offersHourly ? (Number(newHotelNonAc3h) || 499) : 0,
+                      hourly6h: offersHourly ? (Number(newHotelNonAc6h) || 799) : 0,
+                      hourly12h: offersHourly ? (Number(newHotelNonAc12h) || 1199) : 0,
+                      dayRate: Number(newHotelNonAcDay) || 999,
                       nightRate: Number(newHotelNonAcNight) || 1399,
                       image: gallery[1] || gallery[0] || PRESET_HOTEL_PHOTOS[1],
                       amenities: ['Fan Ventilated', 'Queen Bed', 'Free WiFi', 'Clean Bedding']
@@ -1416,9 +1480,34 @@ export default function HotelsPage() {
                       4. Configure AC &amp; Non-AC Room Tariffs
                     </span>
                     <p className="text-[10px] text-slate-500 font-medium">
-                      Set your 3h, 6h, 12h &amp; night rates. (Room numbers are allotted at your front desk upon arrival)
+                      Set pricing for your rooms. (Room numbers are allotted at your front desk upon arrival)
                     </p>
                   </div>
+                </div>
+
+                {/* ⏱️ Hourly Booking Question Toggle */}
+                <div className="bg-white border border-purple-200 p-3.5 rounded-2xl flex items-center justify-between gap-3 shadow-2xs">
+                  <div>
+                    <span className="text-xs font-black text-purple-950 flex items-center gap-1.5">
+                      <span>⏱️</span> Do you offer Hourly Booking (3h / 6h / 12h)?
+                    </span>
+                    <p className="text-[10px] text-slate-500 font-medium">
+                      {offersHourly 
+                        ? 'Hourly booking is ON. Guests can book 3h, 6h, 12h, Full Day or Overnight stays.' 
+                        : 'Hourly booking is OFF. Only Day Stay & Night Stay rates will be offered to guests.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOffersHourly(!offersHourly)}
+                    className={`px-3.5 py-1.5 rounded-xl font-black text-xs transition-all cursor-pointer shadow-xs shrink-0 ${
+                      offersHourly
+                        ? 'bg-purple-900 text-white shadow-md'
+                        : 'bg-slate-100 text-slate-700 border border-slate-300'
+                    }`}
+                  >
+                    {offersHourly ? '✓ YES (Hourly Stays)' : 'NO (Day & Night Only)'}
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1433,48 +1522,85 @@ export default function HotelsPage() {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-1.5">
-                      <div>
-                        <label className="block text-[8px] font-black text-purple-900 text-center uppercase">3h (₹)</label>
-                        <input
-                          type="number"
-                          required
-                          value={newHotelAc3h}
-                          onChange={(e) => setNewHotelAc3h(e.target.value)}
-                          className="w-full bg-purple-50/70 border border-purple-200 rounded-lg px-1.5 py-1 text-xs font-black text-purple-900 text-center outline-none focus:border-purple-600 shadow-2xs"
-                        />
+                    {offersHourly ? (
+                      <div className="grid grid-cols-5 gap-1">
+                        <div>
+                          <label className="block text-[8px] font-black text-purple-900 text-center uppercase">3h (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelAc3h}
+                            onChange={(e) => setNewHotelAc3h(e.target.value)}
+                            className="w-full bg-purple-50/70 border border-purple-200 rounded-lg px-1 py-1 text-xs font-black text-purple-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-black text-purple-900 text-center uppercase">6h (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelAc6h}
+                            onChange={(e) => setNewHotelAc6h(e.target.value)}
+                            className="w-full bg-purple-50/70 border border-purple-200 rounded-lg px-1 py-1 text-xs font-black text-purple-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-black text-purple-900 text-center uppercase">12h (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelAc12h}
+                            onChange={(e) => setNewHotelAc12h(e.target.value)}
+                            className="w-full bg-purple-50/70 border border-purple-200 rounded-lg px-1 py-1 text-xs font-black text-purple-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-black text-emerald-800 text-center uppercase">Day (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelAcDay}
+                            onChange={(e) => setNewHotelAcDay(e.target.value)}
+                            className="w-full bg-emerald-50/80 border border-emerald-300 rounded-lg px-1 py-1 text-xs font-black text-emerald-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-black text-amber-800 text-center uppercase">Night (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelAcNight}
+                            onChange={(e) => setNewHotelAcNight(e.target.value)}
+                            className="w-full bg-amber-50/80 border border-amber-300 rounded-lg px-1 py-1 text-xs font-black text-amber-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-[8px] font-black text-purple-900 text-center uppercase">6h (₹)</label>
-                        <input
-                          type="number"
-                          required
-                          value={newHotelAc6h}
-                          onChange={(e) => setNewHotelAc6h(e.target.value)}
-                          className="w-full bg-purple-50/70 border border-purple-200 rounded-lg px-1.5 py-1 text-xs font-black text-purple-900 text-center outline-none focus:border-purple-600 shadow-2xs"
-                        />
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[8px] font-black text-emerald-800 text-center uppercase">☀️ Day Stay Rate (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelAcDay}
+                            onChange={(e) => setNewHotelAcDay(e.target.value)}
+                            placeholder="e.g. 1499"
+                            className="w-full bg-emerald-50/80 border border-emerald-300 rounded-lg px-2 py-1.5 text-xs font-black text-emerald-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-black text-amber-800 text-center uppercase">🌙 Night Stay Rate (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelAcNight}
+                            onChange={(e) => setNewHotelAcNight(e.target.value)}
+                            placeholder="e.g. 1899"
+                            className="w-full bg-amber-50/80 border border-amber-300 rounded-lg px-2 py-1.5 text-xs font-black text-amber-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-[8px] font-black text-purple-900 text-center uppercase">12h (₹)</label>
-                        <input
-                          type="number"
-                          required
-                          value={newHotelAc12h}
-                          onChange={(e) => setNewHotelAc12h(e.target.value)}
-                          className="w-full bg-purple-50/70 border border-purple-200 rounded-lg px-1.5 py-1 text-xs font-black text-purple-900 text-center outline-none focus:border-purple-600 shadow-2xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[8px] font-black text-amber-800 text-center uppercase">Night (₹)</label>
-                        <input
-                          type="number"
-                          required
-                          value={newHotelAcNight}
-                          onChange={(e) => setNewHotelAcNight(e.target.value)}
-                          className="w-full bg-amber-50/80 border border-amber-300 rounded-lg px-1.5 py-1 text-xs font-black text-amber-900 text-center outline-none focus:border-purple-600 shadow-2xs"
-                        />
-                      </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* 🌀 Non-AC Room Tariff Box */}
@@ -1488,48 +1614,85 @@ export default function HotelsPage() {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-1.5">
-                      <div>
-                        <label className="block text-[8px] font-black text-slate-600 text-center uppercase">3h (₹)</label>
-                        <input
-                          type="number"
-                          required
-                          value={newHotelNonAc3h}
-                          onChange={(e) => setNewHotelNonAc3h(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1.5 py-1 text-xs font-black text-slate-900 text-center outline-none focus:border-purple-600 shadow-2xs"
-                        />
+                    {offersHourly ? (
+                      <div className="grid grid-cols-5 gap-1">
+                        <div>
+                          <label className="block text-[8px] font-black text-slate-600 text-center uppercase">3h (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelNonAc3h}
+                            onChange={(e) => setNewHotelNonAc3h(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1 py-1 text-xs font-black text-slate-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-black text-slate-600 text-center uppercase">6h (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelNonAc6h}
+                            onChange={(e) => setNewHotelNonAc6h(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1 py-1 text-xs font-black text-slate-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-black text-slate-600 text-center uppercase">12h (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelNonAc12h}
+                            onChange={(e) => setNewHotelNonAc12h(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1 py-1 text-xs font-black text-slate-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-black text-emerald-800 text-center uppercase">Day (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelNonAcDay}
+                            onChange={(e) => setNewHotelNonAcDay(e.target.value)}
+                            className="w-full bg-emerald-50/80 border border-emerald-300 rounded-lg px-1 py-1 text-xs font-black text-emerald-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-black text-amber-800 text-center uppercase">Night (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelNonAcNight}
+                            onChange={(e) => setNewHotelNonAcNight(e.target.value)}
+                            className="w-full bg-amber-50/80 border border-amber-300 rounded-lg px-1 py-1 text-xs font-black text-amber-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-[8px] font-black text-slate-600 text-center uppercase">6h (₹)</label>
-                        <input
-                          type="number"
-                          required
-                          value={newHotelNonAc6h}
-                          onChange={(e) => setNewHotelNonAc6h(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1.5 py-1 text-xs font-black text-slate-900 text-center outline-none focus:border-purple-600 shadow-2xs"
-                        />
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[8px] font-black text-emerald-800 text-center uppercase">☀️ Day Stay Rate (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelNonAcDay}
+                            onChange={(e) => setNewHotelNonAcDay(e.target.value)}
+                            placeholder="e.g. 999"
+                            className="w-full bg-emerald-50/80 border border-emerald-300 rounded-lg px-2 py-1.5 text-xs font-black text-emerald-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-black text-amber-800 text-center uppercase">🌙 Night Stay Rate (₹)</label>
+                          <input
+                            type="number"
+                            required
+                            value={newHotelNonAcNight}
+                            onChange={(e) => setNewHotelNonAcNight(e.target.value)}
+                            placeholder="e.g. 1399"
+                            className="w-full bg-amber-50/80 border border-amber-300 rounded-lg px-2 py-1.5 text-xs font-black text-amber-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-[8px] font-black text-slate-600 text-center uppercase">12h (₹)</label>
-                        <input
-                          type="number"
-                          required
-                          value={newHotelNonAc12h}
-                          onChange={(e) => setNewHotelNonAc12h(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1.5 py-1 text-xs font-black text-slate-900 text-center outline-none focus:border-purple-600 shadow-2xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[8px] font-black text-amber-800 text-center uppercase">Night (₹)</label>
-                        <input
-                          type="number"
-                          required
-                          value={newHotelNonAcNight}
-                          onChange={(e) => setNewHotelNonAcNight(e.target.value)}
-                          className="w-full bg-amber-50/80 border border-amber-300 rounded-lg px-1.5 py-1 text-xs font-black text-amber-900 text-center outline-none focus:border-purple-600 shadow-2xs"
-                        />
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
