@@ -173,12 +173,7 @@ interface AdOrder {
 
 export default function AdminPanelPage() {
   const { currentRole, setRole, login, isLoggedIn, loggedInUser, setLoginModalOpen, showToast } = useApp();
-  const [isAdminPageUnlocked, setIsAdminPageUnlocked] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('majh_boisar_adminmb_auth') === 'unlocked';
-    }
-    return false;
-  });
+  const [isAdminPageUnlocked, setIsAdminPageUnlocked] = useState(false);
   const [adminPasscode, setAdminPasscode] = useState('');
   const [adminPasscodeError, setAdminPasscodeError] = useState('');
   const [savedAdminPasscode, setSavedAdminPasscode] = useState<string>(() => {
@@ -2171,7 +2166,6 @@ export default function AdminPanelPage() {
         if (typeof window !== 'undefined') {
           sessionStorage.removeItem('admin_failed_attempts');
           sessionStorage.removeItem('admin_lockout_until');
-          sessionStorage.setItem('majh_boisar_adminmb_auth', 'unlocked');
           localStorage.setItem('majh_boisar_role', 'Admin');
         }
         setRole('Admin');
