@@ -17,6 +17,7 @@ import {
   Utensils, Bell, Receipt, Printer, Volume2, VolumeX, Coffee
 } from 'lucide-react';
 import BusinessQRStandeeModal from '@/components/BusinessQRStandeeModal';
+import { compressImage } from '@/lib/imageCompressor';
 const toTitleCase = (str: string) => {
   return str
     .toLowerCase()
@@ -2383,8 +2384,23 @@ function DashboardContent() {
       });
 
       if (!res.ok) {
-        const errObj = await res.json();
-        throw new Error(errObj.error || 'Failed to create business listing.');
+        let errMessage = 'Failed to create business listing. Please try again.';
+        try {
+          const errObj = await res.json();
+          errMessage = errObj.error || errMessage;
+        } catch {
+          try {
+            const text = await res.text();
+            if (text.includes('Request Entity') || text.includes('Too Large') || res.status === 413) {
+              errMessage = 'Uploaded photos are too large. Please select smaller photos or remove extra images.';
+            } else if (text) {
+              errMessage = text;
+            }
+          } catch {
+            // fallback
+          }
+        }
+        throw new Error(errMessage);
       }
 
       const createdObj = await res.json();
@@ -2907,18 +2923,26 @@ function DashboardContent() {
                     type="file"
                     accept="image/*"
                     id="wizard-cover-upload"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        const base64 = reader.result as string;
-                        if (base64) {
-                          setNewBizImage(base64); // Set image immediately
-                          openCropperFor(base64, 'newBiz'); // Open cropper optionally
+                      try {
+                        const compressed = await compressImage(file, 1200, 1200, 0.8);
+                        if (compressed) {
+                          setNewBizImage(compressed);
+                          openCropperFor(compressed, 'newBiz');
                         }
-                      };
-                      reader.readAsDataURL(file);
+                      } catch {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64 = reader.result as string;
+                          if (base64) {
+                            setNewBizImage(base64);
+                            openCropperFor(base64, 'newBiz');
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }
                       e.target.value = '';
                     }}
                     className="hidden"
@@ -2976,23 +3000,28 @@ function DashboardContent() {
                     multiple
                     accept="image/*"
                     id="wizard-gallery-upload"
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const files = Array.from(e.target.files || []);
                       if (files.length === 0) return;
-                      files.forEach((file) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          const base64 = reader.result as string;
-                          if (base64) {
-                            setNewBizGalleryPhotos(prev => {
-                              if (prev.includes(base64)) return prev;
-                              return [...prev, base64];
-                            });
-                          }
-                        };
-                        reader.readAsDataURL(file);
-                      });
-                      showToast(`Added ${files.length} gallery photos! 📸`, "success");
+                      const compressedList: string[] = [];
+                      for (const file of files) {
+                        try {
+                          const c = await compressImage(file, 1000, 1000, 0.75);
+                          if (c) compressedList.push(c);
+                        } catch {
+                          // fallback
+                        }
+                      }
+                      if (compressedList.length > 0) {
+                        setNewBizGalleryPhotos(prev => {
+                          const combined = [...prev];
+                          compressedList.forEach(img => {
+                            if (!combined.includes(img)) combined.push(img);
+                          });
+                          return combined;
+                        });
+                        showToast(`Added ${compressedList.length} gallery photos! 📸`, "success");
+                      }
                       e.target.value = '';
                     }}
                     className="hidden"
@@ -8252,18 +8281,26 @@ function DashboardContent() {
                         <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">✓ Cover Set</span>
                       )}
                     </div>
-                    <input type="file" accept="image/*" id="modal-cover-upload" onChange={(e) => {
+                    <input type="file" accept="image/*" id="modal-cover-upload" onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        const base64 = reader.result as string;
-                        if (base64) {
-                          setNewBizImage(base64); // Set image immediately
-                          openCropperFor(base64, 'newBiz'); // Cropper optional
+                      try {
+                        const compressed = await compressImage(file, 1200, 1200, 0.8);
+                        if (compressed) {
+                          setNewBizImage(compressed);
+                          openCropperFor(compressed, 'newBiz');
                         }
-                      };
-                      reader.readAsDataURL(file);
+                      } catch {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64 = reader.result as string;
+                          if (base64) {
+                            setNewBizImage(base64);
+                            openCropperFor(base64, 'newBiz');
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                      }
                       e.target.value = '';
                     }} className="hidden" />
                     {newBizImage ? (
@@ -8304,23 +8341,28 @@ function DashboardContent() {
                       multiple
                       accept="image/*"
                       id="modal-gallery-upload"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const files = Array.from(e.target.files || []);
                         if (files.length === 0) return;
-                        files.forEach((file) => {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            const base64 = reader.result as string;
-                            if (base64) {
-                              setNewBizGalleryPhotos(prev => {
-                                if (prev.includes(base64)) return prev;
-                                return [...prev, base64];
-                              });
-                            }
-                          };
-                          reader.readAsDataURL(file);
-                        });
-                        showToast(`Added ${files.length} gallery photos! 📸`, 'success');
+                        const compressedList: string[] = [];
+                        for (const file of files) {
+                          try {
+                            const c = await compressImage(file, 1000, 1000, 0.75);
+                            if (c) compressedList.push(c);
+                          } catch {
+                            // fallback
+                          }
+                        }
+                        if (compressedList.length > 0) {
+                          setNewBizGalleryPhotos(prev => {
+                            const combined = [...prev];
+                            compressedList.forEach(img => {
+                              if (!combined.includes(img)) combined.push(img);
+                            });
+                            return combined;
+                          });
+                          showToast(`Added ${compressedList.length} gallery photos! 📸`, 'success');
+                        }
                         e.target.value = '';
                       }}
                       className="hidden"
