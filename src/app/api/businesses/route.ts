@@ -372,7 +372,12 @@ export async function POST(request: NextRequest) {
     const result = {
       ...business,
       image: parts[0] || '',
-      gallery: parts.slice(1)
+      gallery: parts.slice(1),
+      leads: [],
+      reviews: [],
+      products: [],
+      services: [],
+      faqs: []
     };
 
     return NextResponse.json(result, { status: 201 });

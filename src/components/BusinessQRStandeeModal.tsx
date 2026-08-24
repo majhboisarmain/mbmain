@@ -113,66 +113,24 @@ const THEME_CONFIGS: Record<StandeeTheme, {
 };
 
 export default function BusinessQRStandeeModal({ isOpen, onClose, business }: Props) {
-  const [selectedTheme, setSelectedTheme] = useState<StandeeTheme>('emerald');
-  const [customHeadline, setCustomHeadline] = useState('');
-  const [customOffer, setCustomOffer] = useState('');
-  const [tableNumber, setTableNumber] = useState<string>(business.tableNumber || '');
+  const [selectedTheme, setSelectedTheme] = useState<StandeeTheme>('gold');
+  const [customHeadline, setCustomHeadline] = useState('⭐ REVIEW & RATE US ON MAJH BOISAR');
+  const [customOffer, setCustomOffer] = useState('Loved our service? Scan to leave a 5-Star review & feedback!');
   const [copied, setCopied] = useState(false);
   const standeeRef = useRef<HTMLDivElement>(null);
 
-  // Determine category presets
-  const cat = (business.category || '').toLowerCase();
-  const isFood = cat.includes('restaurant') || cat.includes('cafe') || cat.includes('food') || cat.includes('hotel / food');
-  const isHotel = cat.includes('hotel') || cat.includes('lodge') || cat.includes('stay') || cat.includes('room');
-  const isResort = cat.includes('resort') || cat.includes('villa') || cat.includes('pool');
-  const isMedical = cat.includes('doctor') || cat.includes('clinic') || cat.includes('hospital') || cat.includes('pharmacy') || cat.includes('lab');
-  const isTravel = cat.includes('travel') || cat.includes('cab') || cat.includes('auto') || cat.includes('car') || cat.includes('tempo');
-
-  // Automatic smart presets
   useEffect(() => {
-    if (isFood) {
-      setSelectedTheme('gold');
-      if (tableNumber) {
-        setCustomHeadline(`SCAN TO DINE-IN AT TABLE ${tableNumber.replace(/\D/g, '') || tableNumber}`);
-        setCustomOffer('🍽️ Add dishes & send order direct to kitchen on WhatsApp!');
-      } else {
-        setCustomHeadline('SCAN TO VIEW DIGITAL MENU & OFFERS');
-        setCustomOffer('🍽️ Fresh food, fast dining & takeaway on order!');
-      }
-    } else if (isHotel) {
-      setSelectedTheme('purple');
-      setCustomHeadline('SCAN FOR HOURLY ROOM TARIFFS & CHECK-IN');
-      setCustomOffer('🏨 3h / 6h / 12h & Night Stays • Local ID Accepted');
-    } else if (isResort) {
-      setSelectedTheme('teal');
-      setCustomHeadline('SCAN FOR SWIMMING POOL VILLA PACKAGES');
-      setCustomOffer('🏊 Day-Picnic & Weekend Family Bookings');
-    } else if (isMedical) {
-      setSelectedTheme('emerald');
-      setCustomHeadline('SCAN FOR OPD TIMINGS & APPOINTMENT');
-      setCustomOffer('🩺 1-Tap Doctor Contact & Clinic Schedule');
-    } else if (isTravel) {
-      setSelectedTheme('slate');
-      setCustomHeadline('SCAN TO SAVE DRIVER NUMBER & BOOK CABS');
-      setCustomOffer('🚕 Mumbai Airport Drop & 24x7 Local Travel');
-    } else {
-      setSelectedTheme('emerald');
-      setCustomHeadline('SCAN TO RATE & REVIEW ON MAJH BOISAR');
-      setCustomOffer('⭐ Share your review, rating & feedback on Majh Boisar!');
-    }
-  }, [business.category, isFood, isHotel, isResort, isMedical, isTravel, tableNumber]);
+    setCustomHeadline('⭐ REVIEW & RATE US ON MAJH BOISAR');
+    setCustomOffer('Loved our service? Scan to leave a 5-Star review & feedback!');
+  }, [business]);
 
   if (!isOpen) return null;
 
   const baseTargetUrl = business.customUrl || (typeof window !== 'undefined' 
-    ? `${window.location.origin}/business/${business.id}`
-    : `https://majhboisar.in/business/${business.id}`);
+    ? `${window.location.origin}/business/${business.id}?review=true#reviews`
+    : `https://majhboisar.in/business/${business.id}?review=true#reviews`);
 
-  const targetUrl = tableNumber.trim()
-    ? `${baseTargetUrl}${baseTargetUrl.includes('?') ? '&' : '?'}table=${encodeURIComponent(tableNumber.trim())}`
-    : baseTargetUrl;
-
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(targetUrl)}&margin=10&format=png&color=0b192c`;
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(baseTargetUrl)}&margin=10&format=png&color=0f172a`;
 
   const theme = THEME_CONFIGS[selectedTheme];
 
@@ -181,13 +139,13 @@ export default function BusinessQRStandeeModal({ isOpen, onClose, business }: Pr
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(targetUrl);
+    navigator.clipboard.writeText(baseTargetUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleShareWhatsApp = () => {
-    const text = `Check out *${business.name}* on Majh Boisar (माझं बोईसर) - Boisar's Verified City Directory!\n\nView Profile & Catalog: ${targetUrl}`;
+    const text = `Please leave a 5-Star review for *${business.name}* on Majh Boisar (माझं बोईसर):\n\n${baseTargetUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -198,15 +156,15 @@ export default function BusinessQRStandeeModal({ isOpen, onClose, business }: Pr
       <div className="bg-white rounded-3xl max-w-4xl w-full border border-slate-200 shadow-2xl overflow-hidden my-auto flex flex-col md:flex-row max-h-[92vh]">
         
         {/* Left Side: Interactive Standee Live Preview */}
-        <div className="flex-1 bg-slate-100/80 p-4 sm:p-6 flex flex-col items-center justify-center overflow-y-auto border-b md:border-b-0 md:border-r border-slate-200">
+        <div className="flex-1 bg-slate-100/90 p-4 sm:p-6 flex flex-col items-center justify-center overflow-y-auto border-b md:border-b-0 md:border-r border-slate-200">
           
           <div className="w-full flex items-center justify-between mb-3 text-xs font-black text-slate-500 uppercase tracking-wider">
             <span className="flex items-center gap-1.5">
               <Eye className="w-3.5 h-3.5 text-teal-700" />
-              <span>Official Table-Top Standee Preview</span>
+              <span>Counter Review Standee Preview</span>
             </span>
-            <span className="text-[10.5px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded-md font-bold">
-              Ready to Print (A4 / Standee)
+            <span className="text-[10.5px] bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-black">
+              🖨️ Ready to Print &amp; Laminate
             </span>
           </div>
 
@@ -214,85 +172,79 @@ export default function BusinessQRStandeeModal({ isOpen, onClose, business }: Pr
           <div 
             id="printable-standee"
             ref={standeeRef}
-            className="w-full max-w-[360px] bg-white rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-900 relative transition-all duration-300 flex flex-col text-slate-900"
-            style={{ minHeight: '520px' }}
+            className="w-full max-w-[340px] bg-white rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-900 relative transition-all duration-300 flex flex-col text-slate-900 text-center"
+            style={{ minHeight: '500px' }}
           >
             
             {/* Top Brand Banner */}
             <div className={`bg-gradient-to-r ${theme.headerGrad} text-white p-4 text-center relative overflow-hidden`}>
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-20 h-20 bg-black/15 rounded-full blur-lg pointer-events-none" />
               
-              <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border border-white/30 text-white shadow-2xs mb-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
-                <span>MAJH BOISAR VERIFIED PARTNER</span>
+              <div className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-white/30 text-white shadow-2xs mb-1.5">
+                <ShieldCheck className="w-3 h-3 text-amber-300" />
+                <span>OFFICIAL VERIFIED MERCHANT</span>
               </div>
 
-              {/* Table Number Badge for Dine-In Table Standees */}
-              {tableNumber.trim() && (
-                <div className="my-1">
-                  <span className="inline-flex items-center gap-1 bg-amber-400 text-slate-950 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider shadow-md">
-                    <span>🪑</span>
-                    <span>TABLE NO. {tableNumber.replace(/\D/g, '') || tableNumber}</span>
-                  </span>
-                </div>
-              )}
+              {/* 5 Golden Stars Header */}
+              <div className="flex items-center justify-center gap-1 text-amber-300 text-lg mb-1 drop-shadow-xs">
+                <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+              </div>
 
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-tight uppercase line-clamp-2 drop-shadow-xs">
                 {business.name}
               </h2>
 
-              <p className="text-[11px] text-white/90 font-bold flex items-center justify-center gap-1 mt-1">
+              <p className="text-[10.5px] text-white/90 font-bold flex items-center justify-center gap-1 mt-1">
                 <MapPin className="w-3 h-3 shrink-0 text-amber-300" />
-                <span className="truncate">{business.location || 'Boisar West & Tarapur MIDC'}</span>
+                <span className="truncate">{business.location || 'Boisar, Palghar'}</span>
                 <span>•</span>
-                <span className="flex items-center text-amber-300 font-black">
-                  ★ {business.rating || '4.9'}
+                <span className="text-amber-300 font-black">
+                  {business.category || 'Business'}
                 </span>
               </p>
             </div>
 
             {/* Standee Body */}
-            <div className="p-4 sm:p-5 flex-1 flex flex-col items-center justify-between text-center space-y-3.5 bg-white">
+            <div className="p-4 sm:p-5 flex-1 flex flex-col items-center justify-between text-center space-y-3 bg-white">
               
               {/* Dynamic Action Headline */}
               <div className="space-y-1">
                 <span className={`inline-block px-3 py-1 rounded-xl text-[10.5px] sm:text-xs font-black uppercase tracking-wider ${theme.tagBg} border shadow-2xs`}>
-                  {customHeadline || 'SCAN TO CONNECT & VIEW CATALOG'}
+                  {customHeadline || '⭐ REVIEW & RATE US ON MAJH BOISAR'}
                 </span>
-                <p className="text-[11px] font-extrabold text-slate-700">
-                  {customOffer || 'Scan with any Phone Camera, Google Lens or WhatsApp'}
+                <p className="text-[11px] font-extrabold text-slate-700 leading-tight">
+                  {customOffer || 'Loved our service? Scan to leave a 5-Star review & feedback!'}
                 </p>
               </div>
 
-              {/* High-Resolution QR Code with Center Badge */}
+              {/* High-Resolution QR Code with Center Star Badge */}
               <div className={`relative p-3 bg-white rounded-3xl border-2 ${theme.qrBorder} shadow-lg flex items-center justify-center group`}>
                 <img 
                   src={qrImageUrl} 
-                  alt="Business QR Code" 
-                  className="w-48 h-48 sm:w-52 sm:h-52 object-contain rounded-xl"
+                  alt="Business Review QR Code" 
+                  className="w-44 h-44 sm:w-48 sm:h-48 object-contain rounded-xl"
                 />
                 
-                {/* Center Majh Boisar Seal */}
-                <div className="absolute inset-0 m-auto w-12 h-12 rounded-2xl bg-slate-950 border-2 border-white shadow-xl flex items-center justify-center flex-col text-white">
-                  <span className="text-[10px] font-black leading-none text-amber-400">MB</span>
-                  <span className="text-[6.5px] font-black uppercase tracking-tighter text-white">BOISAR</span>
+                {/* Center Star Badge */}
+                <div className="absolute inset-0 m-auto w-11 h-11 rounded-2xl bg-amber-500 border-2 border-white shadow-xl flex items-center justify-center flex-col text-slate-950">
+                  <span className="text-xs font-black leading-none">5★</span>
+                  <span className="text-[6px] font-black uppercase tracking-tighter">REVIEW</span>
                 </div>
               </div>
 
-              {/* 3 Value Highlights for Customer */}
-              <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-2.5 space-y-1 text-left text-[10.5px]">
+              {/* 3 Step Simple Instructions */}
+              <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-2.5 space-y-1 text-left text-[10px]">
                 <div className="flex items-center gap-1.5 font-extrabold text-slate-800">
-                  <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[9px] shrink-0 font-black">✓</span>
-                  <span className="truncate">View Verified Catalog, Tariffs &amp; Menu</span>
+                  <span className="w-4 h-4 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center text-[9px] shrink-0 font-black">1</span>
+                  <span>Open Phone Camera, Google Lens or Pay App</span>
                 </div>
                 <div className="flex items-center gap-1.5 font-extrabold text-slate-800">
-                  <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[9px] shrink-0 font-black">✓</span>
-                  <span className="truncate">1-Tap Direct WhatsApp Chat &amp; Call</span>
+                  <span className="w-4 h-4 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center text-[9px] shrink-0 font-black">2</span>
+                  <span>Scan this QR Code</span>
                 </div>
                 <div className="flex items-center gap-1.5 font-extrabold text-slate-800">
-                  <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[9px] shrink-0 font-black">✓</span>
-                  <span className="truncate">Rate &amp; Review Shop on Majh Boisar</span>
+                  <span className="w-4 h-4 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center text-[9px] shrink-0 font-black">3</span>
+                  <span>Give 5-Star Rating &amp; share your review! ⭐</span>
                 </div>
               </div>
 
@@ -300,9 +252,9 @@ export default function BusinessQRStandeeModal({ isOpen, onClose, business }: Pr
               <div className="w-full pt-1 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-black">
                 <span className="flex items-center gap-1 text-slate-800">
                   <Phone className="w-3 h-3 text-teal-700" />
-                  <span>{business.phone || business.whatsapp || '9307294733'}</span>
+                  <span>{business.phone || business.whatsapp || ''}</span>
                 </span>
-                <span className="text-teal-900 uppercase tracking-wider">
+                <span className="text-teal-900 uppercase tracking-wider font-extrabold">
                   majhboisar.in
                 </span>
               </div>
@@ -315,7 +267,7 @@ export default function BusinessQRStandeeModal({ isOpen, onClose, business }: Pr
           </div>
 
           {/* Standee Acrylic Stand Visual Base */}
-          <div className="w-64 h-3 bg-slate-300/80 rounded-b-xl shadow-md border-t border-slate-400/40 mt-0.5" />
+          <div className="w-56 h-3 bg-slate-300/80 rounded-b-xl shadow-md border-t border-slate-400/40 mt-0.5" />
 
         </div>
 
@@ -342,54 +294,52 @@ export default function BusinessQRStandeeModal({ isOpen, onClose, business }: Pr
               </button>
             </div>
 
-            {/* Table Number Selector (For Restaurants, Cafes & Dine-In) */}
+            {/* Quick Review Standee Presets */}
             <div className="bg-amber-50/90 border border-amber-200 rounded-2xl p-3 space-y-2 text-left">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-black text-amber-950 flex items-center gap-1.5">
-                  <span>🪑</span>
-                  <span>Table Number (Dine-In QR)</span>
+                  <span>⭐</span>
+                  <span>Review Standee Presets</span>
                 </label>
-                {tableNumber && (
-                  <span className="text-[9.5px] font-black bg-amber-200 text-amber-950 px-2 py-0.5 rounded-full">
-                    Table {tableNumber.replace(/\D/g, '') || tableNumber}
-                  </span>
-                )}
+                <span className="text-[9.5px] font-black bg-amber-200 text-amber-950 px-2 py-0.5 rounded-full">
+                  Instant Template
+                </span>
               </div>
               
-              <div className="flex flex-wrap gap-1.5">
-                {['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'].map((num) => (
+              <div className="flex flex-col gap-1.5">
+                {[
+                  {
+                    title: '⭐ 5-Star Review Standee',
+                    head: '⭐ REVIEW & RATE US ON MAJH BOISAR',
+                    offer: 'Loved our service? Scan to leave a 5-Star review & feedback!'
+                  },
+                  {
+                    title: '🌟 Google & Boisar Reviews',
+                    head: '🌟 SCAN TO LEAVE A 5-STAR REVIEW',
+                    offer: 'Help our local Boisar business grow with your review!'
+                  },
+                  {
+                    title: '💬 Customer Feedback & Rating',
+                    head: '💬 SHARE YOUR EXPERIENCE WITH US',
+                    offer: 'Your review takes only 10 seconds. Thank you for visiting!'
+                  }
+                ].map((item, idx) => (
                   <button
-                    key={num}
+                    key={idx}
                     type="button"
-                    onClick={() => setTableNumber(num)}
-                    className={`text-[10.5px] font-black px-2.5 py-1 rounded-xl border transition-all cursor-pointer ${
-                      tableNumber === num
-                        ? 'bg-slate-950 text-amber-300 border-slate-950 shadow-xs scale-102'
-                        : 'bg-white text-slate-700 border-amber-200/80 hover:bg-amber-100'
+                    onClick={() => {
+                      setCustomHeadline(item.head);
+                      setCustomOffer(item.offer);
+                    }}
+                    className={`text-[10.5px] text-left font-black p-2 rounded-xl border transition-all cursor-pointer ${
+                      customHeadline === item.head
+                        ? 'bg-slate-950 text-amber-300 border-slate-950 shadow-xs'
+                        : 'bg-white text-slate-700 border-amber-200 hover:bg-amber-100/60'
                     }`}
                   >
-                    {num ? `Table ${num}` : 'Counter / All'}
+                    {item.title}
                   </button>
                 ))}
-              </div>
-
-              <div className="pt-1 flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Custom Table / Cabin (e.g. Garden 3)"
-                  value={tableNumber}
-                  onChange={(e) => setTableNumber(e.target.value)}
-                  className="flex-1 bg-white border border-amber-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-amber-500"
-                />
-                {tableNumber && (
-                  <button
-                    type="button"
-                    onClick={() => setTableNumber('')}
-                    className="text-[10px] font-black text-slate-500 hover:text-slate-800 px-2 py-1 bg-white border border-slate-200 rounded-lg"
-                  >
-                    Clear
-                  </button>
-                )}
               </div>
             </div>
 
@@ -460,7 +410,7 @@ export default function BusinessQRStandeeModal({ isOpen, onClose, business }: Pr
                 <input
                   type="text"
                   readOnly
-                  value={targetUrl}
+                  value={baseTargetUrl}
                   className="flex-1 bg-transparent text-[11px] font-bold text-slate-700 outline-none truncate"
                 />
                 <button

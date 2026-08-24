@@ -39,6 +39,7 @@ interface Product {
   name: string;
   price: number;
   description: string | null;
+  image?: string | null;
 }
 
 interface Service {
@@ -467,6 +468,7 @@ function DashboardContent() {
   const [prodName, setProdName] = useState('');
   const [prodPrice, setProdPrice] = useState('');
   const [prodDesc, setProdDesc] = useState('');
+  const [prodImage, setProdImage] = useState('');
   const [addingProduct, setAddingProduct] = useState(false);
 
   const [srvName, setSrvName] = useState('');
@@ -635,6 +637,20 @@ function DashboardContent() {
   const [manualHotelRoomCategory, setManualHotelRoomCategory] = useState('Deluxe AC Room');
   const [manualHotelRoomNo, setManualHotelRoomNo] = useState('101');
   const [manualHotelAmount, setManualHotelAmount] = useState('699');
+
+  // ── SUBSCRIPTION BILLING & ORDER HISTORY STATE ──
+  const [billingHistory, setBillingHistory] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const phone = localStorage.getItem('majh_boisar_user') ? JSON.parse(localStorage.getItem('majh_boisar_user') || '{}')?.phone : '';
+        const key = phone ? `majh_boisar_billing_history_${phone.replace(/\D/g, '')}` : 'majh_boisar_billing_history';
+        const saved = localStorage.getItem(key);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return [];
+  });
+  const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
 
   // Reload bookings from localStorage
   useEffect(() => {
@@ -2216,13 +2232,15 @@ function DashboardContent() {
           businessId: selectedId,
           name: prodName,
           price: parseFloat(prodPrice),
-          description: prodDesc || undefined
+          description: prodDesc || undefined,
+          image: prodImage || undefined
         })
       });
       if (res.ok) {
         setProdName('');
         setProdPrice('');
         setProdDesc('');
+        setProdImage('');
         fetchBusinessData();
       }
     } catch (err) {
@@ -2289,35 +2307,63 @@ function DashboardContent() {
     }
   };
 
-  const handleUpgradeSubscription = async (tier: 'Free' | 'Basic' | 'Pro') => {
+  const handleUpgradeSubscription = async (tier: 'Free' | 'Basic' | 'Starter' | 'Pro' | 'Enterprise') => {
     try {
-      const isPro = tier === 'Pro';
-      const isBasic = tier === 'Basic';
-      const isPremium = isBasic || isPro;
+      const isPaid = tier !== 'Free';
 
       const res = await fetch(`/api/businesses/${selectedId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subscription: tier,
-          premium: isPremium,
+          premium: isPaid,
           verified: true
         })
       });
       if (res.ok) {
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 30);
+        const formattedExpiry = expiryDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
         if (tier !== 'Free') {
           // Set expiry 30 days from now
-          const expiryDate = new Date();
-          expiryDate.setDate(expiryDate.getDate() + 30);
           localStorage.setItem(`majh_boisar_expiry_${selectedId}`, expiryDate.toISOString());
-          setSubscriptionExpiresAt(expiryDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }));
+          setSubscriptionExpiresAt(formattedExpiry);
           setDaysRemaining(30);
+
+          // Record Invoice in Billing History
+          const priceMap: Record<string, string> = {
+            Starter: '₹149',
+            Pro: '₹499',
+            Basic: '₹99',
+            Enterprise: '₹999'
+          };
+          const newInvoice = {
+            id: `INV-${Date.now().toString().slice(-6)}`,
+            businessName: business?.name || 'My Business',
+            plan: `${tier} Plan`,
+            amount: couponApplied ? '₹0 (Free Trial)' : (priceMap[tier] || '₹149'),
+            date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+            expiry: formattedExpiry,
+            status: 'Active',
+            paymentMethod: couponApplied ? '1-Month Free Trial' : 'UPI / Online',
+            utr: upiRefId || `UPI${Math.floor(100000000000 + Math.random() * 900000000000)}`
+          };
+          setBillingHistory(prev => {
+            const updated = [newInvoice, ...prev];
+            if (typeof window !== 'undefined') {
+              const userPhone = loggedInUser?.phone ? loggedInUser.phone.replace(/\D/g, '') : '';
+              const key = userPhone ? `majh_boisar_billing_history_${userPhone}` : 'majh_boisar_billing_history';
+              localStorage.setItem(key, JSON.stringify(updated));
+            }
+            return updated;
+          });
         } else {
           localStorage.removeItem(`majh_boisar_expiry_${selectedId}`);
           setSubscriptionExpiresAt(null);
           setDaysRemaining(null);
         }
-        alert(`🎉 Subscription Activated! Updated your plan to: ${tier} Plan (${tier === 'Pro' ? 'Pro Trusted Badge + 10 Photos + 20 Catalog Items + Review Replies' : tier === 'Basic' ? 'Basic Plan + 5 Photos + 10 Catalog Items' : 'Free Plan'})`);
+        showToast(`🎉 Subscription Activated! Upgraded to ${tier} Plan. All premium features unlocked!`, 'success', 5000);
         fetchBusinessData();
       }
     } catch (e) {
@@ -2489,8 +2535,16 @@ function DashboardContent() {
       }
 
       // Mark user as having a registered business & select it immediately
+      const safeCreatedObj = {
+        ...createdObj,
+        leads: Array.isArray(createdObj.leads) ? createdObj.leads : [],
+        reviews: Array.isArray(createdObj.reviews) ? createdObj.reviews : [],
+        products: Array.isArray(createdObj.products) ? createdObj.products : [],
+        services: Array.isArray(createdObj.services) ? createdObj.services : [],
+        faqs: Array.isArray(createdObj.faqs) ? createdObj.faqs : []
+      };
       setSelectedId(createdObj.id);
-      setBusiness(createdObj);
+      setBusiness(safeCreatedObj);
       setHasRegisteredBusiness(true);
       setRole('BusinessOwner');
       fetchBusinessesList();
@@ -3231,6 +3285,59 @@ function DashboardContent() {
                           className="bg-white border border-amber-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500"
                         />
                       </div>
+
+                      {/* Product Image Uploader */}
+                      <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-amber-200">
+                        <div className="w-12 h-12 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center overflow-hidden shrink-0">
+                          {newBizProdInput.image ? (
+                            <img src={newBizProdInput.image} alt="Product" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-xl">📸</span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            id="wizard-prod-img-upload"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              try {
+                                const compressed = await compressImage(file, 800, 800, 0.75);
+                                if (compressed) setNewBizProdInput(p => ({ ...p, image: compressed }));
+                              } catch {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  if (reader.result) setNewBizProdInput(p => ({ ...p, image: reader.result as string }));
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                              e.target.value = '';
+                            }}
+                            className="hidden"
+                          />
+                          <div className="flex items-center gap-2">
+                            <label
+                              htmlFor="wizard-prod-img-upload"
+                              className="text-[11px] font-black text-amber-800 bg-amber-100/70 hover:bg-amber-200 px-3 py-1 rounded-lg cursor-pointer transition-colors inline-block"
+                            >
+                              {newBizProdInput.image ? '✓ Change Photo' : '📁 Upload Product Photo'}
+                            </label>
+                            {newBizProdInput.image && (
+                              <button
+                                type="button"
+                                onClick={() => setNewBizProdInput(p => ({ ...p, image: '' }))}
+                                className="text-[10px] font-bold text-rose-600 hover:underline cursor-pointer"
+                              >
+                                Remove Photo
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-[9px] text-slate-400 mt-0.5">Attach a photo of this product for your shop catalog.</p>
+                        </div>
+                      </div>
+
                       <button
                         type="button"
                         onClick={() => {
@@ -3247,10 +3354,15 @@ function DashboardContent() {
                         <div className="space-y-1.5 mt-2">
                           {newBizProducts.map((p, idx) => (
                             <div key={idx} className="flex items-center justify-between bg-white border border-amber-100 rounded-xl px-3 py-2 text-xs">
-                              <div>
-                                <span className="font-extrabold text-slate-800">{p.name}</span>
-                                {p.price && <span className="ml-2 text-amber-700 font-bold">{p.price.startsWith('₹') ? p.price : `₹${p.price}`}</span>}
-                                {p.desc && <span className="ml-2 text-slate-400">{p.desc}</span>}
+                              <div className="flex items-center gap-2.5">
+                                {p.image && (
+                                  <img src={p.image} alt={p.name} className="w-8 h-8 rounded-lg object-cover border border-amber-200" />
+                                )}
+                                <div>
+                                  <span className="font-extrabold text-slate-800">{p.name}</span>
+                                  {p.price && <span className="ml-2 text-amber-700 font-bold">{p.price.startsWith('₹') ? p.price : `₹${p.price}`}</span>}
+                                  {p.desc && <span className="ml-2 text-slate-400">{p.desc}</span>}
+                                </div>
                               </div>
                               <button type="button" onClick={() => setNewBizProducts(prev => prev.filter((_, i) => i !== idx))} className="text-rose-500 hover:text-rose-700 font-black text-sm cursor-pointer">×</button>
                             </div>
@@ -5747,10 +5859,10 @@ function DashboardContent() {
                     {/* Stats Counters Grid (Mobile-friendly 2x2 grid) */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
                       {[
-                        { label: 'Profile Views', val: business.views, icon: <Eye className="w-4 h-4 text-teal-600" /> },
-                        { label: 'Phone Clicks', val: business.phoneClicks, icon: <Phone className="w-4 h-4 text-emerald-600" /> },
-                        { label: 'WhatsApp Clicks', val: business.whatsappClicks, icon: <MessageSquare className="w-4 h-4 text-teal-500" /> },
-                        { label: 'Verified Leads', val: business.leads.length, icon: <ClipboardCheck className="w-4 h-4 text-rose-500" /> }
+                        { label: 'Profile Views', val: business.views || 0, icon: <Eye className="w-4 h-4 text-teal-600" /> },
+                        { label: 'Phone Clicks', val: business.phoneClicks || 0, icon: <Phone className="w-4 h-4 text-emerald-600" /> },
+                        { label: 'WhatsApp Clicks', val: business.whatsappClicks || 0, icon: <MessageSquare className="w-4 h-4 text-teal-500" /> },
+                        { label: 'Verified Leads', val: (business.leads || []).length, icon: <ClipboardCheck className="w-4 h-4 text-rose-500" /> }
                       ].map((stat, i) => (
                         <div key={i} className="border border-slate-200 rounded-xl p-3 bg-white shadow-xs flex items-center justify-between">
                           <div>
@@ -6320,7 +6432,7 @@ function DashboardContent() {
                           </div>
                         )}
 
-                        {business.leads.length === 0 && hotelBookingsList.length === 0 ? (
+                        {(business.leads || []).length === 0 && hotelBookingsList.length === 0 ? (
                           <div className="text-center py-10 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
                             <ClipboardCheck className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                             <p className="text-xs text-slate-600 font-bold">No verified enquiries received yet.</p>
@@ -6367,7 +6479,7 @@ function DashboardContent() {
                                 </div>
                               </div>
                             ))}
-                            {business.leads.map((lead) => (
+                            {(business.leads || []).map((lead) => (
                               <div key={lead.id} className="py-4.5 first:pt-0 last:pb-0 flex flex-col md:flex-row md:items-start justify-between gap-4 text-xs">
                                 <div className="space-y-2">
                                   <div className="flex items-center gap-2 flex-wrap">
@@ -6472,15 +6584,15 @@ function DashboardContent() {
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
                           <span>Product Inventory Catalog</span>
-                          <span className="text-[10px] bg-slate-50 px-2 py-0.5 border border-slate-200 rounded text-teal-655 font-bold">{business.products.length} listed</span>
+                          <span className="text-[10px] bg-slate-50 px-2 py-0.5 border border-slate-200 rounded text-teal-655 font-bold">{(business.products || []).length} listed</span>
                         </h3>
                         <span className="text-[9px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full">
-                          Plan limit: {business.products.length}/{catalogLimit} products
+                          Plan limit: {(business.products || []).length}/{catalogLimit} products
                         </span>
                       </div>
 
                       {/* Add Product Form — gated by catalog limit */}
-                      {business.products.length >= catalogLimit ? (
+                      {(business.products || []).length >= catalogLimit ? (
                         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
                           <span className="text-lg shrink-0">🔒</span>
                           <div>
@@ -6531,6 +6643,58 @@ function DashboardContent() {
                               className="w-full bg-white border border-slate-250 rounded-lg px-2.5 py-2 text-xs focus:outline-none"
                             />
                           </div>
+
+                          {/* Product Image Attachment */}
+                          <div className="bg-white p-2.5 rounded-lg border border-slate-200 flex items-center gap-3">
+                            <div className="w-10 h-10 rounded bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                              {prodImage ? (
+                                <img src={prodImage} alt="Product" className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-lg">📸</span>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <input
+                                type="file"
+                                accept="image/*"
+                                id="catalog-prod-img-upload"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  try {
+                                    const compressed = await compressImage(file, 800, 800, 0.75);
+                                    if (compressed) setProdImage(compressed);
+                                  } catch {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                      if (reader.result) setProdImage(reader.result as string);
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                  e.target.value = '';
+                                }}
+                                className="hidden"
+                              />
+                              <div className="flex items-center gap-2">
+                                <label
+                                  htmlFor="catalog-prod-img-upload"
+                                  className="text-[10px] font-black text-teal-800 bg-teal-50 hover:bg-teal-100 px-2.5 py-1 rounded cursor-pointer border border-teal-200 transition-colors inline-block"
+                                >
+                                  {prodImage ? '✓ Change Photo' : '📁 Upload Product Photo'}
+                                </label>
+                                {prodImage && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setProdImage('')}
+                                    className="text-[9px] font-bold text-rose-600 hover:underline cursor-pointer"
+                                  >
+                                    Remove
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
                           <button
                             type="submit"
                             disabled={addingProduct}
@@ -6544,14 +6708,19 @@ function DashboardContent() {
 
                       {/* Products list */}
                       <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1">
-                        {business.products.length === 0 ? (
+                        {(business.products || []).length === 0 ? (
                           <p className="text-xs text-slate-455 py-4 text-center">No products listed.</p>
                         ) : (
-                          business.products.map((prod) => (
+                          (business.products || []).map((prod) => (
                             <div key={prod.id} className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl flex items-center justify-between gap-4 text-xs shadow-sm">
-                              <div>
-                                <h4 className="font-bold text-slate-800">{prod.name}</h4>
-                                {prod.description && <p className="text-[10px] text-slate-500 leading-relaxed truncate max-w-sm mt-0.5">{prod.description}</p>}
+                              <div className="flex items-center gap-3">
+                                {prod.image && (
+                                  <img src={prod.image} alt={prod.name} className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0" />
+                                )}
+                                <div>
+                                  <h4 className="font-bold text-slate-800">{prod.name}</h4>
+                                  {prod.description && <p className="text-[10px] text-slate-500 leading-relaxed truncate max-w-sm mt-0.5">{prod.description}</p>}
+                                </div>
                               </div>
                               <div className="flex items-center gap-3 shrink-0">
                                 <span className="font-extrabold text-teal-605">₹{prod.price}</span>
@@ -6573,15 +6742,15 @@ function DashboardContent() {
                       <div className="flex items-center justify-between flex-wrap gap-2">
                         <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
                           <span>Services Catalog</span>
-                          <span className="text-[10px] bg-slate-50 px-2 py-0.5 border border-slate-200 rounded text-teal-650 font-bold">{business.services.length} active</span>
+                          <span className="text-[10px] bg-slate-50 px-2 py-0.5 border border-slate-200 rounded text-teal-650 font-bold">{(business.services || []).length} active</span>
                         </h3>
                         <span className="text-[9px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full">
-                          Plan limit: {business.services.length}/{catalogLimit} services
+                          Plan limit: {(business.services || []).length}/{catalogLimit} services
                         </span>
                       </div>
 
                       {/* Add Service Form — gated by catalog limit */}
-                      {business.services.length >= catalogLimit ? (
+                      {(business.services || []).length >= catalogLimit ? (
                         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
                           <span className="text-lg shrink-0">🔒</span>
                           <div>
@@ -6644,10 +6813,10 @@ function DashboardContent() {
 
                       {/* Services List */}
                       <div className="space-y-2.5 max-h-96 overflow-y-auto pr-1">
-                        {business.services.length === 0 ? (
+                        {(business.services || []).length === 0 ? (
                           <p className="text-xs text-slate-455 py-4 text-center">No services listed.</p>
                         ) : (
-                          business.services.map((srv) => (
+                          (business.services || []).map((srv) => (
                             <div key={srv.id} className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between gap-4 text-xs shadow-sm">
                               <div>
                                 <h4 className="font-bold text-slate-800">{srv.name}</h4>
@@ -7638,6 +7807,69 @@ function DashboardContent() {
                       );
                     })()}
 
+                    {/* 📜 Previous Orders & Billing Invoices History */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4 mt-6">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div>
+                          <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                            <span>📜 Order & Subscription Invoices</span>
+                            <span className="text-[10px] bg-teal-50 text-teal-700 font-bold px-2 py-0.5 rounded-full border border-teal-200">
+                              {billingHistory.length} Recorded
+                            </span>
+                          </h4>
+                          <p className="text-[11px] text-slate-500 mt-0.5">Your past plan upgrades, receipts and active billing cycles.</p>
+                        </div>
+                      </div>
+
+                      {billingHistory.length === 0 ? (
+                        <div className="text-center py-8 bg-white rounded-xl border border-dashed border-slate-200">
+                          <Receipt className="w-8 h-8 text-slate-350 mx-auto mb-2" />
+                          <p className="text-xs font-bold text-slate-600">No previous purchase records found.</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">Your invoices and payment receipts will appear here automatically upon plan upgrades.</p>
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs bg-white rounded-xl border border-slate-200 overflow-hidden">
+                            <thead className="bg-slate-100/80 text-[10px] font-black uppercase text-slate-600 tracking-wider border-b border-slate-200">
+                              <tr>
+                                <th className="p-3">Invoice Ref</th>
+                                <th className="p-3">Plan / Item</th>
+                                <th className="p-3">Amount</th>
+                                <th className="p-3">Billing Date</th>
+                                <th className="p-3">Expiry</th>
+                                <th className="p-3">Status</th>
+                                <th className="p-3 text-right">Receipt</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {billingHistory.map((inv, idx) => (
+                                <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                                  <td className="p-3 font-mono font-bold text-teal-700">{inv.id}</td>
+                                  <td className="p-3 font-extrabold text-slate-800">{inv.plan}</td>
+                                  <td className="p-3 font-black text-emerald-700">{inv.amount}</td>
+                                  <td className="p-3 text-slate-500 font-medium">{inv.date}</td>
+                                  <td className="p-3 text-slate-500 font-medium">{inv.expiry || '30 Days'}</td>
+                                  <td className="p-3">
+                                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full text-[9px] font-black uppercase">
+                                      ✓ {inv.status || 'Active'}
+                                    </span>
+                                  </td>
+                                  <td className="p-3 text-right">
+                                    <button
+                                      type="button"
+                                      onClick={() => setSelectedInvoice(inv)}
+                                      className="bg-slate-900 hover:bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-lg transition-all shadow-xs cursor-pointer inline-flex items-center gap-1"
+                                    >
+                                      <span>📄 View</span>
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
 
                   </div>
                 )}
