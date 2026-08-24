@@ -589,17 +589,6 @@ export default function BusinessDetailsPage() {
                     )}
                   </button>
 
-                  {isOwnerOrAdmin && (
-                    <button
-                      onClick={() => setIsStandeeModalOpen(true)}
-                      className="px-2.5 py-1.5 border border-amber-300 bg-amber-50 hover:bg-amber-100/90 text-amber-900 rounded-xl transition-all cursor-pointer shadow-2xs active:scale-95 flex items-center gap-1.5 text-xs font-black shrink-0"
-                      title="Business Owner Only: Download Official QR Standee"
-                    >
-                      <QrCode className="w-3.5 h-3.5 text-amber-700" />
-                      <span className="text-[11px]">QR Standee</span>
-                    </button>
-                  )}
-
                   {business.instagram && (
                     <a href={business.instagram} target="_blank" className="p-1.5 border border-slate-200 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all shadow-2xs active:scale-95 flex items-center justify-center cursor-pointer group shrink-0" title="Instagram">
                       <svg className="w-3.5 h-3.5 text-slate-500 group-hover:text-[#E1306C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1311,15 +1300,6 @@ export default function BusinessDetailsPage() {
             </form>
           </div>
         </div>
-      )}
-
-      {/* Official Printable QR Standee Modal */}
-      {business && (
-        <BusinessQRStandeeModal
-          isOpen={isStandeeModalOpen}
-          onClose={() => setIsStandeeModalOpen(false)}
-          business={business}
-        />
       )}
 
     </div>
