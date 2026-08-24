@@ -7985,154 +7985,197 @@ function DashboardContent() {
             </div>
 
             {/* Plan summary card */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 mb-2.5">
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="text-[9px] font-black uppercase text-teal-700 bg-teal-50 border border-teal-150 px-2 py-0.5 rounded-full">
-                    {checkoutPlan === 'OwnerPass' ? 'Verified Owner Pass' : checkoutPlan === 'ProAgent' ? 'Pro Agent Pass' : checkoutPlan === 'BuilderPass' ? 'Builder Pass' : `${checkoutPlan} Plan`}
-                  </span>
-                  <p className="text-[11px] sm:text-xs font-black text-slate-800 mt-1">
-                    {checkoutPlan === 'OwnerPass'
-                      ? '3 Direct Owner Listings + Verified Owner Badge + Direct Leads'
-                      : checkoutPlan === 'ProAgent'
-                        ? '5 Active Listings + Verified Agent Badge + 5x WhatsApp Leads'
-                        : checkoutPlan === 'BuilderPass'
-                          ? '10 Active Listings / Projects + Rank #1 Priority'
-                          : 'Boisar Local Business Promotion'}
-                  </p>
-                </div>
-                <div className="text-right shrink-0 ml-2">
-                  <span className="text-base sm:text-lg font-black text-slate-800">
-                    {checkoutPlan === 'Basic' ? '₹99' : checkoutPlan === 'Pro' ? '₹149' : checkoutPlan === 'OwnerPass' ? '₹199' : checkoutPlan === 'ProAgent' ? '₹499' : '₹1,499'}
-                  </span>
-                  <span className="text-[9px] text-slate-405 font-semibold block">/ month</span>
-                </div>
-              </div>
-            </div>
+            {(() => {
+              const getCheckoutDetails = (plan: string) => {
+                if (plan === 'Starter') {
+                  return {
+                    name: 'Starter Plan',
+                    price: '₹149',
+                    amountNum: 149,
+                    desc: '10 Gallery Photos + 15 Catalog Items + Verified Partner Badge'
+                  };
+                }
+                if (plan === 'Pro') {
+                  return {
+                    name: 'Pro Plan',
+                    price: '₹499',
+                    amountNum: 499,
+                    desc: '#1 Top Priority Featured Ranking + Gold Badge + Unlimited Catalog'
+                  };
+                }
+                if (plan === 'Basic') {
+                  return {
+                    name: 'Basic Plan',
+                    price: '₹99',
+                    amountNum: 99,
+                    desc: '5 Gallery Photos + 10 Catalog Items'
+                  };
+                }
+                if (plan === 'OwnerPass') {
+                  return {
+                    name: 'Verified Owner Pass',
+                    price: '₹199',
+                    amountNum: 199,
+                    desc: '3 Direct Owner Listings + Verified Owner Badge + Direct Leads'
+                  };
+                }
+                if (plan === 'ProAgent') {
+                  return {
+                    name: 'Pro Agent Pass',
+                    price: '₹499',
+                    amountNum: 499,
+                    desc: '5 Active Listings + Verified Agent Badge + 5x WhatsApp Leads'
+                  };
+                }
+                if (plan === 'BuilderPass') {
+                  return {
+                    name: 'Builder / VIP Pass',
+                    price: '₹1,499',
+                    amountNum: 1499,
+                    desc: '10 Active Listings / Projects + Rank #1 Priority'
+                  };
+                }
+                return {
+                  name: `${plan} Plan`,
+                  price: '₹149',
+                  amountNum: 149,
+                  desc: 'Boisar Local Business Promotion'
+                };
+              };
 
-            {/* Promo Code section inside Checkout */}
-            <div className="bg-teal-50/40 border border-teal-100 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 mb-2.5 space-y-1.5">
-              <label className="block text-[9px] sm:text-[10px] text-teal-800 font-bold uppercase tracking-wider">🏷️ Apply Coupon Code</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={couponInput}
-                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                  placeholder="e.g. MAJHBOISAR99"
-                  className="flex-1 bg-white border border-teal-200 rounded-xl px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-teal-500 text-slate-800 font-bold"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCouponErrorMsg('');
-                    setCouponSuccessMsg('');
-                    const code = couponInput.trim().toUpperCase();
+              const planInfo = getCheckoutDetails(checkoutPlan);
 
-                    if (code === 'MAJHBOISAR99MB' || code === 'MAJHBOISAR99') {
-                      if (checkoutPlan === 'Basic') {
-                        setCouponApplied(true);
-                        setCouponSuccessMsg('🎉 Cash Coupon Applied! ₹99 Basic Plan activated.');
-                      } else {
-                        setCouponErrorMsg('This coupon code is valid for ₹99 Basic Shop Plan.');
-                      }
-                    } else if (code === 'MAJHBOISAR149MB' || code === 'MAJHBOISAR149') {
-                      if (checkoutPlan === 'Pro') {
-                        setCouponApplied(true);
-                        setCouponSuccessMsg('🎉 Cash Coupon Applied! ₹149 Pro Shop Plan activated.');
-                      } else {
-                        setCouponErrorMsg('This coupon code is valid for ₹149 Pro Shop Plan.');
-                      }
-                    } else if (code === 'MAJHBOISAR499MB' || code === 'MAJHBOISAR499') {
-                      if (checkoutPlan === 'ProAgent' || checkoutPlan === 'Pro') {
-                        setCouponApplied(true);
-                        setCouponSuccessMsg('🎉 Cash Coupon Applied! ₹499 Pro Agent Pass activated.');
-                      } else {
-                        setCouponErrorMsg('This coupon code is valid for ₹499 Pro Agent Pass.');
-                      }
-                    } else if (code === 'MAJHBOISAR1499' || code === 'MAJHBOISAR1499MB') {
-                      if (checkoutPlan === 'BuilderPass' || checkoutPlan === 'Pro') {
-                        setCouponApplied(true);
-                        setCouponSuccessMsg('🎉 Cash Coupon Applied! ₹1,499 Builder / VIP Pass activated.');
-                      } else {
-                        setCouponErrorMsg('This coupon code is valid for ₹1,499 Builder / VIP Pass.');
-                      }
-                    } else {
-                      setCouponErrorMsg('Invalid coupon code.');
-                    }
-                  }}
-                  className="bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-[11px] px-4 py-1.5 rounded-xl transition-all cursor-pointer shadow-sm border border-teal-800 shrink-0"
-                >
-                  Apply
-                </button>
-              </div>
-              {couponSuccessMsg && <p className="text-[9px] font-bold text-emerald-600">{couponSuccessMsg}</p>}
-              {couponErrorMsg && <p className="text-[9px] font-bold text-rose-600">{couponErrorMsg}</p>}
-            </div>
-
-            {/* Bill Details */}
-            <div className="space-y-1 text-[11px] text-slate-600 mb-2.5 border-b border-slate-100 pb-2 font-semibold">
-              <div className="flex justify-between font-bold">
-                <span>Plan Charge</span>
-                <span>{checkoutPlan === 'Basic' ? '₹99.00' : checkoutPlan === 'Pro' ? '₹149.00' : checkoutPlan === 'OwnerPass' ? '₹199.00' : checkoutPlan === 'ProAgent' ? '₹499.00' : '₹1,499.00'}</span>
-              </div>
-              {couponApplied && (
-                <div className="flex justify-between text-emerald-650 font-black">
-                  <span>Promo Code Discount (1st Month Free)</span>
-                  <span>-{checkoutPlan === 'Basic' ? '₹99.00' : '₹149.00'}</span>
-                </div>
-              )}
-              <hr className="border-slate-100" />
-              <div className="flex justify-between text-slate-850 text-xs sm:text-sm font-black">
-                <span>Total Amount Due</span>
-                <span>
-                  {couponApplied ? '₹0.00' : checkoutPlan === 'Basic' ? '₹99.00' : checkoutPlan === 'Pro' ? '₹149.00' : checkoutPlan === 'OwnerPass' ? '₹199.00' : checkoutPlan === 'ProAgent' ? '₹499.00' : '₹1,499.00'}
-                </span>
-              </div>
-            </div>
-
-            {/* Payment Details (Disabled if ₹0 balance due) */}
-            {couponApplied ? (
-              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-3 mb-2.5 text-xs font-bold leading-relaxed flex items-center gap-2">
-                <span className="text-base">🎁</span>
-                <div>
-                  <p className="font-extrabold uppercase text-[9px]">Free Trial Active!</p>
-                  <p className="text-[9px] text-emerald-700 font-medium">Coupon has cleared the balance. You can activate the plan immediately for free.</p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-2 mb-3">
-                <div className="flex items-center justify-between">
-                  <label className="block text-[10px] text-slate-800 font-black uppercase tracking-wider">Payment Method</label>
-                  <span className="text-[8px] font-black bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">⚡ Instant UPI / QR</span>
-                </div>
-
-                <div className="bg-amber-50/50 border border-amber-200 rounded-xl sm:rounded-2xl p-2.5 sm:p-3 space-y-2.5 animate-in fade-in duration-200">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-18 h-18 sm:w-20 sm:h-20 bg-white border border-amber-300 rounded-xl p-0.5 shadow-xs shrink-0 flex flex-col items-center justify-center">
-                      <img loading="lazy" decoding="async" src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=majhboisar@upi&pn=Majh%20Boisar&am=${checkoutPlan === 'Basic' ? 99 : checkoutPlan === 'Pro' ? 149 : checkoutPlan === 'OwnerPass' ? 199 : checkoutPlan === 'ProAgent' ? 499 : 1499}&cu=INR`)}`} alt="UPI QR Code" className="w-full h-full object-contain" />
-                    </div>
-                    <div className="text-left space-y-0.5 text-[9px] font-bold text-amber-900 flex-1 min-w-0">
-                      <p className="font-black text-amber-950 leading-tight text-[11px]">Scan &amp; Pay via GPay / PhonePe / Paytm</p>
-                      <p className="text-[9px] text-amber-800 font-medium truncate">Send to: <strong className="text-slate-900 font-mono bg-white px-1 py-0.5 rounded border border-amber-300">majhboisar@upi</strong></p>
-                      <p className="text-[8px] text-amber-700 font-medium">Enter 12-digit UTR/Ref number below after payment.</p>
+              return (
+                <>
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 mb-2.5">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <span className="text-[9px] font-black uppercase text-teal-700 bg-teal-50 border border-teal-150 px-2 py-0.5 rounded-full">
+                          {planInfo.name}
+                        </span>
+                        <p className="text-[11px] sm:text-xs font-black text-slate-800 mt-1">
+                          {planInfo.desc}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0 ml-2">
+                        <span className="text-base sm:text-lg font-black text-slate-800">
+                          {planInfo.price}
+                        </span>
+                        <span className="text-[9px] text-slate-405 font-semibold block">/ month</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-[8px] text-amber-900 font-black uppercase tracking-wider mb-0.5">UPI Ref ID / UTR Number (12 Digits) *</label>
-                    <input
-                      type="text"
-                      required
-                      maxLength={12}
-                      value={upiRefId}
-                      onChange={e => setUpiRefId(e.target.value.replace(/\D/g, ''))}
-                      placeholder="e.g. 308912345678"
-                      className="w-full bg-white border border-amber-300 rounded-lg sm:rounded-xl px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-amber-500 font-mono tracking-widest text-slate-800 font-bold"
-                    />
+                  {/* Promo Code section inside Checkout */}
+                  <div className="bg-teal-50/40 border border-teal-100 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 mb-2.5 space-y-1.5">
+                    <label className="block text-[9px] sm:text-[10px] text-teal-800 font-bold uppercase tracking-wider">🏷️ Apply Coupon Code</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                        placeholder="e.g. MAJHBOISAR99"
+                        className="flex-1 bg-white border border-teal-200 rounded-xl px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-teal-500 text-slate-800 font-bold"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCouponErrorMsg('');
+                          setCouponSuccessMsg('');
+                          const code = couponInput.trim().toUpperCase();
+
+                          if (code === 'MAJHBOISAR99MB' || code === 'MAJHBOISAR99') {
+                            setCouponApplied(true);
+                            setCouponSuccessMsg('🎉 Cash Coupon Applied! 1st Month Free activated.');
+                          } else if (code === 'MAJHBOISAR149MB' || code === 'MAJHBOISAR149') {
+                            setCouponApplied(true);
+                            setCouponSuccessMsg('🎉 Cash Coupon Applied! 1st Month Free activated.');
+                          } else if (code === 'MAJHBOISAR499MB' || code === 'MAJHBOISAR499') {
+                            setCouponApplied(true);
+                            setCouponSuccessMsg('🎉 Cash Coupon Applied! 1st Month Free activated.');
+                          } else if (code === 'MAJHBOISAR1499' || code === 'MAJHBOISAR1499MB') {
+                            setCouponApplied(true);
+                            setCouponSuccessMsg('🎉 Cash Coupon Applied! 1st Month Free activated.');
+                          } else {
+                            setCouponErrorMsg('Invalid coupon code.');
+                          }
+                        }}
+                        className="bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-[11px] px-4 py-1.5 rounded-xl transition-all cursor-pointer shadow-sm border border-teal-800 shrink-0"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                    {couponSuccessMsg && <p className="text-[9px] font-bold text-emerald-600">{couponSuccessMsg}</p>}
+                    {couponErrorMsg && <p className="text-[9px] font-bold text-rose-600">{couponErrorMsg}</p>}
                   </div>
-                </div>
-              </div>
-            )}
+
+                  {/* Bill Details */}
+                  <div className="space-y-1 text-[11px] text-slate-600 mb-2.5 border-b border-slate-100 pb-2 font-semibold">
+                    <div className="flex justify-between font-bold">
+                      <span>Plan Charge</span>
+                      <span>{planInfo.price}.00</span>
+                    </div>
+                    {couponApplied && (
+                      <div className="flex justify-between text-emerald-650 font-black">
+                        <span>Promo Code Discount (1st Month Free)</span>
+                        <span>-{planInfo.price}.00</span>
+                      </div>
+                    )}
+                    <hr className="border-slate-100" />
+                    <div className="flex justify-between text-slate-850 text-xs sm:text-sm font-black">
+                      <span>Total Amount Due</span>
+                      <span>
+                        {couponApplied ? '₹0.00' : `${planInfo.price}.00`}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Payment Details (Disabled if ₹0 balance due) */}
+                  {couponApplied ? (
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-3 mb-2.5 text-xs font-bold leading-relaxed flex items-center gap-2">
+                      <span className="text-base">🎁</span>
+                      <div>
+                        <p className="font-extrabold uppercase text-[9px]">Free Trial Active!</p>
+                        <p className="text-[9px] text-emerald-700 font-medium">Coupon has cleared the balance. You can activate the plan immediately for free.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[10px] text-slate-800 font-black uppercase tracking-wider">Payment Method</label>
+                        <span className="text-[8px] font-black bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">⚡ Instant UPI / QR</span>
+                      </div>
+
+                      <div className="bg-amber-50/50 border border-amber-200 rounded-xl sm:rounded-2xl p-2.5 sm:p-3 space-y-2.5 animate-in fade-in duration-200">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-18 h-18 sm:w-20 sm:h-20 bg-white border border-amber-300 rounded-xl p-0.5 shadow-xs shrink-0 flex flex-col items-center justify-center">
+                            <img loading="lazy" decoding="async" src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=majhboisar@upi&pn=Majh%20Boisar&am=${planInfo.amountNum}&cu=INR`)}`} alt="UPI QR Code" className="w-full h-full object-contain" />
+                          </div>
+                          <div className="text-left space-y-0.5 text-[9px] font-bold text-amber-900 flex-1 min-w-0">
+                            <p className="font-black text-amber-950 leading-tight text-[11px]">Scan &amp; Pay via GPay / PhonePe / Paytm</p>
+                            <p className="text-[9px] text-amber-800 font-medium truncate">Send to: <strong className="text-slate-900 font-mono bg-white px-1 py-0.5 rounded border border-amber-300">majhboisar@upi</strong></p>
+                            <p className="text-[8px] text-amber-700 font-medium">Enter 12-digit UTR/Ref number below after payment.</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[8px] text-amber-900 font-black uppercase tracking-wider mb-0.5">UPI Ref ID / UTR Number (12 Digits) *</label>
+                          <input
+                            type="text"
+                            required
+                            maxLength={12}
+                            value={upiRefId}
+                            onChange={e => setUpiRefId(e.target.value.replace(/\D/g, ''))}
+                            placeholder="e.g. 308912345678"
+                            className="w-full bg-white border border-amber-300 rounded-lg sm:rounded-xl px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-amber-500 font-mono tracking-widest text-slate-800 font-bold"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
 
             {/* Checkout Action Buttons */}
             <a
