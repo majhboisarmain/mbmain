@@ -14,10 +14,11 @@ import {
   ArrowUpRight, Plus, Trash2, Check, X, ShieldAlert, Award, Star,
   TrendingUp, Activity, Layers, Coins, Globe, Clock, Mail, MapPin,
   FileText, ArrowRight, ArrowLeft, Briefcase, Trophy, Gamepad2, Edit, Search, Lock, Unlock, QrCode,
-  Utensils, Bell, Receipt, Printer, Volume2, VolumeX, Coffee
+  Utensils, Bell, Receipt, Printer, Volume2, VolumeX, Coffee, ChevronDown
 } from 'lucide-react';
 import BusinessQRStandeeModal from '@/components/BusinessQRStandeeModal';
 import { compressImage } from '@/lib/imageCompressor';
+import { CATEGORY_CATALOG } from '@/lib/categoryMapping';
 const toTitleCase = (str: string) => {
   return str
     .toLowerCase()
@@ -1744,6 +1745,30 @@ function DashboardContent() {
     'Veterinary Clinics', 'Driving Schools', 'Gift Shops', 'Other'
   ];
 
+  const allAvailableCategories = React.useMemo(() => {
+    const catalogCats = (CATEGORY_CATALOG || []).map(c => c.category);
+    const combined = Array.from(new Set([...categoriesList, ...catalogCats])).filter(Boolean);
+    // Keep 'Other' at the end
+    return [...combined.filter(c => c !== 'Other'), 'Other'];
+  }, []);
+
+  const [wizardCatSearch, setWizardCatSearch] = useState('');
+  const [isCatDropdownOpen, setIsCatDropdownOpen] = useState(false);
+  const [modalCatSearch, setModalCatSearch] = useState('');
+  const [isModalCatDropdownOpen, setIsModalCatDropdownOpen] = useState(false);
+
+  const filteredWizardCategories = React.useMemo(() => {
+    const q = wizardCatSearch.toLowerCase().trim();
+    if (!q) return allAvailableCategories;
+    return allAvailableCategories.filter(c => c.toLowerCase().includes(q));
+  }, [wizardCatSearch, allAvailableCategories]);
+
+  const filteredModalCategories = React.useMemo(() => {
+    const q = modalCatSearch.toLowerCase().trim();
+    if (!q) return allAvailableCategories;
+    return allAvailableCategories.filter(c => c.toLowerCase().includes(q));
+  }, [modalCatSearch, allAvailableCategories]);
+
   const locationsList = ['Boisar West', 'Boisar East', 'Tarapur MIDC', 'Ostwal Empire'];
 
   // Load review replies from localStorage
@@ -2781,30 +2806,131 @@ function DashboardContent() {
               <div className="space-y-5 animate-in fade-in duration-200">
                 <h4 className="font-extrabold text-[10px] text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-1 mb-2">Category, Timings &amp; Photos</h4>
 
-                {/* Category + Description */}
-                <div>
-                  <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Listing Category *</label>
-                  <select
-                    value={newBizCategory}
-                    onChange={(e) => setNewBizCategory(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 cursor-pointer font-bold"
-                  >
-                    {categoriesList.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
+                {/* Searchable Listing Category Selector */}
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider">
+                      Listing Category *
+                    </label>
+                    {newBizCategory && (
+                      <span className="text-[9px] font-black text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                        Selected: {newBizCategory}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Search Input & Selection Trigger */}
+                  <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                      <Search className="w-3.5 h-3.5" />
+                    </div>
+                    <input
+                      type="text"
+                      value={isCatDropdownOpen ? wizardCatSearch : newBizCategory}
+                      onFocus={() => {
+                        setIsCatDropdownOpen(true);
+                        setWizardCatSearch('');
+                      }}
+                      onChange={(e) => {
+                        setWizardCatSearch(e.target.value);
+                        setIsCatDropdownOpen(true);
+                      }}
+                      placeholder="🔍 Type to search 800+ categories (e.g. Doctor, Salon, Plumber, Gym, CA, Bakery)..."
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 rounded-xl pl-9 pr-9 py-2.5 text-xs text-slate-900 font-bold focus:outline-none focus:bg-white shadow-2xs transition-all cursor-pointer"
+                    />
+                    {isCatDropdownOpen ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCatDropdownOpen(false);
+                          setWizardCatSearch('');
+                        }}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsCatDropdownOpen(true)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full cursor-pointer"
+                      >
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Dropdown Options List */}
+                  {isCatDropdownOpen && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-40" 
+                        onClick={() => {
+                          setIsCatDropdownOpen(false);
+                          setWizardCatSearch('');
+                        }} 
+                      />
+                      <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto p-1.5 space-y-0.5 text-left animate-in fade-in zoom-in-95 duration-150">
+                        <div className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-slate-400 flex items-center justify-between border-b border-slate-100 mb-1">
+                          <span>All Categories ({filteredWizardCategories.length})</span>
+                          {wizardCatSearch && <span className="text-teal-600">Matching "{wizardCatSearch}"</span>}
+                        </div>
+
+                        {filteredWizardCategories.map((cat) => {
+                          const isSelected = newBizCategory === cat;
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => {
+                                setNewBizCategory(cat);
+                                setIsCatDropdownOpen(false);
+                                setWizardCatSearch('');
+                              }}
+                              className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                                isSelected 
+                                  ? 'bg-teal-600 text-white shadow-xs' 
+                                  : 'text-slate-700 hover:bg-teal-50 hover:text-teal-900'
+                              }`}
+                            >
+                              <span>{cat}</span>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
+                            </button>
+                          );
+                        })}
+
+                        {filteredWizardCategories.length === 0 && (
+                          <div className="p-3 text-center space-y-2">
+                            <p className="text-xs font-bold text-slate-600">No matching category found for "{wizardCatSearch}"</p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNewBizCategory('Other');
+                                setNewBizCustomCategory(wizardCatSearch);
+                                setIsCatDropdownOpen(false);
+                                setWizardCatSearch('');
+                              }}
+                              className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-black px-3.5 py-1.5 rounded-xl shadow-xs cursor-pointer inline-flex items-center gap-1"
+                            >
+                              <span>✨ Use "{wizardCatSearch}" as Custom Category</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {newBizCategory === 'Other' && (
                   <div className="animate-in fade-in duration-200">
-                    <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Specify Custom Category Name *</label>
+                    <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1.5">Specify Custom Category Name *</label>
                     <input
                       type="text"
                       required
                       value={newBizCustomCategory}
                       onChange={(e) => setNewBizCustomCategory(e.target.value)}
-                      placeholder="e.g. Laundry, Cafe, etc."
-                      className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
+                      placeholder="e.g. Laundry, Cafe, Welding, etc."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
                     />
                   </div>
                 )}
@@ -8144,18 +8270,119 @@ function DashboardContent() {
                 <div className="space-y-5">
                   <h4 className="font-extrabold text-[10px] text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-1 mb-2">Category, Timings &amp; Photos</h4>
 
-                  {/* Category */}
-                  <div>
-                    <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Listing Category *</label>
-                    <select
-                      value={newBizCategory}
-                      onChange={(e) => setNewBizCategory(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 cursor-pointer font-bold"
-                    >
-                      {categoriesList.map((cat) => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
+                  {/* Searchable Listing Category Selector */}
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider">
+                        Listing Category *
+                      </label>
+                      {newBizCategory && (
+                        <span className="text-[9px] font-black text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                          Selected: {newBizCategory}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Search Input & Selection Trigger */}
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                        <Search className="w-3.5 h-3.5" />
+                      </div>
+                      <input
+                        type="text"
+                        value={isModalCatDropdownOpen ? modalCatSearch : newBizCategory}
+                        onFocus={() => {
+                          setIsModalCatDropdownOpen(true);
+                          setModalCatSearch('');
+                        }}
+                        onChange={(e) => {
+                          setModalCatSearch(e.target.value);
+                          setIsModalCatDropdownOpen(true);
+                        }}
+                        placeholder="🔍 Type to search 800+ categories (e.g. Doctor, Salon, Plumber, Gym, CA, Bakery)..."
+                        className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 rounded-xl pl-9 pr-9 py-2.5 text-xs text-slate-900 font-bold focus:outline-none focus:bg-white shadow-2xs transition-all cursor-pointer"
+                      />
+                      {isModalCatDropdownOpen ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsModalCatDropdownOpen(false);
+                            setModalCatSearch('');
+                          }}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setIsModalCatDropdownOpen(true)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full cursor-pointer"
+                        >
+                          <ChevronDown className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Dropdown Options List */}
+                    {isModalCatDropdownOpen && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-40" 
+                          onClick={() => {
+                            setIsModalCatDropdownOpen(false);
+                            setModalCatSearch('');
+                          }} 
+                        />
+                        <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto p-1.5 space-y-0.5 text-left animate-in fade-in zoom-in-95 duration-150">
+                          <div className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-slate-400 flex items-center justify-between border-b border-slate-100 mb-1">
+                            <span>All Categories ({filteredModalCategories.length})</span>
+                            {modalCatSearch && <span className="text-teal-600">Matching "{modalCatSearch}"</span>}
+                          </div>
+
+                          {filteredModalCategories.map((cat) => {
+                            const isSelected = newBizCategory === cat;
+                            return (
+                              <button
+                                key={cat}
+                                type="button"
+                                onClick={() => {
+                                  setNewBizCategory(cat);
+                                  setIsModalCatDropdownOpen(false);
+                                  setModalCatSearch('');
+                                }}
+                                className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                                  isSelected 
+                                    ? 'bg-teal-600 text-white shadow-xs' 
+                                    : 'text-slate-700 hover:bg-teal-50 hover:text-teal-900'
+                                }`}
+                              >
+                                <span>{cat}</span>
+                                {isSelected && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
+                              </button>
+                            );
+                          })}
+
+                          {filteredModalCategories.length === 0 && (
+                            <div className="p-3 text-center space-y-2">
+                              <p className="text-xs font-bold text-slate-600">No matching category found for "{modalCatSearch}"</p>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setNewBizCategory('Other');
+                                  setNewBizCustomCategory(modalCatSearch);
+                                  setIsModalCatDropdownOpen(false);
+                                  setModalCatSearch('');
+                                }}
+                                className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-black px-3.5 py-1.5 rounded-xl shadow-xs cursor-pointer inline-flex items-center gap-1"
+                              >
+                                <span>✨ Use "{modalCatSearch}" as Custom Category</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {newBizCategory === 'Other' && (
