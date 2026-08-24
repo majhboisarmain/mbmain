@@ -2376,6 +2376,7 @@ function DashboardContent() {
           gst: newBizGst || undefined,
           workingHours: finalWorkingHours,
           image: finalImage,
+          gallery: newBizGalleryPhotos.length > 0 ? newBizGalleryPhotos : undefined,
           latitude: newBizLat || undefined,
           longitude: newBizLng || undefined,
           // Save the login phone of the user so we can reliably find their businesses later
