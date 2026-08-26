@@ -323,6 +323,36 @@ export default function Navbar() {
             {showHeaderSearch && navSearchQuery.trim().length > 0 && isNavSearchFocused && (
               <div className="absolute top-full -left-8 right-0 sm:left-0 sm:right-0 mt-1.5 bg-white rounded-2xl shadow-2xl border border-slate-200 z-[100] overflow-hidden text-left animate-in fade-in duration-150 max-h-[65vh] sm:max-h-[380px] overflow-y-auto min-w-[280px] sm:min-w-0">
 
+                {/* Direct Portal Shortcut for Travels / Vehicles */}
+                {(() => {
+                  const qLower = navSearchQuery.toLowerCase().trim();
+                  const isVehicleQuery = ['tempo', 'car', 'cab', 'taxi', 'bus', 'auto', 'rickshaw', 'riksha', 'travels', 'travel', 'driver', 'vehicle', 'shifting', 'chota hathi', 'bike'].some(k => qLower.includes(k) || (qLower.length >= 3 && k.startsWith(qLower)));
+                  if (isVehicleQuery) {
+                    return (
+                      <div 
+                        onClick={() => {
+                          setNavSearchQuery('');
+                          setIsNavSearchFocused(false);
+                          router.push('/hire-vehicle');
+                        }}
+                        className="p-2 sm:p-2.5 bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-200/60 cursor-pointer flex items-center justify-between hover:from-orange-100 hover:to-amber-100 transition-colors group"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-6 h-6 rounded-lg bg-orange-500 text-white flex items-center justify-center text-xs shrink-0 shadow-2xs">
+                            🚗
+                          </div>
+                          <div>
+                            <p className="text-xs font-black text-slate-900 leading-tight group-hover:text-orange-950">Boisar Travels &amp; Vehicle Hire</p>
+                            <p className="text-[10px] text-orange-800 font-bold leading-tight">Cars, Autos, Tempos &amp; Buses (Direct Driver Contact)</p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] bg-orange-600 text-white font-black px-2 py-0.5 rounded-md shadow-2xs shrink-0">Open Hub →</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 {/* 1. Matching Categories Section (Max 5) */}
                 {matchingNavCategories.length > 0 && (
                   <div className="p-1 sm:p-2 border-b border-slate-100">
@@ -795,84 +825,6 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* 1. Main Navigation Links */}
-            <div className="space-y-0.5 bg-slate-50 p-2 rounded-xl border border-slate-200">
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block px-1.5 py-0.5">
-                Explore Boisar
-              </span>
-
-              <Link
-                href="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">🏠</span>
-                  <span>Home</span>
-                </div>
-                <ChevronRight className="w-3 h-3 text-slate-400" />
-              </Link>
-
-              <Link
-                href="/hotels"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-purple-700 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">🏨</span>
-                  <span>Hourly Hotels</span>
-                </div>
-                <span className="text-[8.5px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.2 rounded">3h · 6h</span>
-              </Link>
-
-              <Link
-                href="/resorts"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">🏊</span>
-                  <span>Resorts &amp; Villas</span>
-                </div>
-                <span className="text-[8.5px] bg-teal-100 text-teal-800 font-bold px-1.5 py-0.2 rounded">Day &amp; Night</span>
-              </Link>
-
-              <Link
-                href="/jobs"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-emerald-700 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">💼</span>
-                  <span>Jobs in Boisar</span>
-                </div>
-                <span className="text-[8.5px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded">Hiring</span>
-              </Link>
-
-              <Link
-                href="/creators"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-rose-700 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">🌟</span>
-                  <span>Creators &amp; Influencers</span>
-                </div>
-                <span className="text-[8.5px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.2 rounded">New</span>
-              </Link>
-
-              <Link
-                href="/hire-vehicle"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-blue-700 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">🚗</span>
-                  <span>Vehicle Rentals</span>
-                </div>
-                <span className="text-[8.5px] bg-blue-100 text-blue-800 font-bold px-1.5 py-0.2 rounded">Cab/Auto</span>
-              </Link>
-            </div>
 
             {/* 2. Business & Partner Section */}
             <div className="space-y-0.5 bg-slate-50 p-2 rounded-xl border border-slate-200">

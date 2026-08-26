@@ -401,20 +401,22 @@ export default function SearchClient() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-2 sm:mt-3">
 
         {/* Search Metadata & Header */}
-        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-2">
-          <div>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="min-w-0 flex-1">
+            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">
               Palghar &gt; Boisar &gt; {urlCategory || 'Local Services'}
             </p>
-            <h1 className="text-sm sm:text-base font-black text-slate-800 tracking-tight flex items-center gap-2">
-              <span>{urlCategory || 'Local Services'} in Boisar, Palghar</span>
-              {!loading && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                  {businesses.length} {businesses.length === 1 ? 'Listing' : 'Listings'}
-                </span>
-              )}
+            <h1 className="text-xs sm:text-sm md:text-base font-black text-slate-800 tracking-tight truncate leading-snug">
+              {urlCategory || 'Local Services'} in Boisar
             </h1>
           </div>
+          {!loading && (
+            <div className="shrink-0">
+              <span className="text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs whitespace-nowrap">
+                {businesses.length} {businesses.length === 1 ? 'Listing' : 'Listings'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Filters Row - Compact scrollable row */}

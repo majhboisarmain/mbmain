@@ -136,19 +136,36 @@ function HireVehicleContent() {
   const [formImage, setFormImage] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewModalImg, setPreviewModalImg] = useState<{ src: string; title: string; category?: string } | null>(null);
+
+  // Fetch vehicles from database
+  const fetchDbVehicles = async () => {
+    try {
+      const res = await fetch('/api/vehicles');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const formatted = data.map((d: any) => ({
+            ...d,
+            features: typeof d.features === 'string' && d.features.startsWith('[')
+              ? JSON.parse(d.features)
+              : (d.features || ['Direct Owner Contact', 'Verified Boisar Listing'])
+          }));
+          setVehicles(formatted);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Error fetching db vehicles:', e);
+    }
+  };
+
   // Scroll to top on mount and load registered vehicles
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      try {
-        const saved = localStorage.getItem('majh_boisar_hire_vehicles');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            setVehicles(parsed);
-          }
-        }
-      } catch (e) {}
+      fetchDbVehicles();
     }
   }, []);
 
@@ -194,7 +211,7 @@ function HireVehicleContent() {
     }
   }, [catParam]);
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formPhone.trim()) {
       showToast('Please enter Driver / Agency Name and Contact Phone!', 'error');
@@ -210,42 +227,52 @@ function HireVehicleContent() {
       'Commercial': 'https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?w=600&auto=format&fit=crop&q=80',
     };
 
-    const newVehicle: VehicleListing = {
-      id: `veh-custom-${Date.now()}`,
-      name: formName.trim(),
-      category: formCategory,
-      vehicleModel: formModel.trim() || 'Standard Commercial Model',
-      capacity: formCapacity.trim() || 'Standard',
-      ratePerKm: formRate.trim() || 'Affordable Local Rate',
-      location: formLocation.trim() || 'Boisar West',
-      phone: formPhone.trim(),
-      timing: formTiming.trim() || 'Daily 24x7',
-      rating: 5.0,
-      reviewsCount: 1,
-      verified: true,
-      image: formImage || defaultImages[formCategory] || defaultImages['Car & Cab'],
-      features: ['Direct Owner Contact', '0% Commission', 'Verified Boisar Listing']
-    };
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/vehicles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formName.trim(),
+          category: formCategory,
+          vehicleModel: formModel.trim() || 'Standard Commercial Model',
+          capacity: formCapacity.trim() || 'Standard',
+          ratePerKm: formRate.trim() || 'Affordable Local Rate',
+          location: formLocation.trim() || 'Boisar West',
+          phone: formPhone.trim(),
+          timing: formTiming.trim() || 'Daily 24x7',
+          image: formImage || defaultImages[formCategory] || defaultImages['Car & Cab'],
+          features: ['Direct Owner Contact', '0% Commission', 'Verified Boisar Listing']
+        })
+      });
 
-    const updated = [newVehicle, ...vehicles];
-    setVehicles(updated);
+      if (res.ok) {
+        const savedVehicle = await res.json();
+        const formattedVehicle: VehicleListing = {
+          ...savedVehicle,
+          features: ['Direct Owner Contact', '0% Commission', 'Verified Boisar Listing']
+        };
+        setVehicles(prev => [formattedVehicle, ...prev.filter(v => v.id !== formattedVehicle.id)]);
+        setSelectedCategory(formCategory);
+        setSuccessMsg('🎉 Vehicle / Driver Listed Successfully!');
+        showToast(`🎉 ${formName} Listed Live on Majh Boisar Travels!`, 'success');
 
-    if (typeof window !== 'undefined') {
-      const customOnly = updated.filter(v => v.id.startsWith('veh-custom-'));
-      localStorage.setItem('majh_boisar_hire_vehicles', JSON.stringify(customOnly));
+        setTimeout(() => {
+          setSuccessMsg('');
+          setShowAddModal(false);
+          setFormName('');
+          setFormPhone('');
+          setFormImage('');
+        }, 1500);
+      } else {
+        const errData = await res.json();
+        showToast(errData.error || 'Failed to list vehicle', 'error');
+      }
+    } catch (err) {
+      showToast('Error saving listing to server. Please try again.', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setSelectedCategory(formCategory);
-    setSuccessMsg('🎉 Vehicle / Driver Listed Successfully!');
-    showToast(`🎉 ${formName} Listed Live on Majh Boisar Travels!`, 'success');
-
-    setTimeout(() => {
-      setSuccessMsg('');
-      setShowAddModal(false);
-      setFormName('');
-      setFormPhone('');
-      setFormImage('');
-    }, 1500);
   };
 
   const filteredVehicles = useMemo(() => {
@@ -345,11 +372,14 @@ function HireVehicleContent() {
                 >
                   <div>
                     {/* Vehicle Photo Container (Full Vehicle View) */}
-                    <div className="relative w-full aspect-[16/10] bg-slate-950 overflow-hidden shrink-0">
+                    <div 
+                      onClick={() => setPreviewModalImg({ src: v.image, title: `${v.name} · ${v.vehicleModel}`, category: v.category })}
+                      className="relative w-full aspect-[16/10] bg-slate-950 overflow-hidden shrink-0 cursor-pointer group/img"
+                    >
                       <img
                         src={v.image}
                         alt={v.name}
-                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute top-2.5 left-2.5">
                         <span className="bg-slate-900/90 backdrop-blur-md text-white text-[9.5px] font-black px-2.5 py-1 rounded-lg shadow-xs border border-white/10">
@@ -359,6 +389,11 @@ function HireVehicleContent() {
                       <div className="absolute top-2.5 right-2.5">
                         <span className="bg-blue-600 text-white text-xs font-black px-2.5 py-1 rounded-lg shadow-sm">
                           {v.ratePerKm}
+                        </span>
+                      </div>
+                      <div className="absolute bottom-2 right-2 opacity-90 sm:opacity-0 group-hover/img:opacity-100 transition-opacity">
+                        <span className="bg-black/75 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 border border-white/20 shadow-xs">
+                          🔍 Full Photo
                         </span>
                       </div>
                     </div>
@@ -662,6 +697,44 @@ function HireVehicleContent() {
                 </button>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Full Photo Modal / Lightbox */}
+      {previewModalImg && (
+        <div 
+          onClick={() => setPreviewModalImg(null)}
+          className="fixed inset-0 z-[600] flex items-center justify-center bg-black/90 backdrop-blur-md p-3 sm:p-6 animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-4xl w-full bg-slate-900 border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]"
+          >
+            <div className="flex items-center justify-between px-4 py-3 bg-slate-950/80 border-b border-white/10 text-white">
+              <div>
+                <h4 className="text-xs sm:text-sm font-black">{previewModalImg.title}</h4>
+                {previewModalImg.category && (
+                  <span className="text-[10px] text-blue-400 font-bold">{previewModalImg.category}</span>
+                )}
+              </div>
+              <button
+                onClick={() => setPreviewModalImg(null)}
+                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="relative flex-1 flex items-center justify-center p-2 bg-black overflow-auto">
+              <img
+                src={previewModalImg.src}
+                alt={previewModalImg.title}
+                className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-lg"
+              />
+            </div>
+            <div className="px-4 py-2 bg-slate-950 text-center text-[11px] text-slate-400 font-medium">
+              100% Full Uncropped Photo View
+            </div>
           </div>
         </div>
       )}

@@ -23,21 +23,39 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
   const [availability, setAvailability] = useState('24/7 Available');
   const [image, setImage] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sync with local storage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('majh_boisar_tempo_list');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setDriverList([...parsed, ...TEMPO_DRIVERS]);
-          }
-        } catch (e) { }
+  // Sync with database
+  const fetchDbTempos = async () => {
+    try {
+      const res = await fetch('/api/vehicles?category=Tempo & Shifting');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const formatted: TempoDriver[] = data.map((d: any) => ({
+            id: d.id.toString(),
+            driverName: d.name,
+            vehicleType: d.vehicleModel || 'Tempo & Shifting',
+            phone: d.phone,
+            standLocation: d.location,
+            rateEstimate: d.ratePerKm,
+            availability: d.timing,
+            image: d.image || 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&auto=format&fit=crop&q=80'
+          }));
+          setDriverList([...formatted, ...TEMPO_DRIVERS]);
+          return;
+        }
       }
+    } catch (e) {
+      console.warn('Error fetching tempo listings:', e);
     }
-  }, []);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchDbTempos();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -52,7 +70,7 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
 
   if (!isOpen) return null;
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!driverName.trim() || !phone.trim()) {
       alert("Please enter Business / Driver Name and Contact Phone!");
@@ -65,38 +83,54 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
       : vehicleType.includes('Auto') ? 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=600&auto=format&fit=crop&q=80'
       : 'https://images.unsplash.com/photo-1519003722824-194d4455a60c?w=600&auto=format&fit=crop&q=80';
 
-    const newDriver: TempoDriver = {
-      id: `tmp-custom-${Date.now()}`,
-      driverName,
-      vehicleType,
-      phone,
-      standLocation,
-      rateEstimate,
-      availability,
-      image: image.trim() || defaultImg
-    };
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/vehicles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: driverName.trim(),
+          category: 'Tempo & Shifting',
+          vehicleModel: vehicleType,
+          capacity: 'Standard Shifting Load',
+          ratePerKm: rateEstimate,
+          location: standLocation,
+          phone: phone.trim(),
+          timing: availability,
+          image: image.trim() || defaultImg,
+          features: ['Direct Owner Contact', '0% Commission', 'Verified Boisar Listing']
+        })
+      });
 
-    const updated = [newDriver, ...driverList];
-    setDriverList(updated);
-
-    if (typeof window !== 'undefined') {
-      const existingSaved = localStorage.getItem('majh_boisar_tempo_list');
-      let customOnly: TempoDriver[] = [];
-      if (existingSaved) {
-        try { customOnly = JSON.parse(existingSaved); } catch (e) { }
+      if (res.ok) {
+        const saved = await res.json();
+        const newDriver: TempoDriver = {
+          id: saved.id.toString(),
+          driverName: saved.name,
+          vehicleType: saved.vehicleModel,
+          phone: saved.phone,
+          standLocation: saved.location,
+          rateEstimate: saved.ratePerKm,
+          availability: saved.timing,
+          image: saved.image || defaultImg
+        };
+        setDriverList(prev => [newDriver, ...prev]);
+        setSuccessMsg('Packers & Movers / Tempo registered successfully in Database!');
+        setTimeout(() => {
+          setSuccessMsg('');
+          setShowAddForm(false);
+          setDriverName('');
+          setPhone('');
+          setImage('');
+        }, 1500);
       }
-      localStorage.setItem('majh_boisar_tempo_list', JSON.stringify([newDriver, ...customOnly]));
+    } catch (e) {
+      console.warn('Error registering tempo to database:', e);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setSuccessMsg('Packers & Movers / Tempo registered successfully!');
-    setTimeout(() => {
-      setSuccessMsg('');
-      setShowAddForm(false);
-      setDriverName('');
-      setPhone('');
-      setImage('');
-    }, 1500);
   };
+
 
   const filteredDrivers = driverList.filter((d) => {
     if (selectedFilter === 'All') return true;

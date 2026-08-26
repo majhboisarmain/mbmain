@@ -229,3 +229,36 @@ model ListingReport {
   createdAt   DateTime @default(now())
 }
 
+model VehicleRental {
+  id           Int      @id @default(autoincrement())
+  name         String
+  category     String   @default("Car & Cab")
+  vehicleModel String   @default("Standard Commercial Model")
+  capacity     String   @default("4+1")
+  ratePerKm    String   @default("Affordable Local Rate")
+  location     String   @default("Boisar West")
+  phone        String
+  timing       String   @default("Daily 24x7")
+  rating       Float    @default(5.0)
+  reviewsCount Int      @default(1)
+  verified     Boolean  @default(true)
+  image        String?
+  features     String?  // JSON string or comma-separated
+  createdAt    DateTime @default(now())
+}
+
+model HomeTechnician {
+  id           Int      @id @default(autoincrement())
+  name         String
+  category     String   @default("AC Service")
+  experience   String   @default("5+ Yrs Experience")
+  phone        String
+  location     String   @default("Boisar West")
+  visitingFee  String   @default("₹199 Inspection Fee")
+  rating       Float    @default(5.0)
+  reviewsCount Int      @default(1)
+  verified     Boolean  @default(true)
+  image        String?
+  createdAt    DateTime @default(now())
+}
+

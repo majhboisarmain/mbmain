@@ -219,13 +219,15 @@ export async function DELETE(
       return NextResponse.json({ error: 'Invalid business ID' }, { status: 400 });
     }
 
-    // Delete related records
-    await prisma.review.deleteMany({ where: { businessId } });
-    await prisma.service.deleteMany({ where: { businessId } });
-    await prisma.product.deleteMany({ where: { businessId } });
-    await prisma.fAQ.deleteMany({ where: { businessId } });
-    await prisma.lead.deleteMany({ where: { businessId } });
-    await prisma.adOrder.deleteMany({ where: { businessId } });
+    // Delete related records safely
+    await prisma.jobApplication.deleteMany({ where: { job: { businessId } } }).catch(() => {});
+    await prisma.job.deleteMany({ where: { businessId } }).catch(() => {});
+    await prisma.review.deleteMany({ where: { businessId } }).catch(() => {});
+    await prisma.service.deleteMany({ where: { businessId } }).catch(() => {});
+    await prisma.product.deleteMany({ where: { businessId } }).catch(() => {});
+    await prisma.fAQ.deleteMany({ where: { businessId } }).catch(() => {});
+    await prisma.lead.deleteMany({ where: { businessId } }).catch(() => {});
+    await prisma.adOrder.deleteMany({ where: { businessId } }).catch(() => {});
 
     // Delete the business itself
     await prisma.business.delete({ where: { id: businessId } });
@@ -233,6 +235,6 @@ export async function DELETE(
     return NextResponse.json({ message: 'Business deleted successfully' });
   } catch (error: any) {
     console.error('Error deleting business:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Failed to delete business' }, { status: 500 });
   }
 }

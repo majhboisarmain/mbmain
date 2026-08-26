@@ -13,7 +13,8 @@ import {
   MessageSquare, Layers, ShieldCheck, ShieldAlert, Star, Eye, Trash2,
   ToggleLeft, ToggleRight, Coins, Terminal, RefreshCw, BarChart2,
   Edit, Plus, X, Users, Phone, UserCheck, PlusCircle, MapPin, Briefcase, FileText,
-  HardDrive, Database, Server, Smartphone, Zap, Lock, KeyRound, EyeOff, Waves, Compass, Utensils
+  HardDrive, Database, Server, Smartphone, Zap, Lock, KeyRound, EyeOff, Waves, Compass, Utensils,
+  Car, ExternalLink
 } from 'lucide-react';
 
 export interface HomeFeaturedRestaurant {
@@ -222,6 +223,7 @@ export default function AdminPanelPage() {
   const [customAdminCategories, setCustomAdminCategories] = useState<string[]>([]);
   const [registeredUsers, setRegisteredUsers] = useState<any[]>([]);
   const [deletionRequests, setDeletionRequests] = useState<DeletionRequest[]>([]);
+  const [adminJobsList, setAdminJobsList] = useState<any[]>([]);
 
   // Homepage Featured Restaurants Management States
   const [adminHomeRestaurants, setAdminHomeRestaurants] = useState<HomeFeaturedRestaurant[]>(() => {
@@ -395,10 +397,23 @@ export default function AdminPanelPage() {
     }
     return [];
   });
-  const [adminJobsList, setAdminJobsList] = useState<any[]>([]);
+  const [adminListingSubTab, setAdminListingSubTab] = useState<'businesses' | 'specialists' | 'travels'>('businesses');
   const [adminStaycationSubTab, setAdminStaycationSubTab] = useState<'hotels' | 'resorts' | 'payouts'>('hotels');
-  const [adminListingSubTab, setAdminListingSubTab] = useState<'businesses' | 'specialists'>('businesses');
   const [adminSpecialistSearchQuery, setAdminSpecialistSearchQuery] = useState('');
+  const [adminVehiclesList, setAdminVehiclesList] = useState<any[]>([]);
+  const [adminVehicleSearchQuery, setAdminVehicleSearchQuery] = useState('');
+  const [adminAddVehicleModalOpen, setAdminAddVehicleModalOpen] = useState(false);
+  const [adminVehForm, setAdminVehForm] = useState({
+    name: '',
+    category: 'Car & Cab',
+    vehicleModel: '',
+    capacity: '4+1 Passengers',
+    ratePerKm: '₹12/km (AC Local & Outstation)',
+    location: 'Boisar West & Station',
+    phone: '',
+    timing: '24x7 Available on Call',
+    image: '',
+  });
 
   // Admin Hotel Bookings & Payout Settlements State
   const [adminHotelBookings, setAdminHotelBookings] = useState<any[]>(() => {
@@ -1361,6 +1376,18 @@ export default function AdminPanelPage() {
         console.error("Error fetching db properties for admin:", err);
       }
 
+      try {
+        const vehRes = await fetch('/api/vehicles', { cache: 'no-store' });
+        if (vehRes.ok) {
+          const dataVeh = await vehRes.json();
+          if (Array.isArray(dataVeh)) {
+            setAdminVehiclesList(dataVeh);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching db vehicles for admin:", err);
+      }
+
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('majh_boisar_special_profiles');
         if (saved) {
@@ -1556,17 +1583,90 @@ export default function AdminPanelPage() {
 
   const handleDeleteBusiness = async (id: number) => {
     try {
+      setBusinesses(prev => prev.filter(b => b.id !== id));
       const res = await fetch(`/api/businesses/${id}`, {
         method: 'DELETE'
       });
       if (res.ok) {
         logEvent(`Deleted Business ID ${id}`);
+        showToast(`Business #${id} deleted successfully.`, 'success');
         fetchAdminData();
       } else {
+        fetchAdminData();
         alert('Failed to delete business');
       }
     } catch (e) {
       console.error(e);
+      fetchAdminData();
+    }
+  };
+
+  const handleDeleteVehicle = async (id: number, name: string) => {
+    if (!confirm(`Are you sure you want to permanently delete "${name}" from Travels & Vehicles database?`)) return;
+    try {
+      setAdminVehiclesList(prev => prev.filter(v => v.id !== id));
+      const res = await fetch(`/api/vehicles?id=${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        logEvent(`Deleted Vehicle ID ${id} (${name})`);
+        showToast(`🚗 Vehicle "${name}" deleted successfully.`, 'success');
+      } else {
+        alert('Failed to delete vehicle');
+        fetchAdminData();
+      }
+    } catch (err) {
+      console.error(err);
+      fetchAdminData();
+    }
+  };
+
+  const handleAdminAddVehicle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminVehForm.name.trim() || !adminVehForm.phone.trim()) {
+      alert('Please enter Driver / Agency Name and Contact Phone!');
+      return;
+    }
+    try {
+      const res = await fetch('/api/vehicles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: adminVehForm.name.trim(),
+          category: adminVehForm.category,
+          vehicleModel: adminVehForm.vehicleModel.trim() || 'Standard Model',
+          capacity: adminVehForm.capacity.trim() || '4+1 Passengers',
+          ratePerKm: adminVehForm.ratePerKm.trim() || 'Affordable Local Rate',
+          location: adminVehForm.location.trim() || 'Boisar West',
+          phone: adminVehForm.phone.trim(),
+          timing: adminVehForm.timing.trim() || 'Daily 24x7',
+          image: adminVehForm.image.trim() || null,
+          features: ['Direct Owner Contact', '0% Commission', 'Verified Boisar Listing']
+        })
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setAdminVehiclesList(prev => [saved, ...prev]);
+        logEvent(`Added new Vehicle: ${adminVehForm.name}`);
+        showToast(`🎉 Vehicle ${adminVehForm.name} Added Live!`, 'success');
+        setAdminAddVehicleModalOpen(false);
+        setAdminVehForm({
+          name: '',
+          category: 'Car & Cab',
+          vehicleModel: '',
+          capacity: '4+1 Passengers',
+          ratePerKm: '₹12/km (AC Local & Outstation)',
+          location: 'Boisar West & Station',
+          phone: '',
+          timing: '24x7 Available on Call',
+          image: '',
+        });
+      } else {
+        alert('Failed to add vehicle');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error adding vehicle');
     }
   };
 
@@ -3675,6 +3775,18 @@ export default function AdminPanelPage() {
                         <span>Specialists &amp; Freelancers ({allSpecialists.length})</span>
                         {pendingSpecialists.length > 0 && <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />}
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdminListingSubTab('travels')}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          adminListingSubTab === 'travels'
+                            ? 'bg-blue-700 text-white shadow-2xs font-black'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <Car className="w-3.5 h-3.5" />
+                        <span>Travels &amp; Vehicles ({adminVehiclesList.length})</span>
+                      </button>
                     </div>
                   );
                 })()}
@@ -3889,7 +4001,7 @@ export default function AdminPanelPage() {
                       </table>
                     </div>
                   </>
-                ) : (
+                ) : adminListingSubTab === 'specialists' ? (
                   <>
                     {/* Specialist Network Directory Editor */}
                     <div className="space-y-4">
@@ -3939,38 +4051,50 @@ export default function AdminPanelPage() {
                               <th className="py-3 px-4">Specialty Category</th>
                               <th className="py-3 px-4">Active Plan</th>
                               <th className="py-3 px-4">Rating</th>
-                              <th className="py-3 px-4 text-center">Status</th>
+                              <th className="py-3 px-4 text-center">Verified Check</th>
                               <th className="py-3 px-4 text-center">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-left">
-                            {Object.entries(specialProfiles).flatMap(([cat, list]: any) =>
-                              (list || []).map((p: any) => ({ ...p, catKey: cat }))
-                            )
-                            .filter((p: any) => {
+                          <tbody className="divide-y divide-slate-100 font-medium">
+                            {Object.entries(specialProfiles).flatMap(([catKey, list]: any) =>
+                              (list || []).map((p: any) => ({ ...p, catKey }))
+                            ).filter((p: any) => {
                               if (!adminSpecialistSearchQuery.trim()) return true;
                               const q = adminSpecialistSearchQuery.toLowerCase();
                               return (
                                 (p.name || '').toLowerCase().includes(q) ||
                                 (p.category || '').toLowerCase().includes(q) ||
-                                (p.catKey || '').toLowerCase().includes(q) ||
-                                (p.phone || '').includes(q)
+                                (p.specialty || '').toLowerCase().includes(q) ||
+                                (p.catKey || '').toLowerCase().includes(q)
                               );
-                            })
-                            .map((p: any) => (
-                              <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                                <td className="py-4 px-4 font-extrabold text-slate-850 flex items-center gap-2">
-                                  <img src={p.avatar} alt={p.name} className="w-6 h-6 rounded-full object-cover border shrink-0" />
-                                  <span className="truncate">{p.name}</span>
+                            }).map((p: any) => (
+                              <tr key={`${p.catKey}-${p.id}`} className="hover:bg-slate-50">
+                                <td className="py-4 px-4 font-bold text-slate-800 flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-full bg-teal-50 border border-teal-200 flex items-center justify-center font-bold text-teal-800 text-xs shrink-0 overflow-hidden">
+                                    {p.avatar ? (
+                                      <img src={p.avatar} alt={p.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                      p.name.charAt(0)
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className="font-extrabold text-slate-900">{p.name}</div>
+                                    <div className="text-[10px] text-slate-400 font-mono">ID: #{p.id}</div>
+                                  </div>
                                 </td>
-                                <td className="py-4 px-4 text-slate-500">{p.category} ({p.catKey})</td>
                                 <td className="py-4 px-4">
-                                  <span className={`font-bold px-2 py-0.5 rounded text-[9px] uppercase border ${p.subscription === 'Premium'
-                                    ? 'bg-amber-50 border-amber-200 text-amber-700'
-                                    : p.subscription === 'Pro'
-                                      ? 'bg-teal-50 border-teal-200 text-teal-700'
-                                      : 'bg-slate-50 border-slate-200 text-slate-600'
-                                    }`}>
+                                  <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                    {p.category || p.catKey}
+                                  </span>
+                                </td>
+                                <td className="py-4 px-4">
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
+                                    p.subscription === 'Gold'
+                                      ? 'bg-amber-50 border-amber-200 text-amber-700'
+                                      : p.subscription === 'Pro'
+                                        ? 'bg-teal-50 border-teal-200 text-teal-700'
+                                        : 'bg-slate-50 border-slate-200 text-slate-600'
+                                  }`}>
                                     {p.subscription || 'Free'}
                                   </span>
                                 </td>
@@ -4000,6 +4124,163 @@ export default function AdminPanelPage() {
                                 </td>
                               </tr>
                             ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Travels & Vehicles Directory Editor */}
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div>
+                          <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                            <Car className="w-4 h-4 text-blue-600" />
+                            <span>Travels &amp; Vehicle Rentals ({adminVehiclesList.length})</span>
+                          </h3>
+                          <p className="text-xs text-slate-500 mt-0.5">Manage registered cars, auto rickshaws, bike rentals, tempos, buses and commercial transport services.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              fetchAdminData();
+                              showToast('🔄 Travels list refreshed from database!', 'success');
+                            }}
+                            className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5 text-blue-600" />
+                            <span>Refresh</span>
+                          </button>
+                          <button
+                            onClick={() => setAdminAddVehicleModalOpen(true)}
+                            className="bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                          >
+                            <PlusCircle className="w-4 h-4" />
+                            <span>➕ Add Vehicle / Driver</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Search Filter */}
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+                        <div className="relative flex-1">
+                          <input
+                            type="text"
+                            value={adminVehicleSearchQuery}
+                            onChange={(e) => setAdminVehicleSearchQuery(e.target.value)}
+                            placeholder="🔍 Search vehicle by driver name, model, phone, location, category..."
+                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                          />
+                          {adminVehicleSearchQuery && (
+                            <button
+                              onClick={() => setAdminVehicleSearchQuery('')}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Vehicle Listings Table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                              <th className="py-3 px-3">Photo</th>
+                              <th className="py-3 px-3">Driver / Agency</th>
+                              <th className="py-3 px-3">Category</th>
+                              <th className="py-3 px-3">Model &amp; Capacity</th>
+                              <th className="py-3 px-3">Rate / Fares</th>
+                              <th className="py-3 px-3">Stand / Location</th>
+                              <th className="py-3 px-3">Phone</th>
+                              <th className="py-3 px-3 text-center">Status</th>
+                              <th className="py-3 px-3 text-center">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 font-medium">
+                            {adminVehiclesList.filter(v => {
+                              if (!adminVehicleSearchQuery.trim()) return true;
+                              const q = adminVehicleSearchQuery.toLowerCase();
+                              return (
+                                (v.name || '').toLowerCase().includes(q) ||
+                                (v.vehicleModel || '').toLowerCase().includes(q) ||
+                                (v.category || '').toLowerCase().includes(q) ||
+                                (v.location || '').toLowerCase().includes(q) ||
+                                (v.phone || '').includes(q)
+                              );
+                            }).length > 0 ? (
+                              adminVehiclesList.filter(v => {
+                                if (!adminVehicleSearchQuery.trim()) return true;
+                                const q = adminVehicleSearchQuery.toLowerCase();
+                                return (
+                                  (v.name || '').toLowerCase().includes(q) ||
+                                  (v.vehicleModel || '').toLowerCase().includes(q) ||
+                                  (v.category || '').toLowerCase().includes(q) ||
+                                  (v.location || '').toLowerCase().includes(q) ||
+                                  (v.phone || '').includes(q)
+                                );
+                              }).map(v => (
+                                <tr key={v.id} className="hover:bg-slate-50/80 transition-colors">
+                                  <td className="py-3 px-3">
+                                    <div className="w-12 h-9 rounded-lg overflow-hidden bg-slate-900 border border-slate-200 shrink-0">
+                                      {v.image ? (
+                                        <img src={v.image} alt={v.name} className="w-full h-full object-cover object-center hover:scale-125 transition-transform duration-300 cursor-pointer" onClick={() => window.open(v.image, '_blank')} title="Click to open full photo" />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">🚗</div>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-3 font-bold text-slate-800">
+                                    <div className="text-xs font-black text-slate-900">{v.name}</div>
+                                    <div className="text-[10px] text-slate-400 font-mono">ID: #{v.id}</div>
+                                  </td>
+                                  <td className="py-3 px-3">
+                                    <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9.5px] font-black px-2 py-0.5 rounded-md whitespace-nowrap">
+                                      {v.category || 'Car & Cab'}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-3 text-slate-700">
+                                    <div className="font-bold text-slate-800 text-[11px]">{v.vehicleModel || 'Standard'}</div>
+                                    <div className="text-[10px] text-slate-500">{v.capacity || '4+1'}</div>
+                                  </td>
+                                  <td className="py-3 px-3 font-bold text-blue-700 text-[11px]">
+                                    {v.ratePerKm || 'Standard'}
+                                  </td>
+                                  <td className="py-3 px-3 text-slate-600 text-[11px]">
+                                    📍 {v.location || 'Boisar'}
+                                  </td>
+                                  <td className="py-3 px-3">
+                                    <a href={`tel:${v.phone}`} className="text-blue-600 font-bold hover:underline text-[11px] flex items-center gap-1">
+                                      <Phone className="w-3 h-3 text-blue-500" />
+                                      <span>{v.phone}</span>
+                                    </a>
+                                  </td>
+                                  <td className="py-3 px-3 text-center">
+                                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black px-2 py-0.5 rounded-md">
+                                      ✓ Active Live
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-3 text-center">
+                                    <button
+                                      onClick={() => handleDeleteVehicle(v.id, v.name)}
+                                      className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1.5 rounded-lg transition-all cursor-pointer"
+                                      title="Delete Vehicle Listing"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={9} className="py-8 text-center text-slate-400 font-bold">
+                                  No vehicle listings found. Click "+ Add Vehicle / Driver" to list one in database.
+                                </td>
+                              </tr>
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -7646,6 +7927,167 @@ export default function AdminPanelPage() {
                   className="bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-xs px-6 py-2.5 rounded-xl shadow-lg transition-all hover:scale-[1.01] cursor-pointer flex items-center gap-2"
                 >
                   {addingDirectSpec ? 'Creating Profile...' : '✨ Create Specialist (Tagged Admin)'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== ADMIN DIRECT TRAVELS & VEHICLE CREATION MODAL ==================== */}
+      {adminAddVehicleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="fixed inset-0" onClick={() => setAdminAddVehicleModalOpen(false)} />
+          <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 z-10 flex flex-col max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 text-left">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3.5 mb-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
+                  <Car className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 uppercase tracking-wider">🚗 Add Travels &amp; Vehicle Listing</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Add verified driver or agency directly into the server database.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAdminAddVehicleModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <form onSubmit={handleAdminAddVehicle} className="space-y-3.5 text-xs text-slate-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Driver / Agency Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={adminVehForm.name}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g. Boisar Travels / Rahul Cab"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Vehicle Category *</label>
+                  <select
+                    value={adminVehForm.category}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600 cursor-pointer"
+                  >
+                    <option value="Car & Cab">Car &amp; Cab (Sedan/SUV)</option>
+                    <option value="Auto Rickshaw">Auto Rickshaw</option>
+                    <option value="Bike Rental">Bike Rental</option>
+                    <option value="Bus & Traveler">Bus &amp; Traveler (17-32 Seater)</option>
+                    <option value="Tempo & Shifting">Tempo &amp; Shifting (Tata Ace / Pickup)</option>
+                    <option value="Commercial">Commercial Trucks &amp; Heavy</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Vehicle Model</label>
+                  <input
+                    type="text"
+                    value={adminVehForm.vehicleModel}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, vehicleModel: e.target.value }))}
+                    placeholder="e.g. Maruti Ertiga AC / Tata Ace"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Capacity</label>
+                  <input
+                    type="text"
+                    value={adminVehForm.capacity}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, capacity: e.target.value }))}
+                    placeholder="e.g. 6+1 Passengers"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Rate / Fares</label>
+                  <input
+                    type="text"
+                    value={adminVehForm.ratePerKm}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, ratePerKm: e.target.value }))}
+                    placeholder="e.g. ₹13/km or ₹800/Trip"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Stand / Location</label>
+                  <input
+                    type="text"
+                    value={adminVehForm.location}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="e.g. Boisar West Station"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Contact Phone *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={adminVehForm.phone}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="e.g. 9820098200"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Availability Timing</label>
+                  <input
+                    type="text"
+                    value={adminVehForm.timing}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, timing: e.target.value }))}
+                    placeholder="e.g. 24x7 Available on Call"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Vehicle Photo URL (Optional)</label>
+                <input
+                  type="url"
+                  value={adminVehForm.image}
+                  onChange={e => setAdminVehForm(prev => ({ ...prev, image: e.target.value }))}
+                  placeholder="https://images.unsplash.com/... or leave blank for default"
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                />
+              </div>
+
+              {/* Submit */}
+              <div className="flex gap-3 pt-3 justify-end border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setAdminAddVehicleModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold cursor-pointer transition-colors text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-xs px-6 py-2 rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                >
+                  🚗 Save Vehicle to Database
                 </button>
               </div>
             </form>

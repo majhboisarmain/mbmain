@@ -5277,7 +5277,31 @@ const COMMON_SYNONYMS: Record<string, string[]> = {
   "music classes": ["Music Classes", "Dance & Music Classes"],
   "blood": ["Blood Donors", "Blood Banks", "Blood Donation Centers"],
   "blood donor": ["Blood Donors", "Blood Banks"],
-  "blood donation": ["Blood Donors", "Blood Banks", "Blood Donation Centers"]
+  "blood donation": ["Blood Donors", "Blood Banks", "Blood Donation Centers"],
+  "tempo": ["Tempo & Shifting", "Car & Bike Rentals", "Packers & Movers", "Travel Agencies & Tours"],
+  "temppo": ["Tempo & Shifting", "Car & Bike Rentals"],
+  "chota hathi": ["Tempo & Shifting", "Car & Bike Rentals"],
+  "shifting": ["Tempo & Shifting", "Packers & Movers"],
+  "car": ["Car & Bike Rentals", "Travel Agencies & Tours", "Automobile Garages & Repair"],
+  "cab": ["Car & Bike Rentals", "Travel Agencies & Tours"],
+  "taxi": ["Car & Bike Rentals", "Travel Agencies & Tours"],
+  "auto": ["Auto Rickshaw", "Car & Bike Rentals"],
+  "autorickshaw": ["Auto Rickshaw", "Car & Bike Rentals"],
+  "rickshaw": ["Auto Rickshaw", "Car & Bike Rentals"],
+  "riksha": ["Auto Rickshaw", "Car & Bike Rentals"],
+  "rikshaw": ["Auto Rickshaw", "Car & Bike Rentals"],
+  "bus": ["Bus & Traveler Rental", "Travel Agencies & Tours", "Car & Bike Rentals"],
+  "buses": ["Bus & Traveler Rental", "Travel Agencies & Tours"],
+  "traveler": ["Bus & Traveler Rental", "Travel Agencies & Tours"],
+  "traveller": ["Bus & Traveler Rental", "Travel Agencies & Tours"],
+  "travels": ["Car & Bike Rentals", "Travel Agencies & Tours", "Bus & Traveler Rental"],
+  "travel": ["Travel Agencies & Tours", "Car & Bike Rentals"],
+  "tour": ["Travel Agencies & Tours", "Resorts & Villas"],
+  "tours": ["Travel Agencies & Tours", "Resorts & Villas"],
+  "bike": ["Car & Bike Rentals", "Automobile Garages & Repair"],
+  "bike rental": ["Car & Bike Rentals"],
+  "scooty": ["Car & Bike Rentals", "Automobile Garages & Repair"],
+  "driver": ["Car & Bike Rentals", "Travel Agencies & Tours"]
 };
 
 /**

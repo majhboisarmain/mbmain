@@ -132,19 +132,17 @@ function FoodPageContent() {
     return 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&auto=format&fit=crop&q=80';
   };
 
-  // Auto-sync orderType when a restaurant is selected based on its supported serviceModes
+  // Lock background scrolling when modals are open
   useEffect(() => {
-    if (selectedRestoForMenu) {
-      const offered = selectedRestoForMenu.serviceModes || ['dinein', 'delivery'];
-      const hasDineIn = offered.includes('dinein');
-      const hasDelivery = offered.includes('delivery');
-      if (hasDineIn && !hasDelivery) {
-        setOrderType('dinein');
-      } else if (!hasDineIn && hasDelivery) {
-        setOrderType('delivery');
-      }
+    if (selectedRestoForMenu || isListModalOpen || isOrderSummaryOpen || isMyOrdersModalOpen || isStandeeModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
     }
-  }, [selectedRestoForMenu]);
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedRestoForMenu, isListModalOpen, isOrderSummaryOpen, isMyOrdersModalOpen, isStandeeModalOpen]);
 
   // Sync category & table from URL params
   useEffect(() => {
@@ -446,16 +444,16 @@ function FoodPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fffaf5] text-slate-800 font-sans pb-32 text-left">
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-32 text-left">
       
       {/* ── TOP LIVE DINE-IN TABLE ALERT BANNER (If scanned at table) ── */}
       {tableNumber && (
-        <div className="bg-slate-950 text-white px-4 py-2.5 shadow-md sticky top-0 z-40 border-b border-amber-500/40">
+        <div className="bg-slate-900 text-white px-4 py-2 shadow-xs sticky top-0 z-40 border-b border-slate-700">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span className="font-bold text-slate-300">Dine-In Active:</span>
-              <span className="bg-amber-400 text-slate-950 font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider text-[11px]">
+              <span className="font-medium text-slate-300">Dine-In Active:</span>
+              <span className="bg-white text-slate-900 font-black px-2.5 py-0.5 rounded-md uppercase tracking-wider text-[11px]">
                 🪑 Table #{tableNumber}
               </span>
             </div>
@@ -475,7 +473,7 @@ function FoodPageContent() {
                       setTableNumber(tempTableInput.trim());
                       setIsEditingTable(false);
                     }}
-                    className="bg-amber-400 text-slate-950 px-2 py-1 rounded font-black text-[10px]"
+                    className="bg-emerald-600 text-white px-2 py-1 rounded font-black text-[10px]"
                   >
                     Save
                   </button>
@@ -483,7 +481,7 @@ function FoodPageContent() {
               ) : (
                 <button
                   onClick={() => setIsEditingTable(true)}
-                  className="text-amber-300 hover:text-amber-200 text-[11px] font-bold flex items-center gap-1 underline cursor-pointer"
+                  className="text-slate-300 hover:text-white text-[11px] font-bold flex items-center gap-1 underline cursor-pointer"
                 >
                   <Edit3 className="w-3 h-3" /> Change Table
                 </button>
@@ -493,25 +491,25 @@ function FoodPageContent() {
         </div>
       )}
 
-      {/* ── CLEAN, INTUITIVE & MINIMAL FOOD HERO HEADER ── */}
-      <div className="bg-[#fffdfa] border-b border-orange-100/90 pt-3 pb-3.5 px-3 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto space-y-2.5">
+      {/* ── CLEAN FOOD HEADER ── */}
+      <div className="bg-white border-b border-slate-200 pt-3.5 pb-4 px-3 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto space-y-3">
           
           {/* Top Bar: Back, Title, & Action Buttons */}
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
               <Link 
                 href="/"
-                className="inline-flex items-center gap-1 text-xs font-black text-slate-700 hover:text-orange-600 bg-white px-2 py-1.5 rounded-xl border border-slate-200 shadow-2xs hover:shadow-xs transition-all cursor-pointer shrink-0"
+                className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 hover:text-slate-950 bg-slate-50 hover:bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200 transition-all cursor-pointer shrink-0"
                 title="Back to Home"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Back</span>
               </Link>
 
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-base sm:text-lg shrink-0">🍕</span>
-                <h1 className="text-xs sm:text-base font-black text-slate-900 leading-tight truncate">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-lg shrink-0">🍽️</span>
+                <h1 className="text-sm sm:text-base font-black text-slate-900 leading-tight truncate">
                   Dining &amp; Food Delivery in Boisar
                 </h1>
               </div>
@@ -522,24 +520,24 @@ function FoodPageContent() {
               {myFoodOrders.length > 0 && (
                 <button
                   onClick={() => setIsMyOrdersModalOpen(true)}
-                  className="inline-flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-black text-[10.5px] sm:text-xs px-2 sm:px-2.5 py-1.5 rounded-xl shadow-2xs transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1.5 bg-slate-900 text-white font-bold text-[11px] sm:text-xs px-3 py-1.5 rounded-xl shadow-2xs transition-all cursor-pointer"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                   <span>Orders ({myFoodOrders.length})</span>
                 </button>
               )}
             </div>
           </div>
 
-          {/* Unified Compact Search Bar with Integrated Veg Toggle */}
-          <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-400/20 shadow-2xs p-1 sm:p-1.5 pl-2.5 sm:pl-3 flex items-center gap-1.5 sm:gap-2 transition-all">
-            <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-orange-500 shrink-0" />
+          {/* Search Bar with Veg Toggle */}
+          <div className="bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-200 focus-within:border-slate-400 focus-within:bg-white p-1 sm:p-1.5 pl-3 flex items-center gap-2 transition-all">
+            <Search className="w-4 h-4 text-slate-400 shrink-0" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search dishes, pizza, thali, biryani, cafe..."
-              className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 outline-none min-w-0"
+              className="w-full bg-transparent text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none min-w-0"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className="p-1 text-slate-400 hover:text-slate-700 shrink-0">
@@ -547,31 +545,31 @@ function FoodPageContent() {
               </button>
             )}
 
-            {/* Compact Integrated Veg Toggle Pill */}
+            {/* Veg Toggle Pill */}
             <button
               type="button"
               onClick={() => setVegOnlyFilter(!vegOnlyFilter)}
-              className={`px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl font-black text-[10px] sm:text-xs flex items-center gap-1 sm:gap-1.5 border transition-all cursor-pointer shrink-0 whitespace-nowrap active:scale-95 ${
+              className={`px-2.5 py-1.5 rounded-lg sm:rounded-xl font-bold text-xs flex items-center gap-1.5 border transition-all cursor-pointer shrink-0 whitespace-nowrap active:scale-95 ${
                 vegOnlyFilter
-                  ? 'bg-emerald-600 border-emerald-700 text-white shadow-2xs'
-                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  ? 'bg-emerald-700 border-emerald-800 text-white shadow-2xs'
+                  : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
               }`}
             >
-              <span className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-xs border flex items-center justify-center shrink-0 ${vegOnlyFilter ? 'border-white bg-white' : 'border-emerald-600 bg-white'}`}>
-                <span className="w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-emerald-600" />
+              <span className={`w-3 h-3 rounded-xs border flex items-center justify-center shrink-0 ${vegOnlyFilter ? 'border-white bg-white' : 'border-emerald-600 bg-white'}`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
               </span>
               <span>Pure Veg</span>
             </button>
           </div>
 
-          {/* Combined Clean Filter Row: Area & Category Tabs */}
+          {/* Area & Category Filter Row */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide scroll-smooth">
-            {/* Area Dropdown / Filter Pill */}
+            {/* Area Dropdown */}
             <div className="relative shrink-0">
               <select
                 value={selectedArea}
                 onChange={(e) => setSelectedArea(e.target.value)}
-                className="appearance-none bg-orange-50 hover:bg-orange-100 text-orange-950 border border-orange-200/90 font-black text-[11px] sm:text-xs pl-5 sm:pl-6 pr-5 sm:pr-6 py-1.5 rounded-lg sm:rounded-xl cursor-pointer outline-none shadow-2xs transition-all"
+                className="appearance-none bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-bold text-xs pl-6 pr-6 py-1.5 rounded-xl cursor-pointer outline-none shadow-2xs transition-all"
               >
                 <option value="All">📍 All Areas</option>
                 <option value="Boisar West">📍 Boisar West</option>
@@ -581,8 +579,8 @@ function FoodPageContent() {
                 <option value="Navapur Road">📍 Navapur Road</option>
                 <option value="Kelwa Road">📍 Kelwa Road</option>
               </select>
-              <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-600 absolute left-1.5 sm:left-2 top-2 pointer-events-none" />
-              <ChevronRight className="w-3 h-3 text-orange-600 rotate-90 absolute right-1.5 sm:right-2 top-2.5 pointer-events-none" />
+              <MapPin className="w-3 h-3 text-slate-500 absolute left-2 top-2.5 pointer-events-none" />
+              <ChevronRight className="w-3 h-3 text-slate-500 rotate-90 absolute right-2 top-2.5 pointer-events-none" />
             </div>
 
             <div className="h-4 w-px bg-slate-200 shrink-0 mx-0.5" />
@@ -604,9 +602,9 @@ function FoodPageContent() {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`shrink-0 rounded-lg sm:rounded-xl px-2.5 sm:px-3 py-1.5 flex items-center gap-1 transition-all cursor-pointer font-bold text-[11px] sm:text-xs border shadow-2xs group active:scale-95 whitespace-nowrap ${
+                  className={`shrink-0 rounded-xl px-3 py-1.5 flex items-center gap-1.5 transition-all cursor-pointer font-bold text-xs border shadow-2xs group active:scale-95 whitespace-nowrap ${
                     isSelected
-                      ? 'bg-slate-900 text-white border-slate-900 font-black'
+                      ? 'bg-slate-900 text-white border-slate-900'
                       : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
                   }`}
                 >
@@ -616,7 +614,7 @@ function FoodPageContent() {
               );
             })}
 
-            <span className="text-[10.5px] sm:text-[11px] font-black text-slate-400 shrink-0 ml-auto pl-1 sm:pl-2">
+            <span className="text-xs font-bold text-slate-400 shrink-0 ml-auto pl-2">
               {filteredItems.length} spots
             </span>
           </div>
@@ -628,11 +626,11 @@ function FoodPageContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-5">
         
         {filteredItems.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredItems.map((resto) => (
               <div
                 key={resto.id}
-                className="bg-white rounded-3xl border border-orange-200/80 hover:border-orange-400 overflow-hidden shadow-2xs hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
+                className="bg-white rounded-2xl border border-slate-200 hover:border-slate-300 overflow-hidden shadow-2xs hover:shadow-md transition-all duration-200 flex flex-col justify-between group"
               >
                 <div>
                   {/* Photo with Offer Badge & Veg Pill */}
@@ -646,91 +644,91 @@ function FoodPageContent() {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
 
-                    {/* Offer Ribbon */}
+                    {/* Offer Badge */}
                     {resto.discount && (
                       <div className="absolute top-3 left-3">
-                        <span className="bg-gradient-to-r from-red-600 via-orange-600 to-amber-600 text-white text-[10px] sm:text-xs font-black px-2.5 py-1 rounded-lg shadow-md flex items-center gap-1 uppercase tracking-wider">
-                          <span>%</span>
+                        <span className="bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
                           <span>{resto.discount}</span>
                         </span>
                       </div>
                     )}
 
-                    {/* Veg / Non-Veg Indicator Top Right */}
+                    {/* Veg / Non-Veg Indicator */}
                     <div className="absolute top-3 right-3">
-                      <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border shadow-md flex items-center gap-1 ${
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border shadow-xs flex items-center gap-1 ${
                         resto.isPureVeg 
-                          ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500' 
-                          : 'bg-red-950/80 text-rose-300 border-rose-500'
+                          ? 'bg-white text-emerald-800 border-emerald-300' 
+                          : 'bg-white text-slate-800 border-slate-300'
                       }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${resto.isPureVeg ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${resto.isPureVeg ? 'bg-emerald-600' : 'bg-rose-600'}`} />
                         <span>{resto.isPureVeg ? 'Pure Veg' : 'Veg & Non-Veg'}</span>
                       </span>
                     </div>
 
                     {/* Category Label Pill */}
                     <div className="absolute bottom-2.5 left-3">
-                      <span className="bg-slate-950/80 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded-lg border border-white/20">
+                      <span className="bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-medium px-2 py-0.5 rounded-md">
                         {resto.categoryLabel}
                       </span>
                     </div>
                   </div>
 
                   {/* Card Content */}
-                  <div className="p-4 sm:p-5 space-y-3">
+                  <div className="p-4 space-y-2.5">
                     
                     {/* Name & Rating */}
                     <div className="flex items-start justify-between gap-2">
                       <div className="space-y-0.5 min-w-0">
                         <h3 
                           onClick={() => setSelectedRestoForMenu(resto)}
-                          className="text-base font-black text-slate-950 group-hover:text-orange-700 leading-tight cursor-pointer truncate"
+                          className="text-base font-bold text-slate-900 group-hover:text-teal-700 leading-tight cursor-pointer truncate"
                         >
                           {resto.name}
                         </h3>
-                        <p className="text-xs text-slate-500 font-bold flex items-center gap-1 truncate">
-                          <MapPin className="w-3 h-3 text-orange-600 shrink-0" />
+                        <p className="text-xs text-slate-500 font-medium flex items-center gap-1 truncate">
+                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
                           <span>{resto.location}</span>
                         </p>
                       </div>
 
-                      <div className="bg-emerald-600 text-white text-xs font-black px-2 py-1 rounded-xl shrink-0 flex items-center gap-1 shadow-2xs">
+                      <div className="bg-emerald-700 text-white text-xs font-bold px-2 py-0.5 rounded-lg shrink-0 flex items-center gap-1 shadow-2xs">
                         <span>★</span>
                         <span>{resto.rating}</span>
-                        <span className="text-[9.5px] text-emerald-200">({resto.reviewsCount})</span>
+                        <span className="text-[10px] text-emerald-200">({resto.reviewsCount})</span>
                       </div>
                     </div>
 
                     {/* Speciality Highlight */}
-                    <div className="bg-orange-50/80 border border-orange-200/70 rounded-2xl p-2.5">
-                      <span className="text-[10px] text-orange-900/60 font-black uppercase tracking-wider block">
-                        Must Try Speciality:
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">
+                        Must Try:
                       </span>
-                      <p className="text-xs font-black text-orange-950 truncate mt-0.5">
-                        🍽️ {resto.speciality}
+                      <p className="text-xs font-bold text-slate-800 truncate mt-0.5">
+                        {resto.speciality}
                       </p>
-                    {/* Service Modes Badges */}
-                    <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                      {(!resto.serviceModes || resto.serviceModes.includes('dinein')) && (
-                        <span className="bg-amber-50 text-amber-900 border border-amber-200 text-[9.5px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
-                          <span>🪑</span> Dine-In
-                        </span>
-                      )}
-                      {(!resto.serviceModes || resto.serviceModes.includes('delivery')) && (
-                        <span className="bg-emerald-50 text-emerald-900 border border-emerald-200 text-[9.5px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
-                          <span>🛵</span> Home Delivery
-                        </span>
-                      )}
-                    </div>
+                      
+                      {/* Service Modes Badges */}
+                      <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                        {(!resto.serviceModes || resto.serviceModes.includes('dinein')) && (
+                          <span className="bg-white text-slate-700 border border-slate-200 text-[10px] font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <span>🪑</span> Dine-In
+                          </span>
+                        )}
+                        {(!resto.serviceModes || resto.serviceModes.includes('delivery')) && (
+                          <span className="bg-white text-slate-700 border border-slate-200 text-[10px] font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <span>🛵</span> Home Delivery
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Price & Timings Row */}
-                    <div className="flex items-center justify-between text-xs text-slate-600 font-bold pt-1 border-t border-slate-100">
-                      <span className="text-slate-900 font-black">
-                        💰 {resto.priceForTwo}
+                    <div className="flex items-center justify-between text-xs text-slate-600 font-medium pt-1 border-t border-slate-100">
+                      <span className="text-slate-900 font-bold">
+                        {resto.priceForTwo}
                       </span>
-                      <span className="text-[10.5px] text-slate-500 font-medium flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-orange-500" />
+                      <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-slate-400" />
                         <span>{resto.timings.split('–')[0]}</span>
                       </span>
                     </div>
@@ -738,17 +736,17 @@ function FoodPageContent() {
                   </div>
                 </div>
 
-                {/* Bottom Action Buttons (Clean 50-50 Split for Customers) */}
-                <div className="p-4 sm:p-5 pt-0 grid grid-cols-2 gap-2">
+                {/* Bottom Action Buttons */}
+                <div className="p-4 pt-0 grid grid-cols-2 gap-2">
                   
                   {/* View Menu Button */}
                   <button
                     type="button"
                     onClick={() => setSelectedRestoForMenu(resto)}
-                    className="bg-orange-50 hover:bg-orange-100 text-orange-950 border border-orange-300 font-black text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                   >
-                    <Utensils className="w-3.5 h-3.5 text-orange-600" />
-                    <span>View Menu &amp; Order</span>
+                    <Utensils className="w-3.5 h-3.5 text-slate-600" />
+                    <span>View Menu</span>
                   </button>
 
                   {/* 1-Tap WhatsApp Table/Order Button */}
@@ -759,56 +757,49 @@ function FoodPageContent() {
                         setLoginModalOpen(true);
                         return;
                       }
-                      const text = `Hello ${resto.name}!\nI am looking at your menu on Majh Boisar (माझं बोईसर).\n\n🍽️ Place: ${resto.name}\n📍 Location: ${resto.location}\n\nPlease share table availability & today's specials.`;
-                      window.open(`https://wa.me/91${resto.whatsapp || resto.phone}?text=${encodeURIComponent(text)}`, '_blank');
+                      const msg = `Hi ${resto.name},\nI found your restaurant on Majh Boisar (माझं बोईसर).\n\nPlease share today's menu / offers.`;
+                      window.open(`https://wa.me/91${resto.whatsapp || resto.phone}?text=${encodeURIComponent(msg)}`, '_blank');
                     }}
-                    className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs py-2.5 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-xs"
                   >
-                    <MessageSquare className="w-3.5 h-3.5 fill-white" />
+                    <MessageSquare className="w-3.5 h-3.5" />
                     <span>WhatsApp</span>
                   </button>
 
                 </div>
-
               </div>
             ))}
           </div>
         ) : (
-          /* Empty State */
-          <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8 space-y-4">
-            <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-full flex items-center justify-center mx-auto text-3xl">
-              🍽️
-            </div>
-            <h3 className="text-lg font-black text-slate-900">No Food Outlets Found</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              We couldn&apos;t find any food joints matching your current search &amp; filter criteria.
-            </p>
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center space-y-3">
+            <Utensils className="w-8 h-8 text-slate-400 mx-auto" />
+            <p className="text-sm font-bold text-slate-700">No restaurants match your search or filter.</p>
             <button
               onClick={() => {
+                setSearchQuery('');
                 setSelectedCategory('All');
                 setSelectedArea('All');
                 setVegOnlyFilter(false);
-                setSearchQuery('');
               }}
-              className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-black px-5 py-2.5 rounded-xl transition-all shadow-md cursor-pointer"
+              className="text-xs font-bold text-blue-600 hover:underline cursor-pointer"
             >
-              Clear All Filters
+              Reset all filters
             </button>
           </div>
         )}
 
-        {/* 🍲 List Your Restaurant / Food Joint Banner (Placed at the very bottom) */}
-        <div className="bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 border border-orange-200/90 rounded-3xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs mt-8 sm:mt-10 text-left">
+        {/* 🍲 List Your Restaurant / Food Joint Banner */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs mt-8 sm:mt-10 text-left">
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-12 h-12 rounded-2xl bg-orange-500 text-white flex items-center justify-center text-2xl shrink-0 shadow-sm">
+            <div className="w-11 h-11 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xl shrink-0 shadow-xs">
               👨‍🍳
             </div>
             <div>
-              <h4 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
-                Own a Restaurant, Cafe or Food Outlet in Boisar?
+              <h4 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">
+                Own a Restaurant, Cafe or Food Joint in Boisar?
               </h4>
-              <p className="text-xs text-slate-600 font-medium mt-1">
-                List your menu, accept direct WhatsApp delivery orders, and reach 10,000+ local food lovers with 0% commission.
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                List your digital menu, accept direct WhatsApp delivery orders, and reach local foodies across Boisar with 0% commission.
               </p>
             </div>
           </div>
@@ -822,48 +813,19 @@ function FoodPageContent() {
               }
               setIsListModalOpen(true);
             }}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 active:scale-95 text-white font-black text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-md transition-all cursor-pointer shrink-0 whitespace-nowrap"
+            className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-black active:scale-95 text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer shrink-0 whitespace-nowrap"
           >
-            <Plus className="w-4 h-4 text-amber-200" />
+            <Plus className="w-4 h-4 text-emerald-400" />
             <span>+ List Your Food Joint (Free)</span>
           </button>
         </div>
 
       </div>
 
-      {/* ── FLOATING STICKY DINE-IN CART BAR (Appears when items are added) ── */}
-      {totalCartCount > 0 && (
-        <div className="fixed bottom-4 inset-x-4 max-w-lg mx-auto z-50 animate-in slide-in-from-bottom-5 duration-300">
-          <div className="bg-slate-950 text-white rounded-2xl p-3 sm:p-3.5 shadow-2xl border border-amber-400/40 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
-                <ShoppingBag className="w-5 h-5" />
-              </div>
-              <div className="text-left leading-tight">
-                <span className="text-[10px] text-amber-300 font-bold uppercase tracking-wider block">
-                  {tableNumber ? `Table #${tableNumber} Order` : 'Dine-In Order'}
-                </span>
-                <span className="text-sm font-black text-white">
-                  {totalCartCount} {totalCartCount === 1 ? 'Item' : 'Items'} • ₹{totalCartPrice}
-                </span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setIsOrderSummaryOpen(true)}
-              className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-            >
-              <span>View Order</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* ── DETAILED DISH MENU & DINE-IN / DELIVERY ORDERING MODAL ── */}
       {selectedRestoForMenu && (
-        <div className="fixed inset-0 z-[650] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-2.5 sm:p-4 animate-in fade-in duration-200 text-left">
-          <div className="bg-white rounded-3xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-hidden my-auto max-h-[88vh] sm:max-h-[85vh] flex flex-col">
+        <div className="fixed inset-0 z-[650] flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-2.5 sm:p-4 animate-in fade-in duration-200 text-left">
+          <div className="bg-white rounded-2xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-hidden my-auto max-h-[88vh] sm:max-h-[85vh] flex flex-col">
             
             {/* Header with Photo Banner */}
             <div className="relative h-36 sm:h-44 w-full bg-slate-900 shrink-0">
@@ -872,7 +834,7 @@ function FoodPageContent() {
                 alt={selectedRestoForMenu.name} 
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent" />
 
               <button
                 onClick={() => setSelectedRestoForMenu(null)}
@@ -881,7 +843,7 @@ function FoodPageContent() {
                 <X className="w-4 h-4" />
               </button>
 
-              {/* Dynamic Service Mode Switcher / Badge */}
+              {/* Service Mode Switcher */}
               {(() => {
                 const modes = selectedRestoForMenu.serviceModes || ['dinein', 'delivery'];
                 const hasDineIn = modes.includes('dinein');
@@ -889,13 +851,13 @@ function FoodPageContent() {
 
                 if (hasDineIn && hasDelivery) {
                   return (
-                    <div className="absolute top-3 left-3 bg-black/75 backdrop-blur-md p-1 rounded-2xl flex items-center gap-1 border border-white/20 shadow-xl z-10">
+                    <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-xs p-1 rounded-xl flex items-center gap-1 border border-white/20 shadow-md z-10">
                       <button
                         type="button"
                         onClick={() => setOrderType('dinein')}
-                        className={`text-[10px] sm:text-xs font-black px-2.5 sm:px-3 py-1 rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                        className={`text-xs font-bold px-3 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
                           orderType === 'dinein'
-                            ? 'bg-amber-400 text-slate-950 shadow-md scale-102 font-black'
+                            ? 'bg-white text-slate-900 shadow-xs'
                             : 'text-white/80 hover:text-white'
                         }`}
                       >
@@ -905,9 +867,9 @@ function FoodPageContent() {
                       <button
                         type="button"
                         onClick={() => setOrderType('delivery')}
-                        className={`text-[10px] sm:text-xs font-black px-2.5 sm:px-3 py-1 rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                        className={`text-xs font-bold px-3 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
                           orderType === 'delivery'
-                            ? 'bg-emerald-500 text-white shadow-md scale-102 font-black'
+                            ? 'bg-white text-slate-900 shadow-xs'
                             : 'text-white/80 hover:text-white'
                         }`}
                       >
@@ -921,9 +883,9 @@ function FoodPageContent() {
                 if (hasDineIn && !hasDelivery) {
                   return (
                     <div className="absolute top-3 left-3 z-10">
-                      <span className="bg-amber-400 text-slate-950 text-[10px] sm:text-xs font-black px-3 py-1.5 rounded-xl shadow-lg border border-amber-500/40 flex items-center gap-1.5 uppercase tracking-wider">
+                      <span className="bg-white text-slate-900 text-xs font-bold px-3 py-1 rounded-lg shadow-md flex items-center gap-1.5">
                         <span>🪑</span>
-                        <span>{tableNumber ? `Dine-In Table #${tableNumber}` : 'Dine-In Seating Only'}</span>
+                        <span>{tableNumber ? `Dine-In Table #${tableNumber}` : 'Dine-In Only'}</span>
                       </span>
                     </div>
                   );
@@ -931,7 +893,7 @@ function FoodPageContent() {
 
                 return (
                   <div className="absolute top-3 left-3 z-10">
-                    <span className="bg-emerald-500 text-white text-[10px] sm:text-xs font-black px-3 py-1.5 rounded-xl shadow-lg border border-emerald-600/40 flex items-center gap-1.5 uppercase tracking-wider">
+                    <span className="bg-white text-slate-900 text-xs font-bold px-3 py-1 rounded-lg shadow-md flex items-center gap-1.5">
                       <span>🛵</span>
                       <span>Home Delivery Only</span>
                     </span>
@@ -939,73 +901,34 @@ function FoodPageContent() {
                 );
               })()}
 
-              <div className="absolute bottom-2.5 left-3.5 right-3.5 text-white space-y-0.5">
-                <span className="bg-orange-600 text-white text-[8.5px] font-black uppercase px-2 py-0.5 rounded shadow-sm">
+              <div className="absolute bottom-3 left-3.5 right-3.5 text-white space-y-0.5">
+                <span className="bg-slate-800/90 text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded">
                   {selectedRestoForMenu.categoryLabel}
                 </span>
-                <h2 className="text-lg sm:text-2xl font-black leading-tight truncate">
+                <h2 className="text-lg sm:text-xl font-bold leading-tight truncate">
                   {selectedRestoForMenu.name}
                 </h2>
-                <p className="text-[11px] sm:text-xs text-white/80 font-bold flex items-center gap-1">
-                  <MapPin className="w-3 h-3 text-orange-400" />
+                <p className="text-xs text-white/80 font-medium flex items-center gap-1.5">
+                  <MapPin className="w-3 h-3 text-slate-300" />
                   <span>{selectedRestoForMenu.location}</span>
                   <span>•</span>
-                  <span className="text-amber-400 font-black">★ {selectedRestoForMenu.rating}</span>
+                  <span className="text-emerald-400 font-bold">★ {selectedRestoForMenu.rating}</span>
                 </p>
               </div>
             </div>
 
-            {/* Quick Service Helper Pills (Call Waiter / Bill for Dine-in OR Delivery Banner) */}
-            {orderType === 'dinein' ? (
-              <div className="bg-amber-50/90 border-b border-amber-200 px-3.5 py-1.5 flex items-center justify-between gap-2 overflow-x-auto scrollbar-none shrink-0 animate-in fade-in duration-150">
-                <span className="text-[10px] sm:text-[10.5px] font-black text-amber-950 shrink-0">
-                  🛎️ Table Service:
-                </span>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => handleCallWaiter(selectedRestoForMenu)}
-                    className="bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 text-[10px] sm:text-[10.5px] font-extrabold px-2.5 py-1 rounded-xl flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
-                  >
-                    <Bell className="w-3 h-3 text-amber-600" />
-                    <span>Call Waiter / Water</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRequestBill(selectedRestoForMenu)}
-                    className="bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 text-[10px] sm:text-[10.5px] font-extrabold px-2.5 py-1 rounded-xl flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
-                  >
-                    <Receipt className="w-3 h-3 text-amber-600" />
-                    <span>Request Bill / UPI</span>
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-emerald-50/90 border-b border-emerald-200 px-3.5 py-1.5 flex items-center justify-between gap-2 text-xs font-bold text-emerald-950 shrink-0 animate-in fade-in duration-150">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm">🛵</span>
-                  <span className="text-[10.5px] sm:text-[11px] font-black">Home Delivery Mode Active</span>
-                </div>
-                <span className="text-[9.5px] sm:text-[10.5px] text-emerald-700 bg-white px-2 py-0.5 rounded-lg border border-emerald-200 font-extrabold">
-                  ⚡ Fast Delivery in Boisar
-                </span>
-              </div>
-            )}
-
-            {/* Modal Body: Popular Dishes Menu & Details (Fully Scrollable) */}
-            <div className="p-3.5 sm:p-5 overflow-y-auto space-y-3.5 flex-1 min-h-0">
+            {/* Modal Body: Popular Dishes Menu */}
+            <div className="p-3.5 sm:p-4 overflow-y-auto space-y-3 flex-1 min-h-0">
               
-              {/* Popular Dishes List with Add To Table Order Buttons */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
-                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                     <span>🍽️</span> {orderType === 'dinein' ? 'Digital Menu & Table Ordering' : 'Delivery Menu & Ordering'}
                   </h4>
-                  <span className="text-[9.5px] sm:text-[10px] text-slate-500 font-bold">1-Tap Add to WhatsApp Order</span>
+                  <span className="text-[10px] text-slate-500 font-medium">1-Tap Add to WhatsApp Order</span>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {selectedRestoForMenu.popularDishes.map((dish, idx) => {
                     const cartKey = `${selectedRestoForMenu.id}__${dish.name}`;
                     const inCart = cart[cartKey];
@@ -1014,56 +937,55 @@ function FoodPageContent() {
                     return (
                       <div 
                         key={idx}
-                        className="p-3 sm:p-3.5 rounded-2xl border border-slate-200/90 bg-white hover:border-orange-300 transition-all flex items-start justify-between gap-3 shadow-2xs group"
+                        className="p-3 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all flex items-start justify-between gap-3 shadow-2xs group"
                       >
                         <div className="space-y-1 min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <span className={`w-3.5 h-3.5 rounded-xs border flex items-center justify-center shrink-0 ${dish.isVeg ? 'border-emerald-600 bg-white' : 'border-rose-600 bg-white'}`}>
                               <span className={`w-1.5 h-1.5 rounded-full ${dish.isVeg ? 'bg-emerald-600' : 'bg-rose-600'}`} />
                             </span>
-                            <h5 className="text-xs sm:text-sm font-black text-slate-900 leading-snug">
+                            <h5 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug">
                               {dish.name}
                             </h5>
                           </div>
                           {dish.desc && (
-                            <p className="text-[10.5px] sm:text-[11.5px] text-slate-500 font-medium leading-tight line-clamp-2">
+                            <p className="text-[11px] text-slate-500 font-normal leading-tight line-clamp-2">
                               {dish.desc}
                             </p>
                           )}
-                          <span className="text-xs sm:text-sm font-black text-slate-950 block pt-0.5">
+                          <span className="text-xs font-bold text-slate-900 block pt-0.5">
                             {dish.price}
                           </span>
                         </div>
 
                         {/* Dish Food Thumbnail & Add/Counter Action */}
                         <div className="relative shrink-0 flex flex-col items-center pb-2">
-                          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border border-slate-200 shadow-2xs bg-slate-100 relative">
+                          <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 relative">
                             <img
                               src={dishImg}
                               alt={dish.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                           </div>
 
                           {/* Add / Counter Button */}
                           <div className="absolute -bottom-1 z-10">
                             {inCart ? (
-                              <div className="flex items-center bg-slate-950 text-white rounded-xl p-0.5 shadow-md border border-white/20">
+                              <div className="flex items-center bg-slate-900 text-white rounded-lg p-0.5 shadow-xs">
                                 <button
                                   type="button"
                                   onClick={() => removeFromCart(selectedRestoForMenu.id, dish.name)}
-                                  className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 font-black cursor-pointer transition-colors"
+                                  className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-white font-bold cursor-pointer transition-colors"
                                 >
                                   <Minus className="w-3 h-3" />
                                 </button>
-                                <span className="w-6 sm:w-7 text-center font-black text-xs text-amber-300">
+                                <span className="w-6 text-center font-bold text-xs text-white">
                                   {inCart.count}
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => addToCart(selectedRestoForMenu, dish)}
-                                  className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 font-black cursor-pointer transition-colors"
+                                  className="w-6 h-6 flex items-center justify-center rounded bg-slate-800 hover:bg-slate-700 text-white font-bold cursor-pointer transition-colors"
                                 >
                                   <Plus className="w-3 h-3" />
                                 </button>
@@ -1072,9 +994,9 @@ function FoodPageContent() {
                               <button
                                 type="button"
                                 onClick={() => addToCart(selectedRestoForMenu, dish)}
-                                className="bg-white hover:bg-orange-50 text-orange-700 font-black text-xs px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-xl border border-orange-300 transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-md hover:shadow-lg"
+                                className="bg-white hover:bg-slate-50 text-emerald-700 font-bold text-xs px-3 py-1 rounded-lg border border-emerald-300 transition-all flex items-center gap-1 cursor-pointer shadow-xs active:scale-95"
                               >
-                                <Plus className="w-3 h-3 text-orange-600 stroke-[3]" />
+                                <Plus className="w-3 h-3 text-emerald-600 stroke-[3]" />
                                 <span>ADD</span>
                               </button>
                             )}
@@ -1085,22 +1007,22 @@ function FoodPageContent() {
                   })}
                 </div>
 
-                {/* ➕ ADD CUSTOM DISH / OFF-MENU ITEM */}
+                {/* Custom Dish / Special Request */}
                 <div className="pt-2">
                   {!isAddingCustomDish ? (
                     <button
                       type="button"
                       onClick={() => setIsAddingCustomDish(true)}
-                      className="w-full bg-slate-50 hover:bg-slate-100 border border-dashed border-slate-300 hover:border-orange-400 p-3 rounded-2xl text-xs font-black text-slate-700 hover:text-orange-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                      className="w-full bg-slate-50 hover:bg-slate-100 border border-dashed border-slate-300 p-2.5 rounded-xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                     >
-                      <Plus className="w-4 h-4 text-orange-600" />
-                      <span>+ Add Custom Dish or Special Request to Order</span>
+                      <Plus className="w-3.5 h-3.5 text-slate-600" />
+                      <span>+ Add Custom Dish or Special Request</span>
                     </button>
                   ) : (
-                    <div className="bg-orange-50/90 border border-orange-200 p-3.5 rounded-2xl space-y-3 animate-in fade-in duration-150">
+                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl space-y-2.5 animate-in fade-in duration-150">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-black text-orange-950 flex items-center gap-1.5">
-                          <span>✨</span> Add Custom Item / Special Dish
+                        <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                          <span>✨</span> Add Custom Item / Request
                         </span>
                         <button
                           type="button"
@@ -1118,55 +1040,43 @@ function FoodPageContent() {
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <input
                           type="text"
-                          placeholder="Dish name (e.g. Extra Butter Pav, Sweet Lassi)"
                           value={customDishName}
                           onChange={(e) => setCustomDishName(e.target.value)}
-                          className="sm:col-span-2 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-orange-500"
+                          placeholder="Dish name / description"
+                          className="sm:col-span-2 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-800 outline-none"
                         />
                         <input
-                          type="number"
-                          placeholder="Price ₹ (e.g. 50)"
+                          type="text"
                           value={customDishPrice}
                           onChange={(e) => setCustomDishPrice(e.target.value)}
-                          className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-orange-500"
+                          placeholder="Price (e.g. ₹150)"
+                          className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-800 outline-none"
                         />
                       </div>
 
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setCustomDishIsVeg(true)}
-                            className={`px-2.5 py-1 rounded-lg text-[10px] font-black border cursor-pointer ${
-                              customDishIsVeg ? 'bg-emerald-100 text-emerald-900 border-emerald-400' : 'bg-white text-slate-600 border-slate-200'
-                            }`}
-                          >
-                            🟢 Pure Veg
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setCustomDishIsVeg(false)}
-                            className={`px-2.5 py-1 rounded-lg text-[10px] font-black border cursor-pointer ${
-                              !customDishIsVeg ? 'bg-rose-100 text-rose-900 border-rose-400' : 'bg-white text-slate-600 border-slate-200'
-                            }`}
-                          >
-                            🔴 Non-Veg
-                          </button>
-                        </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <label className="flex items-center gap-1.5 text-xs font-bold text-slate-700 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={customDishIsVeg}
+                            onChange={(e) => setCustomDishIsVeg(e.target.checked)}
+                            className="rounded text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5"
+                          />
+                          <span>Pure Veg Dish</span>
+                        </label>
 
                         <button
                           type="button"
                           onClick={() => {
                             if (!customDishName.trim()) {
-                              alert('Please enter dish name.');
+                              alert('Please enter a dish name.');
                               return;
                             }
-                            const priceNum = parseInt(customDishPrice, 10) || 100;
                             const customDish = {
                               name: customDishName.trim(),
-                              price: `₹${priceNum}`,
+                              price: customDishPrice.trim() ? (customDishPrice.includes('₹') ? customDishPrice.trim() : `₹${customDishPrice.trim()}`) : '₹100',
                               isVeg: customDishIsVeg,
-                              desc: 'Custom item added by diner'
+                              desc: 'Custom special order item'
                             };
                             addToCart(selectedRestoForMenu, customDish);
                             setCustomDishName('');
@@ -1174,9 +1084,9 @@ function FoodPageContent() {
                             setIsAddingCustomDish(false);
                             showToast(`Added "${customDish.name}" to your order!`, 'success');
                           }}
-                          className="bg-orange-600 hover:bg-orange-700 text-white text-xs font-black px-4 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
+                          className="bg-slate-900 hover:bg-black text-white text-xs font-bold px-3.5 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer active:scale-95"
                         >
-                          Add to Order 🛒
+                          Add to Order
                         </button>
                       </div>
                     </div>
@@ -1186,21 +1096,17 @@ function FoodPageContent() {
 
             </div>
 
-            {/* Modal Bottom Action Bar (Fixed, Always Visible & Never Cut Off) */}
-            <div className="p-3 sm:p-4 border-t border-slate-200 bg-white flex items-center justify-between gap-2 shrink-0 shadow-lg z-20">
+            {/* Modal Bottom Action Bar */}
+            <div className="p-3 sm:p-4 border-t border-slate-200 bg-white flex items-center justify-between gap-2 shrink-0 shadow-sm z-20">
               {totalCartCount > 0 ? (
                 <button
                   type="button"
                   onClick={() => setIsOrderSummaryOpen(true)}
-                  className={`w-full text-white font-black text-xs sm:text-sm py-3 rounded-2xl text-center transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-98 ${
-                    orderType === 'delivery'
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500'
-                      : 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500'
-                  }`}
+                  className="w-full bg-slate-900 hover:bg-black text-white font-bold text-xs sm:text-sm py-3 rounded-xl text-center transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                 >
-                  <ShoppingBag className="w-4 h-4 text-amber-300" />
+                  <ShoppingBag className="w-4 h-4 text-emerald-400" />
                   <span>
-                    {orderType === 'delivery' ? '🛵 Proceed to Home Delivery' : '🪑 View Table Order'} ({totalCartCount} items • ₹{totalCartPrice})
+                    {orderType === 'delivery' ? 'Proceed to Delivery' : 'View Table Order'} ({totalCartCount} items • ₹{totalCartPrice})
                   </span>
                 </button>
               ) : (
@@ -1213,9 +1119,9 @@ function FoodPageContent() {
                         setLoginModalOpen(true);
                       }
                     }}
-                    className="flex-1 bg-slate-900 hover:bg-black text-white font-black text-xs py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-center transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-xs py-2.5 sm:py-3 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                   >
-                    <Phone className="w-3.5 h-3.5" />
+                    <Phone className="w-3.5 h-3.5 text-slate-700" />
                     <span>Call Desk</span>
                   </a>
 
@@ -1229,9 +1135,9 @@ function FoodPageContent() {
                       const text = `Hello ${selectedRestoForMenu.name}!\nI am viewing your digital menu on Majh Boisar (माझं बोईसर).\n\n🍽️ Place: ${selectedRestoForMenu.name}\n📍 Location: ${selectedRestoForMenu.location}\n\nPlease share menu & current offers.`;
                       window.open(`https://wa.me/91${selectedRestoForMenu.whatsapp || selectedRestoForMenu.phone}?text=${encodeURIComponent(text)}`, '_blank');
                     }}
-                    className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-center transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 sm:py-3 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                   >
-                    <MessageSquare className="w-3.5 h-3.5 fill-white" />
+                    <MessageSquare className="w-3.5 h-3.5" />
                     <span>WhatsApp Inquiry</span>
                   </button>
                 </>

@@ -962,6 +962,115 @@ function DashboardContent() {
     }
   };
 
+  // ── HOTEL ROOMS OCCUPANCY BOARD (Room, Customer, Check In, Duration, Amount, Status) ──
+  const [hotelRoomBoard, setHotelRoomBoard] = useState<Array<{
+    roomNo: string;
+    customer: string;
+    checkIn: string;
+    duration: string;
+    amount: string;
+    status: 'Booked' | 'Available';
+  }>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('majh_boisar_hotel_room_board');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {}
+      }
+    }
+    return [
+      { roomNo: '101', customer: 'Amit', checkIn: '2:00 PM', duration: '6 Hours', amount: '₹800', status: 'Booked' },
+      { roomNo: '102', customer: '–', checkIn: '–', duration: '–', amount: '–', status: 'Available' },
+      { roomNo: '103', customer: 'Vikram', checkIn: '3:00 PM', duration: '3 Hours', amount: '₹500', status: 'Booked' },
+      { roomNo: '104', customer: '–', checkIn: '–', duration: '–', amount: '–', status: 'Available' },
+      { roomNo: '105', customer: 'Rahul Sharma', checkIn: '1:30 PM', duration: 'Night Stay', amount: '₹1,800', status: 'Booked' },
+      { roomNo: '106', customer: '–', checkIn: '–', duration: '–', amount: '–', status: 'Available' },
+    ];
+  });
+
+  const [bookingModalRoom, setBookingModalRoom] = useState<string | null>(null);
+  const [bookRoomCustomer, setBookRoomCustomer] = useState('');
+  const [bookRoomCheckIn, setBookRoomCheckIn] = useState('02:00 PM');
+  const [bookRoomDuration, setBookRoomDuration] = useState('3 Hours');
+  const [bookRoomAmount, setBookRoomAmount] = useState('600');
+  const [newRoomNoInput, setNewRoomNoInput] = useState('');
+  const [showAddRoomModal, setShowAddRoomModal] = useState(false);
+
+  const saveRoomBoard = (updated: typeof hotelRoomBoard) => {
+    setHotelRoomBoard(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('majh_boisar_hotel_room_board', JSON.stringify(updated));
+    }
+  };
+
+  const handleVacateBoardRoom = (roomNo: string) => {
+    const updated = hotelRoomBoard.map(r => r.roomNo === roomNo ? {
+      ...r,
+      customer: '–',
+      checkIn: '–',
+      duration: '–',
+      amount: '–',
+      status: 'Available' as const
+    } : r);
+    saveRoomBoard(updated);
+    showToast(`🟢 Room ${roomNo} marked Available (Vacated / Checked-Out).`, 'info', 3000);
+  };
+
+  const handleConfirmRoomBooking = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookingModalRoom) return;
+    if (!bookRoomCustomer.trim()) {
+      showToast('Please enter Customer / Guest Name', 'error');
+      return;
+    }
+    const updated = hotelRoomBoard.map(r => r.roomNo === bookingModalRoom ? {
+      ...r,
+      customer: bookRoomCustomer.trim(),
+      checkIn: bookRoomCheckIn || 'Just Now',
+      duration: bookRoomDuration || '3 Hours',
+      amount: bookRoomAmount.startsWith('₹') ? bookRoomAmount : `₹${bookRoomAmount}`,
+      status: 'Booked' as const
+    } : r);
+    saveRoomBoard(updated);
+    setBookingModalRoom(null);
+    setBookRoomCustomer('');
+    showToast(`🎉 Room ${bookingModalRoom} Booked for ${bookRoomCustomer.trim()}!`, 'success', 3500);
+  };
+
+  const handleAddNewRoomToBoard = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRoomNoInput.trim()) return;
+    const cleanRoom = newRoomNoInput.trim();
+    if (hotelRoomBoard.some(r => r.roomNo.toLowerCase() === cleanRoom.toLowerCase())) {
+      showToast(`Room ${cleanRoom} already exists on board!`, 'error');
+      return;
+    }
+    const updated = [...hotelRoomBoard, {
+      roomNo: cleanRoom,
+      customer: '–',
+      checkIn: '–',
+      duration: '–',
+      amount: '–',
+      status: 'Available' as const
+    }];
+    saveRoomBoard(updated);
+    setNewRoomNoInput('');
+    setShowAddRoomModal(false);
+    showToast(`✅ Room ${cleanRoom} added to Room Board!`, 'success', 3000);
+  };
+
+  const handleDeleteBoardRoom = (roomNo: string) => {
+    if (hotelRoomBoard.length <= 1) {
+      showToast('At least 1 room is required.', 'error');
+      return;
+    }
+    const updated = hotelRoomBoard.filter(r => r.roomNo !== roomNo);
+    saveRoomBoard(updated);
+    showToast(`Room ${roomNo} removed from board.`, 'info', 2500);
+  };
+
   // ── LIVE KITCHEN ORDER & TABLE KDS STATE FOR RESTAURANTS / CAFES ──
   const [kitchenAudioEnabled, setKitchenAudioEnabled] = useState(true);
   const [kitchenOrdersFilter, setKitchenOrdersFilter] = useState<'all' | 'dinein' | 'delivery' | 'new' | 'cooking' | 'ready' | 'history'>('all');
@@ -4975,6 +5084,251 @@ function DashboardContent() {
                             </div>
                           </div>
                         </div>
+
+                        {/* ── LIVE HOTEL ROOM OCCUPANCY & STATUS BOARD (AS REQUESTED) ── */}
+                        <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden text-left">
+                          <div className="p-3.5 sm:p-4 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-base">🏨</span>
+                              <div>
+                                <h5 className="font-black text-xs sm:text-sm text-slate-900 leading-tight">Live Room Status &amp; Occupancy Board</h5>
+                                <p className="text-[10px] text-slate-500 font-medium">Real-time room availability, active guest check-in &amp; stay duration</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="text-[10px] font-bold px-2.5 py-1 rounded-xl bg-purple-50 text-purple-900 border border-purple-200">
+                                <span>{hotelRoomBoard.filter(r => r.status === 'Booked').length} Booked</span> • <span className="text-emerald-700 font-extrabold">{hotelRoomBoard.filter(r => r.status === 'Available').length} Available</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setShowAddRoomModal(true)}
+                                className="bg-purple-900 hover:bg-purple-950 text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-2xs cursor-pointer flex items-center gap-1 transition-all"
+                              >
+                                + Add Room
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse text-xs">
+                              <thead>
+                                <tr className="bg-[#f4f3fb] border-b border-slate-200/80 text-slate-700 text-[11px] font-black">
+                                  <th className="py-2.5 px-4">Room</th>
+                                  <th className="py-2.5 px-4 text-center">Customer</th>
+                                  <th className="py-2.5 px-4 text-center">Check In</th>
+                                  <th className="py-2.5 px-4 text-center">Duration</th>
+                                  <th className="py-2.5 px-4 text-center">Amount</th>
+                                  <th className="py-2.5 px-4 text-center">Status</th>
+                                  <th className="py-2.5 px-4 text-right">Quick Action</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                {hotelRoomBoard.map((row) => {
+                                  const isBooked = row.status === 'Booked';
+                                  return (
+                                    <tr key={row.roomNo} className="hover:bg-slate-50/80 transition-colors">
+                                      <td className="py-3 px-4 font-black text-slate-900 text-xs sm:text-sm">
+                                        {row.roomNo}
+                                      </td>
+                                      <td className="py-3 px-4 text-center font-bold text-slate-800">
+                                        {row.customer}
+                                      </td>
+                                      <td className="py-3 px-4 text-center text-slate-700 font-medium font-mono text-[11px]">
+                                        {row.checkIn}
+                                      </td>
+                                      <td className="py-3 px-4 text-center text-slate-700 font-medium">
+                                        {row.duration}
+                                      </td>
+                                      <td className="py-3 px-4 text-center font-black text-slate-900">
+                                        {row.amount}
+                                      </td>
+                                      <td className="py-3 px-4 text-center">
+                                        <span className={`inline-block font-extrabold text-[11px] px-2.5 py-0.5 rounded-md ${
+                                          isBooked 
+                                            ? 'text-rose-600 font-black' 
+                                            : 'text-emerald-600 font-black'
+                                        }`}>
+                                          {isBooked ? 'Booked' : 'Available'}
+                                        </span>
+                                      </td>
+                                      <td className="py-3 px-4 text-right">
+                                        <div className="flex items-center justify-end gap-1.5">
+                                          {isBooked ? (
+                                            <button
+                                              type="button"
+                                              onClick={() => handleVacateBoardRoom(row.roomNo)}
+                                              className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-black cursor-pointer transition-colors shadow-2xs"
+                                              title="Check-out customer & mark room available"
+                                            >
+                                              Vacate
+                                            </button>
+                                          ) : (
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setBookingModalRoom(row.roomNo);
+                                                setBookRoomCustomer('');
+                                              }}
+                                              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-black cursor-pointer transition-colors shadow-2xs"
+                                              title="Book this room for walk-in guest"
+                                            >
+                                              + Book
+                                            </button>
+                                          )}
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDeleteBoardRoom(row.roomNo)}
+                                            className="p-1 text-slate-300 hover:text-rose-500 rounded cursor-pointer"
+                                            title="Delete room from board"
+                                          >
+                                            ✕
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Quick Booking Modal for Room Board */}
+                        {bookingModalRoom && (
+                          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                            <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-200 text-left animate-in fade-in">
+                              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xl">🚪</span>
+                                  <div>
+                                    <h4 className="font-black text-sm text-slate-900">Check-In Guest — Room {bookingModalRoom}</h4>
+                                    <p className="text-[10px] text-slate-500 font-medium">Record quick walk-in reservation</p>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setBookingModalRoom(null)}
+                                  className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+
+                              <form onSubmit={handleConfirmRoomBooking} className="space-y-3">
+                                <div>
+                                  <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider mb-1">Customer / Guest Name *</label>
+                                  <input
+                                    type="text"
+                                    required
+                                    value={bookRoomCustomer}
+                                    onChange={e => setBookRoomCustomer(e.target.value)}
+                                    placeholder="e.g. Amit Sharma"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-purple-600"
+                                  />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider mb-1">Check-In Time</label>
+                                    <input
+                                      type="text"
+                                      value={bookRoomCheckIn}
+                                      onChange={e => setBookRoomCheckIn(e.target.value)}
+                                      placeholder="e.g. 2:00 PM"
+                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-purple-600"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider mb-1">Duration</label>
+                                    <select
+                                      value={bookRoomDuration}
+                                      onChange={e => setBookRoomDuration(e.target.value)}
+                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-purple-600 cursor-pointer"
+                                    >
+                                      <option value="3 Hours">3 Hours</option>
+                                      <option value="6 Hours">6 Hours</option>
+                                      <option value="12 Hours">12 Hours</option>
+                                      <option value="Night Stay">Night Stay</option>
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider mb-1">Amount (₹)</label>
+                                  <input
+                                    type="text"
+                                    value={bookRoomAmount}
+                                    onChange={e => setBookRoomAmount(e.target.value)}
+                                    placeholder="e.g. 800"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-purple-600"
+                                  />
+                                </div>
+
+                                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                                  <button
+                                    type="button"
+                                    onClick={() => setBookingModalRoom(null)}
+                                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="submit"
+                                    className="px-5 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-md"
+                                  >
+                                    Confirm Check-In
+                                  </button>
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Add Room Number Modal */}
+                        {showAddRoomModal && (
+                          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+                            <div className="bg-white rounded-3xl p-5 max-w-xs w-full shadow-2xl space-y-4 border border-slate-200 text-left animate-in fade-in">
+                              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                                <h4 className="font-black text-xs sm:text-sm text-slate-900">+ Add New Room Number</h4>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowAddRoomModal(false)}
+                                  className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                              <form onSubmit={handleAddNewRoomToBoard} className="space-y-3">
+                                <div>
+                                  <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider mb-1">Room Number *</label>
+                                  <input
+                                    type="text"
+                                    required
+                                    value={newRoomNoInput}
+                                    onChange={e => setNewRoomNoInput(e.target.value)}
+                                    placeholder="e.g. 201 or Suite-A"
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-black text-purple-900 outline-none focus:border-purple-600"
+                                  />
+                                </div>
+                                <div className="flex justify-end gap-2 pt-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowAddRoomModal(false)}
+                                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="submit"
+                                    className="px-4 py-1.5 rounded-xl text-xs font-black bg-purple-900 hover:bg-purple-950 text-white cursor-pointer shadow-sm"
+                                  >
+                                    Add Room
+                                  </button>
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        )}
 
                         {/* Walk-in Entry Expandable Button & Form */}
                         <div className="bg-white border border-purple-200/90 rounded-2xl shadow-xs overflow-hidden">

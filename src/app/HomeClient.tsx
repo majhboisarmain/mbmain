@@ -2240,13 +2240,13 @@ export default function HomeClient() {
               onClick={() => router.push(`/search?category=${encodeURIComponent(cat.name)}`)}
               className="group bg-white rounded-2xl border border-slate-200/80 p-2 sm:p-2.5 shadow-2xs hover:shadow-md hover:border-teal-300/80 transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col items-center justify-between text-center relative"
             >
-              {/* Inner Pastel Box with Category Photo (Matching Popular Categories) */}
-              <div className={`w-full aspect-square rounded-xl ${cat.bgClass} flex items-center justify-center p-1.5 transition-transform duration-300 group-hover:scale-105 shadow-2xs overflow-hidden`}>
+              {/* Clean Image Box */}
+              <div className="w-full aspect-square rounded-xl bg-slate-100 overflow-hidden transition-transform duration-300 group-hover:scale-105 shadow-2xs">
                 <img
                   src={cat.image}
                   alt={cat.name}
                   loading="lazy"
-                  className="w-full h-full object-cover rounded-lg shadow-2xs group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/imagess/shop offer.png';
                   }}
@@ -2264,39 +2264,33 @@ export default function HomeClient() {
 
       {/* 4. Foodie & Dining Portal (Hi Foodie, Dine in Boisar!) */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6">
-        <div 
-          style={{ background: 'linear-gradient(135deg, #fff7ee 0%, #ffeedd 50%, #fef4e8 100%)' }}
-          className="rounded-3xl border border-orange-200/90 p-4 sm:p-5 shadow-sm space-y-3 text-left relative overflow-hidden"
-        >
-          {/* Subtle ambient decorative accents */}
-          <div className="absolute -top-12 -right-12 w-44 h-44 bg-orange-400/15 rounded-full blur-3xl pointer-events-none"></div>
-          <div className="absolute -bottom-12 -left-12 w-44 h-44 bg-amber-400/15 rounded-full blur-3xl pointer-events-none"></div>
-
-          {/* Top Greeting Header - Compact & Clean */}
-          <div className="flex items-center justify-between gap-2 border-b border-orange-200/60 pb-2 relative z-1">
+        <div className="bg-gradient-to-br from-[#fff7ee] via-[#fff4ea] to-[#fff8f0] rounded-3xl border border-orange-200/80 p-4 sm:p-5 shadow-xs space-y-3.5 text-left">
+          
+          {/* Top Greeting Header */}
+          <div className="flex items-center justify-between gap-2 border-b border-orange-200/60 pb-3">
             <div className="flex items-center gap-2">
               <span className="text-xl shrink-0">🍕</span>
               <div>
                 <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
                   Hi Foodie, Dine in Boisar!
                 </h3>
-                <p className="text-[10px] sm:text-[11px] text-orange-950/70 font-bold leading-tight">
-                  Top Cafes, Family Dining &amp; Fast Food
+                <p className="text-[11px] text-orange-950/70 font-semibold leading-tight">
+                  Top Cafes, Family Dining &amp; Fast Food Outlets
                 </p>
               </div>
             </div>
             
             <button
               onClick={() => router.push('/food')}
-              className="text-[11px] sm:text-xs font-black text-orange-800 hover:text-orange-950 flex items-center gap-1 cursor-pointer shrink-0 group bg-white/90 px-3 py-1 rounded-xl border border-orange-200 shadow-2xs hover:bg-white transition-all"
+              className="text-xs font-bold text-orange-950 hover:text-orange-900 flex items-center gap-1 cursor-pointer shrink-0 bg-white hover:bg-orange-50 px-3 py-1.5 rounded-xl border border-orange-200/90 shadow-2xs transition-all"
             >
               <span>See all</span>
-              <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+              <span>→</span>
             </button>
           </div>
 
           {/* Quick Meal Type Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory relative z-1">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none snap-x snap-mandatory">
             {[
               { id: 'lunch', label: 'Lunch', icon: '🍲', query: 'Thali' },
               { id: 'dinner', label: 'Dinner', icon: '🥘', query: 'Family Dining' },
@@ -2309,59 +2303,58 @@ export default function HomeClient() {
               <button
                 key={meal.id}
                 onClick={() => router.push(`/food?category=${encodeURIComponent(meal.query)}`)}
-                className="snap-start shrink-0 bg-white hover:bg-orange-50 border border-orange-200/90 hover:border-orange-400 rounded-xl px-3 py-1.5 flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs group active:scale-95"
+                className="snap-start shrink-0 bg-white hover:bg-orange-50 border border-orange-200/80 hover:border-orange-300 rounded-xl px-3 py-1.5 flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs group active:scale-95"
               >
-                <span className="text-sm group-hover:scale-110 transition-transform">{meal.icon}</span>
-                <span className="text-[11px] font-black text-slate-800 group-hover:text-orange-950 whitespace-nowrap">{meal.label}</span>
+                <span className="text-sm group-hover:scale-105 transition-transform">{meal.icon}</span>
+                <span className="text-xs font-bold text-slate-800 group-hover:text-orange-950 whitespace-nowrap">{meal.label}</span>
               </button>
             ))}
           </div>
 
-          {/* Restaurants & Cafes Cards Grid (Live Admin Managed) */}
-          <div className="pt-1 relative z-1">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
+          {/* Restaurants & Cafes Cards Grid */}
+          <div className="pt-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {featuredRestaurants.filter(r => r.isActive !== false).map((resto) => (
                 <div
                   key={resto.id}
                   onClick={() => router.push(`/food?id=${resto.id}`)}
-                  className="bg-white border border-orange-100 hover:border-orange-400 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between text-left"
+                  className="bg-white border border-orange-100 hover:border-orange-300 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between text-left"
                 >
                   <div>
                     {/* Food Photo Container */}
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-900">
+                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-950">
                       <img
                         src={resto.image}
                         alt={resto.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      {/* Offer Badge Ribbon */}
+                      {/* Offer Badge */}
                       {resto.discount && (
-                        <div className="absolute bottom-1.5 left-1.5">
-                          <span className="bg-gradient-to-r from-red-600 to-orange-600 text-white text-[8.5px] sm:text-[9px] font-black px-1.5 py-0.5 rounded shadow-sm flex items-center gap-1">
-                            <span>%</span>
-                            <span>{resto.discount}</span>
+                        <div className="absolute bottom-2 left-2">
+                          <span className="bg-rose-50 text-rose-700 border border-rose-200 text-[9.5px] font-bold px-2 py-0.5 rounded-md shadow-xs">
+                            {resto.discount}
                           </span>
                         </div>
                       )}
                     </div>
 
                     {/* Details */}
-                    <div className="p-2 sm:p-2.5 space-y-0.5">
+                    <div className="p-2.5 sm:p-3 space-y-1">
                       <div className="flex items-start justify-between gap-1">
-                        <h5 className="text-[11.5px] sm:text-xs font-black text-slate-900 group-hover:text-orange-700 leading-tight truncate">
+                        <h5 className="text-xs font-bold text-slate-900 group-hover:text-orange-700 leading-tight truncate">
                           {resto.name}
                         </h5>
-                        <span className="bg-emerald-600 text-white text-[8.5px] font-black px-1 py-0.2 rounded shrink-0 flex items-center gap-0.5">
+                        <span className="bg-emerald-700 text-white text-[9px] font-black px-1.5 py-0.2 rounded shrink-0 flex items-center gap-0.5">
                           <span>★</span>
                           <span>{resto.rating}</span>
                         </span>
                       </div>
 
-                      <p className="text-[9.5px] text-slate-500 font-medium truncate">
+                      <p className="text-[10px] text-slate-500 font-medium truncate">
                         {resto.location}
                       </p>
                       
-                      <p className="text-[9px] font-bold text-orange-800 truncate">
+                      <p className="text-[10px] font-bold text-orange-800 truncate">
                         {resto.speciality}
                       </p>
                     </div>
@@ -2374,6 +2367,7 @@ export default function HomeClient() {
         </div>
       </div>
 
+
       {/* 3. Portrait Style Action Cards Grid (Trending Quick Portals - Sorted by Priority) */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-6 sm:mt-9">
         <div className="flex items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5 mb-3">
@@ -2384,7 +2378,7 @@ export default function HomeClient() {
           <span className="text-[9.5px] sm:text-[10.5px] font-bold text-slate-400 whitespace-nowrap shrink-0">1-Tap Direct Access</span>
         </div>
 
-        <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-5 lg:grid-cols-10 gap-2.5 sm:gap-3.5">
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-9 lg:grid-cols-9 gap-2.5 sm:gap-3.5">
 
           {/* 1. Home Services */}
           <div
@@ -2436,18 +2430,7 @@ export default function HomeClient() {
             </div>
           </div>
 
-          {/* 5. Jobs in Boisar */}
-          <div
-            onClick={() => router.push('/jobs')}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-blue-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/carrers jobs.png" alt="Jobs in Boisar"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* 6. Influencers & Creators */}
+          {/* 5. Influencers & Creators */}
           <div
             onClick={() => router.push('/creators')}
             className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-rose-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"

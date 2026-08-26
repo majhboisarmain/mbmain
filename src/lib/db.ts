@@ -14,6 +14,7 @@ const prismaClientSingleton = () => {
   return new PrismaClient({ adapter });
 };
 
+export { pool };
 export const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prismaClientSingleton();

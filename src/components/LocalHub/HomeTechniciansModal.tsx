@@ -183,16 +183,27 @@ export default function HomeTechniciansModal({ isOpen, onClose }: HomeTechnician
   const [formImage, setFormImage] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Load custom providers from local storage & pre-populate
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('majh_boisar_tech_list');
-        const parsed = saved ? JSON.parse(saved) : [];
-        setProviders(Array.isArray(parsed) ? parsed : []);
-      } catch (e) {
-        setProviders([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch technicians from database
+  const fetchDbTechnicians = async () => {
+    try {
+      const res = await fetch('/api/technicians');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setProviders(data);
+          return;
+        }
       }
+    } catch (e) {
+      console.warn('Error fetching technicians:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchDbTechnicians();
     }
   }, [isOpen]);
 
@@ -329,44 +340,51 @@ export default function HomeTechniciansModal({ isOpen, onClose }: HomeTechnician
     router.push(`/search?category=${encodeURIComponent(query)}`);
   };
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formPhone.trim()) {
       showToast("Please enter Technician / Shop Name and Contact Phone!", "error");
       return;
     }
 
-    const newProvider: ServiceProvider = {
-      id: `tech-custom-${Date.now()}`,
-      name: formName.trim(),
-      category: formCategory,
-      experience: formExperience,
-      phone: formPhone.trim(),
-      location: formLocation.trim() || 'Boisar West',
-      visitingFee: formVisitingFee.trim() || '₹199 Inspection',
-      rating: 5.0,
-      reviewsCount: 1,
-      verified: true,
-      image: formImage.trim() || 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop&q=80'
-    };
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/technicians', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formName.trim(),
+          category: formCategory,
+          experience: formExperience,
+          phone: formPhone.trim(),
+          location: formLocation.trim() || 'Boisar West',
+          visitingFee: formVisitingFee.trim() || '₹199 Inspection Fee',
+          image: formImage.trim() || 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop&q=80'
+        })
+      });
 
-    const updated = [newProvider, ...providers];
-    setProviders(updated);
+      if (res.ok) {
+        const saved = await res.json();
+        setProviders(prev => [saved, ...prev]);
+        setSuccessMsg('🎉 Service Provider Registered Successfully!');
+        showToast('🎉 Service Provider Registered Successfully on Majh Boisar!', 'success');
 
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('majh_boisar_tech_list', JSON.stringify(updated));
+        setTimeout(() => {
+          setSuccessMsg('');
+          setShowAddForm(false);
+          setFormName('');
+          setFormPhone('');
+          setFormImage('');
+        }, 1500);
+      } else {
+        const errData = await res.json();
+        showToast(errData.error || 'Failed to register provider', 'error');
+      }
+    } catch (err) {
+      showToast('Error saving to server. Please try again.', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setSuccessMsg('🎉 Service Provider Registered Successfully!');
-    showToast('🎉 Service Provider Registered Successfully on Majh Boisar!', 'success');
-
-    setTimeout(() => {
-      setSuccessMsg('');
-      setShowAddForm(false);
-      setFormName('');
-      setFormPhone('');
-      setFormImage('');
-    }, 1500);
   };
 
   // Filtered providers for active view
