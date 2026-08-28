@@ -750,13 +750,14 @@ export default function Navbar() {
 
           {/* Mobile Navigation controls */}
           <div className="flex md:hidden items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Mobile Quick Access: Dashboard icon if has business */}
-            {mounted && isLoggedIn && hasRegisteredBusiness && (
+            {/* Mobile Business Dashboard Button (Only if business is listed / BusinessOwner / Admin) */}
+            {mounted && isLoggedIn && (hasRegisteredBusiness || currentRole === 'BusinessOwner' || currentRole === 'Admin' || (loggedInUser as any)?.role === 'BusinessOwner' || (loggedInUser as any)?.role === 'Admin') && (
               <Link
                 href="/dashboard"
-                className="flex items-center gap-1 bg-slate-900 hover:bg-teal-700 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow-xs transition-colors cursor-pointer shrink-0"
+                className="flex items-center gap-1 bg-slate-900 hover:bg-teal-700 active:scale-95 text-white text-[10.5px] font-black px-2.5 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer shrink-0"
+                title="Business Owner Dashboard"
               >
-                <Building className="w-3 h-3 text-teal-400 shrink-0" />
+                <Building className="w-3.5 h-3.5 text-teal-400 shrink-0" />
                 <span>Dashboard</span>
               </Link>
             )}
@@ -764,7 +765,7 @@ export default function Navbar() {
             {mounted && !isLoggedIn && (
               <button
                 onClick={() => setLoginModalOpen(true)}
-                className="bg-[#e62238] hover:bg-[#cc1b30] active:scale-95 text-white text-[11px] font-black px-3.5 py-1.5 rounded-xl shadow-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+                className="bg-[#e62238] hover:bg-[#cc1b30] active:scale-95 text-white text-[11px] font-black px-3 py-1.5 rounded-xl shadow-xs transition-all flex items-center gap-1 shrink-0 cursor-pointer"
               >
                 <User className="w-3.5 h-3.5 text-white" />
                 <span>{t('nav.login')}</span>

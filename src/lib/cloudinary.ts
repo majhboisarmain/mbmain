@@ -15,15 +15,17 @@ cloudinary.config({
 export async function uploadImage(imageStr: string | null | undefined): Promise<string | null> {
   if (!imageStr) return null;
 
-  // Check if it is a base64 data URI (e.g. data:image/png;base64,...)
-  if (imageStr.startsWith('data:image/')) {
+  // Check if it is a base64 data URI (e.g. data:image/png;base64,... or data:video/mp4;base64,...)
+  if (imageStr.startsWith('data:image/') || imageStr.startsWith('data:video/')) {
     try {
+      const isVideo = imageStr.startsWith('data:video/');
       const response = await cloudinary.uploader.upload(imageStr, {
         folder: 'majh-boisar',
+        resource_type: isVideo ? 'video' : 'auto',
       });
       return response.secure_url;
     } catch (error) {
-      console.error('Error uploading image to Cloudinary:', error);
+      console.error('Error uploading media to Cloudinary:', error);
       // Fallback: return the original base64 string so the application doesn't crash
       return imageStr;
     }
@@ -33,7 +35,7 @@ export async function uploadImage(imageStr: string | null | undefined): Promise<
 }
 
 /**
- * Uploads multiple images (an array of base64 strings or URLs) to Cloudinary.
+ * Uploads multiple images or media items (an array of base64 strings or URLs) to Cloudinary.
  */
 export async function uploadGallery(gallery: string[] | null | undefined): Promise<string[]> {
   if (!gallery || !Array.isArray(gallery)) return [];

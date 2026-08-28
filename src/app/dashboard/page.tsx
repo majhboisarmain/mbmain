@@ -1650,7 +1650,38 @@ function DashboardContent() {
   const [paymentMode, setPaymentMode] = useState<'upi' | 'card' | 'net'>('upi');
   const [upiRefId, setUpiRefId] = useState('');
 
-  // Plan-based limits
+  // Single Lead Purchase states (40% OFF Market Rate: ₹49 -> ₹29)
+  const [unlockedLeadIds, setUnlockedLeadIds] = useState<number[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('majh_boisar_unlocked_lead_ids');
+        return saved ? JSON.parse(saved) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
+  const [leadToBuy, setLeadToBuy] = useState<{ id: number; customerName: string; query: string; customerPhone?: string } | null>(null);
+  const [buyingLead, setBuyingLead] = useState(false);
+  const [leadUpiRef, setLeadUpiRef] = useState('');
+
+  const handleConfirmLeadPurchase = () => {
+    if (!leadToBuy) return;
+    setBuyingLead(true);
+    setTimeout(() => {
+      const updated = Array.from(new Set([...unlockedLeadIds, leadToBuy.id]));
+      setUnlockedLeadIds(updated);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('majh_boisar_unlocked_lead_ids', JSON.stringify(updated));
+      }
+      setBuyingLead(false);
+      const boughtName = leadToBuy.customerName;
+      setLeadToBuy(null);
+      setLeadUpiRef('');
+      showToast(`🎉 Lead Unlocked for ₹29 (40% OFF)! Full contact details for ${boughtName} are now visible.`, 'success', 6000);
+    }, 800);
+  };
   const planLimits: Record<string, { catalog: number; photos: number }> = {
     Free: { catalog: 5, photos: 3 },
     Starter: { catalog: 15, photos: 10 },
@@ -6787,192 +6818,256 @@ function DashboardContent() {
 
                 {/* Subtab Content: Lead Pipeline */}
                 {activeSubTab === 'leads' && (
-                  <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm space-y-4">
-                    {!canAccessLeadInbox ? (
-                      <UpgradeNudge feature="Lead Pipeline Inbox" requiredPlan="Starter (₹149/mo) or Pro (₹349/mo)" />
-                    ) : (
-                      <>
+                  <div className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-sm space-y-4">
+                    {/* Leads Header */}
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2 text-left">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Customer Inquiries &amp; Leads</h3>
+                          {canAccessLeadInbox ? (
+                            <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <span>✓ Unlimited Leads (Plan Active)</span>
+                            </span>
+                          ) : (
+                            <span className="bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <span>⚡ Pay-Per-Lead (40% OFF)</span>
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">Manage customer quotations, callbacks and requests.</p>
+                      </div>
 
-
-                        {/* Leads Header */}
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2 text-left">
-                          <div>
-                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Customer Inquiries &amp; Leads</h3>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">Manage customer quotations, callbacks and requests.</p>
-                          </div>
-
+                      <div className="flex items-center gap-2">
+                        {!canAccessLeadInbox && (
                           <button
-                            onClick={() => {
-                              alert(`Compiling spreadsheet...\n\nSuccessfully generated: ${business.name}-leads-report.csv`);
-                            }}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-2xs transition-all cursor-pointer"
+                            onClick={() => setActiveSubTab('subscription')}
+                            className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-black text-xs px-3 py-1.5 rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95"
                           >
-                            <ArrowUpRight className="w-3.5 h-3.5 text-slate-700" />
-                            <span>Export CSV</span>
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>Unlock All Free (from ₹149/mo)</span>
                           </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            alert(`Compiling spreadsheet...\n\nSuccessfully generated: ${business.name}-leads-report.csv`);
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-2xs transition-all cursor-pointer"
+                        >
+                          <ArrowUpRight className="w-3.5 h-3.5 text-slate-700" />
+                          <span>Export CSV</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 40% OFF Discount Banner for Non-Subscribed Merchants */}
+                    {!canAccessLeadInbox && (
+                      <div className="bg-gradient-to-r from-teal-50 via-emerald-50 to-blue-50 border border-teal-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left shadow-2xs">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wide">
+                              🔥 40% Discount Applied
+                            </span>
+                            <span className="text-xs font-black text-slate-900">
+                              Market Rate: <span className="line-through text-slate-400 font-normal">₹49/lead</span> ➔ <span className="text-emerald-700 font-extrabold">₹29 only</span>
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 font-medium">
+                            No subscription? Buy individual verified leads instantly for <strong>₹29/lead</strong> (40% OFF market price), or get unlimited leads with Starter plan.
+                          </p>
                         </div>
 
-                        {/* Hotel Bookings Quick Link if hotel */}
-                        {hotelBookingsList.length > 0 && (
-                          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-2 text-left">
-                            <div className="flex items-center gap-2">
-                              <span className="text-base">🏨</span>
-                              <div>
-                                <h4 className="text-xs font-bold text-slate-900">
-                                  {hotelBookingsList.length} Hotel Bookings Received
-                                </h4>
-                                <p className="text-[10px] text-slate-500 font-medium">Manage check-ins, room assignment &amp; tariffs.</p>
+                        <button
+                          onClick={() => setActiveSubTab('subscription')}
+                          className="bg-slate-900 hover:bg-slate-800 text-white font-black text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs shrink-0 cursor-pointer active:scale-95"
+                        >
+                          View Subscription Plans →
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Hotel Bookings Quick Link if hotel */}
+                    {hotelBookingsList.length > 0 && (
+                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-2 text-left">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">🏨</span>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-900">
+                              {hotelBookingsList.length} Hotel Bookings Received
+                            </h4>
+                            <p className="text-[10px] text-slate-500 font-medium">Manage check-ins, room assignment &amp; tariffs.</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveSubTab('hotel_bookings')}
+                          className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer shrink-0"
+                        >
+                          Open Register →
+                        </button>
+                      </div>
+                    )}
+
+                    {(business.leads || []).length === 0 && hotelBookingsList.length === 0 ? (
+                      <div className="text-center py-10 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
+                        <ClipboardCheck className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                        <p className="text-xs text-slate-600 font-bold">No verified enquiries received yet.</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Enquiries from WhatsApp &amp; your business listing will appear here.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3 text-left">
+                        {/* Render Hotel Booking Summary cards */}
+                        {hotelBookingsList.map((hBooking) => (
+                          <div key={hBooking.id} className="bg-white border border-slate-200 p-3 rounded-2xl shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-bold text-slate-900 text-xs">{hBooking.guestName}</h4>
+                                <span className="px-1.5 py-0.5 rounded text-[8.5px] font-bold bg-purple-50 text-purple-900 border border-purple-200 font-mono">
+                                  #{hBooking.id}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-medium">{hBooking.createdAt ? hBooking.createdAt.split(',')[0] : 'Today'}</span>
+                              </div>
+
+                              <div className="flex items-center gap-2 text-slate-600 text-[11px] flex-wrap">
+                                <span className="font-mono text-slate-800 font-bold">+91 {hBooking.guestPhone}</span>
+                                <span className="text-slate-300">•</span>
+                                <span>{hBooking.roomCategory || 'AC Room'} ({hBooking.timeSlot || '3h'})</span>
+                                <span className="text-slate-300">•</span>
+                                <span className="text-emerald-700 font-bold">₹{hBooking.totalAmount} (Pay on Arrival)</span>
                               </div>
                             </div>
-                            <button
-                              type="button"
-                              onClick={() => setActiveSubTab('hotel_bookings')}
-                              className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer shrink-0"
-                            >
-                              Open Register →
-                            </button>
-                          </div>
-                        )}
 
-                        {(business.leads || []).length === 0 && hotelBookingsList.length === 0 ? (
-                          <div className="text-center py-10 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
-                            <ClipboardCheck className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                            <p className="text-xs text-slate-600 font-bold">No verified enquiries received yet.</p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">Enquiries from WhatsApp &amp; your business listing will appear here.</p>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <a
+                                href={`tel:${hBooking.guestPhone}`}
+                                className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-[10px]"
+                              >
+                                <Phone className="w-3 h-3" /> Call
+                              </a>
+                              <a
+                                href={`https://wa.me/91${hBooking.guestPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${hBooking.guestName}, this is regarding your booking #${hBooking.id} at ${hBooking.hotelName}.`)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-2.5 py-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-[10px]"
+                              >
+                                <MessageSquare className="w-3 h-3 fill-white" /> WhatsApp
+                              </a>
+                            </div>
                           </div>
-                        ) : (
-                          <div className="space-y-2.5 text-left">
-                            {/* Render Clean Hotel Booking Summary cards if needed */}
-                            {hotelBookingsList.map((hBooking) => (
-                              <div key={hBooking.id} className="bg-white border border-slate-200 p-3 rounded-2xl shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <h4 className="font-bold text-slate-900 text-xs">{hBooking.guestName}</h4>
-                                    <span className="px-1.5 py-0.5 rounded text-[8.5px] font-bold bg-purple-50 text-purple-900 border border-purple-200 font-mono">
-                                      #{hBooking.id}
+                        ))}
+
+                        {/* Customer Inquiries / Business Leads */}
+                        {(business.leads || []).map((lead) => {
+                          const isLeadUnlocked = canAccessLeadInbox || unlockedLeadIds.includes(lead.id) || currentRole === 'Admin';
+                          const maskedName = isLeadUnlocked ? lead.customerName : `${lead.customerName.split(' ')[0]} ${lead.customerName.split(' ')[1] ? lead.customerName.split(' ')[1].charAt(0) + '••••' : '••••'}`;
+                          const maskedPhone = isLeadUnlocked ? lead.customerPhone : (lead.customerPhone ? `${lead.customerPhone.slice(0, 2)}•••• ••${lead.customerPhone.slice(-2)}` : '+91 98•••• ••21');
+                          const maskedEmail = isLeadUnlocked ? lead.customerEmail : '••••••••@gmail.com';
+
+                          return (
+                            <div key={lead.id} className="p-4 bg-white border border-slate-200 rounded-2xl shadow-2xs space-y-3 text-left hover:border-slate-300 transition-colors">
+                              <div className="flex items-center justify-between flex-wrap gap-2">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-extrabold text-sm text-slate-900">{maskedName}</h4>
+                                  {isLeadUnlocked ? (
+                                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                                      <span>✓ Unlocked Lead</span>
                                     </span>
-                                    <span className="text-[10px] text-slate-400 font-medium">{hBooking.createdAt ? hBooking.createdAt.split(',')[0] : 'Today'}</span>
-                                  </div>
+                                  ) : (
+                                    <span className="bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                                      <span>🔒 Contact Locked</span>
+                                    </span>
+                                  )}
+                                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                                    lead.status === 'Won'
+                                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                      : lead.status === 'Lost'
+                                        ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                        : 'bg-teal-50 text-teal-700 border border-teal-200'
+                                  }`}>
+                                    {lead.status}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] text-slate-400 font-bold">{new Date(lead.createdAt).toLocaleDateString()}</span>
+                              </div>
 
-                                  <div className="flex items-center gap-2 text-slate-600 text-[11px] flex-wrap">
-                                    <span className="font-mono text-slate-800 font-bold">+91 {hBooking.guestPhone}</span>
-                                    <span className="text-slate-300">•</span>
-                                    <span>{hBooking.roomCategory || 'AC Room'} ({hBooking.timeSlot || '3h'})</span>
-                                    <span className="text-slate-300">•</span>
-                                    <span className="text-emerald-700 font-bold">₹{hBooking.totalAmount} (Pay on Arrival)</span>
-                                  </div>
+                              <div className="space-y-1.5 text-xs">
+                                <div className="flex items-center gap-3 text-slate-600 flex-wrap">
+                                  <p><strong className="font-bold text-slate-700">Phone:</strong> {maskedPhone}</p>
+                                  {lead.customerEmail && <p><strong className="font-bold text-slate-700">Email:</strong> {maskedEmail}</p>}
                                 </div>
 
-                                <div className="flex items-center gap-1.5 shrink-0">
-                                  <a
-                                    href={`tel:${hBooking.guestPhone}`}
-                                    className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-[10px]"
-                                  >
-                                    <Phone className="w-3 h-3" /> Call
-                                  </a>
-                                  <a
-                                    href={`https://wa.me/91${hBooking.guestPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${hBooking.guestName}, this is regarding your booking #${hBooking.id} at ${hBooking.hotelName}.`)}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="px-2.5 py-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-[10px]"
-                                  >
-                                    <MessageSquare className="w-3 h-3 fill-white" /> WhatsApp
-                                  </a>
+                                <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-slate-700 leading-relaxed text-xs">
+                                  <strong className="font-bold text-slate-500 block mb-0.5 text-[9px] uppercase tracking-wider">Customer Requirement:</strong>
+                                  "{lead.query}"
                                 </div>
                               </div>
-                            ))}
-                            {(business.leads || []).map((lead) => (
-                              <div key={lead.id} className="py-4.5 first:pt-0 last:pb-0 flex flex-col md:flex-row md:items-start justify-between gap-4 text-xs">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <h4 className="font-extrabold text-sm text-slate-850">{lead.customerName}</h4>
-                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${lead.status === 'Won'
-                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                        : lead.status === 'Lost'
-                                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                          : 'bg-teal-50 text-teal-700 border border-teal-200'
-                                      }`}>
-                                      {lead.status}
-                                    </span>
-                                    <span className="text-[10px] text-slate-400">{new Date(lead.createdAt).toLocaleDateString()}</span>
+
+                              {/* Unlocked Actions: Direct Call & WhatsApp & Pipeline */}
+                              {isLeadUnlocked ? (
+                                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 flex-wrap">
+                                  <div className="flex items-center gap-2">
+                                    <a
+                                      href={`tel:${lead.customerPhone}`}
+                                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-xs active:scale-95"
+                                    >
+                                      <Phone className="w-3.5 h-3.5" /> Call Customer
+                                    </a>
+                                    <a
+                                      href={`https://wa.me/91${lead.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${lead.customerName}, this is regarding your inquiry with ${business.name} on Majh Boisar.`)}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="px-3 py-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-xs active:scale-95"
+                                    >
+                                      <MessageSquare className="w-3.5 h-3.5 fill-white" /> WhatsApp
+                                    </a>
                                   </div>
 
-                                  <div className="space-y-1">
-                                    <p className="text-slate-600"><strong className="font-semibold text-slate-700">Phone:</strong> {lead.customerPhone} {lead.customerEmail && `• Email: ${lead.customerEmail}`}</p>
-                                    <p className="bg-slate-50 border border-slate-200 p-2.5 rounded-lg text-slate-555 leading-relaxed font-light">
-                                      <strong className="font-semibold text-slate-600 block mb-0.5 text-[10px] uppercase">Enquiry Query:</strong>
-                                      "{lead.query}"
-                                    </p>
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      onClick={() => handleUpdateLeadStatus(lead.id, 'Won')}
+                                      className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg font-bold text-[11px] transition-all cursor-pointer"
+                                    >
+                                      Mark Won
+                                    </button>
+                                    <button
+                                      onClick={() => handleUpdateLeadStatus(lead.id, 'Lost')}
+                                      className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-[11px] transition-all cursor-pointer"
+                                    >
+                                      Mark Lost
+                                    </button>
                                   </div>
-
-                                  {/* Private Note Section */}
-                                  <div className="bg-amber-50/50 border border-amber-200/50 p-3 rounded-lg max-w-xl">
-                                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                                      <span className="text-[9px] text-amber-800 font-extrabold uppercase tracking-wide">Private Merchant Notes</span>
-                                      {editingLeadId === lead.id ? (
-                                        <div className="flex gap-2">
-                                          <button
-                                            onClick={() => handleSaveLeadNote(lead.id)}
-                                            className="text-[10px] text-emerald-650 hover:underline font-bold"
-                                          >
-                                            Save
-                                          </button>
-                                          <button
-                                            onClick={() => setEditingLeadId(null)}
-                                            className="text-[10px] text-slate-500 hover:underline font-bold"
-                                          >
-                                            Cancel
-                                          </button>
-                                        </div>
-                                      ) : (
-                                        <button
-                                          onClick={() => {
-                                            setEditingLeadId(lead.id);
-                                            setLeadNoteText(lead.notes || '');
-                                          }}
-                                          className="text-[10px] text-teal-655 hover:underline font-bold"
-                                        >
-                                          Edit Notes
-                                        </button>
-                                      )}
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-slate-100 flex-wrap bg-slate-50/70 p-3 rounded-xl">
+                                  <div>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-xs font-black text-slate-900">Unlock Full Contact:</span>
+                                      <span className="text-xs text-slate-400 line-through">₹49</span>
+                                      <span className="text-xs font-black text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded">₹29 (40% OFF)</span>
                                     </div>
+                                    <span className="text-[10px] text-slate-500 font-medium">Instant direct phone number &amp; WhatsApp callback</span>
+                                  </div>
 
-                                    {editingLeadId === lead.id ? (
-                                      <input
-                                        type="text"
-                                        value={leadNoteText}
-                                        onChange={(e) => setLeadNoteText(e.target.value)}
-                                        placeholder="Log customer callback status or pricing notes..."
-                                        className="w-full bg-white border border-slate-250 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-teal-500"
-                                      />
-                                    ) : (
-                                      <p className="text-[11px] text-slate-600 italic">
-                                        {lead.notes ? `"${lead.notes}"` : 'No custom notes logged. Tap edit to store quotation status.'}
-                                      </p>
-                                    )}
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      onClick={() => setLeadToBuy(lead)}
+                                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                                    >
+                                      <Unlock className="w-3.5 h-3.5" />
+                                      <span>Buy Lead (₹29)</span>
+                                    </button>
+                                    <button
+                                      onClick={() => setActiveSubTab('subscription')}
+                                      className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-2 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95"
+                                    >
+                                      Subscribe Free
+                                    </button>
                                   </div>
                                 </div>
-
-                                {/* Pipeline Status Actions */}
-                                <div className="flex items-center gap-1.5 shrink-0 self-start md:self-auto">
-                                  <button
-                                    onClick={() => handleUpdateLeadStatus(lead.id, 'Won')}
-                                    className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-250 rounded-lg font-bold transition-all cursor-pointer"
-                                  >
-                                    Mark Won
-                                  </button>
-                                  <button
-                                    onClick={() => handleUpdateLeadStatus(lead.id, 'Lost')}
-                                    className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-250 rounded-lg font-bold transition-all cursor-pointer"
-                                  >
-                                    Mark Lost
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 )}
@@ -9949,6 +10044,113 @@ function DashboardContent() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 40% OFF Lead Purchase Checkout Modal */}
+      {leadToBuy && (
+        <div className="fixed inset-0 z-[1300] bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-left relative animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-sm">
+                  ⚡
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">Buy Verified Customer Lead</h3>
+                  <p className="text-[10px] text-slate-500 font-medium">Instant direct contact unlock</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLeadToBuy(null)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Lead Summary */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-1.5 text-xs">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Customer Lead Details</span>
+              <p className="font-black text-slate-900 text-sm">{leadToBuy.customerName}</p>
+              <p className="text-slate-600 text-xs italic line-clamp-2">"{leadToBuy.query}"</p>
+            </div>
+
+            {/* Pricing Breakdown with 40% Discount */}
+            <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 space-y-2 text-xs">
+              <div className="flex items-center justify-between text-slate-600 font-semibold">
+                <span>Standard Market Lead Price</span>
+                <span className="line-through text-slate-400">₹49.00</span>
+              </div>
+              <div className="flex items-center justify-between text-emerald-700 font-bold">
+                <span>Majh Boisar Local Discount (40% OFF)</span>
+                <span>- ₹20.00</span>
+              </div>
+              <div className="border-t border-emerald-200 pt-2 flex items-center justify-between text-sm font-black text-slate-900">
+                <span>Total Amount Payable</span>
+                <span className="text-base text-emerald-800">₹29.00</span>
+              </div>
+            </div>
+
+            {/* Instant UPI Details & Quick Pay */}
+            <div className="space-y-3">
+              <div className="bg-slate-900 text-white rounded-2xl p-3.5 flex items-center justify-between gap-3 text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Direct UPI ID</span>
+                  <strong className="font-mono text-xs sm:text-sm text-teal-300">9307294733@okbizaxis</strong>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText('9307294733@okbizaxis');
+                    showToast('UPI ID Copied to clipboard!', 'info', 3000);
+                  }}
+                  className="bg-slate-800 hover:bg-slate-700 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg border border-slate-700 transition-colors"
+                >
+                  Copy UPI
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                  UPI Transaction / Reference ID (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 402918274619 or UPI App Name"
+                  value={leadUpiRef}
+                  onChange={(e) => setLeadUpiRef(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setLeadToBuy(null)}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs py-3 rounded-xl transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={buyingLead}
+                onClick={handleConfirmLeadPurchase}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-3 rounded-xl transition-all cursor-pointer shadow-md flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
+              >
+                {buyingLead ? (
+                  <span>Unlocking...</span>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Pay ₹29 &amp; Unlock</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

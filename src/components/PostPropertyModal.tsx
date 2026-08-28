@@ -213,12 +213,19 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
           price: formattedPrice,
           description: description || `A beautiful ${isPlot ? 'plot' : 'property'} listed for ${forAction.toLowerCase()} in ${projectOrLocality}, ${cityName}.`,
           photos: selectedPhotos,
+          video: selectedVideo || null,
         }),
       });
 
       if (res.ok) {
         const newProperty = await res.json();
-        onAddProperty(newProperty);
+        const propertyWithMedia = {
+          ...newProperty,
+          video: selectedVideo || newProperty.video,
+          videos: selectedVideo ? [selectedVideo] : newProperty.videos || [],
+          gallery: selectedPhotos.length > 0 ? selectedPhotos : newProperty.gallery,
+        };
+        onAddProperty(propertyWithMedia);
         showToast('🎉 Property Submitted! Under verification (will be live within 24 hours).', 'success', 6000);
         setStep(4);
       } else {

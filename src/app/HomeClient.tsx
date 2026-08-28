@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { 
   Search, MapPin, Sparkles, Phone, ArrowRight, MessageSquare, 
   PlusCircle, Plus, CheckCircle, Star, Sparkle, X, Send, Eye, ShieldCheck,
@@ -572,10 +572,11 @@ function getCategoryImage(name: string): string {
   return "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=260&q=80";
 }
 
-export default function HomeClient() {
+export default function HomeClient({ initialSpecialCategory }: { initialSpecialCategory?: 'influencers' | 'properties' | 'helpers' | 'caterers' | null } = {}) {
   const { userName, currentRole, isLoggedIn, loggedInUser, loginModalOpen, setLoginModalOpen, adModalOpen, setAdModalOpen, showToast } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
@@ -791,7 +792,7 @@ export default function HomeClient() {
   const [selectedLocation, setSelectedLocation] = useState('All');
   const [filterVerified, setFilterVerified] = useState(false);
   const [filterRating, setFilterRating] = useState(false);
-  const [activeSpecialCategory, setActiveSpecialCategory] = useState<'influencers' | 'properties' | 'helpers' | 'caterers' | null>(null);
+  const [activeSpecialCategory, setActiveSpecialCategory] = useState<'influencers' | 'properties' | 'helpers' | 'caterers' | null>(initialSpecialCategory || null);
   const [propertyMode, setPropertyMode] = useState<'buy' | 'sell' | 'rent' | null>(null);
   const [postPropertyModalOpen, setPostPropertyModalOpen] = useState(false);
   const [buyDropdownOpen, setBuyDropdownOpen] = useState(false);
@@ -884,13 +885,31 @@ export default function HomeClient() {
     }
   }, [selectedProfile, activeSpecialCategory, propertyMode]);
 
+  const closePortal = () => {
+    if (pathname === '/properties' || pathname?.startsWith('/properties')) {
+      router.push('/');
+    }
+    setActiveSpecialCategory(null);
+    setSelectedProfile(null);
+    setPropertyMode(null);
+  };
+
   const [portraitTurfTab, setPortraitTurfTab] = useState<'turf' | 'game'>('game');
   const [portraitBusOpen, setPortraitBusOpen] = useState(false);
   const [portraitBookOpen, setPortraitBookOpen] = useState(false);
   const [portraitEventsOpen, setPortraitEventsOpen] = useState(false);
 
-  // Auto-open specific portal modal if URL contains search parameters or query keywords
+  // Auto-open specific portal modal if URL contains search parameters or query keywords or on /properties route
   useEffect(() => {
+    if (initialSpecialCategory) {
+      setActiveSpecialCategory(initialSpecialCategory);
+      return;
+    }
+    if (pathname === '/properties' || pathname?.startsWith('/properties')) {
+      setActiveSpecialCategory('properties');
+      return;
+    }
+
     if (!searchParams) return;
     if (searchParams.get('postProperty') === 'true' || searchParams.get('portal') === 'properties') {
       setActiveSpecialCategory('properties');
@@ -2855,13 +2874,13 @@ export default function HomeClient() {
 
             {/* Full Real Estate Portal Navbar Header */}
             {activeSpecialCategory === 'properties' ? (
-              <div className="px-2 sm:px-6 py-2 sm:py-2.5 border-b border-slate-200 flex items-center justify-between gap-1.5 sm:gap-2 bg-white text-slate-800 shadow-sm z-30 shrink-0 sticky top-0">
+              <div className="px-3 sm:px-6 py-2 sm:py-2.5 min-h-[52px] sm:min-h-[56px] border-b border-slate-200 flex items-center justify-between gap-1.5 sm:gap-2 bg-white text-slate-800 shadow-sm z-30 shrink-0 sticky top-0">
                 {/* Logo & Portal Badge */}
                 <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
                   <img 
                     src="/majh-boisar-full-logo.png" 
                     alt="Majh Boisar" 
-                    className="h-6 sm:h-8 md:h-9 w-auto object-contain cursor-pointer transition-transform active:scale-95 shrink-0"
+                    className="h-8 sm:h-9 md:h-10.5 w-auto object-contain cursor-pointer transition-transform active:scale-95 shrink-0"
                     onClick={() => {
                       setActiveSpecialCategory(null);
                       setSelectedProfile(null);
@@ -3010,8 +3029,415 @@ export default function HomeClient() {
             )}
 
             {/* Content Body */}
-            <div ref={portalContentRef} className={`flex-1 overflow-y-auto ${activeSpecialCategory === 'properties' ? 'p-0' : 'p-4 sm:p-6 space-y-6'}`}>
-              {activeSpecialCategory === 'properties' && propertyMode === null ? (
+            <div ref={portalContentRef} className={`flex-1 overflow-y-auto ${activeSpecialCategory === 'properties' || selectedProfile?.listingType === 'property' ? 'p-0' : 'p-4 sm:p-6 space-y-6'}`}>
+              {selectedProfile?.listingType === 'property' ? (
+                /* PROPERTY DETAIL VIEW (Clean Modern Majh Boisar Style) */
+                <div className="animate-in fade-in duration-200 bg-slate-50/50 min-h-full pb-24 relative text-left">
+                   {/* Top Header Section */}
+                   <div className="w-full flex items-center justify-between px-3 sm:px-8 py-2.5 sm:py-3.5 border-b border-slate-200 bg-white shrink-0 shadow-2xs">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <button 
+                          onClick={() => setSelectedProfile(null)} 
+                          className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg sm:rounded-xl transition-all flex items-center gap-1 text-[11px] sm:text-xs font-black cursor-pointer shrink-0 whitespace-nowrap active:scale-95 shadow-2xs"
+                          title="Back to property listings"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5 text-slate-700" />
+                          <span>Back</span>
+                        </button>
+                        <div className="h-4 w-px bg-slate-200" />
+                        <span className="text-xs text-slate-600 font-bold truncate">
+                          Boisar Real Estate
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={closePortal}
+                          className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                          title="Exit Real Estate"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                   </div>
+
+                   {/* Gallery & Content Area */}
+                   <div className="max-w-6xl mx-auto p-3 sm:p-6 flex flex-col gap-4">
+                     {/* Title & Price Header Card */}
+                     <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-2xs flex flex-col md:flex-row justify-between md:items-center gap-4">
+                       <div className="space-y-1.5">
+                         <div className="flex items-center gap-2 flex-wrap">
+                           <span className="bg-slate-900 text-white text-[10px] font-black px-2.5 py-0.5 rounded-md">
+                             {selectedProfile.forAction === 'Rent' || selectedProfile.category?.toLowerCase().includes('rent') ? 'FOR RENT' : 'FOR SALE'}
+                           </span>
+                           {(() => {
+                             const role = (selectedProfile.postedBy || selectedProfile.iAm || '').trim();
+                             const isAgent = role.toLowerCase().includes('agent') || role.toLowerCase().includes('broker');
+                             const isBuilder = role.toLowerCase().includes('builder') || role.toLowerCase().includes('developer');
+                             const isOwner = role.toLowerCase().includes('owner');
+                             
+                             if (isAgent) {
+                               return (
+                                 <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                                   <CheckCircle className="w-3 h-3 text-blue-600" />
+                                   <span>Real Estate Agent</span>
+                                 </span>
+                               );
+                             }
+                             if (isBuilder) {
+                               return (
+                                 <span className="bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                                   <CheckCircle className="w-3 h-3 text-purple-600" />
+                                   <span>Builder / Developer</span>
+                                 </span>
+                               );
+                             }
+                             if (isOwner) {
+                               return (
+                                 <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                                   <CheckCircle className="w-3 h-3 text-emerald-600" />
+                                   <span>Direct Owner</span>
+                                 </span>
+                               );
+                             }
+                             return (
+                               <span className="bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                                 <CheckCircle className="w-3 h-3 text-slate-500" />
+                                 <span>{role || 'Verified Listing'}</span>
+                               </span>
+                             );
+                           })()}
+                           {Boolean(selectedProfile.video || (selectedProfile.videos && selectedProfile.videos.length > 0)) && (
+                             <span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                               <span>🎥 Video Tour</span>
+                             </span>
+                           )}
+                         </div>
+                         <h1 className="text-base sm:text-2xl font-black text-slate-900 leading-snug">
+                           {selectedProfile.category || selectedProfile.name || selectedProfile.title}
+                         </h1>
+                         <p className="text-xs text-slate-600 font-semibold flex items-center gap-1.5">
+                           <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                           <span>{selectedProfile.address || selectedProfile.location || selectedProfile.projectName || 'Boisar, Maharashtra'}</span>
+                         </p>
+                       </div>
+
+                       <div className="md:text-right shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
+                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Price</span>
+                         <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">{formatPrice(selectedProfile.price)}</h2>
+                         <p className="text-[11px] text-slate-400 font-semibold">
+                           {selectedProfile.pricePerSqft ? formatPrice(selectedProfile.pricePerSqft) : selectedProfile.postedBy ? `Posted by ${selectedProfile.postedBy}` : 'Verified Listing'}
+                         </p>
+                       </div>
+                     </div>
+
+                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+                      {/* Left: Gallery Grid */}
+                      <div className="lg:col-span-7 flex flex-col gap-2.5">
+                        {(() => {
+                          const photos = selectedProfile.gallery?.length ? selectedProfile.gallery : [selectedProfile.avatar || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'];
+                          const activePhoto = photos[activePhotoIndex % photos.length] || photos[0];
+                          return (
+                            <>
+                              {/* Featured Main Image */}
+                              <div 
+                                onClick={() => setFullImagePreview(activePhoto)}
+                                className="w-full h-[260px] sm:h-[380px] rounded-2xl overflow-hidden bg-slate-950 relative group border border-slate-200 shadow-2xs cursor-pointer flex items-center justify-center"
+                              >
+                                <img 
+                                  src={activePhoto} 
+                                  alt={selectedProfile.category || selectedProfile.name || 'Property Photo'}
+                                  className="w-full h-full object-contain sm:object-cover group-hover:scale-102 transition-transform duration-500" 
+                                />
+                                
+                                {/* Photo Navigation Prev/Next */}
+                                {photos.length > 1 && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActivePhotoIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
+                                      }}
+                                      className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-slate-900/80 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-xs transition-all shadow-md cursor-pointer z-10"
+                                      title="Previous photo"
+                                    >
+                                      <ChevronLeft className="w-4 h-4 text-white" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActivePhotoIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
+                                      }}
+                                      className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-slate-900/80 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-xs transition-all shadow-md cursor-pointer z-10"
+                                      title="Next photo"
+                                    >
+                                      <ChevronRight className="w-4 h-4 text-white" />
+                                    </button>
+                                  </>
+                                )}
+
+                                <div className="absolute top-3 left-3 bg-slate-900/80 text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-lg backdrop-blur-xs shadow-xs flex items-center gap-1.5 z-10">
+                                  <Camera className="w-3.5 h-3.5 text-white" />
+                                  <span>{activePhotoIndex + 1} / {photos.length} Photos</span>
+                                </div>
+                                <div className="absolute bottom-3 right-3 bg-slate-900/80 text-white text-[10px] font-black px-3 py-1 rounded-lg backdrop-blur-xs transition-all flex items-center gap-1 opacity-90 group-hover:opacity-100 shadow-xs z-10">
+                                  <Eye className="w-3.5 h-3.5 text-white" />
+                                  <span>Full Photo Lightbox</span>
+                                </div>
+                              </div>
+
+                              {/* Thumbnail Grid Row */}
+                              {photos.length > 1 && (
+                                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-2.5">
+                                  {photos.slice(0, 6).map((img: string, i: number) => {
+                                    const isActive = (activePhotoIndex % photos.length) === i;
+                                    const isLastAndMore = i === 5 && photos.length > 6;
+                                    return (
+                                      <div 
+                                        key={i} 
+                                        onClick={() => setActivePhotoIndex(i)}
+                                        className={`h-16 sm:h-20 rounded-xl overflow-hidden bg-slate-900 relative cursor-pointer border transition-all ${
+                                          isActive ? 'ring-2 ring-slate-900 border-transparent shadow-xs scale-[1.02]' : 'border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100'
+                                        }`}
+                                      >
+                                        <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
+                                        {isLastAndMore && (
+                                          <div className="absolute inset-0 bg-slate-900/70 flex items-center justify-center text-white font-black text-xs backdrop-blur-xs">
+                                            +{photos.length - 6} More
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+
+                        {/* Video Tour Section (if available) */}
+                        {Boolean(selectedProfile.video || (selectedProfile.videos && selectedProfile.videos.length > 0)) && (
+                          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3 mt-1">
+                            <div className="flex items-center justify-between">
+                              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                                <span className="text-base">🎥</span>
+                                <span>Property Video Tour &amp; Walkthrough</span>
+                              </h3>
+                              <span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-black px-2 py-0.5 rounded-md">
+                                HD Video Tour
+                              </span>
+                            </div>
+                            <div className="w-full rounded-xl overflow-hidden bg-black aspect-video shadow-xs border border-slate-200 relative flex items-center justify-center">
+                              <video 
+                                src={selectedProfile.video || (selectedProfile.videos && selectedProfile.videos[0])} 
+                                controls 
+                                playsInline
+                                preload="metadata"
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right: Info Section */}
+                      <div className="lg:col-span-5 flex flex-col gap-4">
+                        {/* Highlights Row */}
+                        <div className="grid grid-cols-4 bg-white border border-slate-200 rounded-2xl divide-x divide-slate-100 shadow-2xs overflow-hidden">
+                          <div className="p-3 flex flex-col items-center justify-center text-center">
+                            <span className="text-base sm:text-lg font-black text-slate-900">{selectedProfile.bedrooms || 1}</span>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Beds</span>
+                          </div>
+                          <div className="p-3 flex flex-col items-center justify-center text-center">
+                            <span className="text-base sm:text-lg font-black text-slate-900">{selectedProfile.bathrooms || 1}</span>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Baths</span>
+                          </div>
+                          <div className="p-3 flex flex-col items-center justify-center text-center">
+                            <span className="text-base sm:text-lg font-black text-slate-900">{selectedProfile.balconies || 1}</span>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Balcony</span>
+                          </div>
+                          <div className="p-3 flex flex-col items-center justify-center text-center">
+                            <span className="text-xs font-black text-slate-900 leading-tight">{selectedProfile.furnishing || 'Semi'}</span>
+                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Furnished</span>
+                          </div>
+                        </div>
+
+                        {/* Intricate Specs Grid */}
+                        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3">
+                          <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Property Specifications</h3>
+                          <div className="grid grid-cols-2 gap-3 text-left">
+                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Carpet Area</span>
+                              <strong className="text-xs font-black text-slate-900">{selectedProfile.carpetArea || '650 sqft'}</strong>
+                            </div>
+                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Super Area</span>
+                              <strong className="text-xs font-black text-slate-900">{selectedProfile.superArea || selectedProfile.carpetArea || 'N/A'}</strong>
+                            </div>
+                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Status</span>
+                              <strong className="text-xs font-black text-slate-900">{selectedProfile.status || 'Ready to Move'}</strong>
+                            </div>
+                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Floor</span>
+                              <strong className="text-xs font-black text-slate-900">{selectedProfile.floor ? `${selectedProfile.floor} of ${selectedProfile.totalFloors || 4}` : '2 of 4'}</strong>
+                            </div>
+                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Transaction</span>
+                              <strong className="text-xs font-black text-slate-900">{selectedProfile.transactionType || 'Resale'}</strong>
+                            </div>
+                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Facing</span>
+                              <strong className="text-xs font-black text-slate-900">{selectedProfile.facing || 'East'}</strong>
+                            </div>
+                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Ownership</span>
+                              <strong className="text-xs font-black text-slate-900">{selectedProfile.ownership || 'Freehold'}</strong>
+                            </div>
+                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Developer</span>
+                              <strong className="text-xs font-black text-slate-900">{selectedProfile.developer || selectedProfile.projectName || 'Independent'}</strong>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        {selectedProfile.bio && (
+                          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-2">
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                              <FileText className="w-3.5 h-3.5 text-slate-500" />
+                              <span>More Details</span>
+                            </h3>
+                            <p className="text-xs text-slate-600 font-normal leading-relaxed">
+                              {selectedProfile.bio}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Contact Card */}
+                        {(() => {
+                          const rawPhone = selectedProfile.contactPhone || selectedProfile.phone || '';
+                          const rawWhatsapp = selectedProfile.whatsappPhone || selectedProfile.whatsapp || rawPhone;
+                          const ownerName = selectedProfile.contactName || selectedProfile.name || 'Owner';
+                          const postedByRole = selectedProfile.postedBy || 'Owner';
+
+                          const isUnlocked = isPropertyContactUnlocked(selectedProfile.id);
+                          const phoneDisplay = formatPropertyPhoneDisplay(rawPhone, selectedProfile.id);
+
+                          return (
+                            <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3 text-left">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-800 font-black text-xs">
+                                    {ownerName.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <h4 className="text-xs font-black text-slate-900">{ownerName}</h4>
+                                    <span className="text-[10px] text-slate-400 font-semibold">Posted by {postedByRole}</span>
+                                  </div>
+                                </div>
+                                <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
+                                  isUnlocked 
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                    : 'bg-amber-50 text-amber-800 border-amber-200'
+                                }`}>
+                                  {isUnlocked ? '✓ Contact Unlocked' : '🔒 Direct Contact'}
+                                </span>
+                              </div>
+
+                              {/* Phone Number Display Box */}
+                              <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs font-black ${
+                                isUnlocked 
+                                  ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 font-mono' 
+                                  : 'bg-slate-50 border-slate-200 text-slate-700'
+                              }`}>
+                                <span className="flex items-center gap-1.5 truncate">
+                                  <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                                  <span>{phoneDisplay}</span>
+                                </span>
+                                {!isUnlocked && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePropertyContactCall(selectedProfile, false)}
+                                    className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0 cursor-pointer shadow-xs active:scale-95"
+                                  >
+                                    {!isLoggedIn ? 'Login' : userUnlockedPropsState.length < 2 ? 'Unlock Free' : 'Upgrade'}
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-2 pt-0.5">
+                                <button
+                                  onClick={() => handlePropertyContactCall(selectedProfile, false)}
+                                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs py-2.5 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                                >
+                                  <Phone className="w-3.5 h-3.5" />
+                                  <span>{postedByRole.toLowerCase().includes('agent') ? 'Call Agent' : postedByRole.toLowerCase().includes('builder') ? 'Call Builder' : 'Call Owner'}</span>
+                                </button>
+                                <button
+                                  onClick={() => handlePropertyContactCall(selectedProfile, true)}
+                                  className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs py-2.5 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                  <span>WhatsApp</span>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                     </div>
+                   </div>
+
+                   {/* Sticky Bottom Action Bar */}
+                   <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 sm:px-8 shadow-lg z-50 flex items-center justify-between gap-3">
+                     <div className="flex flex-col text-left min-w-0">
+                       <span className="text-[10px] text-slate-400 font-bold uppercase">
+                         Listed by {selectedProfile.postedBy || selectedProfile.iAm || 'Owner'}
+                       </span>
+                       <span className="text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">
+                         {selectedProfile.contactName || selectedProfile.name || 'Owner'}
+                       </span>
+                     </div>
+
+                     <div className="flex items-center gap-2 shrink-0">
+                       <button 
+                         onClick={() => handlePropertyContactCall(selectedProfile, false)}
+                         className="bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 font-black text-xs px-3.5 py-2 rounded-xl transition-all shadow-2xs whitespace-nowrap cursor-pointer flex items-center gap-1.5 active:scale-95"
+                       >
+                         <Phone className="w-3.5 h-3.5 text-slate-700" />
+                         <span className="hidden sm:inline">
+                           {(selectedProfile.postedBy || selectedProfile.iAm || '').toLowerCase().includes('agent') ? 'Call Agent' : (selectedProfile.postedBy || selectedProfile.iAm || '').toLowerCase().includes('builder') ? 'Call Builder' : 'Call Owner'}
+                         </span>
+                         <span className="sm:hidden">Call</span>
+                       </button>
+
+                       <button 
+                         onClick={() => handlePropertyContactCall(selectedProfile, true)}
+                         className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 active:scale-95"
+                       >
+                         <MessageSquare className="w-3.5 h-3.5" />
+                         <span>WhatsApp</span>
+                       </button>
+
+                       <button 
+                         onClick={() => {
+                           setEnquirySenderName(userName || '');
+                           setEnquirySenderPhone('');
+                           setEnquiryMessage(`Hi ${selectedProfile.contactName || 'Owner'}, I am interested in your property (${selectedProfile.category}). Please share details.`);
+                           setEnquiryModalProperty(selectedProfile);
+                         }}
+                         className="bg-slate-900 hover:bg-slate-800 text-white font-black text-xs px-4 py-2 rounded-xl shadow-xs transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer active:scale-95"
+                       >
+                         <Send className="w-3.5 h-3.5 text-white" />
+                         <span>Send Enquiry</span>
+                       </button>
+                     </div>
+                   </div>
+                </div>
+              ) : activeSpecialCategory === 'properties' && propertyMode === null ? (
                 <div className="w-full bg-white min-h-full flex flex-col">
                   {/* Header */}
                   <div className="border-b border-slate-200 px-3 sm:px-8 py-3 sm:py-4 text-left">
@@ -3101,35 +3527,40 @@ export default function HomeClient() {
                     </div>
 
                     {((profilesState.properties || []).filter((p: any) => p.listingType === 'property')).length > 0 ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3.5">
                         {((profilesState.properties || []).filter((p: any) => p.listingType === 'property').slice(0, 6)).map((property: any) => (
                           <div
                             key={property.id}
                             onClick={() => setSelectedProfile(property)}
-                            className="bg-white rounded-xl border border-slate-200 hover:border-slate-400 overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col group"
+                            className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 hover:border-slate-400 overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col group"
                           >
-                            <div className="h-32 sm:h-36 relative bg-slate-100 overflow-hidden">
+                            <div className="aspect-[4/3] sm:aspect-[16/10] sm:h-40 relative bg-slate-950 overflow-hidden flex items-center justify-center">
                               <img
                                 src={property.avatar || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'}
                                 alt={property.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                               />
-                              <div className="absolute top-2 left-2 flex items-center gap-1">
-                                <span className="bg-slate-900/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded">
+                              <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
+                                <span className="bg-slate-900/90 text-white text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs">
                                   {property.forAction === 'Rent' || property.category?.toLowerCase().includes('rent') ? 'RENT' : 'SALE'}
                                 </span>
                               </div>
-                              <div className="absolute bottom-2 left-2 bg-white/95 text-slate-950 font-black text-[11px] px-2 py-0.5 rounded shadow-xs">
+                              {Boolean(property.video || (property.videos && property.videos.length > 0)) && (
+                                <div className="absolute top-2 right-2 bg-rose-600 text-white text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-xs z-10">
+                                  <span>🎥 Video</span>
+                                </div>
+                              )}
+                              <div className="absolute bottom-2 left-2 bg-white/95 text-slate-950 font-black text-[10.5px] sm:text-xs px-2 py-0.5 rounded shadow-xs z-10">
                                 {formatPrice(property.price || property.budget)}
                               </div>
                             </div>
 
-                            <div className="p-2.5 flex-1 flex flex-col justify-between">
+                            <div className="p-2 sm:p-3 flex-1 flex flex-col justify-between space-y-1">
                               <div>
                                 <h4 className="text-[11px] sm:text-xs font-black text-slate-900 line-clamp-1">{property.name || property.title}</h4>
-                                <p className="text-[10px] text-slate-500 font-medium mt-0.5">📍 {property.location || 'Boisar'}</p>
+                                <p className="text-[9.5px] sm:text-[10.5px] text-slate-500 font-medium mt-0.5 line-clamp-1">📍 {property.location || 'Boisar'}</p>
                               </div>
-                              <span className="text-[10px] font-bold text-slate-400 mt-1.5">{property.category || 'Flat'}</span>
+                              <span className="text-[9.5px] sm:text-[10px] font-bold text-teal-700">{property.category || 'Flat'}</span>
                             </div>
                           </div>
                         ))}
@@ -3291,154 +3722,120 @@ export default function HomeClient() {
                     </div>
                   </div>
                 </div>
-              ) : activeSpecialCategory === 'properties' && !selectedProfile ? (
-                /* PROPERTY LISTING UI (Clean White / Slate Filter Header) */
-                <div className="w-full flex flex-col">
-                  {/* Clean Full-Width Filter Bar */}
-                  <div className="bg-white border-b border-slate-200 w-full px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 relative z-40 shadow-2xs overflow-x-auto no-scrollbar whitespace-nowrap">
-                    <div className="flex items-center gap-2 w-full justify-between sm:justify-start">
-                      {/* 1. Buy / Rent Segmented Toggle */}
-                      <div className="bg-slate-100 p-0.5 rounded-xl flex items-center shrink-0 border border-slate-200">
+              ) : activeSpecialCategory === 'properties' ? (
+                <div className="w-full bg-slate-50 min-h-full flex flex-col">
+                  {/* Top Bar with Buy/Rent Switcher */}
+                  <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-3 z-20 shadow-2xs">
+                    <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+                      {/* Left: Back button & Mode Switcher */}
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => setPropertyMode('buy')}
-                          className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                            propertyMode === 'buy' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                          }`}
+                          onClick={() => setPropertyMode(null)}
+                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold flex items-center gap-1 text-xs transition-colors cursor-pointer"
+                          title="Back to Real Estate Home"
                         >
-                          Buy
+                          <ChevronLeft className="w-4 h-4 text-slate-800" />
+                          <span className="hidden sm:inline text-xs font-bold text-slate-800">Home</span>
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setPropertyMode('rent')}
-                          className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                            propertyMode === 'rent' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                          }`}
-                        >
-                          Rent
-                        </button>
+
+                        <div className="flex items-center bg-slate-100 p-1 rounded-xl">
+                          <button
+                            type="button"
+                            onClick={() => setPropertyMode('buy')}
+                            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                              propertyMode === 'buy'
+                                ? 'bg-slate-900 text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            Buy
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPropertyMode('rent')}
+                            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                              propertyMode === 'rent'
+                                ? 'bg-slate-900 text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            Rent
+                          </button>
+                        </div>
                       </div>
 
-                      {/* 2. Property Type Selector */}
-                      <select 
-                        value={propertyTypeFilter} 
-                        onChange={(e) => setPropertyTypeFilter(e.target.value)} 
-                        className="bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold rounded-xl px-3 py-1.5 outline-none cursor-pointer border border-slate-200 shrink-0 transition-colors shadow-2xs"
-                      >
-                        <option value="All Types">All Types</option>
-                        <option value="Flat/Apartment">Flat/Apartment</option>
-                        <option value="House/Villa">House/Villa</option>
-                        <option value="Plot/Land">Plot/Land</option>
-                        <option value="Commercial">Commercial Shop</option>
-                      </select>
-
-                      {/* 3. BHK Selector */}
-                      <select 
-                        value={bhkFilter} 
-                        onChange={(e) => setBhkFilter(e.target.value)} 
-                        className="bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold rounded-xl px-3 py-1.5 outline-none cursor-pointer border border-slate-200 shrink-0 transition-colors shadow-2xs"
-                      >
-                        <option value="All BHK">All BHK</option>
-                        <option value="1 BHK">1 BHK</option>
-                        <option value="2 BHK">2 BHK</option>
-                        <option value="3 BHK">3 BHK</option>
-                        <option value="4+ BHK">4+ BHK</option>
-                      </select>
-
-                      {/* 4. Budget Selector */}
-                      <select 
-                        value={budgetFilter} 
-                        onChange={(e) => setBudgetFilter(e.target.value)} 
-                        className="bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold rounded-xl px-3 py-1.5 outline-none cursor-pointer border border-slate-200 shrink-0 transition-colors shadow-2xs"
-                      >
-                        <option value="All Budgets">All Budgets</option>
-                        <option value="Under ₹20 Lakhs">Under ₹20L</option>
-                        <option value="₹20L - ₹40L">₹20L - ₹40L</option>
-                        <option value="₹40L - ₹75L">₹40L - ₹75L</option>
-                        <option value="₹75L+">₹75L+</option>
-                      </select>
-
-                      {/* Sell Property Button */}
-                      <button 
+                      {/* Right: Post Property Button */}
+                      <button
+                        type="button"
                         onClick={() => {
                           if (!isLoggedIn) {
                             showToast("Please login first to post your property.", "info", 4000);
                             setLoginModalOpen(true);
-                          } else {
-                            setPostPropertyModalOpen(true);
+                            return;
                           }
+                          setPostPropertyModalOpen(true);
                         }}
-                        className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-xs px-3.5 py-1.5 rounded-xl shadow-xs transition-all flex items-center gap-1 shrink-0 ml-auto whitespace-nowrap cursor-pointer"
+                        className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black px-3.5 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
                       >
                         <PlusCircle className="w-3.5 h-3.5 text-white" />
-                        <span>Post Property</span>
+                        <span className="hidden sm:inline">Post Property</span>
+                        <span className="sm:hidden">Post</span>
                       </button>
                     </div>
-                  </div>
 
-                  {/* Property Verification Notice Strip (Neutral & Clean) */}
-                  <div className="bg-slate-50 border-b border-slate-200 px-3 sm:px-6 py-1.5 flex items-center justify-between text-[11px] text-slate-600 font-medium">
-                    <div className="flex items-center gap-1.5 font-bold truncate">
-                      <span className="text-emerald-600">✓ Verified Direct Listings:</span>
-                      <span>Verify 7/12 &amp; Index-2 legal property documents before token payment.</span>
+                    {/* Filter Dropdowns Bar */}
+                    <div className="max-w-5xl mx-auto pt-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar">
+                      {/* Type Filter */}
+                      <div className="relative shrink-0">
+                        <select
+                          value={propertyTypeFilter}
+                          onChange={(e) => setPropertyTypeFilter(e.target.value)}
+                          className="bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-250 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer outline-none shadow-2xs"
+                        >
+                          <option value="All Types">All Types</option>
+                          <option value="Flat/Apartment">Flat / Apartment</option>
+                          <option value="Commercial">Commercial / Shop</option>
+                          <option value="Plot/Land">Plot / Land</option>
+                          <option value="Villa/House">Villa / House</option>
+                        </select>
+                      </div>
+
+                      {/* BHK Filter */}
+                      <div className="relative shrink-0">
+                        <select
+                          value={bhkFilter}
+                          onChange={(e) => setBhkFilter(e.target.value)}
+                          className="bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-250 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer outline-none shadow-2xs"
+                        >
+                          <option value="All BHK">All BHK</option>
+                          <option value="1 BHK">1 BHK</option>
+                          <option value="2 BHK">2 BHK</option>
+                          <option value="3 BHK">3 BHK</option>
+                          <option value="4+ BHK">4+ BHK</option>
+                        </select>
+                      </div>
+
+                      {/* Sort Dropdown */}
+                      <div className="relative shrink-0 ml-auto">
+                        <select
+                          value={propertySortBy}
+                          onChange={(e) => setPropertySortBy(e.target.value as any)}
+                          className="bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-250 px-2.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer outline-none shadow-2xs"
+                        >
+                          <option value="relevance">Sort: Relevance</option>
+                          <option value="price_low">Price: Low to High</option>
+                          <option value="price_high">Price: High to Low</option>
+                          <option value="newest">Newest First</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Clean 1-Line Results Summary Header */}
-                  <div className="px-3 sm:px-6 py-2 bg-slate-50/70 border-b border-slate-200 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-xs font-black text-slate-800 truncate">
-                        Properties for {propertyMode === 'buy' ? 'Sale' : 'Rent'}
-                      </span>
-                      <span className="bg-teal-100 text-teal-800 text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full shrink-0">
-                        {(profilesState.properties || [])
-                          .filter((p: any) => p.listingType === 'property')
-                          .filter((p: any) => {
-                            // Filter by Buy vs Rent
-                            if (propertyMode === 'buy') {
-                              const isRentOnly = p.category?.toLowerCase().includes('rent') || p.forAction === 'Rent' || p.transactionType === 'Lease';
-                              if (isRentOnly) return false;
-                            } else if (propertyMode === 'rent') {
-                              const isRent = p.category?.toLowerCase().includes('rent') || p.forAction === 'Rent' || p.transactionType === 'Lease';
-                              if (!isRent) return false;
-                            }
-
-                            if (bhkFilter !== 'All BHK') {
-                              const num = bhkFilter.split(' ')[0];
-                              if (num && !p.category.includes(`${num} BHK`) && p.bedrooms !== parseInt(num)) return false;
-                            }
-                            if (propertyTypeFilter !== 'All Types') {
-                              if (propertyTypeFilter.includes('Flat') && !p.category.toLowerCase().includes('flat') && !p.category.toLowerCase().includes('bhk')) return false;
-                              if (propertyTypeFilter.includes('Villa') && !p.category.toLowerCase().includes('villa') && !p.category.toLowerCase().includes('house')) return false;
-                              if (propertyTypeFilter.includes('Plot') && !p.category.toLowerCase().includes('plot') && !p.category.toLowerCase().includes('land')) return false;
-                            }
-                            return true;
-                          }).length} Listings
-                      </span>
-                    </div>
-
-                    {/* Working Sort Dropdown */}
-                    <div className="inline-flex items-center gap-1 border border-slate-300 rounded-lg px-2 py-0.5 sm:py-1 bg-white shrink-0 shadow-2xs">
-                      <span className="text-slate-400 text-[10px] sm:text-[11px] font-medium">Sort:</span>
-                      <select
-                        value={propertySortBy}
-                        onChange={(e) => setPropertySortBy(e.target.value as any)}
-                        className="bg-transparent text-[10px] sm:text-[11px] font-extrabold text-slate-800 outline-none cursor-pointer pr-1"
-                      >
-                        <option value="relevance">Relevance</option>
-                        <option value="price_low">Price: Low to High</option>
-                        <option value="price_high">Price: High to Low</option>
-                        <option value="newest">Newest First</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Horizontal Cards List */}
-                  <div className="bg-slate-100 p-3 sm:p-6 flex-1 space-y-3">
-                    {(profilesState.properties || [])
-                      .filter((p: any) => p.listingType === 'property')
+                  {/* Listings Grid */}
+                  <div className="max-w-5xl mx-auto w-full p-4 sm:p-6 space-y-3.5 text-left flex-1">
+                    {((profilesState.properties || []).filter((p: any) => p.listingType === 'property'))
                       .filter((p: any) => {
-                        // Filter by Buy vs Rent
                         if (propertyMode === 'buy') {
                           const isRentOnly = p.category?.toLowerCase().includes('rent') || p.forAction === 'Rent' || p.transactionType === 'Lease';
                           if (isRentOnly) return false;
@@ -3446,15 +3843,30 @@ export default function HomeClient() {
                           const isRent = p.category?.toLowerCase().includes('rent') || p.forAction === 'Rent' || p.transactionType === 'Lease';
                           if (!isRent) return false;
                         }
-
                         if (bhkFilter !== 'All BHK') {
                           const num = bhkFilter.split(' ')[0];
-                          if (num && !p.category.includes(`${num} BHK`) && p.bedrooms !== parseInt(num)) return false;
+                          const pText = `${p.category || ''} ${p.name || ''} ${p.title || ''}`.toLowerCase();
+                          const pBed = Number(p.bedrooms || 0);
+                          if (num === '4+') {
+                            if (!pText.includes('4 bhk') && !pText.includes('5 bhk') && pBed < 4) return false;
+                          } else if (num) {
+                            const numInt = parseInt(num);
+                            const hasBhkInText = pText.includes(`${num} bhk`) || pText.includes(`${num}bhk`) || pText.includes(`${num} bed`);
+                            const hasBedMatches = pBed === numInt;
+                            if (!hasBhkInText && !hasBedMatches) return false;
+                          }
                         }
                         if (propertyTypeFilter !== 'All Types') {
-                          if (propertyTypeFilter.includes('Flat') && !p.category.toLowerCase().includes('flat') && !p.category.toLowerCase().includes('bhk')) return false;
-                          if (propertyTypeFilter.includes('Villa') && !p.category.toLowerCase().includes('villa') && !p.category.toLowerCase().includes('house')) return false;
-                          if (propertyTypeFilter.includes('Plot') && !p.category.toLowerCase().includes('plot') && !p.category.toLowerCase().includes('land')) return false;
+                          const pText = `${p.category || ''} ${p.name || ''} ${p.title || ''} ${p.propertyType || ''}`.toLowerCase();
+                          if (propertyTypeFilter.includes('Flat') || propertyTypeFilter.includes('Apartment')) {
+                            if (!pText.includes('flat') && !pText.includes('apartment') && !pText.includes('bhk')) return false;
+                          } else if (propertyTypeFilter.includes('Commercial') || propertyTypeFilter.includes('Shop')) {
+                            if (!pText.includes('commercial') && !pText.includes('shop') && !pText.includes('office') && !pText.includes('showroom')) return false;
+                          } else if (propertyTypeFilter.includes('Plot') || propertyTypeFilter.includes('Land')) {
+                            if (!pText.includes('plot') && !pText.includes('land')) return false;
+                          } else if (propertyTypeFilter.includes('Villa') || propertyTypeFilter.includes('House')) {
+                            if (!pText.includes('villa') && !pText.includes('house') && !pText.includes('bungalow')) return false;
+                          }
                         }
                         return true;
                       })
@@ -3477,12 +3889,17 @@ export default function HomeClient() {
                           onClick={() => setSelectedProfile(profile)}
                         >
                           {/* Image Column */}
-                          <div className="w-full md:w-[230px] h-48 md:h-auto relative shrink-0">
+                          <div className="w-full md:w-[240px] aspect-[16/10] md:h-auto relative shrink-0 bg-slate-900 overflow-hidden flex items-center justify-center">
                             <img src={profile.avatar || '/majh-boisar-mb-logo.png'} alt={profile.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                            <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+                            <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[9px] font-black px-2 py-0.5 rounded-full z-10">
                               {profile.gallery?.length || 1}+ Photos
                             </div>
-                            <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                            {Boolean(profile.video || (profile.videos && profile.videos.length > 0)) && (
+                              <div className="absolute top-2 right-2 bg-rose-600/90 text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs z-10">
+                                <span>🎥 Video</span>
+                              </div>
+                            )}
+                            <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-full z-10">
                               Updated {profile.updatedAt || 'Recently'}
                             </div>
                           </div>
@@ -3588,12 +4005,12 @@ export default function HomeClient() {
                         }
                         if (bhkFilter !== 'All BHK') {
                           const num = bhkFilter.split(' ')[0];
-                          if (num && !p.category.includes(`${num} BHK`) && p.bedrooms !== parseInt(num)) return false;
+                          if (num && !p.category?.includes(`${num} BHK`) && p.bedrooms !== parseInt(num)) return false;
                         }
                         if (propertyTypeFilter !== 'All Types') {
-                          if (propertyTypeFilter.includes('Flat') && !p.category.toLowerCase().includes('flat') && !p.category.toLowerCase().includes('bhk')) return false;
-                          if (propertyTypeFilter.includes('Villa') && !p.category.toLowerCase().includes('villa') && !p.category.toLowerCase().includes('house')) return false;
-                          if (propertyTypeFilter.includes('Plot') && !p.category.toLowerCase().includes('plot') && !p.category.toLowerCase().includes('land')) return false;
+                          if (propertyTypeFilter.includes('Flat') && !p.category?.toLowerCase().includes('flat') && !p.category?.toLowerCase().includes('bhk')) return false;
+                          if (propertyTypeFilter.includes('Villa') && !p.category?.toLowerCase().includes('villa') && !p.category?.toLowerCase().includes('house')) return false;
+                          if (propertyTypeFilter.includes('Plot') && !p.category?.toLowerCase().includes('plot') && !p.category?.toLowerCase().includes('land')) return false;
                         }
                         return true;
                       }).length === 0 && (
@@ -3646,7 +4063,6 @@ export default function HomeClient() {
                           const cat = activeSpecialCategory;
                           setProfileModalCategory(cat);
                           if (cat === 'influencers') setNewProfileCategory('Content Creator');
-                          if (cat === 'properties') setNewProfileCategory('Real Estate Broker');
                           if (cat === 'helpers') setNewProfileCategory('House Maid');
                           if (cat === 'caterers') setNewProfileCategory('Grand Caterer');
                           setActiveSpecialCategory(null);
@@ -3826,6 +4242,7 @@ export default function HomeClient() {
                       });
 
                       if (filtered.length === 0) {
+                        return (
                           <div className="col-span-full bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 text-center my-2 shadow-2xs space-y-2.5">
                             <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-200">
                               ✨
@@ -3848,72 +4265,10 @@ export default function HomeClient() {
                               </div>
                             )}
                           </div>
+                        );
                       }
 
                       return filtered.map((profile: any) => {
-                        if (profile.listingType === 'property') {
-                          return (
-                            <div
-                              key={profile.id}
-                              className="bg-white border border-slate-200 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xs hover:shadow-md hover:border-teal-400 transition-all duration-300 relative group cursor-pointer flex flex-col justify-between"
-                              onClick={() => setSelectedProfile(profile)}
-                            >
-                              {/* Property Cover Image */}
-                              <div className="w-full h-32 sm:h-48 bg-slate-100 relative overflow-hidden shrink-0">
-                                <img
-                                  src={profile.avatar || '/majh-boisar-mb-logo.png'}
-                                  alt={profile.name}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                                
-                                <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2">
-                                  <span className="bg-red-500 text-white text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs uppercase">
-                                    For Sale
-                                  </span>
-                                </div>
-                                <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2">
-                                  <span className="bg-slate-900/80 backdrop-blur text-white text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded shadow-xs uppercase">
-                                    <Camera className="w-2.5 h-2.5 inline mr-0.5" /> {profile.gallery?.length || 0}
-                                  </span>
-                                </div>
-
-                                <div className="absolute bottom-1.5 left-2 flex flex-col pr-1 w-full">
-                                  <span className="text-white font-black text-xs sm:text-sm drop-shadow-md leading-tight">{formatPrice(profile.price)}</span>
-                                  <span className="text-slate-200 font-bold text-[9px] sm:text-[10px] drop-shadow flex items-center gap-1 mt-0.5 truncate">
-                                    {profile.name}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Property Body */}
-                              <div className="p-2 sm:p-3.5 flex flex-col flex-1 justify-between">
-                                <div>
-                                  <div className="flex flex-wrap gap-1 mb-1.5 pb-1.5 border-b border-slate-100">
-                                    {profile.services.slice(0, 2).map((srv: string, i: number) => (
-                                      <span key={i} className="bg-slate-100 text-slate-600 text-[8px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded">
-                                        {srv}
-                                      </span>
-                                    ))}
-                                  </div>
-                                  
-                                  <h4 className="text-[11px] sm:text-xs font-black text-slate-800 mb-0.5 line-clamp-1">{profile.category}</h4>
-                                  <p className="text-[9px] sm:text-[10px] text-slate-500 font-medium line-clamp-2 leading-relaxed mb-2">
-                                    {profile.bio}
-                                  </p>
-                                </div>
-
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); setSelectedProfile(profile); }}
-                                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-[10px] sm:text-[11px] py-1.5 sm:py-2 rounded-lg sm:rounded-xl transition-all shadow-xs cursor-pointer"
-                                >
-                                  View Property
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        }
-
                         // Domestic Helper / Specialist Profile Card (All details directly on outer card)
                         return (
                           <div
@@ -4017,309 +4372,6 @@ export default function HomeClient() {
                       });
                     })()}
                   </div>
-                </div>
-              ) : selectedProfile.listingType === 'property' ? (
-                /* PROPERTY DETAIL VIEW (Clean Modern Majh Boisar Style) */
-                <div className="animate-in fade-in duration-200 bg-slate-50/50 min-h-full pb-24 relative text-left">
-                   {/* Top Header Section */}
-                   <div className="w-full flex items-center justify-between px-4 sm:px-8 py-3.5 border-b border-slate-200 bg-white shrink-0 shadow-2xs">
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => setSelectedProfile(null)} 
-                          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl transition-all flex items-center gap-1.5 text-xs font-black cursor-pointer"
-                        >
-                          <ChevronLeft className="w-4 h-4 text-slate-700" />
-                          <span className="hidden sm:inline">Back to Properties</span>
-                        </button>
-                        <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-                        <span className="text-xs text-slate-500 font-semibold truncate max-w-[200px] sm:max-w-md">
-                          Boisar Real Estate / {selectedProfile.location || 'Boisar'}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                      </div>
-                   </div>
-
-                   {/* Gallery & Content Area */}
-                   <div className="max-w-6xl mx-auto p-4 sm:p-6 flex flex-col gap-4">
-                     {/* Title & Price Header Card */}
-                     <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-2xs flex flex-col md:flex-row justify-between md:items-center gap-4">
-                       <div className="space-y-1.5">
-                         <div className="flex items-center gap-2 flex-wrap">
-                           <span className="bg-slate-900 text-white text-[10px] font-black px-2.5 py-0.5 rounded-md">
-                             {selectedProfile.forAction === 'Rent' || selectedProfile.category?.toLowerCase().includes('rent') ? 'FOR RENT' : 'FOR SALE'}
-                           </span>
-                           <span className="bg-slate-100 border border-slate-200 text-slate-700 text-[10px] font-black px-2 py-0.5 rounded-md uppercase">
-                             {selectedProfile.location || 'Boisar'}
-                           </span>
-                         </div>
-                         <h1 className="text-base sm:text-2xl font-black text-slate-900 leading-snug">
-                           {selectedProfile.category || selectedProfile.name || selectedProfile.title}
-                         </h1>
-                         <p className="text-xs text-slate-500 font-semibold flex items-center gap-1.5">
-                           <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                           <span>{selectedProfile.address || selectedProfile.location || selectedProfile.projectName || 'Prime Location, Boisar'}</span>
-                         </p>
-                       </div>
-
-                       <div className="md:text-right shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
-                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Price</span>
-                         <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">{formatPrice(selectedProfile.price)}</h2>
-                         <p className="text-[11px] text-slate-400 font-semibold">{selectedProfile.pricePerSqft ? formatPrice(selectedProfile.pricePerSqft) : 'Direct Owner Deal'}</p>
-                       </div>
-                     </div>
-
-                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
-                      {/* Left: Gallery Grid */}
-                      <div className="lg:col-span-7 flex flex-col gap-2.5">
-                        {(() => {
-                          const photos = selectedProfile.gallery?.length ? selectedProfile.gallery : [selectedProfile.avatar || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'];
-                          const activePhoto = photos[activePhotoIndex % photos.length] || photos[0];
-                          return (
-                            <>
-                              {/* Featured Main Image */}
-                              <div 
-                                onClick={() => setFullImagePreview(activePhoto)}
-                                className="w-full h-[240px] sm:h-[340px] rounded-2xl overflow-hidden bg-slate-100 relative group border border-slate-200 shadow-2xs cursor-pointer"
-                              >
-                                <img 
-                                  src={activePhoto} 
-                                  alt={selectedProfile.category}
-                                  className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" 
-                                />
-                                <div className="absolute top-3 left-3 bg-slate-900/80 text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-lg backdrop-blur-xs shadow-xs flex items-center gap-1.5">
-                                  <Camera className="w-3.5 h-3.5 text-white" />
-                                  <span>{activePhotoIndex + 1} / {photos.length} Photos</span>
-                                </div>
-                                <div className="absolute bottom-3 right-3 bg-slate-900/80 text-white text-[10px] font-black px-3 py-1 rounded-lg backdrop-blur-xs transition-all flex items-center gap-1 opacity-90 group-hover:opacity-100 shadow-xs">
-                                  <Eye className="w-3.5 h-3.5 text-white" />
-                                  <span>View Full Photo</span>
-                                </div>
-                              </div>
-
-                              {/* Thumbnail Grid Row */}
-                              {photos.length > 1 && (
-                                <div className="grid grid-cols-4 gap-2 sm:gap-2.5">
-                                  {photos.slice(0, 4).map((img: string, i: number) => {
-                                    const isActive = (activePhotoIndex % photos.length) === i;
-                                    const isLastAndMore = i === 3 && photos.length > 4;
-                                    return (
-                                      <div 
-                                        key={i} 
-                                        onClick={() => setActivePhotoIndex(i)}
-                                        className={`h-16 sm:h-20 rounded-xl overflow-hidden bg-slate-100 relative cursor-pointer border transition-all ${
-                                          isActive ? 'ring-2 ring-slate-900 border-transparent shadow-xs scale-[1.02]' : 'border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100'
-                                        }`}
-                                      >
-                                        <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
-                                        {isLastAndMore && (
-                                          <div className="absolute inset-0 bg-slate-900/70 flex items-center justify-center text-white font-black text-xs backdrop-blur-xs">
-                                            +{photos.length - 4} More
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </div>
-
-                      {/* Right: Info Section */}
-                      <div className="lg:col-span-5 flex flex-col gap-4">
-                        {/* Highlights Row */}
-                        <div className="grid grid-cols-4 bg-white border border-slate-200 rounded-2xl divide-x divide-slate-100 shadow-2xs overflow-hidden">
-                          <div className="p-3 flex flex-col items-center justify-center text-center">
-                            <span className="text-base sm:text-lg font-black text-slate-900">{selectedProfile.bedrooms || 1}</span>
-                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Beds</span>
-                          </div>
-                          <div className="p-3 flex flex-col items-center justify-center text-center">
-                            <span className="text-base sm:text-lg font-black text-slate-900">{selectedProfile.bathrooms || 1}</span>
-                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Baths</span>
-                          </div>
-                          <div className="p-3 flex flex-col items-center justify-center text-center">
-                            <span className="text-base sm:text-lg font-black text-slate-900">{selectedProfile.balconies || 1}</span>
-                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Balcony</span>
-                          </div>
-                          <div className="p-3 flex flex-col items-center justify-center text-center">
-                            <span className="text-xs font-black text-slate-900 leading-tight">{selectedProfile.furnishing || 'Semi'}</span>
-                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Furnished</span>
-                          </div>
-                        </div>
-
-                        {/* Intricate Specs Grid */}
-                        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3">
-                          <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Property Specifications</h3>
-                          <div className="grid grid-cols-2 gap-3 text-left">
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Carpet Area</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.carpetArea || '650 sqft'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Super Area</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.superArea || selectedProfile.carpetArea || 'N/A'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Status</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.status || 'Ready to Move'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Floor</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.floor ? `${selectedProfile.floor} of ${selectedProfile.totalFloors || 4}` : '2 of 4'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Transaction</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.transactionType || 'Resale'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Facing</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.facing || 'East'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Ownership</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.ownership || 'Freehold'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Developer</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.developer || selectedProfile.projectName || 'Independent'}</strong>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Description */}
-                        {selectedProfile.bio && (
-                          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-2">
-                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                              <FileText className="w-3.5 h-3.5 text-slate-500" />
-                              <span>More Details</span>
-                            </h3>
-                            <p className="text-xs text-slate-600 font-normal leading-relaxed">
-                              {selectedProfile.bio}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Contact Card */}
-                        {(() => {
-                          const rawPhone = selectedProfile.contactPhone || selectedProfile.phone || '';
-                          const rawWhatsapp = selectedProfile.whatsappPhone || selectedProfile.whatsapp || rawPhone;
-                          const ownerName = selectedProfile.contactName || selectedProfile.name || 'Owner';
-                          const postedByRole = selectedProfile.postedBy || 'Owner';
-
-                          const isUnlocked = isPropertyContactUnlocked(selectedProfile.id);
-                          const phoneDisplay = formatPropertyPhoneDisplay(rawPhone, selectedProfile.id);
-
-                          return (
-                            <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3 text-left">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-800 font-black text-xs">
-                                    {ownerName.charAt(0).toUpperCase()}
-                                  </div>
-                                  <div>
-                                    <h4 className="text-xs font-black text-slate-900">{ownerName}</h4>
-                                    <span className="text-[10px] text-slate-400 font-semibold">Posted by {postedByRole}</span>
-                                  </div>
-                                </div>
-                                <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
-                                  isUnlocked 
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                                    : 'bg-amber-50 text-amber-800 border-amber-200'
-                                }`}>
-                                  {isUnlocked ? '✓ Contact Unlocked' : '🔒 Direct Contact'}
-                                </span>
-                              </div>
-
-                              {/* Phone Number Display Box */}
-                              <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs font-black ${
-                                isUnlocked 
-                                  ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 font-mono' 
-                                  : 'bg-slate-50 border-slate-200 text-slate-700'
-                              }`}>
-                                <span className="flex items-center gap-1.5 truncate">
-                                  <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                                  <span>{phoneDisplay}</span>
-                                </span>
-                                {!isUnlocked && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handlePropertyContactCall(selectedProfile, false)}
-                                    className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0 cursor-pointer shadow-xs active:scale-95"
-                                  >
-                                    {!isLoggedIn ? 'Login' : userUnlockedPropsState.length < 2 ? 'Unlock Free' : 'Upgrade'}
-                                  </button>
-                                )}
-                              </div>
-
-                              <div className="flex items-center gap-2 pt-0.5">
-                                <button
-                                  onClick={() => handlePropertyContactCall(selectedProfile, false)}
-                                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs py-2.5 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-                                >
-                                  <Phone className="w-3.5 h-3.5" />
-                                  <span>Call Owner</span>
-                                </button>
-                                <button
-                                  onClick={() => handlePropertyContactCall(selectedProfile, true)}
-                                  className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs py-2.5 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-                                >
-                                  <MessageSquare className="w-3.5 h-3.5" />
-                                  <span>WhatsApp</span>
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                     </div>
-                   </div>
-
-                   {/* Sticky Bottom Action Bar */}
-                   <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 sm:px-8 shadow-lg z-50 flex items-center justify-between gap-3">
-                     <div className="flex flex-col text-left min-w-0">
-                       <span className="text-[10px] text-slate-400 font-bold uppercase">
-                         Listed by {selectedProfile.postedBy || 'Owner'}
-                       </span>
-                       <span className="text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">
-                         {selectedProfile.contactName || selectedProfile.name || 'Owner'}
-                       </span>
-                     </div>
-
-                     <div className="flex items-center gap-2 shrink-0">
-                       <button 
-                         onClick={() => handlePropertyContactCall(selectedProfile, false)}
-                         className="bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 font-black text-xs px-3.5 py-2 rounded-xl transition-all shadow-2xs whitespace-nowrap cursor-pointer flex items-center gap-1.5 active:scale-95"
-                       >
-                         <Phone className="w-3.5 h-3.5 text-slate-700" />
-                         <span className="hidden sm:inline">Call Owner</span>
-                         <span className="sm:hidden">Call</span>
-                       </button>
-
-                       <button 
-                         onClick={() => handlePropertyContactCall(selectedProfile, true)}
-                         className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 active:scale-95"
-                       >
-                         <MessageSquare className="w-3.5 h-3.5" />
-                         <span>WhatsApp</span>
-                       </button>
-
-                       <button 
-                         onClick={() => {
-                           setEnquirySenderName(userName || '');
-                           setEnquirySenderPhone('');
-                           setEnquiryMessage(`Hi ${selectedProfile.contactName || 'Owner'}, I am interested in your property (${selectedProfile.category}). Please share details.`);
-                           setEnquiryModalProperty(selectedProfile);
-                         }}
-                         className="bg-slate-900 hover:bg-slate-800 text-white font-black text-xs px-4 py-2 rounded-xl shadow-xs transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer active:scale-95"
-                       >
-                         <Send className="w-3.5 h-3.5 text-white" />
-                         <span>Send Enquiry</span>
-                       </button>
-                     </div>
-                   </div>
                 </div>
               ) : (
                 /* 2. CLEAN HELPER / SPECIALIST DETAIL VIEW */

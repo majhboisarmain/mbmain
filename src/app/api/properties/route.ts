@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { uploadGallery } from '@/lib/cloudinary';
+import { uploadGallery, uploadImage } from '@/lib/cloudinary';
 import { internalServerErrorResponse, badRequestResponse } from '@/lib/authGuard';
 
 export async function GET(request: NextRequest) {
@@ -43,13 +43,20 @@ export async function GET(request: NextRequest) {
     });
 
     const result = properties.map(p => {
-      const parts = (p.images || '').split('||gallery_sep||').filter(Boolean);
+      const rawParts = (p.images || '').split('||gallery_sep||').filter(Boolean);
+      const photoParts = rawParts.filter(part => !part.startsWith('video:') && !part.match(/\.(mp4|webm|mov|mkv)(\?.*)?$/i) && !part.includes('/video/upload/') && !part.startsWith('data:video/'));
+      const videoParts = rawParts
+        .filter(part => part.startsWith('video:') || part.match(/\.(mp4|webm|mov|mkv)(\?.*)?$/i) || part.includes('/video/upload/') || part.startsWith('data:video/'))
+        .map(part => part.replace(/^video:/, ''));
+
       return {
         ...p,
         category: `${p.bedrooms ? `${p.bedrooms} BHK ` : ''}${p.propertyType} for ${p.forAction}`,
         location: p.addressLocality,
-        avatar: parts[0] || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
-        gallery: parts,
+        avatar: photoParts[0] || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
+        gallery: photoParts.length > 0 ? photoParts : (rawParts.length > 0 && videoParts.length === 0 ? rawParts : []),
+        videos: videoParts,
+        video: videoParts[0] || null,
         listingType: 'property',
         bio: p.description,
         name: p.contactName,
@@ -72,7 +79,7 @@ export async function POST(request: NextRequest) {
       iAm, contactName, contactPhone, whatsappPhone, forAction,
       propertyType, cityName, projectName, addressLocality, bedrooms,
       balconies, furnishing, bathrooms, carpetArea, superArea, price,
-      description, photos
+      description, photos, video, videos
     } = body;
 
     if (!contactName || !contactPhone || !price || !addressLocality) {
@@ -82,6 +89,17 @@ export async function POST(request: NextRequest) {
     let galleryUrls: string[] = [];
     if (Array.isArray(photos) && photos.length > 0) {
       galleryUrls = await uploadGallery(photos);
+    }
+
+    let uploadedVideoUrl: string | null = null;
+    const rawVideo = video || (Array.isArray(videos) && videos[0] ? videos[0] : null);
+    if (rawVideo) {
+      uploadedVideoUrl = await uploadImage(rawVideo);
+    }
+
+    const allMediaToStore = [...galleryUrls];
+    if (uploadedVideoUrl) {
+      allMediaToStore.push(`video:${uploadedVideoUrl}`);
     }
 
     const property = await prisma.propertyListing.create({
@@ -103,18 +121,25 @@ export async function POST(request: NextRequest) {
         superArea: superArea || null,
         price,
         description: description || null,
-        images: galleryUrls.join('||gallery_sep||'),
+        images: allMediaToStore.join('||gallery_sep||'),
         verified: false // Requires Super Admin approval before going live
       },
     });
 
-    const parts = (property.images || '').split('||gallery_sep||').filter(Boolean);
+    const rawParts = (property.images || '').split('||gallery_sep||').filter(Boolean);
+    const photoParts = rawParts.filter(part => !part.startsWith('video:') && !part.match(/\.(mp4|webm|mov|mkv)(\?.*)?$/i) && !part.includes('/video/upload/') && !part.startsWith('data:video/'));
+    const videoParts = rawParts
+      .filter(part => part.startsWith('video:') || part.match(/\.(mp4|webm|mov|mkv)(\?.*)?$/i) || part.includes('/video/upload/') || part.startsWith('data:video/'))
+      .map(part => part.replace(/^video:/, ''));
+
     const result = {
       ...property,
       category: `${property.bedrooms ? `${property.bedrooms} BHK ` : ''}${property.propertyType} for ${property.forAction}`,
       location: property.addressLocality,
-      avatar: parts[0] || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
-      gallery: parts,
+      avatar: photoParts[0] || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
+      gallery: photoParts.length > 0 ? photoParts : (rawParts.length > 0 && videoParts.length === 0 ? rawParts : []),
+      videos: videoParts,
+      video: videoParts[0] || null,
       listingType: 'property',
       bio: property.description,
       name: property.contactName,
