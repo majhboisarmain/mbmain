@@ -132,6 +132,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+    },
     keywords: [
       `best ${categoryName.toLowerCase()} in boisar`,
       `top ${categoryName.toLowerCase()} in boisar`,
@@ -139,6 +144,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `${categoryName.toLowerCase()} in ostwal empire boisar`,
       `${categoryName.toLowerCase()} in tarapur midc`,
       `boisar ${categoryName.toLowerCase()} contact number`,
+      `${categoryName.toLowerCase()} near me boisar`,
+      `${categoryName.toLowerCase()} palghar`,
       'majh boisar directory',
     ],
     openGraph: {
@@ -162,6 +169,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
   };
 }
+
 
 export default async function CategorySEOPage({ params, searchParams }: Props) {
   const resolvedParams = await params;

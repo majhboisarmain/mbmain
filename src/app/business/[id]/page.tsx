@@ -107,12 +107,13 @@ export default function BusinessDetailsPage() {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeFolder, setActiveFolder] = useState<'all' | 'latest' | 'owner' | 'user'>('all');
 
+  const rawImageParts = business?.image ? business.image.split('||gallery_sep||').filter(Boolean) : [];
   const galleryImages = business && Array.isArray((business as any).gallery)
     ? (business as any).gallery.filter(Boolean)
     : [];
 
   const allImages = business
-    ? Array.from(new Set([business.image, ...galleryImages].filter(Boolean)))
+    ? Array.from(new Set([...rawImageParts, ...galleryImages].filter(Boolean)))
     : [];
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
 interface PopularCategoryItem {
@@ -16,39 +16,22 @@ interface PopularCategoryItem {
 
 const POPULAR_CATEGORIES: PopularCategoryItem[] = [
   {
-    id: 'protein',
-    name: 'Protein & Supplements',
-    subtitle: 'Whey, BCAA & Shakers',
-    image: 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?auto=format&fit=crop&w=360&q=80',
-    bgColor: 'bg-amber-100/70',
-    route: '/search?q=Protein+Supplements',
-    badge: 'Popular'
-  },
-  {
     id: 'gyms',
     name: 'Gyms & Fitness',
     subtitle: 'Workouts & Crossfit',
     image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=360&q=80',
     bgColor: 'bg-indigo-100/70',
-    route: '/search?category=Gyms',
+    route: '/category/Gyms%20%26%20Fitness%20Centers',
     badge: 'Trending'
   },
   {
-    id: 'pathology',
-    name: 'Pathology & Blood Tests',
-    subtitle: 'Labs & Health Checkups',
-    image: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=360&q=80',
-    bgColor: 'bg-sky-100/70',
-    route: '/search?category=Diagnostic%20Labs',
-    badge: 'Diagnostic'
-  },
-  {
-    id: 'medical_stores',
-    name: 'Medical & Pharmacy',
-    subtitle: 'Medicines & First Aid',
-    image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=360&q=80',
-    bgColor: 'bg-rose-100/70',
-    route: '/search?category=Medical%20Stores'
+    id: 'protein',
+    name: 'Protein & Supplements',
+    subtitle: 'Whey, BCAA & Shakers',
+    image: 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?auto=format&fit=crop&w=360&q=80',
+    bgColor: 'bg-amber-100/70',
+    route: '/category/Protein%20%26%20Supplements',
+    badge: 'Popular'
   },
   {
     id: 'doctors',
@@ -56,7 +39,7 @@ const POPULAR_CATEGORIES: PopularCategoryItem[] = [
     subtitle: 'Specialists & Physicians',
     image: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=360&q=80',
     bgColor: 'bg-teal-100/70',
-    route: '/search?category=Doctors'
+    route: '/category/Doctors%20%26%20Specialists'
   },
   {
     id: 'hospitals',
@@ -64,28 +47,44 @@ const POPULAR_CATEGORIES: PopularCategoryItem[] = [
     subtitle: '24x7 Multi-Speciality',
     image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=360&q=80',
     bgColor: 'bg-red-100/70',
-    route: '/search?category=Hospitals'
+    route: '/category/Hospitals'
   },
   {
-    id: 'baby_care',
-    name: 'Baby & Mother Care',
-    subtitle: 'Diapers, Lotions & Wipes',
-    image: 'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=360&q=80',
+    id: 'medical_stores',
+    name: 'Medical & Pharmacy',
+    subtitle: 'Medicines & First Aid',
+    image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=360&q=80',
+    bgColor: 'bg-rose-100/70',
+    route: '/category/Medical%20Stores%20%26%20Pharmacy'
+  },
+  {
+    id: 'pathology',
+    name: 'Pathology & Labs',
+    subtitle: 'Blood Tests & Checkups',
+    image: 'https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=360&q=80',
+    bgColor: 'bg-sky-100/70',
+    route: '/category/Diagnostic%20Labs',
+    badge: 'Diagnostic'
+  },
+  {
+    id: 'salon',
+    name: 'Salon & Beauty',
+    subtitle: 'Hair, Makeup & Spa',
+    image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=360&q=80',
+    bgColor: 'bg-pink-100/70',
+    route: '/category/Salon%20%26%20Beauty%20Parlour'
+  },
+  {
+    id: 'properties',
+    name: 'Flats & Real Estate',
+    subtitle: '1 & 2 BHK in Boisar',
+    image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=360&q=80',
     bgColor: 'bg-purple-100/70',
-    route: '/search?q=Baby+Care'
-  },
-  {
-    id: 'opticians',
-    name: 'Eye Care & Opticians',
-    subtitle: 'Glasses & Testing',
-    image: 'https://images.unsplash.com/photo-1574258495973-f010dfbb5371?auto=format&fit=crop&w=360&q=80',
-    bgColor: 'bg-cyan-100/70',
-    route: '/search?category=Opticians'
+    route: '/category/Real%20Estate%20%26%20Properties'
   }
 ];
 
 export default function PopularCategoriesRail() {
-  const router = useRouter();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -137,9 +136,9 @@ export default function PopularCategoriesRail() {
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {POPULAR_CATEGORIES.map((item) => (
-          <div
+          <Link
             key={item.id}
-            onClick={() => router.push(item.route)}
+            href={item.route}
             className="group shrink-0 w-[110px] sm:w-[130px] md:w-[140px] bg-white rounded-2xl border border-slate-200/80 p-2 sm:p-2.5 shadow-sm hover:shadow-lg hover:border-orange-300/80 transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col items-center snap-start relative"
           >
             {item.badge && (
@@ -165,7 +164,7 @@ export default function PopularCategoriesRail() {
             <p className="text-[11px] sm:text-xs font-bold text-slate-800 text-center leading-tight mt-2 line-clamp-2 group-hover:text-orange-600 transition-colors">
               {item.name}
             </p>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
