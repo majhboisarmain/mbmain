@@ -35,7 +35,8 @@ import {
   Car,
   Tv,
   Zap,
-  Train
+  Train,
+  Lock
 } from 'lucide-react';
 import { BOISAR_HOTELS, HotelItem, getAllHotels, recordHotelClick, calculateStayWindow } from '@/lib/hotelsData';
 import { useApp } from '@/context/AppContext';
@@ -520,6 +521,10 @@ export default function HotelsPage() {
               <div 
                 key={hotel.id}
                 onClick={() => {
+                  if (hotel.isComingSoon) {
+                    showToast("🚀 Online booking for this hotel is launching soon! Are you the property owner? Click 'Register Hotel' to list your rooms.", "info", 4500);
+                    return;
+                  }
                   recordHotelClick(hotel.id, 'click');
                   router.push(`/hotels/${hotel.slug}`);
                 }}
@@ -541,8 +546,23 @@ export default function HotelsPage() {
                       <img 
                         src={activePhoto} 
                         alt={hotel.name} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${hotel.isComingSoon ? 'grayscale-[25%]' : ''}`} 
                       />
+
+                      {/* Big Bold COMING SOON Overlay (Matching Sold Out style) */}
+                      {hotel.isComingSoon && (
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-30 p-2 text-center pointer-events-none">
+                          <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border-2 border-amber-300 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-2xl transform -rotate-3 text-center tracking-wider">
+                            <span className="text-[11px] sm:text-xs font-black uppercase block leading-tight drop-shadow-sm flex items-center justify-center gap-1.5">
+                              <Sparkles className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+                              COMING SOON
+                            </span>
+                            <span className="text-[7.5px] sm:text-[8px] font-extrabold uppercase opacity-95 block mt-0.5 tracking-wider">
+                              Online Booking Opening Soon
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Top Badges & Rating Overlay on Image */}
                       <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 flex-wrap pointer-events-none">
@@ -606,7 +626,22 @@ export default function HotelsPage() {
                   {/* Mobile Photo Banner with Thumbnails, Controls & Overlays */}
                   <div className="sm:hidden space-y-1.5 w-full">
                     <div className="relative w-full h-[190px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 shrink-0">
-                      <img src={activePhoto} alt={hotel.name} className="w-full h-full object-cover" />
+                      <img src={activePhoto} alt={hotel.name} className={`w-full h-full object-cover ${hotel.isComingSoon ? 'grayscale-[25%]' : ''}`} />
+
+                      {/* Mobile COMING SOON Overlay */}
+                      {hotel.isComingSoon && (
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-30 p-2 text-center pointer-events-none">
+                          <div className="px-3 py-1.5 rounded-xl border-2 border-amber-300 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-2xl transform -rotate-3 text-center tracking-wider">
+                            <span className="text-xs font-black uppercase block leading-tight drop-shadow-sm flex items-center justify-center gap-1">
+                              <Sparkles className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+                              COMING SOON
+                            </span>
+                            <span className="text-[7.5px] font-extrabold uppercase opacity-95 block mt-0.5 tracking-wider">
+                              Online Booking Opening Soon
+                            </span>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Top Badges & Rating Overlay on Image */}
                       <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 flex-wrap pointer-events-none">
@@ -719,104 +754,135 @@ export default function HotelsPage() {
                       </div>
                     </div>
 
-                    {/* Bottom Row: Pricing Structure (Hourly or Day & Night) */}
-                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2 sm:gap-2.5">
-                      {hotel.offersHourly === false || (hotel.hourlyRate3h === 0 && !hotel.is3hAvailable) ? (
-                        <>
-                          {/* ☀️ Day Stay */}
-                          <div className="flex-1 bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-200 rounded-2xl py-2 px-3 text-center transition-all cursor-pointer">
-                            <span className="text-sm sm:text-base font-black text-emerald-950 block">
-                              ₹{hotel.dayRate || hotel.hourlyRate12h || hotel.nightRate}
-                            </span>
-                            <span className="text-[9.5px] font-bold text-emerald-700 block uppercase tracking-wider">
-                              ☀️ Day Stay
-                            </span>
-                          </div>
+                    {/* Bottom Row: Pricing Structure or COMING SOON Locked state */}
+                    {hotel.isComingSoon ? (
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10.5px] sm:text-xs font-black px-3 py-1.5 rounded-xl border flex items-center gap-1.5 bg-amber-50 text-amber-800 border-amber-300 shadow-2xs">
+                            <Lock className="w-3.5 h-3.5 text-amber-700" />
+                            <span>Coming Soon</span>
+                          </span>
+                          <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium">
+                            Tariff &amp; Instant Booking Opening Soon
+                          </span>
+                        </div>
 
-                          {/* 🌙 Night Stay */}
-                          <div className="flex-1 bg-purple-50/70 hover:bg-purple-100/70 border border-purple-200 rounded-2xl py-2 px-3 text-center transition-all cursor-pointer">
-                            <span className="text-sm sm:text-base font-black text-purple-950 block">
-                              ₹{hotel.nightRate}
-                            </span>
-                            <span className="text-[9.5px] font-bold text-purple-800 block uppercase tracking-wider">
-                              🌙 Night Stay
-                            </span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          {/* 3 Hrs */}
-                          <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
-                            <span className="text-sm sm:text-base font-black text-slate-900 block">
-                              ₹{hotel.hourlyRate3h}
-                            </span>
-                            <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
-                              3 Hrs
-                            </span>
-                          </div>
-
-                          {/* 6 Hrs */}
-                          <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
-                            {hotel.is6hAvailable ? (
-                              <>
-                                <span className="text-sm sm:text-base font-black text-slate-900 block">
-                                  ₹{hotel.hourlyRate6h}
-                                </span>
-                                <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
-                                  6 Hrs
-                                </span>
-                              </>
-                            ) : (
-                              <span className="text-xs font-bold text-slate-400 block py-1.5">Unavailable</span>
-                            )}
-                          </div>
-
-                          {/* 12 Hrs */}
-                          <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
-                            {hotel.is12hAvailable ? (
-                              <>
-                                <span className="text-sm sm:text-base font-black text-slate-900 block">
-                                  ₹{hotel.hourlyRate12h}
-                                </span>
-                                <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
-                                  12 Hrs
-                                </span>
-                              </>
-                            ) : (
-                              <span className="text-xs font-bold text-slate-400 block py-1.5">Unavailable</span>
-                            )}
-                          </div>
-                        </>
-                      )}
-
-                      {/* Action buttons */}
-                      <div className="flex items-center gap-1.5 pl-1 shrink-0">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            triggerWhatsApp(hotel, '3 Hours Stay', hotel.hourlyRate3h);
+                            if (!isLoggedIn) {
+                              showToast("Please Sign In or Register first to list your hotel.", "info", 4000);
+                              setLoginModalOpen(true);
+                              return;
+                            }
+                            setIsAddHotelOpen(true);
                           }}
-                          className="p-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl transition-all cursor-pointer shadow-2xs"
-                          title="WhatsApp Hotel"
+                          className="bg-purple-900 hover:bg-purple-950 text-white font-black text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ml-auto"
                         >
-                          <MessageSquare className="w-4 h-4" />
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Register Hotel</span>
                         </button>
-
-                        <a
-                          href={`tel:${hotel.phone}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            recordHotelClick(hotel.id, 'call');
-                          }}
-                          className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl transition-all cursor-pointer border border-slate-200"
-                          title="Call Reception"
-                        >
-                          <Phone className="w-4 h-4" />
-                        </a>
                       </div>
+                    ) : (
+                      <div className="pt-2 border-t border-slate-100 flex items-center gap-2 sm:gap-2.5">
+                        {hotel.offersHourly === false || (hotel.hourlyRate3h === 0 && !hotel.is3hAvailable) ? (
+                          <>
+                            {/* ☀️ Day Stay */}
+                            <div className="flex-1 bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-200 rounded-2xl py-2 px-3 text-center transition-all cursor-pointer">
+                              <span className="text-sm sm:text-base font-black text-emerald-950 block">
+                                ₹{hotel.dayRate || hotel.hourlyRate12h || hotel.nightRate}
+                              </span>
+                              <span className="text-[9.5px] font-bold text-emerald-700 block uppercase tracking-wider">
+                                ☀️ Day Stay
+                              </span>
+                            </div>
 
-                    </div>
+                            {/* 🌙 Night Stay */}
+                            <div className="flex-1 bg-purple-50/70 hover:bg-purple-100/70 border border-purple-200 rounded-2xl py-2 px-3 text-center transition-all cursor-pointer">
+                              <span className="text-sm sm:text-base font-black text-purple-950 block">
+                                ₹{hotel.nightRate}
+                              </span>
+                              <span className="text-[9.5px] font-bold text-purple-800 block uppercase tracking-wider">
+                                🌙 Night Stay
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            {/* 3 Hrs */}
+                            <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
+                              <span className="text-sm sm:text-base font-black text-slate-900 block">
+                                ₹{hotel.hourlyRate3h}
+                              </span>
+                              <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                                3 Hrs
+                              </span>
+                            </div>
+
+                            {/* 6 Hrs */}
+                            <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
+                              {hotel.is6hAvailable ? (
+                                <>
+                                  <span className="text-sm sm:text-base font-black text-slate-900 block">
+                                    ₹{hotel.hourlyRate6h}
+                                  </span>
+                                  <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                                    6 Hrs
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-xs font-bold text-slate-400 block py-1.5">Unavailable</span>
+                              )}
+                            </div>
+
+                            {/* 12 Hrs */}
+                            <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
+                              {hotel.is12hAvailable ? (
+                                <>
+                                  <span className="text-sm sm:text-base font-black text-slate-900 block">
+                                    ₹{hotel.hourlyRate12h}
+                                  </span>
+                                  <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                                    12 Hrs
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-xs font-bold text-slate-400 block py-1.5">Unavailable</span>
+                              )}
+                            </div>
+                          </>
+                        )}
+
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-1.5 pl-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              triggerWhatsApp(hotel, '3 Hours Stay', hotel.hourlyRate3h);
+                            }}
+                            className="p-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl transition-all cursor-pointer shadow-2xs"
+                            title="WhatsApp Hotel"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                          </button>
+
+                          <a
+                            href={`tel:${hotel.phone}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              recordHotelClick(hotel.id, 'call');
+                            }}
+                            className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl transition-all cursor-pointer border border-slate-200"
+                            title="Call Reception"
+                          >
+                            <Phone className="w-4 h-4" />
+                          </a>
+                        </div>
+
+                      </div>
+                    )}
 
                   </div>
 

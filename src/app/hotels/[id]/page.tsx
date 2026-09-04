@@ -478,6 +478,14 @@ export default function HotelDetailPage() {
         </div>
       </div>
 
+      {/* Coming Soon Notice Banner */}
+      {hotel.isComingSoon && (
+        <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black py-2.5 px-4 text-center text-xs sm:text-sm border-b border-amber-300 shadow-xs flex items-center justify-center gap-2">
+          <Sparkles className="w-4 h-4 fill-slate-950" />
+          <span>🚀 COMING SOON: Direct room bookings for {hotel.name} are opening soon on Majh Boisar!</span>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
         
 

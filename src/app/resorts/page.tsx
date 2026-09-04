@@ -10,7 +10,7 @@ import {
   Search, ArrowUpDown, Bed, Bath, Utensils, Waves, Check,
   Clock, Shield, Heart, Navigation, Award, Coffee, Flame, Wifi,
   Plus, SlidersHorizontal, Ticket, Upload, Camera, Trash2,
-  CheckSquare, Square, QrCode
+  CheckSquare, Square, QrCode, Lock
 } from 'lucide-react';
 import { resortsData, ResortVilla } from '@/lib/resortsData';
 import { useApp } from '@/context/AppContext';
@@ -24,7 +24,22 @@ function ResortsPageContent() {
   const { showToast, isLoggedIn, setLoginModalOpen } = useApp();
 
   // All listings state (init with resortsData, allow dynamic additions)
-  const [allResorts, setAllResorts] = useState<ResortVilla[]>(resortsData);
+  const [allResorts, setAllResorts] = useState<ResortVilla[]>(() => {
+    if (typeof window === 'undefined') return resortsData;
+    try {
+      const saved = localStorage.getItem('majh_boisar_custom_resorts_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const approved = parsed.filter((r: any) => r.status !== 'Pending');
+          return [...approved, ...resortsData];
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return resortsData;
+  });
   const [selectedArea, setSelectedArea] = useState<string>('All');
   const [selectedType, setSelectedType] = useState<string>(
     typeParam === 'villa' || typeParam === 'villas' ? 'Private Pool Villa' : 'All'
@@ -224,7 +239,7 @@ function ResortsPageContent() {
       `Please review and approve this listing on Majh Boisar!`
     );
 
-    window.open(`https://wa.me/917769947217?text=${waText}`, '_blank');
+    window.open(`https://wa.me/919307294733?text=${waText}`, '_blank');
   };
 
   // Booking Form State inside Detail View
@@ -477,7 +492,13 @@ function ResortsPageContent() {
               {filteredResorts.map(resort => (
                 <div
                   key={resort.id}
-                  onClick={() => handleOpenDetail(resort)}
+                  onClick={() => {
+                    if (resort.isComingSoon) {
+                      showToast("🏖️ Bookings for this resort/villa are launching soon! Are you the property owner? Click 'List Your Villa' to register.", "info", 4500);
+                      return;
+                    }
+                    handleOpenDetail(resort);
+                  }}
                   className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 hover:border-teal-500 hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col cursor-pointer group text-left"
                 >
                   {/* Photo Container */}
@@ -485,8 +506,23 @@ function ResortsPageContent() {
                     <img
                       src={(resort.gallery && resort.gallery.length > 0) ? resort.gallery[0] : 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&auto=format&fit=crop&q=80'}
                       alt={resort.name || 'Resort'}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${resort.isComingSoon ? 'grayscale-[25%]' : ''}`}
                     />
+
+                    {/* Big Bold COMING SOON Overlay (Matching Sold Out style) */}
+                    {resort.isComingSoon && (
+                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-20 p-2 text-center pointer-events-none">
+                        <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border-2 border-amber-300 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-2xl transform -rotate-3 text-center tracking-wider">
+                          <span className="text-[11px] sm:text-xs font-black uppercase block leading-tight drop-shadow-sm flex items-center justify-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
+                            COMING SOON
+                          </span>
+                          <span className="text-[7.5px] sm:text-[8px] font-extrabold uppercase opacity-95 block mt-0.5 tracking-wider">
+                            Booking Pass Opening Soon
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Top Badges */}
                     <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1.5 flex-wrap">
@@ -546,57 +582,88 @@ function ResortsPageContent() {
                       )}
                     </div>
 
-                    {/* Pricing & Action Buttons */}
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                      <div>
-                        <span className="text-[9.5px] text-slate-400 font-bold block uppercase tracking-wider">Stay &amp; Day Rates</span>
-                        <div className="flex items-baseline gap-1.5 flex-wrap">
-                          <span className="text-sm sm:text-base font-black text-slate-950">
-                            ₹{(resort.pricePerNight || 0).toLocaleString('en-IN')}<span className="text-[10px] text-slate-500 font-bold">/night</span>
+                    {/* Pricing & Action Buttons or COMING SOON Locked state */}
+                    {resort.isComingSoon ? (
+                      <div className="flex items-center justify-between gap-2 w-full pt-2 border-t border-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] sm:text-xs font-black px-2.5 sm:px-3 py-1.5 rounded-xl border flex items-center gap-1.5 bg-amber-50 text-amber-800 border-amber-300 shadow-2xs">
+                            <Lock className="w-3 h-3 text-amber-700" />
+                            <span>Coming Soon</span>
                           </span>
-                          {resort.dayPicnicPrice && (
-                            <span className="text-[10px] text-teal-800 font-bold bg-teal-50 px-1.5 py-0.5 rounded-md border border-teal-200">
-                              ☀️ Day: ₹{resort.dayPicnicPrice}/person
+                          <span className="text-[10px] sm:text-[10.5px] text-slate-500 font-medium hidden xs:inline-block">
+                            Direct Passes Opening Soon
+                          </span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!isLoggedIn) {
+                              showToast("Please login first to list your resort or pool villa.", "info", 4000);
+                              setLoginModalOpen(true);
+                              return;
+                            }
+                            setIsListModalOpen(true);
+                          }}
+                          className="bg-teal-700 hover:bg-teal-800 text-white font-black text-xs px-3 py-1.5 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ml-auto"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>List Your Villa</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                        <div>
+                          <span className="text-[9.5px] text-slate-400 font-bold block uppercase tracking-wider">Stay &amp; Day Rates</span>
+                          <div className="flex items-baseline gap-1.5 flex-wrap">
+                            <span className="text-sm sm:text-base font-black text-slate-950">
+                              ₹{(resort.pricePerNight || 0).toLocaleString('en-IN')}<span className="text-[10px] text-slate-500 font-bold">/night</span>
                             </span>
-                          )}
+                            {resort.dayPicnicPrice && (
+                              <span className="text-[10px] text-teal-800 font-bold bg-teal-50 px-1.5 py-0.5 rounded-md border border-teal-200">
+                                ☀️ Day: ₹{resort.dayPicnicPrice}/person
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setStandeeResort(resort);
+                              setIsStandeeModalOpen(true);
+                            }}
+                            className="w-9 h-9 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                            title="Download Official Resort QR Standee"
+                          >
+                            <QrCode className="w-4 h-4 text-amber-700" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleWhatsAppBooking(resort);
+                            }}
+                            className="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                            title="Chat on WhatsApp"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenDetail(resort)}
+                            className="px-3.5 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-black transition-all shadow-2xs cursor-pointer active:scale-95"
+                          >
+                            View Details
+                          </button>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setStandeeResort(resort);
-                            setIsStandeeModalOpen(true);
-                          }}
-                          className="w-9 h-9 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 flex items-center justify-center transition-all cursor-pointer active:scale-95"
-                          title="Download Official Resort QR Standee"
-                        >
-                          <QrCode className="w-4 h-4 text-amber-700" />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleWhatsAppBooking(resort);
-                          }}
-                          className="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 flex items-center justify-center transition-all cursor-pointer active:scale-95"
-                          title="Chat on WhatsApp"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleOpenDetail(resort)}
-                          className="px-3.5 py-2 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-black transition-all shadow-2xs cursor-pointer active:scale-95"
-                        >
-                          View Details
-                        </button>
-                      </div>
-                    </div>
+                    )}
 
                   </div>
 
