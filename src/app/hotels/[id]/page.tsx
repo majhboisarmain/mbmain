@@ -379,7 +379,7 @@ export default function HotelDetailPage() {
       const roomLabel = roomTypePreference === 'ac' ? 'Deluxe AC Room' : 'Standard Non-AC Room';
       const newLead = {
         id: `lead_htl_${Date.now()}`,
-        businessId: Number(hotel.id.replace(/\D/g, '')) || 1,
+        businessId: Number(hotel.id.replace(/\D/g, '')) || 0,
         hotelId: hotel.id,
         customerName: guestName,
         customerPhone: guestPhone,

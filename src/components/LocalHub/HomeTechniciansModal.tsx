@@ -113,7 +113,7 @@ const POPULAR_SERVICES: PopularService[] = [
     startingPrice: 'Starting ₹299',
     rating: 4.8,
     reviews: 45,
-    image: 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=500&auto=format&fit=crop&q=80'
+    image: 'https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?w=500&auto=format&fit=crop&q=80'
   },
   {
     id: 'pop-3',
@@ -197,7 +197,10 @@ export default function HomeTechniciansModal({ isOpen, onClose }: HomeTechnician
   // Fetch technicians from database
   const fetchDbTechnicians = async () => {
     try {
-      const res = await fetch('/api/technicians');
+      const res = await fetch('/api/technicians', {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -351,6 +354,8 @@ export default function HomeTechniciansModal({ isOpen, onClose }: HomeTechnician
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     if (!formName.trim() || !formPhone.trim()) {
       showToast("Please enter Technician / Shop Name and Contact Phone!", "error");
       return;
@@ -374,9 +379,14 @@ export default function HomeTechniciansModal({ isOpen, onClose }: HomeTechnician
 
       if (res.ok) {
         const saved = await res.json();
-        setProviders(prev => [saved, ...prev]);
-        setSuccessMsg('🎉 Service Provider Registered Successfully!');
-        showToast('🎉 Service Provider Registered Successfully on Majh Boisar!', 'success');
+        if (saved.verified) {
+          setProviders(prev => [saved, ...prev.filter(p => String(p.id) !== String(saved.id))]);
+          setSuccessMsg('🎉 Service Provider Registered Successfully!');
+          showToast('🎉 Service Provider Registered Successfully on Majh Boisar!', 'success');
+        } else {
+          setSuccessMsg('⏳ Profile submitted! Admin will verify and activate your listing shortly.');
+          showToast('⏳ Profile submitted for verification! It will go live once approved by Admin.', 'info', 6000);
+        }
 
         setTimeout(() => {
           setSuccessMsg('');
@@ -384,7 +394,7 @@ export default function HomeTechniciansModal({ isOpen, onClose }: HomeTechnician
           setFormName('');
           setFormPhone('');
           setFormImage('');
-        }, 1500);
+        }, 1800);
       } else {
         const errData = await res.json();
         showToast(errData.error || 'Failed to register provider', 'error');
@@ -574,9 +584,21 @@ export default function HomeTechniciansModal({ isOpen, onClose }: HomeTechnician
 
                   <button
                     type="submit"
-                    className="w-full bg-teal-700 hover:bg-teal-800 active:scale-[0.98] text-white font-black text-xs py-2.5 rounded-xl shadow-md transition-all cursor-pointer mt-1"
+                    disabled={isSubmitting}
+                    className={`w-full font-black text-xs py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 mt-1 ${
+                      isSubmitting
+                        ? 'bg-teal-500 text-white cursor-not-allowed opacity-80'
+                        : 'bg-teal-700 hover:bg-teal-800 active:scale-[0.98] text-white cursor-pointer'
+                    }`}
                   >
-                    Submit &amp; Register Service Live
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                        <span>Registering Service Live, Please Wait...</span>
+                      </>
+                    ) : (
+                      <span>Submit &amp; Register Service Live</span>
+                    )}
                   </button>
                 </form>
               )}
@@ -820,6 +842,9 @@ export default function HomeTechniciansModal({ isOpen, onClose }: HomeTechnician
                         src={service.image}
                         alt={service.title}
                         className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border border-slate-200 shrink-0 group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&auto=format&fit=crop&q=80';
+                        }}
                       />
                       <div className="min-w-0">
                         <h5 className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-teal-700 transition-colors leading-snug line-clamp-1">

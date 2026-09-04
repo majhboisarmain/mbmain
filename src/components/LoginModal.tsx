@@ -214,7 +214,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       localStorage.setItem('majh_boisar_role', 'Admin');
     }
     setRole('Admin');
-    login('Super Admin (9307294733)', '9307294733', 'admin@majhboisar.in');
+    login('Super Admin (9307294733)', '9307294733', 'majhboisar@gmail.com');
     showToast('🛡️ Super Admin Authenticated! Opening Admin Panel...', 'success', 3500);
     resetForm();
     onClose();

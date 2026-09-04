@@ -243,11 +243,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Clear legacy admin role if stored in public localStorage
       const savedRole = localStorage.getItem('majh_boisar_role') as Role;
+      const isAdminSessionValid = sessionStorage.getItem('majh_boisar_adminmb_auth') === 'unlocked';
+
       if (savedRole === 'Admin') {
-        localStorage.removeItem('majh_boisar_role');
-        setRoleState('User');
+        // Only keep Admin role if session is still valid (authenticated via /adminmb portal)
+        if (isAdminSessionValid) {
+          setRoleState('Admin');
+        } else {
+          // Session expired (browser was closed), clear stale admin role
+          localStorage.removeItem('majh_boisar_role');
+          setRoleState('User');
+        }
       } else if (savedRole && ['Guest', 'User', 'BusinessOwner'].includes(savedRole)) {
         setRoleState(savedRole);
       }
@@ -256,8 +263,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (savedUser) {
         try {
           const parsed = JSON.parse(savedUser);
-          // If legacy user was stored as 'Super Admin', purge and reset to regular guest
-          if (parsed.name === 'Super Admin' || parsed.phone === '9999999999') {
+          // If legacy dummy phone 9999999999 was stored, purge it
+          if (parsed.phone === '9999999999') {
             localStorage.removeItem('majh_boisar_user');
             localStorage.removeItem('majh_boisar_role');
             setLoggedInUser(null);
@@ -284,7 +291,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     Guest: { name: 'Guest Visitor', email: '' },
     User: { name: loggedInUser?.name || 'User', email: loggedInUser?.email || '' },
     BusinessOwner: { name: loggedInUser?.name || 'Business Owner', email: loggedInUser?.email || '' },
-    Admin: { name: loggedInUser?.name || 'Admin', email: loggedInUser?.email || 'admin@majhboisar.in' },
+    Admin: { name: loggedInUser?.name || 'Admin', email: loggedInUser?.email || 'majhboisar@gmail.com' },
   };
 
   const { name: userName, email: userEmail } = roleDetails[currentRole];

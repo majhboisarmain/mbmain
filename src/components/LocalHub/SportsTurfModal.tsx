@@ -208,7 +208,7 @@ export default function SportsTurfModal({ isOpen, onClose, defaultTab = 'game' }
   const handleSubmitTurf = () => {
     if (!form.venueName || !form.location) return;
     const msg = `Hello, I want to list my Turf/Game Zone on Majh Boisar:%0AVenue: ${form.venueName}%0ACategory: ${form.category}%0ALocation: ${form.location}%0APhone: ${userLoggedInPhone}%0AHourly Rate: ${form.hourlyRate}%0ATiming: ${form.timing}%0AFeatures: ${form.features}${form.imageName ? `%0APhoto: ${form.imageName}` : ''}`;
-    window.open(`https://wa.me/919999999999?text=${msg}`, '_blank');
+    window.open(`https://wa.me/919307294733?text=${msg}`, '_blank');
     setSubmitted(true);
     setTimeout(() => {
       setSubmitted(false);

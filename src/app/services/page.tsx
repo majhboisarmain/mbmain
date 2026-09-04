@@ -67,6 +67,7 @@ interface DomesticHelper {
   rating: number;
   reviewsCount: number;
   verified: boolean;
+  featured?: boolean;
   image: string;
 }
 
@@ -82,6 +83,7 @@ interface ServiceProvider {
   rating: number;
   reviewsCount?: number;
   verified?: boolean;
+  featured?: boolean;
   image: string;
 }
 
@@ -374,7 +376,7 @@ const POPULAR_SERVICES: PopularService[] = [
     startingPrice: 'Starting ₹299',
     rating: 4.8,
     reviews: 45,
-    image: 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=500&auto=format&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?w=500&auto=format&fit=crop&q=80',
     desc: 'Filter replacement, membrane service, TDS adjustment, leakage repair & RO installation.'
   },
   {
@@ -461,6 +463,8 @@ function ServicesPageContent() {
 
   // Provider states
   const [providers, setProviders] = useState<ServiceProvider[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Add Provider Form
   const [formName, setFormName] = useState('');
@@ -511,24 +515,172 @@ function ServicesPageContent() {
     setShowAddForm(true);
   };
 
-  // Load custom providers and helpers from local storage
+  // Load live profiles from PostgreSQL database and sync any local items
+  const loadLiveProfiles = async () => {
+    try {
+      const res = await fetch('/api/technicians', {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      if (res.ok) {
+        const dbList = await res.json();
+        if (Array.isArray(dbList)) {
+          const loadedProviders: ServiceProvider[] = [];
+          const loadedHelpers: DomesticHelper[] = [];
+
+          dbList.forEach((item: any) => {
+            const defaultImg = item.category?.includes('Maid') ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=80'
+              : item.category?.includes('Driver') ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80'
+              : item.category?.includes('Cook') ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=80'
+              : item.category?.includes('Babysitter') ? 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=500&auto=format&fit=crop&q=80'
+              : item.category?.includes('Plumber') ? 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=500&auto=format&fit=crop&q=80'
+              : item.category?.includes('AC') ? 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop&q=80'
+              : 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=500&auto=format&fit=crop&q=80';
+
+            const providerItem: ServiceProvider = {
+              id: String(item.id),
+              name: item.name,
+              category: item.category,
+              experience: item.experience || 'Experienced in Boisar',
+              phone: item.phone,
+              location: item.location || 'Boisar West',
+              visitingFee: item.visitingFee || '₹199 Inspection',
+              allowCalls: item.allowCalls !== false,
+              rating: item.rating || 5.0,
+              reviewsCount: item.reviewsCount || 1,
+              verified: item.verified !== false,
+              featured: Boolean(item.featured),
+              image: item.image || defaultImg
+            };
+            loadedProviders.push(providerItem);
+
+            loadedHelpers.push({
+              id: String(item.id),
+              name: item.name,
+              role: item.category,
+              timing: item.timing || 'Available On-Demand',
+              experience: item.experience || 'Experienced in Boisar',
+              expectedSalary: item.visitingFee || 'Starting ₹250 / Call for Rates',
+              location: item.location || 'Boisar West',
+              phone: item.phone,
+              allowCalls: item.allowCalls !== false,
+              rating: item.rating || 5.0,
+              reviewsCount: item.reviewsCount || 1,
+              verified: item.verified !== false,
+              featured: Boolean(item.featured),
+              image: item.image || defaultImg
+            });
+          });
+
+          loadedProviders.sort((a, b) => {
+            if (a.featured && !b.featured) return -1;
+            if (!a.featured && b.featured) return 1;
+            return 0;
+          });
+          loadedHelpers.sort((a, b) => {
+            if (a.featured && !b.featured) return -1;
+            if (!a.featured && b.featured) return 1;
+            return 0;
+          });
+
+          setProviders(loadedProviders);
+          setDomesticHelpers(loadedHelpers);
+
+          // Update local cache
+          try {
+            localStorage.setItem('majh_boisar_tech_list', JSON.stringify(loadedProviders));
+            localStorage.setItem('majh_boisar_domestic_helpers', JSON.stringify(loadedHelpers));
+          } catch (e) {}
+
+          // AUTO-SYNC: check if user had previously created local-only profiles on this phone
+          try {
+            const localTech = JSON.parse(localStorage.getItem('majh_boisar_tech_list') || '[]');
+            const localHelpers = JSON.parse(localStorage.getItem('majh_boisar_domestic_helpers') || '[]');
+            
+            const unsyncedItems = [
+              ...localTech.filter((t: any) => typeof t.id === 'string' && t.id.startsWith('tech-custom-')),
+              ...localHelpers.filter((h: any) => typeof h.id === 'string' && h.id.startsWith('helper-'))
+            ];
+
+            if (unsyncedItems.length > 0) {
+              for (const item of unsyncedItems) {
+                await fetch('/api/technicians', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    name: item.name,
+                    category: item.category || item.role || 'Home Services',
+                    experience: item.experience || '3+ Yrs Experience',
+                    phone: item.phone,
+                    location: item.location || 'Boisar West',
+                    visitingFee: item.visitingFee || item.expectedSalary || '₹199 Inspection',
+                    timing: item.timing || 'Available On-Demand',
+                    allowCalls: item.allowCalls !== false,
+                    image: item.image
+                  })
+                });
+              }
+
+              // Re-fetch to get newly synced IDs
+              const refreshed = await fetch('/api/technicians', { cache: 'no-store' });
+              if (refreshed.ok) {
+                const refreshedList = await refreshed.json();
+                if (Array.isArray(refreshedList)) {
+                  setProviders(refreshedList.map((x: any) => ({
+                    id: String(x.id),
+                    name: x.name,
+                    category: x.category,
+                    experience: x.experience,
+                    phone: x.phone,
+                    location: x.location,
+                    visitingFee: x.visitingFee,
+                    allowCalls: x.allowCalls !== false,
+                    rating: x.rating || 5.0,
+                    reviewsCount: x.reviewsCount || 1,
+                    verified: x.verified !== false,
+                    image: x.image
+                  })));
+                  setDomesticHelpers(refreshedList.map((x: any) => ({
+                    id: String(x.id),
+                    name: x.name,
+                    role: x.category,
+                    timing: x.timing || 'Available On-Demand',
+                    experience: x.experience,
+                    expectedSalary: x.visitingFee,
+                    location: x.location,
+                    phone: x.phone,
+                    allowCalls: x.allowCalls !== false,
+                    rating: x.rating || 5.0,
+                    reviewsCount: x.reviewsCount || 1,
+                    verified: x.verified !== false,
+                    image: x.image
+                  })));
+                }
+              }
+            }
+          } catch (syncErr) {
+            console.warn('Auto-sync notice:', syncErr);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load live profiles from API:', e);
+      try {
+        const savedP = localStorage.getItem('majh_boisar_tech_list');
+        if (savedP) setProviders(JSON.parse(savedP));
+        const savedH = localStorage.getItem('majh_boisar_domestic_helpers');
+        if (savedH) setDomesticHelpers(JSON.parse(savedH));
+      } catch (err) {}
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      try {
-        const saved = localStorage.getItem('majh_boisar_tech_list');
-        const parsed = saved ? JSON.parse(saved) : [];
-        setProviders(Array.isArray(parsed) ? parsed : []);
-
-        const savedHelpers = localStorage.getItem('majh_boisar_domestic_helpers');
-        if (savedHelpers) {
-          const parsedH = JSON.parse(savedHelpers);
-          if (Array.isArray(parsedH)) {
-            setDomesticHelpers(parsedH);
-          }
-        }
-      } catch (e) {}
     }
+    loadLiveProfiles();
   }, []);
 
   useEffect(() => {
@@ -706,47 +858,102 @@ function ServicesPageContent() {
     }
   };
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim() || !formPhone.trim()) {
       showToast("Please enter Technician / Shop Name and Contact Phone!", "error");
       return;
     }
 
-    const newProvider: ServiceProvider = {
-      id: `tech-custom-${Date.now()}`,
-      name: formName.trim(),
-      category: formCategory,
-      experience: formExperience,
-      phone: formPhone.trim(),
-      location: formLocation.trim() || 'Boisar West',
-      visitingFee: formVisitingFee.trim() || '₹199 Inspection',
-      rating: 5.0,
-      reviewsCount: 1,
-      verified: true,
-      image: formImage.trim() || 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop&q=80'
-    };
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/technicians', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formName.trim(),
+          category: formCategory,
+          experience: formExperience.trim() || '5+ Yrs Experience',
+          phone: formPhone.trim(),
+          location: formLocation.trim() || 'Boisar West',
+          visitingFee: formVisitingFee.trim() || '₹199 Inspection',
+          image: formImage.trim() || undefined,
+        })
+      });
 
-    const updated = [newProvider, ...providers];
-    setProviders(updated);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || 'Failed to save service provider to server', 'error');
+        return;
+      }
 
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('majh_boisar_tech_list', JSON.stringify(updated));
+      const saved = await res.json();
+      const newProvider: ServiceProvider = {
+        id: String(saved.id),
+        name: saved.name,
+        category: saved.category,
+        experience: saved.experience,
+        phone: saved.phone,
+        location: saved.location,
+        visitingFee: saved.visitingFee,
+        allowCalls: saved.allowCalls !== false,
+        rating: saved.rating || 5.0,
+        reviewsCount: saved.reviewsCount || 1,
+        verified: !!saved.verified,
+        image: saved.image || 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop&q=80'
+      };
+
+      if (saved.verified) {
+        setProviders(prev => [newProvider, ...prev.filter(p => String(p.id) !== String(newProvider.id))]);
+        setDomesticHelpers(prev => [
+          {
+            id: String(saved.id),
+            name: saved.name,
+            role: saved.category,
+            timing: saved.timing || 'Available On-Demand',
+            experience: saved.experience,
+            expectedSalary: saved.visitingFee,
+            location: saved.location,
+            phone: saved.phone,
+            allowCalls: saved.allowCalls !== false,
+            rating: saved.rating || 5.0,
+            reviewsCount: saved.reviewsCount || 1,
+            verified: true,
+            image: newProvider.image
+          },
+          ...prev.filter(h => String(h.id) !== String(newProvider.id))
+        ]);
+
+        if (typeof window !== 'undefined') {
+          try {
+            const currentP = JSON.parse(localStorage.getItem('majh_boisar_tech_list') || '[]');
+            localStorage.setItem('majh_boisar_tech_list', JSON.stringify([newProvider, ...currentP.filter((p: any) => String(p.id) !== String(newProvider.id))]));
+          } catch (e) {}
+        }
+
+        setSuccessMsg('🎉 Service Provider Registered Successfully!');
+        showToast('🎉 Service Provider Registered Successfully on Majh Boisar!', 'success');
+        setSelectedCategory(formCategory);
+      } else {
+        setSuccessMsg('⏳ Profile submitted! Admin will verify and activate your listing shortly.');
+        showToast('⏳ Profile submitted for verification! It will go live once approved by Admin.', 'info', 6000);
+      }
+
+      setTimeout(() => {
+        setSuccessMsg('');
+        setShowAddForm(false);
+        setFormName('');
+        setFormPhone('');
+        setFormImage('');
+      }, 1800);
+    } catch (err: any) {
+      showToast('Network error while registering service. Please check connection.', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setSuccessMsg('🎉 Service Provider Registered Successfully!');
-    showToast('🎉 Service Provider Registered Successfully on Majh Boisar!', 'success');
-
-    setTimeout(() => {
-      setSuccessMsg('');
-      setShowAddForm(false);
-      setFormName('');
-      setFormPhone('');
-      setFormImage('');
-    }, 1500);
   };
 
-  const handleAddHelperSubmit = (e: React.FormEvent) => {
+  const handleAddHelperSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!helperName.trim() || !helperPhone.trim()) {
       showToast("Please enter Name and Contact Number!", "error");
@@ -767,66 +974,101 @@ function ServicesPageContent() {
 
     const finalImage = helperImage.trim() || defaultImg;
 
-    const newHelper: DomesticHelper = {
-      id: `helper-${Date.now()}`,
-      name: helperName.trim(),
-      role: helperRole,
-      timing: helperTiming.trim() || 'Available On-Demand',
-      experience: helperExp.trim() || '3+ Yrs in Boisar',
-      expectedSalary: helperSalary.trim() || 'Starting ₹250 / Call for Rates',
-      location: helperLocation.trim() || 'Boisar West',
-      phone: helperPhone.trim(),
-      allowCalls: helperAllowCalls,
-      rating: 5.0,
-      reviewsCount: 1,
-      verified: true,
-      image: finalImage
-    };
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/technicians', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: helperName.trim(),
+          category: helperRole,
+          experience: helperExp.trim() || '3+ Yrs in Boisar',
+          phone: helperPhone.trim(),
+          location: helperLocation.trim() || 'Boisar West',
+          visitingFee: helperSalary.trim() || '₹199 Inspection / Visit Fee',
+          timing: helperTiming.trim() || 'Available On-Demand',
+          allowCalls: helperAllowCalls,
+          image: finalImage,
+        })
+      });
 
-    const newProvider: ServiceProvider = {
-      id: `tech-custom-${Date.now()}`,
-      name: helperName.trim(),
-      category: helperRole,
-      experience: helperExp.trim() || '3+ Yrs in Boisar',
-      phone: helperPhone.trim(),
-      location: helperLocation.trim() || 'Boisar West',
-      visitingFee: helperSalary.trim() || '₹199 Inspection / Visit Fee',
-      allowCalls: helperAllowCalls,
-      rating: 5.0,
-      reviewsCount: 1,
-      verified: true,
-      image: finalImage
-    };
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || 'Failed to register helper profile to server', 'error');
+        return;
+      }
 
-    const updatedHelpers = [newHelper, ...domesticHelpers];
-    setDomesticHelpers(updatedHelpers);
+      const saved = await res.json();
+      const newHelper: DomesticHelper = {
+        id: String(saved.id),
+        name: saved.name,
+        role: saved.category,
+        timing: saved.timing || 'Available On-Demand',
+        experience: saved.experience,
+        expectedSalary: saved.visitingFee,
+        location: saved.location,
+        phone: saved.phone,
+        allowCalls: saved.allowCalls !== false,
+        rating: saved.rating || 5.0,
+        reviewsCount: saved.reviewsCount || 1,
+        verified: !!saved.verified,
+        image: saved.image || finalImage
+      };
 
-    const updatedProviders = [newProvider, ...providers];
-    setProviders(updatedProviders);
+      const newProvider: ServiceProvider = {
+        id: String(saved.id),
+        name: saved.name,
+        category: saved.category,
+        experience: saved.experience,
+        phone: saved.phone,
+        location: saved.location,
+        visitingFee: saved.visitingFee,
+        allowCalls: saved.allowCalls !== false,
+        rating: saved.rating || 5.0,
+        reviewsCount: saved.reviewsCount || 1,
+        verified: !!saved.verified,
+        image: saved.image || finalImage
+      };
 
-    if (typeof window !== 'undefined') {
-      const customOnlyH = updatedHelpers.filter(h => h.id.startsWith('helper-'));
-      localStorage.setItem('majh_boisar_domestic_helpers', JSON.stringify(customOnlyH));
-      localStorage.setItem('majh_boisar_tech_list', JSON.stringify(updatedProviders));
+      if (saved.verified) {
+        setDomesticHelpers(prev => [newHelper, ...prev.filter(h => String(h.id) !== String(newHelper.id))]);
+        setProviders(prev => [newProvider, ...prev.filter(p => String(p.id) !== String(newProvider.id))]);
+
+        if (typeof window !== 'undefined') {
+          try {
+            const currentH = JSON.parse(localStorage.getItem('majh_boisar_domestic_helpers') || '[]');
+            localStorage.setItem('majh_boisar_domestic_helpers', JSON.stringify([newHelper, ...currentH.filter((h: any) => String(h.id) !== String(newHelper.id))]));
+            const currentP = JSON.parse(localStorage.getItem('majh_boisar_tech_list') || '[]');
+            localStorage.setItem('majh_boisar_tech_list', JSON.stringify([newProvider, ...currentP.filter((p: any) => String(p.id) !== String(newProvider.id))]));
+          } catch (e) {}
+        }
+
+        // Automatically navigate to active category
+        setSelectedCategory(helperRole);
+        setHelperFilter(helperRole);
+
+        setSuccessMsg('🎉 Profile Registered Successfully!');
+        showToast(`🎉 ${helperRole} Profile Registered Live on Majh Boisar!`, 'success');
+      } else {
+        setSuccessMsg('⏳ Profile submitted! Admin will verify and activate your profile shortly.');
+        showToast(`⏳ ${helperRole} profile submitted for verification! It will go live once approved by Admin.`, 'info', 6000);
+      }
+
+      setTimeout(() => {
+        setSuccessMsg('');
+        setShowHelperModal(false);
+        setHelperName('');
+        setHelperPhone('');
+        setHelperImage('');
+      }, 1800);
+    } catch (err: any) {
+      showToast('Network error while registering profile. Please check connection.', 'error');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Automatically navigate to active category
-    setSelectedCategory(helperRole);
-    setHelperFilter(helperRole);
-
-    setSuccessMsg('🎉 Profile Registered Successfully!');
-    showToast(`🎉 ${helperRole} Profile Registered Live on Majh Boisar!`, 'success');
-
-    setTimeout(() => {
-      setSuccessMsg('');
-      setShowHelperModal(false);
-      setHelperName('');
-      setHelperPhone('');
-      setHelperImage('');
-    }, 1500);
   };
 
-const isMatchingRole = (roleStr: string, catStr: string) => {
+  const isMatchingRole = (roleStr: string, catStr: string) => {
   if (!roleStr || !catStr) return false;
   const r = roleStr.toLowerCase().trim();
   const c = catStr.toLowerCase().trim();
@@ -855,42 +1097,49 @@ const isMatchingRole = (roleStr: string, catStr: string) => {
 
   // Filtered Domestic Helpers
   const filteredDomesticHelpers = useMemo(() => {
-    return domesticHelpers.filter(h => {
-      // If user selected a specific category, STRICTLY match that category
-      if (selectedCategory !== 'All') {
-        if (!isMatchingRole(h.role, selectedCategory)) {
-          return false;
+    return domesticHelpers
+      .filter(h => {
+        // If user selected a specific category, STRICTLY match that category
+        if (selectedCategory !== 'All') {
+          if (!isMatchingRole(h.role, selectedCategory)) {
+            return false;
+          }
+        } else if (helperFilter !== 'All Helpers') {
+          if (!isMatchingRole(h.role, helperFilter)) {
+            return false;
+          }
         }
-      } else if (helperFilter !== 'All Helpers') {
-        if (!isMatchingRole(h.role, helperFilter)) {
-          return false;
-        }
-      }
 
-      const matchArea = selectedArea === 'All' || h.location?.toLowerCase().includes(selectedArea.toLowerCase());
+        const matchArea = selectedArea === 'All' || h.location?.toLowerCase().includes(selectedArea.toLowerCase());
 
-      const matchSearch = !searchQuery.trim() ||
-        h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        h.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        h.location.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchSearch = !searchQuery.trim() ||
+          h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          h.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          h.location.toLowerCase().includes(searchQuery.toLowerCase());
 
-      return matchArea && matchSearch;
-    });
+        return matchArea && matchSearch;
+      })
+      .sort((a, b) => {
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        return 0;
+      });
   }, [domesticHelpers, helperFilter, selectedCategory, selectedArea, searchQuery]);
 
   // Filtered providers
   const filteredProviders = useMemo(() => {
-    return providers.filter(p => {
-      if (selectedCategory !== 'All') {
-        if (!isMatchingRole(p.category, selectedCategory)) {
-          return false;
+    return providers
+      .filter(p => {
+        if (selectedCategory !== 'All') {
+          if (!isMatchingRole(p.category, selectedCategory)) {
+            return false;
+          }
         }
-      }
 
-      const matchArea = selectedArea === 'All' || p.location?.toLowerCase().includes(selectedArea.toLowerCase());
+        const matchArea = selectedArea === 'All' || p.location?.toLowerCase().includes(selectedArea.toLowerCase());
 
-      const matchSearch = !searchQuery.trim() ||
-        p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        const matchSearch = !searchQuery.trim() ||
+          p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.location?.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -1026,7 +1275,7 @@ const isMatchingRole = (roleStr: string, catStr: string) => {
         </div>
 
         {/* ── 4. SPECIFIC RESULTS VIEW (Only shown when user selects a specific category or searches) ── */}
-        {selectedCategory !== 'All' ? (
+        {selectedCategory !== 'All' || searchQuery.trim() !== '' ? (
           <div className="space-y-4">
             {/* If domestic helper or matching profile is found for selectedCategory */}
             {filteredDomesticHelpers.length > 0 && (
@@ -1050,9 +1299,18 @@ const isMatchingRole = (roleStr: string, catStr: string) => {
                   {filteredDomesticHelpers.map((helper) => (
                     <div
                       key={helper.id}
-                      className="bg-white border border-slate-200 hover:border-pink-300 rounded-2xl p-3.5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group text-left"
+                      className={`bg-white rounded-2xl p-3.5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group text-left ${
+                        helper.featured ? 'border-2 border-amber-400 ring-1 ring-amber-300/60 shadow-md' : 'border border-slate-200 hover:border-pink-300'
+                      }`}
                     >
                       <div>
+                        {helper.featured && (
+                          <div className="mb-2">
+                            <span className="bg-linear-to-r from-amber-500 to-amber-600 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-2xs inline-flex items-center gap-1 border border-amber-300">
+                              ⭐ Top Choice / Featured
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-start gap-3">
                           <img
                             src={helper.image}
@@ -1259,6 +1517,9 @@ const isMatchingRole = (roleStr: string, catStr: string) => {
                       src={service.image}
                       alt={service.title}
                       className="w-14 h-14 rounded-xl object-cover border border-slate-200 shrink-0 group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&auto=format&fit=crop&q=80';
+                      }}
                     />
                     <div className="min-w-0">
                       <h3 className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-teal-700 transition-colors leading-snug line-clamp-1">
@@ -1280,6 +1541,94 @@ const isMatchingRole = (roleStr: string, catStr: string) => {
                 </div>
               ))}
             </div>
+
+            {/* Live Verified Profiles & Technicians on Landing View */}
+            {providers.length > 0 && (
+              <div className="pt-4 border-t border-slate-100 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    </span>
+                    <h3 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
+                      Live Verified Profiles &amp; Technicians in Boisar ({providers.length})
+                    </h3>
+                  </div>
+                  <span className="text-[9.5px] sm:text-[10px] text-teal-800 font-bold bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full">
+                    Direct Contact
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {providers.map((p) => (
+                    <div
+                      key={p.id}
+                      className={`bg-white rounded-2xl p-3 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group text-left ${
+                        p.featured ? 'border-2 border-amber-400 ring-1 ring-amber-300/60 shadow-md' : 'border border-slate-200 hover:border-teal-400'
+                      }`}
+                    >
+                      <div>
+                        {p.featured && (
+                          <div className="mb-2">
+                            <span className="bg-linear-to-r from-amber-500 to-amber-600 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-2xs inline-flex items-center gap-1 border border-amber-300">
+                              ⭐ Top Choice / Featured
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-start gap-2.5">
+                          <img
+                            src={p.image}
+                            alt={p.name}
+                            className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0 group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1">
+                              <h4 className="text-xs font-black text-slate-900 truncate">{p.name}</h4>
+                              <span className="text-emerald-700 text-[8px] font-black bg-emerald-50 px-1 rounded border border-emerald-200 shrink-0">
+                                ✓
+                              </span>
+                            </div>
+                            <span className="inline-block text-[9.5px] font-extrabold text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded mt-0.5 truncate max-w-full">
+                              {p.category}
+                            </span>
+                            <p className="text-[9.5px] text-slate-500 font-bold mt-0.5 truncate">
+                              📍 {p.location}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px]">
+                          <span className="text-slate-500 font-bold truncate">{p.experience}</span>
+                          <span className="font-black text-teal-800 shrink-0">{p.visitingFee}</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 mt-2 border-t border-slate-100 flex items-center gap-1.5">
+                        {p.allowCalls !== false && (
+                          <a
+                            href={`tel:${p.phone}`}
+                            className="flex-1 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-black text-[10px] py-1.5 rounded-lg text-center shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <Phone className="w-2.5 h-2.5" />
+                            <span>Call</span>
+                          </a>
+                        )}
+                        <a
+                          href={`https://wa.me/91${p.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${p.name}, I found your profile on Majh Boisar.`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-black text-[10px] py-1.5 rounded-lg text-center shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <MessageSquare className="w-2.5 h-2.5" />
+                          <span>WhatsApp</span>
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1583,9 +1932,10 @@ const isMatchingRole = (roleStr: string, catStr: string) => {
 
                 <button
                   type="submit"
-                  className="w-full bg-pink-600 hover:bg-pink-700 active:scale-[0.98] text-white font-black text-xs py-2.5 rounded-xl shadow-md transition-all cursor-pointer mt-1"
+                  disabled={isSubmitting}
+                  className={`w-full bg-pink-600 hover:bg-pink-700 active:scale-[0.98] text-white font-black text-xs py-2.5 rounded-xl shadow-md transition-all cursor-pointer mt-1 ${isSubmitting ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
-                  Submit &amp; Register Profile
+                  {isSubmitting ? 'Registering Profile Live...' : 'Submit & Register Profile'}
                 </button>
               </form>
             )}
@@ -1700,9 +2050,10 @@ const isMatchingRole = (roleStr: string, catStr: string) => {
 
                 <button
                   type="submit"
-                  className="w-full bg-teal-700 hover:bg-teal-800 active:scale-[0.98] text-white font-black text-xs py-3 rounded-xl shadow-md transition-all cursor-pointer mt-2"
+                  disabled={isSubmitting}
+                  className={`w-full bg-teal-700 hover:bg-teal-800 active:scale-[0.98] text-white font-black text-xs py-3 rounded-xl shadow-md transition-all cursor-pointer mt-2 ${isSubmitting ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
-                  Submit &amp; Register Service
+                  {isSubmitting ? 'Registering Service Live...' : 'Submit & Register Service'}
                 </button>
               </form>
             )}

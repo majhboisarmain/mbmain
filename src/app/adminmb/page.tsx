@@ -14,7 +14,7 @@ import {
   ToggleLeft, ToggleRight, Coins, Terminal, RefreshCw, BarChart2,
   Edit, Plus, X, Users, Phone, UserCheck, PlusCircle, MapPin, Briefcase, FileText,
   HardDrive, Database, Server, Smartphone, Zap, Lock, KeyRound, EyeOff, Waves, Compass, Utensils,
-  Car, ExternalLink
+  Car, ExternalLink, Wrench, Heart
 } from 'lucide-react';
 
 export interface HomeFeaturedRestaurant {
@@ -397,7 +397,7 @@ export default function AdminPanelPage() {
     }
     return [];
   });
-  const [adminListingSubTab, setAdminListingSubTab] = useState<'businesses' | 'specialists' | 'travels'>('businesses');
+  const [adminListingSubTab, setAdminListingSubTab] = useState<'businesses' | 'specialists' | 'travels' | 'home-services' | 'blood-donors'>('businesses');
   const [adminStaycationSubTab, setAdminStaycationSubTab] = useState<'hotels' | 'resorts' | 'payouts'>('hotels');
   const [adminSpecialistSearchQuery, setAdminSpecialistSearchQuery] = useState('');
   const [adminVehiclesList, setAdminVehiclesList] = useState<any[]>([]);
@@ -413,6 +413,35 @@ export default function AdminPanelPage() {
     phone: '',
     timing: '24x7 Available on Call',
     image: '',
+  });
+
+  // Admin Home Services & Technicians State
+  const [adminTechniciansList, setAdminTechniciansList] = useState<any[]>([]);
+  const [adminTechnicianSearchQuery, setAdminTechnicianSearchQuery] = useState('');
+  const [adminAddTechModalOpen, setAdminAddTechModalOpen] = useState(false);
+  const [adminTechForm, setAdminTechForm] = useState({
+    name: '',
+    category: 'AC Service',
+    experience: '5+ Yrs Experience',
+    phone: '',
+    location: 'Boisar West',
+    visitingFee: '₹199 Inspection Fee',
+    timing: 'Available On-Demand',
+    allowCalls: true,
+    image: '',
+  });
+
+  // Admin Blood Donors State
+  const [adminDonorsList, setAdminDonorsList] = useState<any[]>([]);
+  const [adminDonorSearchQuery, setAdminDonorSearchQuery] = useState('');
+  const [adminDonorGroupFilter, setAdminDonorGroupFilter] = useState('All');
+  const [adminAddDonorModalOpen, setAdminAddDonorModalOpen] = useState(false);
+  const [adminDonorForm, setAdminDonorForm] = useState({
+    name: '',
+    bloodGroup: 'O+',
+    location: 'Boisar West',
+    phone: '',
+    lastDonated: 'Ready to donate',
   });
 
   // Admin Hotel Bookings & Payout Settlements State
@@ -1377,7 +1406,7 @@ export default function AdminPanelPage() {
       }
 
       try {
-        const vehRes = await fetch('/api/vehicles', { cache: 'no-store' });
+        const vehRes = await fetch('/api/vehicles?showAll=true', { cache: 'no-store' });
         if (vehRes.ok) {
           const dataVeh = await vehRes.json();
           if (Array.isArray(dataVeh)) {
@@ -1386,6 +1415,30 @@ export default function AdminPanelPage() {
         }
       } catch (err) {
         console.error("Error fetching db vehicles for admin:", err);
+      }
+
+      try {
+        const techRes = await fetch('/api/technicians?showAll=true', { cache: 'no-store' });
+        if (techRes.ok) {
+          const dataTech = await techRes.json();
+          if (Array.isArray(dataTech)) {
+            setAdminTechniciansList(dataTech);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching db technicians for admin:", err);
+      }
+
+      try {
+        const donorRes = await fetch('/api/blood-donors?showAll=true', { cache: 'no-store' });
+        if (donorRes.ok) {
+          const dataDonors = await donorRes.json();
+          if (Array.isArray(dataDonors)) {
+            setAdminDonorsList(dataDonors);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching db blood donors for admin:", err);
       }
 
       if (typeof window !== 'undefined') {
@@ -1641,7 +1694,8 @@ export default function AdminPanelPage() {
           phone: adminVehForm.phone.trim(),
           timing: adminVehForm.timing.trim() || 'Daily 24x7',
           image: adminVehForm.image.trim() || null,
-          features: ['Direct Owner Contact', '0% Commission', 'Verified Boisar Listing']
+          features: ['Direct Owner Contact', '0% Commission', 'Verified Boisar Listing'],
+          verified: true
         })
       });
       if (res.ok) {
@@ -1667,6 +1721,241 @@ export default function AdminPanelPage() {
     } catch (err) {
       console.error(err);
       alert('Error adding vehicle');
+    }
+  };
+
+  const handleToggleApproveVehicle = async (id: number, currentVerified: boolean) => {
+    const nextStatus = !currentVerified;
+    try {
+      setAdminVehiclesList(prev => prev.map(v => v.id === id ? { ...v, verified: nextStatus } : v));
+      const res = await fetch('/api/vehicles', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, verified: nextStatus })
+      });
+      if (res.ok) {
+        logEvent(`${nextStatus ? 'Approved' : 'Unpublished'} Vehicle ID ${id}`);
+        showToast(nextStatus ? '🎉 Vehicle Approved and Published Live on Majh Boisar!' : 'Vehicle unpublished / paused.', 'success');
+      } else {
+        fetchAdminData();
+      }
+    } catch (err) {
+      console.error(err);
+      fetchAdminData();
+    }
+  };
+
+  const handleDeleteTechnician = async (id: number, name: string) => {
+    if (!confirm(`Are you sure you want to permanently delete "${name}" from Home Services & Technicians database?`)) return;
+    try {
+      setAdminTechniciansList(prev => prev.filter(t => t.id !== id));
+      const res = await fetch(`/api/technicians?id=${id}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        logEvent(`Deleted Home Technician ID ${id} (${name})`);
+        showToast(`🔧 Service provider "${name}" deleted successfully.`, 'success');
+      } else {
+        alert('Failed to delete service provider');
+        fetchAdminData();
+      }
+    } catch (err) {
+      console.error(err);
+      fetchAdminData();
+    }
+  };
+
+  const handleToggleApproveTechnician = async (id: number, currentVerified: boolean) => {
+    const nextStatus = !currentVerified;
+    try {
+      setAdminTechniciansList(prev => prev.map(t => t.id === id ? { ...t, verified: nextStatus } : t));
+      const res = await fetch('/api/technicians', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, verified: nextStatus })
+      });
+      if (res.ok) {
+        logEvent(`${nextStatus ? 'Approved' : 'Unpublished'} Technician ID ${id}`);
+        showToast(nextStatus ? '🎉 Service Provider Approved and Published Live on Majh Boisar!' : 'Service provider unpublished / paused.', 'success');
+      } else {
+        fetchAdminData();
+      }
+    } catch (err) {
+      console.error(err);
+      fetchAdminData();
+    }
+  };
+
+  const handleToggleFeatureVehicle = async (id: number, currentFeatured: boolean) => {
+    const nextStatus = !currentFeatured;
+    try {
+      setAdminVehiclesList(prev => prev.map(v => v.id === id ? { ...v, featured: nextStatus } : v));
+      const res = await fetch('/api/vehicles', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, featured: nextStatus })
+      });
+      if (res.ok) {
+        logEvent(`${nextStatus ? 'Featured' : 'Unfeatured'} Vehicle ID ${id}`);
+        showToast(nextStatus ? '⭐ Vehicle pinned as Featured / Top Choice in its category!' : 'Vehicle removed from Featured.', 'success');
+      } else {
+        fetchAdminData();
+      }
+    } catch (err) {
+      console.error(err);
+      fetchAdminData();
+    }
+  };
+
+  const handleToggleFeatureTechnician = async (id: number, currentFeatured: boolean) => {
+    const nextStatus = !currentFeatured;
+    try {
+      setAdminTechniciansList(prev => prev.map(t => t.id === id ? { ...t, featured: nextStatus } : t));
+      const res = await fetch('/api/technicians', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, featured: nextStatus })
+      });
+      if (res.ok) {
+        logEvent(`${nextStatus ? 'Featured' : 'Unfeatured'} Technician ID ${id}`);
+        showToast(nextStatus ? '⭐ Service Provider pinned as Featured / Top Choice in its category!' : 'Service Provider removed from Featured.', 'success');
+      } else {
+        fetchAdminData();
+      }
+    } catch (err) {
+      console.error(err);
+      fetchAdminData();
+    }
+  };
+
+  const handleAdminAddTechnician = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminTechForm.name.trim() || !adminTechForm.phone.trim()) {
+      alert('Please enter Technician / Service Name and Contact Phone!');
+      return;
+    }
+    try {
+      const res = await fetch('/api/technicians', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: adminTechForm.name.trim(),
+          category: adminTechForm.category,
+          experience: adminTechForm.experience.trim() || '5+ Yrs Experience',
+          phone: adminTechForm.phone.trim(),
+          location: adminTechForm.location.trim() || 'Boisar West',
+          visitingFee: adminTechForm.visitingFee.trim() || '₹199 Inspection Fee',
+          timing: adminTechForm.timing.trim() || 'Available On-Demand',
+          allowCalls: adminTechForm.allowCalls,
+          image: adminTechForm.image.trim() || null,
+          verified: true
+        })
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setAdminTechniciansList(prev => [saved, ...prev.filter(t => t.id !== saved.id)]);
+        logEvent(`Added new Home Technician: ${adminTechForm.name}`);
+        showToast(`🎉 Service Provider ${adminTechForm.name} Added Live!`, 'success');
+        setAdminAddTechModalOpen(false);
+        setAdminTechForm({
+          name: '',
+          category: 'AC Service',
+          experience: '5+ Yrs Experience',
+          phone: '',
+          location: 'Boisar West',
+          visitingFee: '₹199 Inspection Fee',
+          timing: 'Available On-Demand',
+          allowCalls: true,
+          image: '',
+        });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Failed to add service provider');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error adding service provider');
+    }
+  };
+
+  const handleDeleteDonor = async (id: number, name: string) => {
+    if (!confirm(`Are you sure you want to permanently delete blood donor "${name}"?`)) return;
+    try {
+      setAdminDonorsList(prev => prev.filter(d => d.id !== id));
+      const res = await fetch(`/api/blood-donors?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        logEvent(`Deleted Blood Donor ID ${id} (${name})`);
+        showToast(`🩸 Blood donor "${name}" deleted successfully.`, 'success');
+      } else {
+        alert('Failed to delete blood donor');
+        fetchAdminData();
+      }
+    } catch (err) {
+      console.error(err);
+      fetchAdminData();
+    }
+  };
+
+  const handleToggleApproveDonor = async (id: number, currentVerified: boolean) => {
+    const nextStatus = !currentVerified;
+    try {
+      setAdminDonorsList(prev => prev.map(d => d.id === id ? { ...d, verified: nextStatus } : d));
+      const res = await fetch('/api/blood-donors', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, verified: nextStatus })
+      });
+      if (res.ok) {
+        logEvent(`${nextStatus ? 'Approved' : 'Unpublished'} Blood Donor ID ${id}`);
+        showToast(nextStatus ? '🎉 Blood Donor Approved and Published Live on Majh Boisar!' : 'Blood donor unpublished / paused.', 'success');
+      } else {
+        fetchAdminData();
+      }
+    } catch (err) {
+      console.error(err);
+      fetchAdminData();
+    }
+  };
+
+  const handleAdminAddDonor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminDonorForm.name.trim() || !adminDonorForm.phone.trim()) {
+      alert('Please enter Donor Name and Mobile Number!');
+      return;
+    }
+    try {
+      const res = await fetch('/api/blood-donors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: adminDonorForm.name.trim(),
+          bloodGroup: adminDonorForm.bloodGroup.trim(),
+          location: adminDonorForm.location.trim() || 'Boisar West',
+          phone: adminDonorForm.phone.trim(),
+          lastDonated: adminDonorForm.lastDonated.trim() || 'Ready to donate',
+          verified: true
+        })
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        setAdminDonorsList(prev => [saved, ...prev.filter(d => d.id !== saved.id)]);
+        logEvent(`Admin added Blood Donor "${adminDonorForm.name}" (${adminDonorForm.bloodGroup})`);
+        showToast(`🎉 Blood Donor "${adminDonorForm.name}" added and published live!`, 'success');
+        setAdminAddDonorModalOpen(false);
+        setAdminDonorForm({
+          name: '',
+          bloodGroup: 'O+',
+          location: 'Boisar West',
+          phone: '',
+          lastDonated: 'Ready to donate',
+        });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Failed to add blood donor');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error adding blood donor');
     }
   };
 
@@ -1843,7 +2132,7 @@ export default function AdminPanelPage() {
       const finalCat = newBizCategory === 'Other'
         ? (newBizCustomCat.trim() || 'General Store')
         : (newBizCategory || 'Doctors');
-      const finalPhone = newBizPhone.replace(/\D/g, '') || "9999999999";
+      const finalPhone = newBizPhone.replace(/\D/g, '') || "9307294733";
       const finalWhatsapp = newBizWhatsapp.replace(/\D/g, '') || finalPhone;
 
       // Construct address block from structured inputs
@@ -1997,7 +2286,7 @@ export default function AdminPanelPage() {
     try {
       const finalName = newSpecName.trim() ? toTitleCase(newSpecName) : 'New Specialist Profile';
       const finalCat = newSpecCategory.trim() || (newSpecCategoryKey === 'helpers' ? 'Home Services' : newSpecCategoryKey === 'caterers' ? 'Catering & Food' : newSpecCategoryKey === 'influencers' ? 'Content Creator' : 'Real Estate');
-      const cleanPhone = newSpecPhone.replace(/\D/g, '') || '9999999999';
+      const cleanPhone = newSpecPhone.replace(/\D/g, '') || '9307294733';
       const finalPrice = newSpecPrice.trim() ? (newSpecPrice.startsWith('₹') ? newSpecPrice : `₹${newSpecPrice}`) : '₹500';
       const finalServices = newSpecServices.trim()
         ? newSpecServices.split(',').map(s => s.trim()).filter(Boolean)
@@ -2216,6 +2505,88 @@ export default function AdminPanelPage() {
       localStorage.setItem('majh_boisar_special_profiles', JSON.stringify(nextState));
     }
     logEvent(`Deleted Specialist ID: ${id}`);
+  };
+
+  const handleAdminToggleSold = async (propId: number, currentSold: boolean) => {
+    try {
+      const res = await fetch(`/api/properties?id=${propId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isSold: !currentSold })
+      });
+      if (res.ok) {
+        let isRent = false;
+        setSpecialProfiles((prev: any) => {
+          const nextProps = (prev.properties || []).map((p: any) => {
+            if (String(p.id) === String(propId)) {
+              isRent = (p.forAction || '').toLowerCase() === 'rent' || (p.category || '').toLowerCase().includes('rent') || p.transactionType === 'Lease';
+              return { ...p, isSold: !currentSold };
+            }
+            return p;
+          });
+          const next = {
+            ...prev,
+            properties: nextProps
+          };
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('majh_boisar_special_profiles', JSON.stringify(next));
+          }
+          return next;
+        });
+        setAdminPropertyList((prev: any[]) => prev.map(p => String(p.id) === String(propId) ? { ...p, isSold: !currentSold } : p));
+        logEvent(`Toggled Sold/Rented Status for Property ID ${propId} to ${!currentSold}`);
+        alert(`Property marked as ${!currentSold ? (isRent ? 'RENTED OUT 🔒' : 'SOLD OUT 🔒') + ' (Moved to bottom of list with overlay)' : 'AVAILABLE ✅'}! Live synced.`);
+      }
+    } catch (err) {
+      console.error('Error toggling sold status:', err);
+    }
+  };
+
+  const handleAdminToggleFeatured = async (propId: number, currentFeatured: boolean) => {
+    try {
+      const res = await fetch(`/api/properties?id=${propId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isFeatured: !currentFeatured })
+      });
+      if (res.ok) {
+        setSpecialProfiles((prev: any) => {
+          const next = {
+            ...prev,
+            properties: (prev.properties || []).map((p: any) => String(p.id) === String(propId) ? { ...p, isFeatured: !currentFeatured } : p)
+          };
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('majh_boisar_special_profiles', JSON.stringify(next));
+          }
+          return next;
+        });
+        setAdminPropertyList((prev: any[]) => prev.map(p => String(p.id) === String(propId) ? { ...p, isFeatured: !currentFeatured } : p));
+        logEvent(`Toggled Featured Status for Property ID ${propId} to ${!currentFeatured}`);
+        alert(`Property ${!currentFeatured ? 'marked as FEATURED ⭐ (Pinned on Top in Recent Listings & Search Results)' : 'removed from Featured'}. Live synced.`);
+      }
+    } catch (err) {
+      console.error('Error toggling featured status:', err);
+    }
+  };
+
+  const handleAdminDeleteProperty = async (propId: number, title: string) => {
+    if (!confirm(`Are you sure you want to delete property "${title}" from database?`)) return;
+    try {
+      const res = await fetch(`/api/properties?id=${propId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setSpecialProfiles((prev: any) => ({
+          ...prev,
+          properties: (prev.properties || []).filter((p: any) => p.id !== propId)
+        }));
+        setAdminPropertyList((prev: any[]) => prev.filter(p => p.id !== propId));
+        logEvent(`Deleted Property ID: ${propId}`);
+        alert('Property listing deleted from database.');
+      }
+    } catch (err) {
+      console.error('Error deleting property:', err);
+    }
   };
 
   const logEvent = (msg: string) => {
@@ -2602,7 +2973,13 @@ export default function AdminPanelPage() {
                     </div>
                     <div className="flex justify-between border-b pb-2">
                       <span className="text-slate-500 font-semibold">Pending Approvals:</span>
-                      <span className="font-bold text-amber-600">{pendingVerifications + pendingSpecialists.length + pendingHotels.length}</span>
+                      <span className="font-bold text-amber-600">
+                        {pendingVerifications + pendingSpecialists.length + pendingHotels.length + adminVehiclesList.filter(v => !v.verified).length + adminTechniciansList.filter(t => !t.verified).length + adminDonorsList.filter(d => !d.verified).length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="text-slate-500 font-semibold">Blood Donors:</span>
+                      <span className="font-bold text-rose-600">{adminDonorsList.length} ({adminDonorsList.filter(d => !d.verified).length} Pending)</span>
                     </div>
                     <div className="flex justify-between border-b pb-2">
                       <span className="text-slate-500 font-semibold">Hotels Registered:</span>
@@ -3786,6 +4163,45 @@ export default function AdminPanelPage() {
                       >
                         <Car className="w-3.5 h-3.5" />
                         <span>Travels &amp; Vehicles ({adminVehiclesList.length})</span>
+                        {adminVehiclesList.filter(v => !v.verified).length > 0 && (
+                          <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
+                            {adminVehiclesList.filter(v => !v.verified).length} pending
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdminListingSubTab('home-services')}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          adminListingSubTab === 'home-services'
+                            ? 'bg-teal-700 text-white shadow-2xs font-black'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <Wrench className="w-3.5 h-3.5" />
+                        <span>Home Services ({adminTechniciansList.length})</span>
+                        {adminTechniciansList.filter(t => !t.verified).length > 0 && (
+                          <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
+                            {adminTechniciansList.filter(t => !t.verified).length} pending
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdminListingSubTab('blood-donors')}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          adminListingSubTab === 'blood-donors'
+                            ? 'bg-rose-700 text-white shadow-2xs font-black'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <Heart className="w-3.5 h-3.5" />
+                        <span>Blood Donors ({adminDonorsList.length})</span>
+                        {adminDonorsList.filter(d => !d.verified).length > 0 && (
+                          <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
+                            {adminDonorsList.filter(d => !d.verified).length} pending
+                          </span>
+                        )}
                       </button>
                     </div>
                   );
@@ -4086,6 +4502,27 @@ export default function AdminPanelPage() {
                                   <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider">
                                     {p.category || p.catKey}
                                   </span>
+                                  {(p.catKey === 'properties' || p.listingType === 'property') && (() => {
+                                    const isRent = (p.forAction || '').toLowerCase() === 'rent' || (p.category || '').toLowerCase().includes('rent') || p.transactionType === 'Lease';
+                                    return (
+                                      <div className="flex items-center gap-1 mt-1 flex-wrap">
+                                        {Boolean(p.isFeatured) && (
+                                          <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[8.5px] font-black px-1.5 py-0.2 rounded flex items-center gap-0.5">
+                                            ⭐ FEATURED (ON TOP)
+                                          </span>
+                                        )}
+                                        {Boolean(p.isSold) && (
+                                          <span className={`border text-[8.5px] font-black px-1.5 py-0.2 rounded flex items-center gap-0.5 ${
+                                            isRent
+                                              ? 'bg-amber-100 text-amber-950 border-amber-400'
+                                              : 'bg-rose-100 text-rose-900 border-rose-300'
+                                          }`}>
+                                            🔒 {isRent ? 'RENTED OUT' : 'SOLD OUT'}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
                                 </td>
                                 <td className="py-4 px-4">
                                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
@@ -4115,12 +4552,49 @@ export default function AdminPanelPage() {
                                   </button>
                                 </td>
                                 <td className="py-4 px-4 text-center">
-                                  <button
-                                    onClick={() => handleDeleteSpecialist(p.catKey, p.id)}
-                                    className="text-rose-500 hover:text-rose-700 hover:scale-105 transition-all cursor-pointer"
-                                  >
-                                    <Trash2 className="w-4.5 h-4.5" />
-                                  </button>
+                                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                                    {(p.catKey === 'properties' || p.listingType === 'property') && (() => {
+                                      const isRent = (p.forAction || '').toLowerCase() === 'rent' || (p.category || '').toLowerCase().includes('rent') || p.transactionType === 'Lease';
+                                      return (
+                                        <>
+                                          <button
+                                            onClick={() => handleAdminToggleFeatured(p.id, Boolean(p.isFeatured))}
+                                            className={`text-[10px] font-black px-2 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs ${
+                                              p.isFeatured
+                                                ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 font-black shadow-amber-500/20'
+                                                : 'bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-900 border border-slate-200 hover:border-amber-300'
+                                            }`}
+                                            title="Pin to top in Recent Listings & Search Results"
+                                          >
+                                            <Star className={`w-3 h-3 ${p.isFeatured ? 'fill-slate-950 text-slate-950' : 'text-amber-500'}`} />
+                                            <span>{p.isFeatured ? 'Featured (Top)' : 'Pin Top'}</span>
+                                          </button>
+
+                                          <button
+                                            onClick={() => handleAdminToggleSold(p.id, Boolean(p.isSold))}
+                                            className={`text-[10px] font-bold px-2 py-1 rounded-lg transition-all cursor-pointer active:scale-95 border ${
+                                              p.isSold
+                                                ? (isRent
+                                                    ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border-amber-300 font-black'
+                                                    : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200 font-black')
+                                                : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+                                            }`}
+                                            title={p.isSold ? 'Mark as Available' : (isRent ? 'Mark as Rented Out' : 'Mark as Sold Out')}
+                                          >
+                                            {p.isSold ? (isRent ? '🔒 Rented' : '🔒 Sold') : 'Available'}
+                                          </button>
+                                        </>
+                                      );
+                                    })()}
+
+                                    <button
+                                      onClick={() => handleDeleteSpecialist(p.catKey, p.id)}
+                                      className="p-1 text-rose-500 hover:text-rose-700 hover:scale-105 transition-all cursor-pointer"
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="w-4.5 h-4.5" />
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -4129,7 +4603,7 @@ export default function AdminPanelPage() {
                       </div>
                     </div>
                   </>
-                ) : (
+                ) : adminListingSubTab === 'travels' ? (
                   <>
                     {/* Travels & Vehicles Directory Editor */}
                     <div className="space-y-4">
@@ -4259,18 +4733,61 @@ export default function AdminPanelPage() {
                                     </a>
                                   </td>
                                   <td className="py-3 px-3 text-center">
-                                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black px-2 py-0.5 rounded-md">
-                                      ✓ Active Live
-                                    </span>
+                                    <div className="flex flex-col items-center gap-1">
+                                      {v.verified ? (
+                                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black px-2 py-0.5 rounded-md whitespace-nowrap">
+                                          ✓ Approved &amp; Live
+                                        </span>
+                                      ) : (
+                                        <span className="bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black px-2 py-0.5 rounded-md whitespace-nowrap animate-pulse">
+                                          ⏳ Pending Approval
+                                        </span>
+                                      )}
+                                      {v.featured && (
+                                        <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black px-1.5 py-0.2 rounded-md whitespace-nowrap">
+                                          ⭐ Top Choice
+                                        </span>
+                                      )}
+                                    </div>
                                   </td>
                                   <td className="py-3 px-3 text-center">
-                                    <button
-                                      onClick={() => handleDeleteVehicle(v.id, v.name)}
-                                      className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1.5 rounded-lg transition-all cursor-pointer"
-                                      title="Delete Vehicle Listing"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex items-center justify-center gap-1.5">
+                                      <button
+                                        onClick={() => handleToggleFeatureVehicle(v.id, Boolean(v.featured))}
+                                        className={`text-[10px] font-black px-2 py-1 rounded-lg border transition-all cursor-pointer whitespace-nowrap ${
+                                          v.featured 
+                                            ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-2xs hover:bg-amber-500' 
+                                            : 'bg-white text-slate-600 border-slate-200 hover:bg-amber-50 hover:text-amber-700'
+                                        }`}
+                                        title={v.featured ? 'Remove from top featured' : 'Pin to top of category as Featured / Top Choice'}
+                                      >
+                                        {v.featured ? '⭐ Featured' : '☆ Feature'}
+                                      </button>
+                                      {v.verified ? (
+                                        <button
+                                          onClick={() => handleToggleApproveVehicle(v.id, true)}
+                                          className="text-[10px] font-bold text-slate-500 hover:text-amber-700 hover:bg-amber-50 px-2 py-1 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+                                          title="Pause / Unpublish listing"
+                                        >
+                                          Unpublish
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => handleToggleApproveVehicle(v.id, false)}
+                                          className="text-[10px] font-black text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 rounded-lg shadow-xs transition-all cursor-pointer whitespace-nowrap"
+                                          title="Approve and make visible on live website"
+                                        >
+                                          ✓ Approve &amp; Publish
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() => handleDeleteVehicle(v.id, v.name)}
+                                        className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1.5 rounded-lg transition-all cursor-pointer"
+                                        title="Delete Vehicle Listing"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
                               ))
@@ -4278,6 +4795,439 @@ export default function AdminPanelPage() {
                               <tr>
                                 <td colSpan={9} className="py-8 text-center text-slate-400 font-bold">
                                   No vehicle listings found. Click "+ Add Vehicle / Driver" to list one in database.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                ) : adminListingSubTab === 'home-services' ? (
+                  <>
+                    {/* Home Services & Technicians Directory Editor */}
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div>
+                          <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                            <Wrench className="w-4 h-4 text-teal-600" />
+                            <span>Home Services &amp; Technicians ({adminTechniciansList.length})</span>
+                          </h3>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Manage home service technicians, AC repair, electricians, plumbers, house maids, cooks, and drivers.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              fetchAdminData();
+                              showToast('🔄 Home Services list refreshed from database!', 'success');
+                            }}
+                            className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5 text-teal-600" />
+                            <span>Refresh</span>
+                          </button>
+                          <button
+                            onClick={() => setAdminAddTechModalOpen(true)}
+                            className="bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                          >
+                            <PlusCircle className="w-4 h-4" />
+                            <span>➕ Add Service / Helper</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Search Filter */}
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+                        <div className="relative flex-1">
+                          <input
+                            type="text"
+                            value={adminTechnicianSearchQuery}
+                            onChange={(e) => setAdminTechnicianSearchQuery(e.target.value)}
+                            placeholder="🔍 Search technician or helper by name, category, phone, location, experience..."
+                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                          />
+                          {adminTechnicianSearchQuery && (
+                            <button
+                              onClick={() => setAdminTechnicianSearchQuery('')}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Technicians Listings Table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                              <th className="py-3 px-3">Photo</th>
+                              <th className="py-3 px-3">Technician / Name</th>
+                              <th className="py-3 px-3">Category</th>
+                              <th className="py-3 px-3">Experience</th>
+                              <th className="py-3 px-3">Visiting Fee / Salary</th>
+                              <th className="py-3 px-3">Service Location</th>
+                              <th className="py-3 px-3">Contact Phone</th>
+                              <th className="py-3 px-3 text-center">Calls / WA</th>
+                              <th className="py-3 px-3 text-center">Status</th>
+                              <th className="py-3 px-3 text-center">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 font-medium">
+                            {adminTechniciansList.filter(t => {
+                              if (!adminTechnicianSearchQuery.trim()) return true;
+                              const q = adminTechnicianSearchQuery.toLowerCase();
+                              return (
+                                (t.name || '').toLowerCase().includes(q) ||
+                                (t.category || '').toLowerCase().includes(q) ||
+                                (t.location || '').toLowerCase().includes(q) ||
+                                (t.experience || '').toLowerCase().includes(q) ||
+                                (t.phone || '').includes(q)
+                              );
+                            }).length > 0 ? (
+                              adminTechniciansList.filter(t => {
+                                if (!adminTechnicianSearchQuery.trim()) return true;
+                                const q = adminTechnicianSearchQuery.toLowerCase();
+                                return (
+                                  (t.name || '').toLowerCase().includes(q) ||
+                                  (t.category || '').toLowerCase().includes(q) ||
+                                  (t.location || '').toLowerCase().includes(q) ||
+                                  (t.experience || '').toLowerCase().includes(q) ||
+                                  (t.phone || '').includes(q)
+                                );
+                              }).map(t => (
+                                <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
+                                  <td className="py-3 px-3">
+                                    <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-900 border border-slate-200 shrink-0">
+                                      {t.image ? (
+                                        <img src={t.image} alt={t.name} className="w-full h-full object-cover object-center hover:scale-125 transition-transform duration-300 cursor-pointer" onClick={() => window.open(t.image, '_blank')} title="Click to open full photo" />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">🔧</div>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-3 font-bold text-slate-800">
+                                    <div className="text-xs font-black text-slate-900">{t.name}</div>
+                                    <div className="text-[10px] text-slate-400 font-mono">ID: #{t.id}</div>
+                                  </td>
+                                  <td className="py-3 px-3">
+                                    <span className="bg-teal-50 text-teal-800 border border-teal-200 text-[9.5px] font-black px-2 py-0.5 rounded-md whitespace-nowrap">
+                                      {t.category || 'Service'}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-3 text-slate-700">
+                                    <div className="font-bold text-slate-800 text-[11px]">{t.experience || '5+ Yrs'}</div>
+                                    <div className="text-[10px] text-slate-500">{t.timing || 'On-Demand'}</div>
+                                  </td>
+                                  <td className="py-3 px-3 font-bold text-teal-800 text-[11px]">
+                                    {t.visitingFee || '₹199'}
+                                  </td>
+                                  <td className="py-3 px-3 text-slate-600 text-[11px]">
+                                    📍 {t.location || 'Boisar'}
+                                  </td>
+                                  <td className="py-3 px-3">
+                                    <a href={`tel:${t.phone}`} className="text-teal-700 font-bold hover:underline text-[11px] flex items-center gap-1">
+                                      <Phone className="w-3 h-3 text-teal-600" />
+                                      <span>{t.phone}</span>
+                                    </a>
+                                  </td>
+                                  <td className="py-3 px-3 text-center">
+                                    {t.allowCalls !== false ? (
+                                      <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9px] font-extrabold px-1.5 py-0.5 rounded">
+                                        Call &amp; WA
+                                      </span>
+                                    ) : (
+                                      <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-extrabold px-1.5 py-0.5 rounded">
+                                        WhatsApp
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-3 px-3 text-center">
+                                    <div className="flex flex-col items-center gap-1">
+                                      {t.verified ? (
+                                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black px-2 py-0.5 rounded-md whitespace-nowrap">
+                                          ✓ Approved &amp; Live
+                                        </span>
+                                      ) : (
+                                        <span className="bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black px-2 py-0.5 rounded-md whitespace-nowrap animate-pulse">
+                                          ⏳ Pending Approval
+                                        </span>
+                                      )}
+                                      {t.featured && (
+                                        <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black px-1.5 py-0.2 rounded-md whitespace-nowrap">
+                                          ⭐ Top Choice
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-3 text-center">
+                                    <div className="flex items-center justify-center gap-1.5">
+                                      <button
+                                        onClick={() => handleToggleFeatureTechnician(t.id, Boolean(t.featured))}
+                                        className={`text-[10px] font-black px-2 py-1 rounded-lg border transition-all cursor-pointer whitespace-nowrap ${
+                                          t.featured 
+                                            ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-2xs hover:bg-amber-500' 
+                                            : 'bg-white text-slate-600 border-slate-200 hover:bg-amber-50 hover:text-amber-700'
+                                        }`}
+                                        title={t.featured ? 'Remove from top featured' : 'Pin to top of category as Featured / Top Choice'}
+                                      >
+                                        {t.featured ? '⭐ Featured' : '☆ Feature'}
+                                      </button>
+                                      {t.verified ? (
+                                        <button
+                                          onClick={() => handleToggleApproveTechnician(t.id, true)}
+                                          className="text-[10px] font-bold text-slate-500 hover:text-amber-700 hover:bg-amber-50 px-2 py-1 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+                                          title="Pause / Unpublish listing"
+                                        >
+                                          Unpublish
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => handleToggleApproveTechnician(t.id, false)}
+                                          className="text-[10px] font-black text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 rounded-lg shadow-xs transition-all cursor-pointer whitespace-nowrap"
+                                          title="Approve and make visible on live website"
+                                        >
+                                          ✓ Approve &amp; Publish
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() => handleDeleteTechnician(t.id, t.name)}
+                                        className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1.5 rounded-lg transition-all cursor-pointer"
+                                        title="Delete Home Service Listing"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={10} className="py-8 text-center text-slate-400 font-bold">
+                                  No home service listings found. Click "+ Add Service / Helper" to list one in database.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Blood Donors (रक्तदाता) Directory Editor */}
+                    <div className="space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div>
+                          <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                            <Heart className="w-4 h-4 text-rose-600 fill-rose-100" />
+                            <span>Blood Donors (रक्तदाता) Directory ({adminDonorsList.length})</span>
+                          </h3>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Manage voluntary blood donors across Boisar, Tarapur MIDC &amp; Palghar. Approve, publish, and delete donor profiles.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              fetchAdminData();
+                              showToast('🔄 Blood Donors list refreshed from database!', 'success');
+                            }}
+                            className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-bold text-xs px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5 text-rose-600" />
+                            <span>Refresh</span>
+                          </button>
+                          <button
+                            onClick={() => setAdminAddDonorModalOpen(true)}
+                            className="bg-rose-700 hover:bg-rose-800 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                          >
+                            <PlusCircle className="w-4 h-4" />
+                            <span>➕ Add Blood Donor</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Search & Blood Group Quick Filter */}
+                      <div className="space-y-2 bg-slate-50 border border-slate-200 rounded-xl p-3">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={adminDonorSearchQuery}
+                            onChange={(e) => setAdminDonorSearchQuery(e.target.value)}
+                            placeholder="🔍 Search donor by name, location, phone, blood group (e.g. O+, B+, Tarapur)..."
+                            className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-rose-600"
+                          />
+                          {adminDonorSearchQuery && (
+                            <button
+                              onClick={() => setAdminDonorSearchQuery('')}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                          <span className="text-[10px] font-black uppercase text-slate-400 mr-1">Group:</span>
+                          {['All', 'O+', 'B+', 'A+', 'AB+', 'O-', 'B-', 'A-', 'AB-'].map(bg => (
+                            <button
+                              key={bg}
+                              type="button"
+                              onClick={() => setAdminDonorGroupFilter(bg)}
+                              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                adminDonorGroupFilter === bg
+                                  ? 'bg-rose-700 text-white shadow-2xs font-black'
+                                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                              }`}
+                            >
+                              {bg}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Donors Table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                              <th className="py-3 px-3">#ID</th>
+                              <th className="py-3 px-3">Donor Name</th>
+                              <th className="py-3 px-3">Blood Group</th>
+                              <th className="py-3 px-3">Location / Area</th>
+                              <th className="py-3 px-3">Contact Details</th>
+                              <th className="py-3 px-3">Availability / Status</th>
+                              <th className="py-3 px-3 text-center">Status</th>
+                              <th className="py-3 px-3 text-center">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 font-medium">
+                            {adminDonorsList.filter(d => {
+                              const matchGroup = adminDonorGroupFilter === 'All' || (d.bloodGroup || '').toUpperCase() === adminDonorGroupFilter.toUpperCase();
+                              if (!matchGroup) return false;
+                              if (!adminDonorSearchQuery.trim()) return true;
+                              const q = adminDonorSearchQuery.toLowerCase();
+                              return (
+                                (d.name || '').toLowerCase().includes(q) ||
+                                (d.bloodGroup || '').toLowerCase().includes(q) ||
+                                (d.location || '').toLowerCase().includes(q) ||
+                                (d.phone || '').includes(q)
+                              );
+                            }).length > 0 ? (
+                              adminDonorsList.filter(d => {
+                                const matchGroup = adminDonorGroupFilter === 'All' || (d.bloodGroup || '').toUpperCase() === adminDonorGroupFilter.toUpperCase();
+                                if (!matchGroup) return false;
+                                if (!adminDonorSearchQuery.trim()) return true;
+                                const q = adminDonorSearchQuery.toLowerCase();
+                                return (
+                                  (d.name || '').toLowerCase().includes(q) ||
+                                  (d.bloodGroup || '').toLowerCase().includes(q) ||
+                                  (d.location || '').toLowerCase().includes(q) ||
+                                  (d.phone || '').includes(q)
+                                );
+                              }).map(d => (
+                                <tr key={d.id} className="hover:bg-slate-50 transition-colors">
+                                  <td className="py-3 px-3 font-mono text-[10px] text-slate-400">
+                                    #{d.id}
+                                  </td>
+                                  <td className="py-3 px-3 font-bold text-slate-900">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-8 h-8 rounded-full bg-rose-50 text-rose-700 flex items-center justify-center font-black text-xs shrink-0 border border-rose-200">
+                                        {d.name.charAt(0).toUpperCase()}
+                                      </div>
+                                      <div>
+                                        <span>{d.name}</span>
+                                        <div className="text-[10px] text-slate-400 font-normal">
+                                          Registered: {new Date(d.createdAt).toLocaleDateString()}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-3">
+                                    <span className="inline-flex items-center gap-1 bg-rose-100 text-rose-800 font-black px-2.5 py-1 rounded-full text-xs border border-rose-200 shadow-2xs">
+                                      🩸 {d.bloodGroup}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-3 text-slate-700">
+                                    <div className="flex items-center gap-1">
+                                      <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                                      <span>{d.location || 'Boisar West'}</span>
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-3">
+                                    <div className="flex items-center gap-2">
+                                      <a
+                                        href={`tel:${d.phone}`}
+                                        className="text-blue-700 font-bold hover:underline flex items-center gap-1 text-[11px]"
+                                      >
+                                        <Phone className="w-3 h-3 text-blue-600" />
+                                        <span>{d.phone}</span>
+                                      </a>
+                                      <a
+                                        href={`https://wa.me/91${d.phone.replace(/\D/g, '')}?text=Hello%20${encodeURIComponent(d.name)}%2C%20we%20have%20an%20urgent%20requirement%20for%20${encodeURIComponent(d.bloodGroup)}%20blood%20in%20Boisar.`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-extrabold px-1.5 py-0.5 rounded hover:bg-emerald-100"
+                                      >
+                                        WhatsApp
+                                      </a>
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-3 text-slate-600 text-[11px]">
+                                    <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded border border-slate-200">
+                                      {d.lastDonated || 'Ready to donate'}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-3 text-center">
+                                    {d.verified ? (
+                                      <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black px-2 py-0.5 rounded-md whitespace-nowrap">
+                                        ✓ Approved &amp; Live
+                                      </span>
+                                    ) : (
+                                      <span className="bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black px-2 py-0.5 rounded-md whitespace-nowrap animate-pulse">
+                                        ⏳ Pending Approval
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-3 px-3 text-center">
+                                    <div className="flex items-center justify-center gap-1.5">
+                                      {d.verified ? (
+                                        <button
+                                          onClick={() => handleToggleApproveDonor(d.id, true)}
+                                          className="text-[10px] font-bold text-slate-500 hover:text-amber-700 hover:bg-amber-50 px-2 py-1 rounded-lg border border-slate-200 transition-colors cursor-pointer"
+                                          title="Pause / Unpublish donor profile"
+                                        >
+                                          Unpublish
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={() => handleToggleApproveDonor(d.id, false)}
+                                          className="text-[10px] font-black text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 rounded-lg shadow-xs transition-all cursor-pointer whitespace-nowrap"
+                                          title="Approve and make visible on live website"
+                                        >
+                                          ✓ Approve &amp; Publish
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() => handleDeleteDonor(d.id, d.name)}
+                                        className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 p-1.5 rounded-lg transition-all cursor-pointer"
+                                        title="Delete Blood Donor Profile"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={8} className="py-8 text-center text-slate-400 font-bold">
+                                  No blood donors found. Click "+ Add Blood Donor" to add one to database.
                                 </td>
                               </tr>
                             )}
@@ -6131,63 +7081,127 @@ export default function AdminPanelPage() {
                   </button>
                 </div>
 
-                {/* Properties Grid */}
+                {/* Properties Grid - Live Database Synced */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {adminPropertyList.map((prop) => (
-                    <div key={prop.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3.5 hover:border-emerald-300 transition-colors flex flex-col justify-between">
-                      <div className="space-y-3">
-                        <div className="flex gap-3 items-start">
-                          <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200 shadow-2xs">
-                            <img src={prop.image || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'} alt={prop.title} className="w-full h-full object-cover" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-1 flex-wrap">
-                              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded uppercase">
-                                {prop.location}
-                              </span>
-                              <span className="text-xs sm:text-sm font-black text-emerald-700">{prop.price}</span>
+                  {(() => {
+                    const dbProps = specialProfiles.properties || [];
+                    const allProps = dbProps.length > 0 ? dbProps : adminPropertyList;
+
+                    return allProps.map((prop: any) => {
+                      const isSold = Boolean(prop.isSold || prop.status?.toLowerCase().includes('sold') || prop.status?.toLowerCase().includes('rented'));
+                      const isRent = prop.forAction === 'Rent' || prop.category?.toLowerCase().includes('rent');
+                      const isFeatured = Boolean(prop.isFeatured || prop.featured);
+                      const propTitle = prop.category || prop.title || `${prop.bedrooms ? `${prop.bedrooms} BHK ` : ''}${prop.propertyType || 'Property'} for ${prop.forAction || 'Sale'}`;
+                      const propLocation = prop.addressLocality || prop.location || 'Boisar';
+                      const propImage = prop.avatar || prop.image || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80';
+                      const propPrice = prop.price;
+                      const propArea = prop.carpetArea || prop.area || '650 sqft';
+                      const propOwner = prop.contactName || prop.postedBy || 'Owner';
+                      const propPhone = prop.contactPhone || prop.phone || '9820123456';
+
+                      return (
+                        <div 
+                          key={prop.id} 
+                          className={`bg-white border rounded-2xl p-4 shadow-sm space-y-3.5 transition-all flex flex-col justify-between ${
+                            isSold 
+                              ? 'border-slate-300 bg-slate-50/80 opacity-80' 
+                              : isFeatured 
+                                ? 'border-amber-300 ring-1 ring-amber-400/30' 
+                                : 'border-slate-200 hover:border-emerald-300'
+                          }`}
+                        >
+                          <div className="space-y-3">
+                            <div className="flex gap-3 items-start">
+                              <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-slate-200 shadow-2xs relative">
+                                <img src={propImage} alt={propTitle} className="w-full h-full object-cover" />
+                                {isSold && (
+                                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                    <span className="text-[8px] font-black text-white bg-rose-600 px-1 py-0.5 rounded uppercase">
+                                      {isRent ? 'Rented' : 'Sold'}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-1 flex-wrap">
+                                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded uppercase">
+                                    {propLocation}
+                                  </span>
+                                  <span className="text-xs sm:text-sm font-black text-emerald-700">{propPrice}</span>
+                                </div>
+                                <h4 className="text-xs sm:text-sm font-bold text-slate-800 mt-1 leading-snug truncate">{propTitle}</h4>
+                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                  {isSold ? (
+                                    <span className="bg-rose-100 text-rose-800 border border-rose-200 text-[9px] font-black px-1.5 py-0.2 rounded">
+                                      🔒 {isRent ? 'RENTED OUT' : 'SOLD OUT'}
+                                    </span>
+                                  ) : (
+                                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-bold px-1.5 py-0.2 rounded">
+                                      ✅ AVAILABLE
+                                    </span>
+                                  )}
+                                  {isFeatured && (
+                                    <span className="bg-amber-100 text-amber-800 border border-amber-300 text-[9px] font-black px-1.5 py-0.2 rounded flex items-center gap-0.5">
+                                      ⭐ FEATURED
+                                    </span>
+                                  )}
+                                  {prop.verified !== false && (
+                                    <span className="bg-teal-50 text-teal-700 text-[9px] font-bold px-1.5 py-0.2 rounded">
+                                      LIVE
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                            <h4 className="text-xs sm:text-sm font-bold text-slate-800 mt-1 leading-snug truncate">{prop.title}</h4>
+
+                            <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                              <div><span className="text-slate-400 block text-[9px] uppercase font-bold">Carpet Area:</span> {propArea}</div>
+                              <div><span className="text-slate-400 block text-[9px] uppercase font-bold">Action / Type:</span> {prop.forAction || 'Sale'} • {prop.propertyType || 'Flat'}</div>
+                              <div className="col-span-2"><span className="text-slate-400 block text-[9px] uppercase font-bold">Owner / Agent:</span> {propOwner} (+91 {propPhone})</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-2 border-t border-slate-100 flex-wrap sm:flex-nowrap">
+                            {/* Toggle Sold / Available */}
+                            <button
+                              onClick={() => handleAdminToggleSold(prop.id, isSold)}
+                              className={`flex-1 font-black text-xs py-2 px-2.5 rounded-xl transition-all shadow-2xs flex items-center justify-center gap-1 cursor-pointer border ${
+                                isSold
+                                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+                                  : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
+                              }`}
+                            >
+                              <Lock className="w-3.5 h-3.5" />
+                              <span>{isSold ? 'Mark Available' : (isRent ? 'Mark Rented Out' : 'Mark Sold Out')}</span>
+                            </button>
+
+                            {/* Toggle Featured */}
+                            <button
+                              onClick={() => handleAdminToggleFeatured(prop.id, isFeatured)}
+                              className={`font-black text-xs py-2 px-3 rounded-xl transition-all shadow-2xs flex items-center justify-center gap-1 cursor-pointer border ${
+                                isFeatured
+                                  ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border-amber-300'
+                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                              }`}
+                              title="Feature on Top & in Recent Listings"
+                            >
+                              <Star className={`w-3.5 h-3.5 ${isFeatured ? 'fill-amber-500 text-amber-500' : 'text-slate-400'}`} />
+                              <span>{isFeatured ? 'Featured' : 'Feature'}</span>
+                            </button>
+
+                            {/* Delete Button */}
+                            <button
+                              onClick={() => handleAdminDeleteProperty(prop.id, propTitle)}
+                              className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs p-2 rounded-xl border border-rose-200 transition-colors cursor-pointer"
+                              title="Delete Property"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                          <div><span className="text-slate-400 block text-[9px] uppercase font-bold">Carpet Area:</span> {prop.area}</div>
-                          <div><span className="text-slate-400 block text-[9px] uppercase font-bold">Status:</span> {prop.status}</div>
-                          <div className="col-span-2"><span className="text-slate-400 block text-[9px] uppercase font-bold">Owner / Agent:</span> {prop.postedBy} (+91 {prop.phone})</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
-                        <button
-                          onClick={() => {
-                            const newStatus = prop.status === 'Ready to Move' ? 'Rented Out / Sold' : 'Ready to Move';
-                            const updated = adminPropertyList.map(p => p.id === prop.id ? { ...p, status: newStatus } : p);
-                            setAdminPropertyList(updated);
-                            if (typeof window !== 'undefined') localStorage.setItem('majh_boisar_user_properties', JSON.stringify(updated));
-                            alert(`Property status changed to "${newStatus}"`);
-                          }}
-                          className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs py-1.5 rounded-lg transition-colors text-center cursor-pointer"
-                        >
-                          {prop.status === 'Ready to Move' ? 'Mark Sold / Rented' : 'Mark Available'}
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm(`Are you sure you want to delete property listing "${prop.title}"?`)) {
-                              const updated = adminPropertyList.filter(p => p.id !== prop.id);
-                              setAdminPropertyList(updated);
-                              if (typeof window !== 'undefined') localStorage.setItem('majh_boisar_user_properties', JSON.stringify(updated));
-                              alert('Property listing deleted.');
-                            }
-                          }}
-                          className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs px-3 py-1.5 rounded-lg border border-rose-200 transition-colors cursor-pointer"
-                          title="Delete Property"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             )}
@@ -8088,6 +9102,302 @@ export default function AdminPanelPage() {
                   className="bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-xs px-6 py-2 rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
                 >
                   🚗 Save Vehicle to Database
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== ADD HOME TECHNICIAN / SERVICE MODAL ==================== */}
+      {adminAddTechModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="fixed inset-0" onClick={() => setAdminAddTechModalOpen(false)} />
+          <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 z-10 flex flex-col max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 text-left">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-teal-50 text-teal-600 border border-teal-200">
+                  <Wrench className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 uppercase tracking-wider">➕ Add Home Technician / Helper</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Add service providers directly to Majh Boisar Home Services database.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAdminAddTechModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <form onSubmit={handleAdminAddTechnician} className="space-y-3.5 text-xs text-slate-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Technician / Shop / Helper Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={adminTechForm.name}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g. Ramesh Sharma (AC Repair)"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Service Category *</label>
+                  <select
+                    value={adminTechForm.category}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600 cursor-pointer"
+                  >
+                    <option value="AC Service">❄️ AC Repair &amp; Service</option>
+                    <option value="Electrician">⚡ Electrician</option>
+                    <option value="Plumber">🚰 Plumber</option>
+                    <option value="Carpenter">🪚 Carpenter</option>
+                    <option value="House Maid">🧹 House Maid</option>
+                    <option value="Personal Driver">🚗 Personal Driver</option>
+                    <option value="Home Cook / Maharaj">👨‍🍳 Home Cook / Maharaj</option>
+                    <option value="Babysitter / Nanny">👶 Babysitter / Nanny</option>
+                    <option value="Elderly Caretaker">👵 Elderly Caretaker</option>
+                    <option value="Painter">🎨 Painter &amp; Waterproofing</option>
+                    <option value="Pest Control">🦟 Pest Control</option>
+                    <option value="Appliance Repair">🔧 Appliance Repair (Washing Machine/Fridge)</option>
+                    <option value="RO Water Purifier">💧 RO Water Purifier</option>
+                    <option value="Deep Cleaning">✨ Deep Cleaning</option>
+                    <option value="CCTV & Security">📹 CCTV &amp; Security</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Contact Mobile Number *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={adminTechForm.phone}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="e.g. 7769947217"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Boisar Location / Stand</label>
+                  <input
+                    type="text"
+                    value={adminTechForm.location}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="e.g. Boisar West, Ostwal Empire"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Visiting Fee / Salary / Rates</label>
+                  <input
+                    type="text"
+                    value={adminTechForm.visitingFee}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, visitingFee: e.target.value }))}
+                    placeholder="e.g. ₹199 Inspection or ₹3,500/Mo"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Work Experience</label>
+                  <input
+                    type="text"
+                    value={adminTechForm.experience}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, experience: e.target.value }))}
+                    placeholder="e.g. 6+ Yrs Experience"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Availability / Timing</label>
+                  <input
+                    type="text"
+                    value={adminTechForm.timing}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, timing: e.target.value }))}
+                    placeholder="e.g. Daily 8 AM - 8 PM or On-Demand"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Contact Mode</label>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setAdminTechForm(prev => ({ ...prev, allowCalls: true }))}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                        adminTechForm.allowCalls ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-600 border-slate-250'
+                      }`}
+                    >
+                      Call &amp; WhatsApp
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAdminTechForm(prev => ({ ...prev, allowCalls: false }))}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                        !adminTechForm.allowCalls ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-600 border-slate-250'
+                      }`}
+                    >
+                      WhatsApp Only
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Profile Photo URL (Optional)</label>
+                <input
+                  type="url"
+                  value={adminTechForm.image}
+                  onChange={e => setAdminTechForm(prev => ({ ...prev, image: e.target.value }))}
+                  placeholder="https://images.unsplash.com/... or leave blank for default"
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                />
+              </div>
+
+              {/* Submit */}
+              <div className="flex gap-3 pt-3 justify-end border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setAdminAddTechModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold cursor-pointer transition-colors text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-xs px-6 py-2 rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                >
+                  🔧 Save Service to Database
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== ADD BLOOD DONOR MODAL ==================== */}
+      {adminAddDonorModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="fixed inset-0" onClick={() => setAdminAddDonorModalOpen(false)} />
+          <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 z-10 flex flex-col max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 text-left">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-200">
+                  <Heart className="w-5 h-5 fill-rose-100" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 uppercase tracking-wider">➕ Add Voluntary Blood Donor</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Add emergency blood donor profile directly to Majh Boisar database.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAdminAddDonorModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <form onSubmit={handleAdminAddDonor} className="space-y-3.5 text-xs text-slate-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Donor Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={adminDonorForm.name}
+                    onChange={e => setAdminDonorForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g. Ramesh Patil"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-rose-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Blood Group *</label>
+                  <select
+                    value={adminDonorForm.bloodGroup}
+                    onChange={e => setAdminDonorForm(prev => ({ ...prev, bloodGroup: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-rose-600 cursor-pointer"
+                  >
+                    <option value="O+">🩸 O Positive (O+)</option>
+                    <option value="B+">🩸 B Positive (B+)</option>
+                    <option value="A+">🩸 A Positive (A+)</option>
+                    <option value="AB+">🩸 AB Positive (AB+)</option>
+                    <option value="O-">🩸 O Negative (O-)</option>
+                    <option value="B-">🩸 B Negative (B-)</option>
+                    <option value="A-">🩸 A Negative (A-)</option>
+                    <option value="AB-">🩸 AB Negative (AB-)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Mobile Number (WhatsApp) *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={adminDonorForm.phone}
+                    onChange={e => setAdminDonorForm(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="e.g. 9820098200"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-rose-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Location / Area in Boisar</label>
+                  <input
+                    type="text"
+                    value={adminDonorForm.location}
+                    onChange={e => setAdminDonorForm(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="e.g. Boisar West, Ostwal Empire"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-rose-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Availability / Last Donated Status</label>
+                <input
+                  type="text"
+                  value={adminDonorForm.lastDonated}
+                  onChange={e => setAdminDonorForm(prev => ({ ...prev, lastDonated: e.target.value }))}
+                  placeholder="e.g. Ready to donate, or Donated last month"
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-rose-600"
+                />
+              </div>
+
+              {/* Submit */}
+              <div className="flex gap-3 pt-3 justify-end border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setAdminAddDonorModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold cursor-pointer transition-colors text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-rose-700 hover:bg-rose-800 text-white font-extrabold text-xs px-6 py-2 rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                >
+                  🩸 Save &amp; Publish Blood Donor
                 </button>
               </div>
             </form>

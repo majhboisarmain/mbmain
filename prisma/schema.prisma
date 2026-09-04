@@ -200,7 +200,10 @@ model PropertyListing {
   price           String
   description     String?
   images          String?  // Separated by ||gallery_sep||
+  mapUrl          String?  // Optional Google Maps link
   verified        Boolean  @default(false)
+  isSold          Boolean  @default(false)
+  isFeatured      Boolean  @default(false)
   createdAt       DateTime @default(now())
 }
 
@@ -255,10 +258,13 @@ model HomeTechnician {
   phone        String
   location     String   @default("Boisar West")
   visitingFee  String   @default("₹199 Inspection Fee")
+  timing       String?  @default("Available On-Demand")
+  allowCalls   Boolean  @default(true)
   rating       Float    @default(5.0)
   reviewsCount Int      @default(1)
   verified     Boolean  @default(true)
   image        String?
   createdAt    DateTime @default(now())
 }
+
 

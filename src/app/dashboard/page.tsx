@@ -103,9 +103,7 @@ function DashboardContent() {
 
   const isAdminAuth = Boolean(
     currentRole === 'Admin' ||
-    loggedInUser?.email === 'admin@majhboisar.in' ||
     loggedInUser?.email === 'majhboisar@gmail.com' ||
-    loggedInUser?.phone === '9999999999' ||
     loggedInUser?.phone === '9307294733' ||
     (loggedInUser?.phone || '').replace(/\D/g, '').endsWith('9307294733') ||
     (loggedInUser?.name || '').toLowerCase().includes('admin') ||
@@ -129,8 +127,9 @@ function DashboardContent() {
   useEffect(() => {
     if (hotelIdParam || hotelNameParam) {
       const isAdmin = currentRole === 'Admin' || 
-        loggedInUser?.email === 'admin@majhboisar.in' || 
-        loggedInUser?.phone === '9999999999' || 
+        loggedInUser?.email === 'majhboisar@gmail.com' || 
+        loggedInUser?.phone === '9307294733' || 
+        (loggedInUser?.phone || '').replace(/\D/g, '').endsWith('9307294733') ||
         (loggedInUser?.name || '').toLowerCase().includes('admin');
 
       const userPhone = (loggedInUser?.phone || '').replace(/\D/g, '');
@@ -255,13 +254,14 @@ function DashboardContent() {
   };
 
   const userPropertyList = React.useMemo(() => {
+    if (isAdminAuth) return rawPropertyList;
     if (!userPhoneDigits) return [];
     return rawPropertyList.filter((p: any) => {
       const pPhone = (p.phone || p.contactPhone || p.postedByPhone || p.userPhone || p.userId || '').toString().replace(/\D/g, '');
       if (!pPhone) return false;
       return pPhone.endsWith(userPhoneDigits) || userPhoneDigits.endsWith(pPhone);
     });
-  }, [rawPropertyList, userPhoneDigits]);
+  }, [rawPropertyList, userPhoneDigits, isAdminAuth]);
 
   // Fetch live properties from database into dashboard
   useEffect(() => {
@@ -3874,11 +3874,15 @@ function DashboardContent() {
                   <div className="space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 bg-white border border-slate-200 p-3.5 rounded-xl shadow-2xs">
                       <div>
-                        <h3 className="text-xs sm:text-sm font-black text-slate-800">My Property Listings ({userPropertyList.length})</h3>
-                        <p className="text-[11px] text-slate-500 font-medium">Click "Edit" to update price, title, location or photos.</p>
+                        <h3 className="text-xs sm:text-sm font-black text-slate-800">
+                          {isAdminAuth ? `All Properties in Boisar (${userPropertyList.length}) [Admin Master View]` : `My Property Listings (${userPropertyList.length})`}
+                        </h3>
+                        <p className="text-[11px] text-slate-500 font-medium">
+                          {isAdminAuth ? 'As Super Admin, you can view, edit, mark sold/rented, or delete any property listing.' : 'Click "Edit" to update price, title, location or photos.'}
+                        </p>
                       </div>
                       <span className="bg-teal-50 border border-teal-200 text-teal-700 text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full shrink-0">
-                        Active Listings
+                        {isAdminAuth ? 'Admin Master View' : 'Active Listings'}
                       </span>
                     </div>
 
@@ -3952,6 +3956,7 @@ function DashboardContent() {
                         const rawEnquiries = JSON.parse(typeof window !== 'undefined' ? localStorage.getItem('majh_boisar_property_enquiries') || '[]' : '[]');
                         const myPropIds = new Set(userPropertyList.map((p: any) => p.id));
                         const list = rawEnquiries.filter((enq: any) => {
+                          if (isAdminAuth) return true;
                           if (!userPhoneDigits && myPropIds.size === 0) return false;
                           if (myPropIds.has(enq.propertyId)) return true;
                           if (userPhoneDigits && enq.ownerPhone) {
@@ -4329,12 +4334,26 @@ function DashboardContent() {
                     bizNameLower.includes('dhaba')
                   );
 
+                  const relevantHotelBookingsCount = isHotelBusiness
+                    ? hotelBookingsList.filter(b => {
+                        if (!b) return false;
+                        if (b.hotelId && (String(b.hotelId) === String(business.id) || String(b.hotelId).toLowerCase().includes(String(business.id).toLowerCase()))) return true;
+                        if (b.hotelName && business.name && (b.hotelName.toLowerCase().includes(business.name.toLowerCase()) || business.name.toLowerCase().includes(b.hotelName.toLowerCase()))) return true;
+                        return false;
+                      }).length
+                    : 0;
+
+                  const validLeadsCount = (business.leads || []).filter((lead: any) => {
+                    if (!isHotelBusiness && (lead.hotelId || (lead.query && lead.query.includes('Hotel Room Booking')))) return false;
+                    return true;
+                  }).length;
+
                   const tabsList = [
                     { val: 'analytics', label: 'Analytics', icon: <Activity className="w-3.5 h-3.5" /> },
                     ...(isFoodBusiness ? [{ val: 'kitchen_orders', label: `🍽️ Kitchen KDS (${kitchenOrdersList.filter(o => o.status !== 'completed').length})`, icon: <Utensils className="w-3.5 h-3.5 text-orange-600" /> }] : []),
-                    ...(isHotelBusiness ? [{ val: 'hotel_bookings', label: `🏨 Hotel Bookings (${hotelBookingsList.length})`, icon: <Building className="w-3.5 h-3.5" /> }] : []),
+                    ...(isHotelBusiness ? [{ val: 'hotel_bookings', label: `🏨 Hotel Bookings (${relevantHotelBookingsCount})`, icon: <Building className="w-3.5 h-3.5" /> }] : []),
                     ...(isTurfBusiness ? [{ val: 'turf_bookings', label: `⚽ Turf Bookings (${turfBookingsList.length})`, icon: <Trophy className="w-3.5 h-3.5" /> }] : []),
-                    { val: 'leads', label: `Leads (${(business.leads || []).length})`, icon: <ClipboardCheck className="w-3.5 h-3.5" /> },
+                    { val: 'leads', label: `Leads (${validLeadsCount})`, icon: <ClipboardCheck className="w-3.5 h-3.5" /> },
                     { val: 'catalog', label: 'Catalog', icon: <Layers className="w-3.5 h-3.5" /> },
                     { val: 'reviews', label: `Reviews (${(business.reviews || []).length})`, icon: <MessageSquare className="w-3.5 h-3.5" /> },
                     { val: 'settings', label: 'Settings', icon: <Building className="w-3.5 h-3.5" /> },
@@ -6817,165 +6836,146 @@ function DashboardContent() {
                 )}
 
                 {/* Subtab Content: Lead Pipeline */}
-                {activeSubTab === 'leads' && (
-                  <div className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-sm space-y-4">
-                    {/* Leads Header */}
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2 text-left">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Customer Inquiries &amp; Leads</h3>
-                          {canAccessLeadInbox ? (
-                            <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                              <span>✓ Unlimited Leads (Plan Active)</span>
-                            </span>
-                          ) : (
-                            <span className="bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                              <span>⚡ Pay-Per-Lead (40% OFF)</span>
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-500 font-medium mt-0.5">Manage customer quotations, callbacks and requests.</p>
-                      </div>
+                {activeSubTab === 'leads' && (() => {
+                  const bizCatLower = (business?.category || '').toLowerCase();
+                  const bizNameLower = (business?.name || '').toLowerCase();
+                  const isHospital = bizCatLower.includes('hospital') || bizCatLower.includes('clinic') || bizCatLower.includes('doctor') || bizCatLower.includes('medical') || bizNameLower.includes('hospital') || bizNameLower.includes('clinic');
+                  const isHotelBusiness = !isHospital && (
+                    bizCatLower === 'hotel' ||
+                    bizCatLower === 'hotels' ||
+                    bizCatLower === 'resort' ||
+                    bizCatLower === 'resorts' ||
+                    bizCatLower.includes('hotel') ||
+                    bizCatLower.includes('resort') ||
+                    bizCatLower.includes('guest house') ||
+                    bizCatLower.includes('lodge') ||
+                    bizCatLower.includes('villa') ||
+                    bizCatLower.includes('homestay') ||
+                    bizNameLower.includes('hotel') ||
+                    bizNameLower.includes('resort')
+                  );
 
-                      <div className="flex items-center gap-2">
-                        {!canAccessLeadInbox && (
-                          <button
-                            onClick={() => setActiveSubTab('subscription')}
-                            className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-black text-xs px-3 py-1.5 rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95"
-                          >
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span>Unlock All Free (from ₹149/mo)</span>
-                          </button>
-                        )}
-                        <button
-                          onClick={() => {
-                            alert(`Compiling spreadsheet...\n\nSuccessfully generated: ${business.name}-leads-report.csv`);
-                          }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-2xs transition-all cursor-pointer"
-                        >
-                          <ArrowUpRight className="w-3.5 h-3.5 text-slate-700" />
-                          <span>Export CSV</span>
-                        </button>
-                      </div>
-                    </div>
+                  // Only hotel businesses can see hotel bookings, and only their own bookings
+                  const relevantHotelBookings = isHotelBusiness
+                    ? hotelBookingsList.filter(b => {
+                        if (!b) return false;
+                        if (b.hotelId && (String(b.hotelId) === String(business.id) || String(b.hotelId).toLowerCase().includes(String(business.id).toLowerCase()))) return true;
+                        if (b.hotelName && business.name && (b.hotelName.toLowerCase().includes(business.name.toLowerCase()) || business.name.toLowerCase().includes(b.hotelName.toLowerCase()))) return true;
+                        return false;
+                      })
+                    : [];
 
-                    {/* 40% OFF Discount Banner for Non-Subscribed Merchants */}
-                    {!canAccessLeadInbox && (
-                      <div className="bg-gradient-to-r from-teal-50 via-emerald-50 to-blue-50 border border-teal-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-left shadow-2xs">
-                        <div className="space-y-1">
+                  // Filter out any accidental hotel leads if this business is not a hotel
+                  const filteredBizLeads = (business.leads || []).filter((lead: any) => {
+                    if (!isHotelBusiness && (lead.hotelId || (lead.query && lead.query.includes('Hotel Room Booking')))) {
+                      return false;
+                    }
+                    return true;
+                  });
+
+                  return (
+                    <div className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-sm space-y-4">
+                      {/* Leads Header */}
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2 text-left">
+                        <div>
                           <div className="flex items-center gap-2">
-                            <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wide">
-                              🔥 40% Discount Applied
-                            </span>
-                            <span className="text-xs font-black text-slate-900">
-                              Market Rate: <span className="line-through text-slate-400 font-normal">₹49/lead</span> ➔ <span className="text-emerald-700 font-extrabold">₹29 only</span>
+                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Customer Inquiries &amp; Leads</h3>
+                            <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <span>✓ Direct Customer Leads</span>
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-600 font-medium">
-                            No subscription? Buy individual verified leads instantly for <strong>₹29/lead</strong> (40% OFF market price), or get unlimited leads with Starter plan.
-                          </p>
+                          <p className="text-xs text-slate-500 font-medium mt-0.5">Manage customer quotations, callbacks and requests.</p>
                         </div>
 
-                        <button
-                          onClick={() => setActiveSubTab('subscription')}
-                          className="bg-slate-900 hover:bg-slate-800 text-white font-black text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs shrink-0 cursor-pointer active:scale-95"
-                        >
-                          View Subscription Plans →
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Hotel Bookings Quick Link if hotel */}
-                    {hotelBookingsList.length > 0 && (
-                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-2 text-left">
                         <div className="flex items-center gap-2">
-                          <span className="text-base">🏨</span>
-                          <div>
-                            <h4 className="text-xs font-bold text-slate-900">
-                              {hotelBookingsList.length} Hotel Bookings Received
-                            </h4>
-                            <p className="text-[10px] text-slate-500 font-medium">Manage check-ins, room assignment &amp; tariffs.</p>
-                          </div>
+                          <button
+                            onClick={() => {
+                              alert(`Compiling spreadsheet...\n\nSuccessfully generated: ${business.name}-leads-report.csv`);
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-2xs transition-all cursor-pointer"
+                          >
+                            <ArrowUpRight className="w-3.5 h-3.5 text-slate-700" />
+                            <span>Export CSV</span>
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => setActiveSubTab('hotel_bookings')}
-                          className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer shrink-0"
-                        >
-                          Open Register →
-                        </button>
                       </div>
-                    )}
 
-                    {(business.leads || []).length === 0 && hotelBookingsList.length === 0 ? (
-                      <div className="text-center py-10 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
-                        <ClipboardCheck className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                        <p className="text-xs text-slate-600 font-bold">No verified enquiries received yet.</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">Enquiries from WhatsApp &amp; your business listing will appear here.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3 text-left">
-                        {/* Render Hotel Booking Summary cards */}
-                        {hotelBookingsList.map((hBooking) => (
-                          <div key={hBooking.id} className="bg-white border border-slate-200 p-3 rounded-2xl shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h4 className="font-bold text-slate-900 text-xs">{hBooking.guestName}</h4>
-                                <span className="px-1.5 py-0.5 rounded text-[8.5px] font-bold bg-purple-50 text-purple-900 border border-purple-200 font-mono">
-                                  #{hBooking.id}
-                                </span>
-                                <span className="text-[10px] text-slate-400 font-medium">{hBooking.createdAt ? hBooking.createdAt.split(',')[0] : 'Today'}</span>
-                              </div>
-
-                              <div className="flex items-center gap-2 text-slate-600 text-[11px] flex-wrap">
-                                <span className="font-mono text-slate-800 font-bold">+91 {hBooking.guestPhone}</span>
-                                <span className="text-slate-300">•</span>
-                                <span>{hBooking.roomCategory || 'AC Room'} ({hBooking.timeSlot || '3h'})</span>
-                                <span className="text-slate-300">•</span>
-                                <span className="text-emerald-700 font-bold">₹{hBooking.totalAmount} (Pay on Arrival)</span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <a
-                                href={`tel:${hBooking.guestPhone}`}
-                                className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-[10px]"
-                              >
-                                <Phone className="w-3 h-3" /> Call
-                              </a>
-                              <a
-                                href={`https://wa.me/91${hBooking.guestPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${hBooking.guestName}, this is regarding your booking #${hBooking.id} at ${hBooking.hotelName}.`)}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="px-2.5 py-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-[10px]"
-                              >
-                                <MessageSquare className="w-3 h-3 fill-white" /> WhatsApp
-                              </a>
+                      {/* Hotel Bookings Quick Link ONLY IF hotel business */}
+                      {isHotelBusiness && relevantHotelBookings.length > 0 && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center justify-between gap-2 text-left">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">🏨</span>
+                            <div>
+                              <h4 className="text-xs font-bold text-slate-900">
+                                {relevantHotelBookings.length} Hotel Bookings Received
+                              </h4>
+                              <p className="text-[10px] text-slate-500 font-medium">Manage check-ins, room assignment &amp; tariffs.</p>
                             </div>
                           </div>
-                        ))}
+                          <button
+                            type="button"
+                            onClick={() => setActiveSubTab('hotel_bookings')}
+                            className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer shrink-0"
+                          >
+                            Open Register →
+                          </button>
+                        </div>
+                      )}
 
-                        {/* Customer Inquiries / Business Leads */}
-                        {(business.leads || []).map((lead) => {
-                          const isLeadUnlocked = canAccessLeadInbox || unlockedLeadIds.includes(lead.id) || currentRole === 'Admin';
-                          const maskedName = isLeadUnlocked ? lead.customerName : `${lead.customerName.split(' ')[0]} ${lead.customerName.split(' ')[1] ? lead.customerName.split(' ')[1].charAt(0) + '••••' : '••••'}`;
-                          const maskedPhone = isLeadUnlocked ? lead.customerPhone : (lead.customerPhone ? `${lead.customerPhone.slice(0, 2)}•••• ••${lead.customerPhone.slice(-2)}` : '+91 98•••• ••21');
-                          const maskedEmail = isLeadUnlocked ? lead.customerEmail : '••••••••@gmail.com';
+                      {filteredBizLeads.length === 0 && relevantHotelBookings.length === 0 ? (
+                        <div className="text-center py-10 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
+                          <ClipboardCheck className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                          <p className="text-xs text-slate-600 font-bold">No verified enquiries received yet.</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">Enquiries from WhatsApp &amp; your business listing will appear here.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 text-left">
+                          {/* Render Hotel Booking Summary cards ONLY for hotel businesses */}
+                          {isHotelBusiness && relevantHotelBookings.map((hBooking) => (
+                            <div key={hBooking.id} className="bg-white border border-slate-200 p-3 rounded-2xl shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-bold text-slate-900 text-xs">{hBooking.guestName}</h4>
+                                  <span className="px-1.5 py-0.5 rounded text-[8.5px] font-bold bg-purple-50 text-purple-900 border border-purple-200 font-mono">
+                                    #{hBooking.id}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 font-medium">{hBooking.createdAt ? hBooking.createdAt.split(',')[0] : 'Today'}</span>
+                                </div>
 
-                          return (
+                                <div className="flex items-center gap-2 text-slate-600 text-[11px] flex-wrap">
+                                  <span className="font-mono text-slate-800 font-bold">+91 {hBooking.guestPhone}</span>
+                                  <span className="text-slate-300">•</span>
+                                  <span>{hBooking.roomCategory || 'AC Room'} ({hBooking.timeSlot || '3h'})</span>
+                                  <span className="text-slate-300">•</span>
+                                  <span className="text-emerald-700 font-bold">₹{hBooking.totalAmount} (Pay on Arrival)</span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <a
+                                  href={`tel:${hBooking.guestPhone}`}
+                                  className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-[10px]"
+                                >
+                                  <Phone className="w-3 h-3" /> Call
+                                </a>
+                                <a
+                                  href={`https://wa.me/91${hBooking.guestPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${hBooking.guestName}, this is regarding your booking #${hBooking.id} at ${hBooking.hotelName}.`)}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="px-2.5 py-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-[10px]"
+                                >
+                                  <MessageSquare className="w-3 h-3 fill-white" /> WhatsApp
+                                </a>
+                              </div>
+                            </div>
+                          ))}
+
+                          {/* Customer Inquiries / Business Leads */}
+                          {filteredBizLeads.map((lead) => (
                             <div key={lead.id} className="p-4 bg-white border border-slate-200 rounded-2xl shadow-2xs space-y-3 text-left hover:border-slate-300 transition-colors">
                               <div className="flex items-center justify-between flex-wrap gap-2">
                                 <div className="flex items-center gap-2">
-                                  <h4 className="font-extrabold text-sm text-slate-900">{maskedName}</h4>
-                                  {isLeadUnlocked ? (
-                                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                                      <span>✓ Unlocked Lead</span>
-                                    </span>
-                                  ) : (
-                                    <span className="bg-amber-50 text-amber-800 border border-amber-200 text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                                      <span>🔒 Contact Locked</span>
-                                    </span>
-                                  )}
+                                  <h4 className="font-extrabold text-sm text-slate-900">{lead.customerName}</h4>
                                   <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
                                     lead.status === 'Won'
                                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -6983,7 +6983,7 @@ function DashboardContent() {
                                         ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                         : 'bg-teal-50 text-teal-700 border border-teal-200'
                                   }`}>
-                                    {lead.status}
+                                    {lead.status || 'New'}
                                   </span>
                                 </div>
                                 <span className="text-[10px] text-slate-400 font-bold">{new Date(lead.createdAt).toLocaleDateString()}</span>
@@ -6991,8 +6991,8 @@ function DashboardContent() {
 
                               <div className="space-y-1.5 text-xs">
                                 <div className="flex items-center gap-3 text-slate-600 flex-wrap">
-                                  <p><strong className="font-bold text-slate-700">Phone:</strong> {maskedPhone}</p>
-                                  {lead.customerEmail && <p><strong className="font-bold text-slate-700">Email:</strong> {maskedEmail}</p>}
+                                  <p><strong className="font-bold text-slate-700">Phone:</strong> {lead.customerPhone || '+91 Not provided'}</p>
+                                  {lead.customerEmail && <p><strong className="font-bold text-slate-700">Email:</strong> {lead.customerEmail}</p>}
                                 </div>
 
                                 <div className="bg-slate-50 border border-slate-200 p-2.5 rounded-xl text-slate-700 leading-relaxed text-xs">
@@ -7001,76 +7001,51 @@ function DashboardContent() {
                                 </div>
                               </div>
 
-                              {/* Unlocked Actions: Direct Call & WhatsApp & Pipeline */}
-                              {isLeadUnlocked ? (
-                                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 flex-wrap">
-                                  <div className="flex items-center gap-2">
-                                    <a
-                                      href={`tel:${lead.customerPhone}`}
-                                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-xs active:scale-95"
-                                    >
-                                      <Phone className="w-3.5 h-3.5" /> Call Customer
-                                    </a>
-                                    <a
-                                      href={`https://wa.me/91${lead.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${lead.customerName}, this is regarding your inquiry with ${business.name} on Majh Boisar.`)}`}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="px-3 py-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-xs active:scale-95"
-                                    >
-                                      <MessageSquare className="w-3.5 h-3.5 fill-white" /> WhatsApp
-                                    </a>
-                                  </div>
-
-                                  <div className="flex items-center gap-1.5">
-                                    <button
-                                      onClick={() => handleUpdateLeadStatus(lead.id, 'Won')}
-                                      className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg font-bold text-[11px] transition-all cursor-pointer"
-                                    >
-                                      Mark Won
-                                    </button>
-                                    <button
-                                      onClick={() => handleUpdateLeadStatus(lead.id, 'Lost')}
-                                      className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-[11px] transition-all cursor-pointer"
-                                    >
-                                      Mark Lost
-                                    </button>
-                                  </div>
+                              {/* Direct Call & WhatsApp & Pipeline Actions */}
+                              <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 flex-wrap">
+                                <div className="flex items-center gap-2">
+                                  {lead.customerPhone && (
+                                    <>
+                                      <a
+                                        href={`tel:${lead.customerPhone}`}
+                                        className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-xs active:scale-95"
+                                      >
+                                        <Phone className="w-3.5 h-3.5" /> Call Customer
+                                      </a>
+                                      <a
+                                        href={`https://wa.me/91${lead.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${lead.customerName}, this is regarding your inquiry with ${business.name} on Majh Boisar.`)}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="px-3 py-1.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold transition-all cursor-pointer shadow-2xs flex items-center gap-1 text-xs active:scale-95"
+                                      >
+                                        <MessageSquare className="w-3.5 h-3.5 fill-white" /> WhatsApp
+                                      </a>
+                                    </>
+                                  )}
                                 </div>
-                              ) : (
-                                <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-slate-100 flex-wrap bg-slate-50/70 p-3 rounded-xl">
-                                  <div>
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="text-xs font-black text-slate-900">Unlock Full Contact:</span>
-                                      <span className="text-xs text-slate-400 line-through">₹49</span>
-                                      <span className="text-xs font-black text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded">₹29 (40% OFF)</span>
-                                    </div>
-                                    <span className="text-[10px] text-slate-500 font-medium">Instant direct phone number &amp; WhatsApp callback</span>
-                                  </div>
 
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      onClick={() => setLeadToBuy(lead)}
-                                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                                    >
-                                      <Unlock className="w-3.5 h-3.5" />
-                                      <span>Buy Lead (₹29)</span>
-                                    </button>
-                                    <button
-                                      onClick={() => setActiveSubTab('subscription')}
-                                      className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3 py-2 rounded-xl transition-all shadow-xs cursor-pointer active:scale-95"
-                                    >
-                                      Subscribe Free
-                                    </button>
-                                  </div>
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    onClick={() => handleUpdateLeadStatus(lead.id, 'Won')}
+                                    className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg font-bold text-[11px] transition-all cursor-pointer"
+                                  >
+                                    Mark Won
+                                  </button>
+                                  <button
+                                    onClick={() => handleUpdateLeadStatus(lead.id, 'Lost')}
+                                    className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-[11px] transition-all cursor-pointer"
+                                  >
+                                    Mark Lost
+                                  </button>
                                 </div>
-                              )}
+                              </div>
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Subtab Content: Catalog Manager */}
                 {activeSubTab === 'catalog' && (

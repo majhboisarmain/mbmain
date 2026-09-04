@@ -23,6 +23,7 @@ export interface VehicleListing {
   rating: number;
   reviewsCount: number;
   verified: boolean;
+  featured?: boolean;
   image: string;
   features?: string[];
 }
@@ -183,6 +184,18 @@ function HireVehicleContent() {
       showToast('Please login with your mobile number to register your vehicle.', 'info', 4000);
       return;
     }
+    if (selectedCategory && selectedCategory !== 'All Vehicles') {
+      const cat = selectedCategory as any;
+      if (VEHICLE_PRESETS[cat]) {
+        setFormCategory(cat);
+        const preset = VEHICLE_PRESETS[cat];
+        setFormModel(preset.modelDefault);
+        setFormRate(preset.rateDefault);
+        setFormCapacity(preset.capacityDefault);
+        setFormLocation(preset.locationDefault);
+        setFormTiming(preset.timingDefault);
+      }
+    }
     setShowAddModal(true);
   };
 
@@ -213,6 +226,8 @@ function HireVehicleContent() {
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     if (!formName.trim() || !formPhone.trim()) {
       showToast('Please enter Driver / Agency Name and Contact Phone!', 'error');
       return;
@@ -250,12 +265,19 @@ function HireVehicleContent() {
         const savedVehicle = await res.json();
         const formattedVehicle: VehicleListing = {
           ...savedVehicle,
+          id: String(savedVehicle.id),
           features: ['Direct Owner Contact', '0% Commission', 'Verified Boisar Listing']
         };
-        setVehicles(prev => [formattedVehicle, ...prev.filter(v => v.id !== formattedVehicle.id)]);
-        setSelectedCategory(formCategory);
-        setSuccessMsg('🎉 Vehicle / Driver Listed Successfully!');
-        showToast(`🎉 ${formName} Listed Live on Majh Boisar Travels!`, 'success');
+        // Deduplicate using String(id) to ensure no duplicate cards appear
+        if (savedVehicle.verified) {
+          setVehicles(prev => [formattedVehicle, ...prev.filter(v => String(v.id) !== String(formattedVehicle.id))]);
+          setSelectedCategory(formCategory);
+          setSuccessMsg('🎉 Vehicle / Driver Listed Successfully!');
+          showToast(`🎉 ${formName} Listed Live on Majh Boisar Travels!`, 'success');
+        } else {
+          setSuccessMsg('🎉 Registration submitted! Admin will verify and activate your vehicle shortly.');
+          showToast(`🎉 ${formName} submitted for verification! It will go live once approved by Admin.`, 'success', 5000);
+        }
 
         setTimeout(() => {
           setSuccessMsg('');
@@ -263,9 +285,10 @@ function HireVehicleContent() {
           setFormName('');
           setFormPhone('');
           setFormImage('');
+          fetchDbVehicles();
         }, 1500);
       } else {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
         showToast(errData.error || 'Failed to list vehicle', 'error');
       }
     } catch (err) {
@@ -276,17 +299,23 @@ function HireVehicleContent() {
   };
 
   const filteredVehicles = useMemo(() => {
-    return vehicles.filter(v => {
-      const matchCat = selectedCategory === 'All Vehicles' || v.category === selectedCategory;
-      const matchArea = selectedArea === 'All' || v.location.toLowerCase().includes(selectedArea.toLowerCase());
-      const matchQuery = !searchQuery.trim() ||
-        v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.vehicleModel.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        v.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return vehicles
+      .filter(v => {
+        const matchCat = selectedCategory === 'All Vehicles' || v.category === selectedCategory;
+        const matchArea = selectedArea === 'All' || v.location.toLowerCase().includes(selectedArea.toLowerCase());
+        const matchQuery = !searchQuery.trim() ||
+          v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          v.vehicleModel.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          v.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          v.category.toLowerCase().includes(searchQuery.toLowerCase());
 
-      return matchCat && matchArea && matchQuery;
-    });
+        return matchCat && matchArea && matchQuery;
+      })
+      .sort((a, b) => {
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        return 0;
+      });
   }, [vehicles, selectedCategory, selectedArea, searchQuery]);
 
   return (
@@ -368,7 +397,9 @@ function HireVehicleContent() {
               {filteredVehicles.map((v) => (
                 <div
                   key={v.id}
-                  className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md hover:border-blue-400 transition-all flex flex-col justify-between group text-left"
+                  className={`bg-white rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group text-left ${
+                    v.featured ? 'border-2 border-amber-400 ring-1 ring-amber-300/60 shadow-md' : 'border border-slate-200 hover:border-blue-400'
+                  }`}
                 >
                   <div>
                     {/* Vehicle Photo Container (Full Vehicle View) */}
@@ -381,7 +412,14 @@ function HireVehicleContent() {
                         alt={v.name}
                         className="w-full h-full object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute top-2.5 left-2.5">
+                      {v.featured && (
+                        <div className="absolute top-2.5 left-2.5 z-10">
+                          <span className="bg-linear-to-r from-amber-500 to-amber-600 text-slate-950 text-[9.5px] font-black px-2.5 py-1 rounded-lg shadow-md flex items-center gap-1 border border-amber-300">
+                            ⭐ Top Choice
+                          </span>
+                        </div>
+                      )}
+                      <div className={`absolute ${v.featured ? 'top-10' : 'top-2.5'} left-2.5`}>
                         <span className="bg-slate-900/90 backdrop-blur-md text-white text-[9.5px] font-black px-2.5 py-1 rounded-lg shadow-xs border border-white/10">
                           {v.category}
                         </span>
@@ -689,11 +727,38 @@ function HireVehicleContent() {
                   </div>
                 </div>
 
+                {/* Availability / Operating Hours Timing */}
+                <div>
+                  <label className="block text-[9.5px] text-slate-600 font-extrabold uppercase mb-0.5">
+                    Availability / Timing *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formTiming}
+                    onChange={e => setFormTiming(e.target.value)}
+                    placeholder="e.g. Daily 6 AM - 11 PM or 24x7 Available on Call"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:bg-white focus:border-blue-600"
+                  />
+                </div>
+
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-black text-xs py-2.5 rounded-xl shadow-md transition-all cursor-pointer mt-1"
+                  disabled={isSubmitting}
+                  className={`w-full font-black text-xs py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 mt-1 ${
+                    isSubmitting
+                      ? 'bg-blue-400 text-white cursor-not-allowed opacity-80'
+                      : 'bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white cursor-pointer'
+                  }`}
                 >
-                  Submit &amp; List Vehicle
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                      <span>Listing Vehicle, Please Wait...</span>
+                    </>
+                  ) : (
+                    <span>Submit &amp; List Vehicle</span>
+                  )}
                 </button>
               </form>
             )}

@@ -62,7 +62,10 @@ export async function GET(request: NextRequest) {
         name: p.contactName,
         phone: p.contactPhone,
         whatsapp: p.whatsappPhone || p.contactPhone,
-        verified: p.verified
+        verified: p.verified,
+        isSold: Boolean(p.isSold),
+        isFeatured: Boolean(p.isFeatured),
+        mapUrl: p.mapUrl || null
       };
     });
 
@@ -79,7 +82,7 @@ export async function POST(request: NextRequest) {
       iAm, contactName, contactPhone, whatsappPhone, forAction,
       propertyType, cityName, projectName, addressLocality, bedrooms,
       balconies, furnishing, bathrooms, carpetArea, superArea, price,
-      description, photos, video, videos
+      description, photos, video, videos, mapUrl
     } = body;
 
     if (!contactName || !contactPhone || !price || !addressLocality) {
@@ -122,7 +125,10 @@ export async function POST(request: NextRequest) {
         price,
         description: description || null,
         images: allMediaToStore.join('||gallery_sep||'),
-        verified: false // Requires Super Admin approval before going live
+        mapUrl: mapUrl ? mapUrl.trim() : null,
+        verified: false, // Requires Super Admin approval before going live
+        isSold: false,
+        isFeatured: false
       },
     });
 
@@ -145,7 +151,10 @@ export async function POST(request: NextRequest) {
       name: property.contactName,
       phone: property.contactPhone,
       whatsapp: property.whatsappPhone || property.contactPhone,
-      verified: false
+      verified: false,
+      isSold: false,
+      isFeatured: false,
+      mapUrl: property.mapUrl || null
     };
 
     return NextResponse.json(result, { status: 201 });
@@ -165,12 +174,20 @@ export async function PUT(request: NextRequest) {
       where: { id: parseInt(id) },
       data: {
         ...(body.verified !== undefined && { verified: body.verified }),
+        ...(body.isSold !== undefined && { isSold: body.isSold }),
+        ...(body.isFeatured !== undefined && { isFeatured: body.isFeatured }),
         ...(body.price !== undefined && { price: body.price }),
         ...(body.description !== undefined && { description: body.description }),
+        ...(body.mapUrl !== undefined && { mapUrl: body.mapUrl ? body.mapUrl.trim() : null }),
       }
     });
 
-    return NextResponse.json(updated);
+    return NextResponse.json({
+      ...updated,
+      isSold: Boolean(updated.isSold),
+      isFeatured: Boolean(updated.isFeatured),
+      mapUrl: updated.mapUrl || null
+    });
   } catch (error: any) {
     return internalServerErrorResponse('/api/properties PUT', error);
   }

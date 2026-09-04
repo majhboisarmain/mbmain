@@ -15,7 +15,7 @@ import {
 import { useApp } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
 import AdModal from '@/components/AdModal';
-import PostPropertyModal from '@/components/PostPropertyModal';
+import PostPropertyModal, { BOISAR_PROPERTY_AREAS } from '@/components/PostPropertyModal';
 import LocalMarketplaceModal from '@/components/LocalHub/LocalMarketplaceModal';
 import LocalOffersModal from '@/components/LocalHub/LocalOffersModal';
 import TempoHelplineModal from '@/components/LocalHub/TempoHelplineModal';
@@ -654,6 +654,13 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   const handlePropertyContactCall = (profile: any, isWhatsapp = false) => {
     if (!profile) return;
 
+    if (profile.isSold || profile.status?.toLowerCase().includes('sold') || profile.status?.toLowerCase().includes('rented')) {
+      if (showToast) {
+        showToast('🔒 This property is already sold/rented out. Contact details are not accessible.', 'info', 4000);
+      }
+      return;
+    }
+
     if (!isLoggedIn) {
       if (showToast) {
         showToast('🔒 Please login to view owner contact details & access 2 Free Calls.', 'info');
@@ -802,6 +809,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   const [propertyTypeFilter, setPropertyTypeFilter] = useState('All Types');
   const [bhkFilter, setBhkFilter] = useState('All BHK');
   const [budgetFilter, setBudgetFilter] = useState('All Budgets');
+  const [propertyAreaFilter, setPropertyAreaFilter] = useState('All Areas');
   const [propertySortBy, setPropertySortBy] = useState<'relevance' | 'price_low' | 'price_high' | 'newest'>('relevance');
   const [selectedProfile, setSelectedProfile] = useState<any>(null);
   const [helperFilterRole, setHelperFilterRole] = useState<string>('All');
@@ -1971,14 +1979,22 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                       <span>✨</span> Specialists &amp; Helpers
                     </div>
                     <div className="space-y-0.5">
-                      {matchingSpecialists.map((spec) => (
+                      {matchingSpecialists.map((spec) => {
+                        const isSpecSold = Boolean(spec.isSold || spec.status?.toLowerCase().includes('sold') || spec.status?.toLowerCase().includes('rented'));
+                        return (
                         <div
                           key={spec.id}
                           onClick={() => {
+                            if (isSpecSold) {
+                              showToast('🔒 This property is sold / rented out and closed.', 'info');
+                              return;
+                            }
                             setIsSearchFocused(false);
                             setSelectedProfile(spec);
                           }}
-                          className="px-3 py-2 rounded-xl hover:bg-emerald-50/80 cursor-pointer flex items-center justify-between transition-colors group"
+                          className={`px-3 py-2 rounded-xl flex items-center justify-between transition-colors group ${
+                            isSpecSold ? 'opacity-60 cursor-not-allowed bg-slate-50' : 'hover:bg-emerald-50/80 cursor-pointer'
+                          }`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
                             <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 font-black text-xs flex items-center justify-center shrink-0 border border-emerald-200">
@@ -1989,9 +2005,14 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                               <p className="text-[10px] text-emerald-700 font-bold truncate">{spec.category} • {spec.price}</p>
                             </div>
                           </div>
-                          <span className="text-[10px] bg-emerald-600 text-white font-bold px-2 py-0.5 rounded-full shrink-0">View Profile</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                            isSpecSold ? 'bg-slate-300 text-slate-700' : 'bg-emerald-600 text-white'
+                          }`}>
+                            {isSpecSold ? 'Closed' : 'View Profile'}
+                          </span>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -2684,8 +2705,8 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
               {selectedProfile?.listingType === 'property' ? (
                 /* PROPERTY DETAIL VIEW (Clean Modern Majh Boisar Style) */
                 <div className="animate-in fade-in duration-200 bg-slate-50/50 min-h-full pb-24 relative text-left">
-                   {/* Top Header Section */}
-                   <div className="w-full flex items-center justify-between px-3 sm:px-8 py-2.5 sm:py-3.5 border-b border-slate-200 bg-white shrink-0 shadow-2xs">
+                   {/* Top Header Section - Compact */}
+                    <div className="w-full flex items-center justify-between px-3 sm:px-8 py-2 sm:py-2.5 border-b border-slate-200 bg-white shrink-0 shadow-2xs">
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                         <button 
                           onClick={() => setSelectedProfile(null)} 
@@ -2710,77 +2731,131 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           <X className="w-4 h-4" />
                         </button>
                       </div>
-                   </div>
+                    </div>
 
-                   {/* Gallery & Content Area */}
-                   <div className="max-w-6xl mx-auto p-3 sm:p-6 flex flex-col gap-4">
-                     {/* Title & Price Header Card */}
-                     <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-2xs flex flex-col md:flex-row justify-between md:items-center gap-4">
-                       <div className="space-y-1.5">
-                         <div className="flex items-center gap-2 flex-wrap">
-                           <span className="bg-slate-900 text-white text-[10px] font-black px-2.5 py-0.5 rounded-md">
-                             {selectedProfile.forAction === 'Rent' || selectedProfile.category?.toLowerCase().includes('rent') ? 'FOR RENT' : 'FOR SALE'}
-                           </span>
-                           {(() => {
-                             const role = (selectedProfile.postedBy || selectedProfile.iAm || '').trim();
-                             const isAgent = role.toLowerCase().includes('agent') || role.toLowerCase().includes('broker');
-                             const isBuilder = role.toLowerCase().includes('builder') || role.toLowerCase().includes('developer');
-                             const isOwner = role.toLowerCase().includes('owner');
-                             
-                             if (isAgent) {
-                               return (
-                                 <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
-                                   <CheckCircle className="w-3 h-3 text-blue-600" />
-                                   <span>Real Estate Agent</span>
-                                 </span>
-                               );
-                             }
-                             if (isBuilder) {
-                               return (
-                                 <span className="bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
-                                   <CheckCircle className="w-3 h-3 text-purple-600" />
-                                   <span>Builder / Developer</span>
-                                 </span>
-                               );
-                             }
-                             if (isOwner) {
-                               return (
-                                 <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
-                                   <CheckCircle className="w-3 h-3 text-emerald-600" />
-                                   <span>Direct Owner</span>
-                                 </span>
-                               );
-                             }
-                             return (
-                               <span className="bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
-                                 <CheckCircle className="w-3 h-3 text-slate-500" />
-                                 <span>{role || 'Verified Listing'}</span>
-                               </span>
-                             );
-                           })()}
-                           {Boolean(selectedProfile.video || (selectedProfile.videos && selectedProfile.videos.length > 0)) && (
-                             <span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
-                               <span>🎥 Video Tour</span>
-                             </span>
-                           )}
-                         </div>
-                         <h1 className="text-base sm:text-2xl font-black text-slate-900 leading-snug">
-                           {selectedProfile.category || selectedProfile.name || selectedProfile.title}
-                         </h1>
-                         <p className="text-xs text-slate-600 font-semibold flex items-center gap-1.5">
-                           <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                           <span>{selectedProfile.address || selectedProfile.location || selectedProfile.projectName || 'Boisar, Maharashtra'}</span>
-                         </p>
-                       </div>
+                    {/* Gallery & Content Area */}
+                    <div className="max-w-6xl mx-auto p-3 sm:p-6 flex flex-col gap-3 sm:gap-4">
+                      {Boolean(selectedProfile.isSold || selectedProfile.status?.toLowerCase().includes('sold') || selectedProfile.status?.toLowerCase().includes('rented')) && (
+                        <div className={`w-full p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border flex items-center justify-between gap-3 shadow-md ${
+                          selectedProfile.forAction === 'Rent' || selectedProfile.category?.toLowerCase().includes('rent')
+                            ? 'bg-amber-500 text-slate-950 border-amber-400'
+                            : 'bg-rose-600 text-white border-rose-500'
+                        }`}>
+                          <div className="flex items-center gap-2">
+                            <Lock className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                            <div>
+                              <span className="text-xs sm:text-sm font-black uppercase tracking-wider block">
+                                {selectedProfile.forAction === 'Rent' || selectedProfile.category?.toLowerCase().includes('rent')
+                                  ? 'THIS PROPERTY HAS BEEN RENTED OUT'
+                                  : 'THIS PROPERTY HAS BEEN SOLD OUT'}
+                              </span>
+                              <span className="text-[10px] sm:text-xs opacity-90 font-medium block">
+                                This listing is archived for record and is no longer available.
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-[9px] sm:text-[10px] font-black uppercase bg-black/20 px-2.5 py-1 rounded-lg shrink-0">
+                            Closed Deal
+                          </span>
+                        </div>
+                      )}
 
-                       <div className="md:text-right shrink-0 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
-                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Price</span>
-                         <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">{formatPrice(selectedProfile.price)}</h2>
-                         <p className="text-[11px] text-slate-400 font-semibold">
-                           {selectedProfile.pricePerSqft ? formatPrice(selectedProfile.pricePerSqft) : selectedProfile.postedBy ? `Posted by ${selectedProfile.postedBy}` : 'Verified Listing'}
-                         </p>
-                       </div>
-                     </div>
+                      {/* Title & Price Header Card - Compact, Short & Modern */}
+                      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs space-y-2">
+                        {/* Top row: Badges on left + Bold Price on right */}
+                        <div className="flex items-center justify-between gap-2.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="bg-slate-900 text-white text-[10px] font-black px-2.5 py-0.5 rounded-md tracking-wider">
+                              {selectedProfile.forAction === 'Rent' || selectedProfile.category?.toLowerCase().includes('rent') ? 'FOR RENT' : 'FOR SALE'}
+                            </span>
+                            {(() => {
+                              const role = (selectedProfile.postedBy || selectedProfile.iAm || '').trim();
+                              const isAgent = role.toLowerCase().includes('agent') || role.toLowerCase().includes('broker');
+                              const isBuilder = role.toLowerCase().includes('builder') || role.toLowerCase().includes('developer');
+                              const isOwner = role.toLowerCase().includes('owner');
+                              
+                              if (isAgent) {
+                                return (
+                                  <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                                    <CheckCircle className="w-3 h-3 text-blue-600" />
+                                    <span>Agent</span>
+                                  </span>
+                                );
+                              }
+                              if (isBuilder) {
+                                return (
+                                  <span className="bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                                    <CheckCircle className="w-3 h-3 text-purple-600" />
+                                    <span>Builder</span>
+                                  </span>
+                                );
+                              }
+                              if (isOwner) {
+                                return (
+                                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                                    <CheckCircle className="w-3 h-3 text-emerald-600" />
+                                    <span>Direct Owner</span>
+                                  </span>
+                                );
+                              }
+                              return (
+                                <span className="bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3 text-slate-500" />
+                                  <span>{role || 'Verified'}</span>
+                                </span>
+                              );
+                            })()}
+                            {Boolean(selectedProfile.video || (selectedProfile.videos && selectedProfile.videos.length > 0)) && (
+                              <span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+                                <span>🎥 Video</span>
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Price aligned cleanly on the right */}
+                          <div className="text-right shrink-0">
+                            <span className="text-base sm:text-2xl font-black text-slate-900 tracking-tight leading-none block">
+                              {formatPrice(selectedProfile.price)}
+                            </span>
+                            {selectedProfile.pricePerSqft ? (
+                              <span className="text-[10px] text-slate-400 font-semibold block leading-tight mt-0.5">
+                                {formatPrice(selectedProfile.pricePerSqft)}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-teal-700 font-bold block leading-tight mt-0.5">
+                                Verified Listing
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Title & Location */}
+                        <div className="pt-0.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                          <div className="min-w-0">
+                            <h1 className="text-sm sm:text-lg font-black text-slate-900 leading-snug">
+                              {selectedProfile.category || selectedProfile.name || selectedProfile.title}
+                            </h1>
+                            <p className="text-[11px] sm:text-xs text-slate-500 font-semibold flex items-center gap-1.5 mt-0.5">
+                              <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                              <span className="truncate">{selectedProfile.address || selectedProfile.location || selectedProfile.addressLocality || selectedProfile.projectName || 'Boisar, Maharashtra'}</span>
+                              {selectedProfile.projectName && selectedProfile.addressLocality && selectedProfile.projectName !== selectedProfile.addressLocality && (
+                                <span className="text-slate-400 font-normal truncate">• {selectedProfile.projectName}</span>
+                              )}
+                            </p>
+                          </div>
+                          {selectedProfile.mapUrl && (
+                            <a
+                              href={selectedProfile.mapUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[10.5px] sm:text-[11px] font-black text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-2.5 py-1 rounded-lg shrink-0 transition-colors w-fit shadow-2xs cursor-pointer active:scale-95"
+                            >
+                              <MapPin className="w-3 h-3 text-blue-600 shrink-0" />
+                              <span>Google Map ↗</span>
+                            </a>
+                          )}
+                        </div>
+                      </div>
 
                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
                       {/* Left: Gallery Grid */}
@@ -2790,80 +2865,153 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           const activePhoto = photos[activePhotoIndex % photos.length] || photos[0];
                           return (
                             <>
-                              {/* Featured Main Image */}
-                              <div 
-                                onClick={() => setFullImagePreview(activePhoto)}
-                                className="w-full h-[260px] sm:h-[380px] rounded-2xl overflow-hidden bg-slate-950 relative group border border-slate-200 shadow-2xs cursor-pointer flex items-center justify-center"
-                              >
-                                <img 
-                                  src={activePhoto} 
-                                  alt={selectedProfile.category || selectedProfile.name || 'Property Photo'}
-                                  className="w-full h-full object-contain sm:object-cover group-hover:scale-102 transition-transform duration-500" 
-                                />
-                                
-                                {/* Photo Navigation Prev/Next */}
-                                {photos.length > 1 && (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActivePhotoIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
-                                      }}
-                                      className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-slate-900/80 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-xs transition-all shadow-md cursor-pointer z-10"
-                                      title="Previous photo"
+                              {/* Mobile View: Swipeable Carousel */}
+                              <div className="sm:hidden relative w-full h-[280px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-250 shadow-2xs">
+                                <div
+                                  className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth"
+                                  onScroll={(e) => {
+                                    const el = e.currentTarget;
+                                    if (el.clientWidth > 0) {
+                                      const index = Math.round(el.scrollLeft / el.clientWidth);
+                                      if (index !== activePhotoIndex && index >= 0 && index < photos.length) {
+                                        setActivePhotoIndex(index);
+                                      }
+                                    }
+                                  }}
+                                >
+                                  {photos.map((img: string, idx: number) => (
+                                    <div
+                                      key={idx}
+                                      onClick={() => setFullImagePreview(img)}
+                                      className="w-full h-full shrink-0 snap-center snap-always relative flex items-center justify-center bg-slate-950 cursor-pointer"
                                     >
-                                      <ChevronLeft className="w-4 h-4 text-white" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActivePhotoIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
-                                      }}
-                                      className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-slate-900/80 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-xs transition-all shadow-md cursor-pointer z-10"
-                                      title="Next photo"
-                                    >
-                                      <ChevronRight className="w-4 h-4 text-white" />
-                                    </button>
-                                  </>
-                                )}
+                                      {/* Ambient blurred backdrop so image never feels awkwardly cropped */}
+                                      <img
+                                        src={img}
+                                        alt=""
+                                        aria-hidden="true"
+                                        className="absolute inset-0 w-full h-full object-cover blur-sm opacity-35 scale-110 pointer-events-none"
+                                      />
+                                      <img
+                                        src={img}
+                                        alt={`Property Photo ${idx + 1}`}
+                                        className="w-full h-full object-contain relative z-[1]"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
 
-                                <div className="absolute top-3 left-3 bg-slate-900/80 text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-lg backdrop-blur-xs shadow-xs flex items-center gap-1.5 z-10">
-                                  <Camera className="w-3.5 h-3.5 text-white" />
-                                  <span>{activePhotoIndex + 1} / {photos.length} Photos</span>
+                                {/* Badges */}
+                                <div className="absolute top-3 left-3 bg-slate-900/80 text-white text-[10px] font-black px-2.5 py-1 rounded-lg backdrop-blur-xs shadow-xs flex items-center gap-1.5 z-10 pointer-events-none">
+                                  <Camera className="w-3 h-3 text-white" />
+                                  <span>{activePhotoIndex + 1} / {photos.length} Photos{photos.length > 1 ? ' • Swipe ↔' : ''}</span>
                                 </div>
-                                <div className="absolute bottom-3 right-3 bg-slate-900/80 text-white text-[10px] font-black px-3 py-1 rounded-lg backdrop-blur-xs transition-all flex items-center gap-1 opacity-90 group-hover:opacity-100 shadow-xs z-10">
-                                  <Eye className="w-3.5 h-3.5 text-white" />
-                                  <span>Full Photo Lightbox</span>
+
+                                <div 
+                                  onClick={() => setFullImagePreview(photos[activePhotoIndex] || photos[0])}
+                                  className="absolute bottom-3 right-3 bg-slate-900/80 text-white text-[10px] font-black px-2.5 py-1 rounded-lg backdrop-blur-xs transition-all flex items-center gap-1 shadow-xs z-10 cursor-pointer"
+                                >
+                                  <Eye className="w-3 h-3 text-white" />
+                                  <span>Full Photo</span>
                                 </div>
+
+                                {/* Pagination Dots (Mobile) */}
+                                {photos.length > 1 && (
+                                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10 pointer-events-none bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-full">
+                                    {photos.map((_: any, dotIdx: number) => (
+                                      <span
+                                        key={dotIdx}
+                                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                                          dotIdx === activePhotoIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/50'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                )}
                               </div>
 
-                              {/* Thumbnail Grid Row */}
-                              {photos.length > 1 && (
-                                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-2.5">
-                                  {photos.slice(0, 6).map((img: string, i: number) => {
-                                    const isActive = (activePhotoIndex % photos.length) === i;
-                                    const isLastAndMore = i === 5 && photos.length > 6;
-                                    return (
-                                      <div 
-                                        key={i} 
-                                        onClick={() => setActivePhotoIndex(i)}
-                                        className={`h-16 sm:h-20 rounded-xl overflow-hidden bg-slate-900 relative cursor-pointer border transition-all ${
-                                          isActive ? 'ring-2 ring-slate-900 border-transparent shadow-xs scale-[1.02]' : 'border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100'
-                                        }`}
+                              {/* Desktop View: High-Res Single View with Prev/Next buttons & Thumbnail Row */}
+                              <div className="hidden sm:block space-y-2.5">
+                                <div 
+                                  onClick={() => setFullImagePreview(activePhoto)}
+                                  className="w-full h-[380px] rounded-2xl overflow-hidden bg-slate-950 relative group border border-slate-200 shadow-2xs cursor-pointer flex items-center justify-center"
+                                >
+                                  <img
+                                    src={activePhoto}
+                                    alt=""
+                                    aria-hidden="true"
+                                    className="absolute inset-0 w-full h-full object-cover blur-sm opacity-35 scale-110 pointer-events-none"
+                                  />
+                                  <img 
+                                    src={activePhoto} 
+                                    alt={selectedProfile.category || selectedProfile.name || 'Property Photo'}
+                                    className="w-full h-full object-contain relative z-[1] group-hover:scale-102 transition-transform duration-500" 
+                                  />
+                                  
+                                  {/* Photo Navigation Prev/Next */}
+                                  {photos.length > 1 && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setActivePhotoIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
+                                        }}
+                                        className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-slate-900/80 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-xs transition-all shadow-md cursor-pointer z-10"
+                                        title="Previous photo"
                                       >
-                                        <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
-                                        {isLastAndMore && (
-                                          <div className="absolute inset-0 bg-slate-900/70 flex items-center justify-center text-white font-black text-xs backdrop-blur-xs">
-                                            +{photos.length - 6} More
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
+                                        <ChevronLeft className="w-4 h-4 text-white" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setActivePhotoIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
+                                        }}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-slate-900/80 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-xs transition-all shadow-md cursor-pointer z-10"
+                                        title="Next photo"
+                                      >
+                                        <ChevronRight className="w-4 h-4 text-white" />
+                                      </button>
+                                    </>
+                                  )}
+
+                                  <div className="absolute top-3 left-3 bg-slate-900/80 text-white text-xs font-black px-3 py-1 rounded-lg backdrop-blur-xs shadow-xs flex items-center gap-1.5 z-10">
+                                    <Camera className="w-3.5 h-3.5 text-white" />
+                                    <span>{activePhotoIndex + 1} / {photos.length} Photos</span>
+                                  </div>
+                                  <div className="absolute bottom-3 right-3 bg-slate-900/80 text-white text-[10px] font-black px-3 py-1 rounded-lg backdrop-blur-xs transition-all flex items-center gap-1 opacity-90 group-hover:opacity-100 shadow-xs z-10">
+                                    <Eye className="w-3.5 h-3.5 text-white" />
+                                    <span>Full Photo Lightbox</span>
+                                  </div>
                                 </div>
-                              )}
+
+                                {/* Desktop Thumbnail Grid Row */}
+                                {photos.length > 1 && (
+                                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-2.5">
+                                    {photos.slice(0, 6).map((img: string, i: number) => {
+                                      const isActive = (activePhotoIndex % photos.length) === i;
+                                      const isLastAndMore = i === 5 && photos.length > 6;
+                                      return (
+                                        <div 
+                                          key={i} 
+                                          onClick={() => setActivePhotoIndex(i)}
+                                          className={`h-16 sm:h-20 rounded-xl overflow-hidden bg-slate-900 relative cursor-pointer border transition-all ${
+                                            isActive ? 'ring-2 ring-slate-900 border-transparent shadow-xs scale-[1.02]' : 'border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100'
+                                          }`}
+                                        >
+                                          <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
+                                          {isLastAndMore && (
+                                            <div className="absolute inset-0 bg-slate-900/70 flex items-center justify-center text-white font-black text-xs backdrop-blur-xs">
+                                              +{photos.length - 6} More
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
                             </>
                           );
                         })()}
@@ -2967,8 +3115,56 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           </div>
                         )}
 
-                        {/* Contact Card */}
+                        {/* Location & Google Map Directions Card */}
+                        {selectedProfile.mapUrl && (
+                          <div className="bg-gradient-to-br from-blue-50/80 via-white to-blue-50/40 border border-blue-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs space-y-2 text-left">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                  <MapPin className="w-4 h-4" />
+                                </div>
+                                <div className="min-w-0">
+                                  <h4 className="text-xs font-black text-slate-900 leading-tight truncate">Google Maps Location</h4>
+                                  <p className="text-[10px] text-slate-500 font-medium truncate">View exact location & directions</p>
+                                </div>
+                              </div>
+                              <a
+                                href={selectedProfile.mapUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-3 py-1.5 rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95 shrink-0"
+                              >
+                                <span>Open Maps</span>
+                                <span>↗</span>
+                              </a>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Contact Card - LOCKED IF SOLD OUT */}
                         {(() => {
+                          const isPropertySold = Boolean(
+                            selectedProfile.isSold || 
+                            selectedProfile.status?.toLowerCase().includes('sold') || 
+                            selectedProfile.status?.toLowerCase().includes('rented')
+                          );
+
+                          if (isPropertySold) {
+                            return (
+                              <div className="bg-slate-100/90 border border-slate-250 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-2 text-center">
+                                <div className="w-9 h-9 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center mx-auto shadow-2xs">
+                                  <Lock className="w-4 h-4" />
+                                </div>
+                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                                  Contact Details Closed
+                                </h4>
+                                <p className="text-[11px] text-slate-500 font-medium leading-relaxed max-w-xs mx-auto">
+                                  This property is {(selectedProfile.forAction || '').toLowerCase() === 'rent' ? 'Rented Out' : 'Sold Out'}. Contact info is locked and no longer accessible.
+                                </p>
+                              </div>
+                            );
+                          }
+
                           const rawPhone = selectedProfile.contactPhone || selectedProfile.phone || '';
                           const rawWhatsapp = selectedProfile.whatsappPhone || selectedProfile.whatsapp || rawPhone;
                           const ownerName = selectedProfile.contactName || selectedProfile.name || 'Owner';
@@ -3043,61 +3239,85 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                    </div>
 
                    {/* Sticky Bottom Action Bar */}
-                   <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 sm:px-8 shadow-lg z-50 flex items-center justify-between gap-3">
-                     <div className="flex flex-col text-left min-w-0">
-                       <span className="text-[10px] text-slate-400 font-bold uppercase">
-                         Listed by {selectedProfile.postedBy || selectedProfile.iAm || 'Owner'}
-                       </span>
-                       <span className="text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">
-                         {selectedProfile.contactName || selectedProfile.name || 'Owner'}
-                       </span>
-                     </div>
+                   <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3 py-2 sm:px-8 sm:py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-50">
+                     <div className="max-w-5xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
+                       {/* Left: Listed By info (protected from shrinking & wrapping) */}
+                       <div className="flex items-center gap-1.5 min-w-0 shrink-0 max-w-[105px] sm:max-w-none">
+                         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-black text-xs flex items-center justify-center shrink-0">
+                           {(selectedProfile.contactName || selectedProfile.name || 'O').charAt(0).toUpperCase()}
+                         </div>
+                         <div className="flex flex-col text-left min-w-0">
+                           <span className="text-[8.5px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate whitespace-nowrap">
+                             Listed by {selectedProfile.postedBy || selectedProfile.iAm || 'Owner'}
+                           </span>
+                           <span className="text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">
+                             {selectedProfile.contactName || selectedProfile.name || 'Owner'}
+                           </span>
+                         </div>
+                       </div>
 
-                     <div className="flex items-center gap-2 shrink-0">
-                       <button 
-                         onClick={() => handlePropertyContactCall(selectedProfile, false)}
-                         className="bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 font-black text-xs px-3.5 py-2 rounded-xl transition-all shadow-2xs whitespace-nowrap cursor-pointer flex items-center gap-1.5 active:scale-95"
-                       >
-                         <Phone className="w-3.5 h-3.5 text-slate-700" />
-                         <span className="hidden sm:inline">
-                           {(selectedProfile.postedBy || selectedProfile.iAm || '').toLowerCase().includes('agent') ? 'Call Agent' : (selectedProfile.postedBy || selectedProfile.iAm || '').toLowerCase().includes('builder') ? 'Call Builder' : 'Call Owner'}
-                         </span>
-                         <span className="sm:hidden">Call</span>
-                       </button>
+                       {/* Right: Actions */}
+                       {Boolean(selectedProfile.isSold || selectedProfile.status?.toLowerCase().includes('sold') || selectedProfile.status?.toLowerCase().includes('rented')) ? (
+                         <div className="flex items-center gap-2 shrink-0">
+                           <span className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
+                             🔒 {(selectedProfile.forAction || '').toLowerCase() === 'rent' ? 'Rented Out (Closed)' : 'Sold Out (Closed)'}
+                           </span>
+                         </div>
+                       ) : (
+                         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                           <button 
+                             onClick={() => handlePropertyContactCall(selectedProfile, false)}
+                             className="bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 font-black text-xs p-2 sm:px-3.5 sm:py-2 rounded-xl transition-all shadow-2xs whitespace-nowrap cursor-pointer flex items-center gap-1.5 active:scale-95"
+                             title="Call"
+                           >
+                             <Phone className="w-3.5 h-3.5 text-slate-700 shrink-0" />
+                             <span className="hidden sm:inline">
+                               {(selectedProfile.postedBy || selectedProfile.iAm || '').toLowerCase().includes('agent') ? 'Call Agent' : (selectedProfile.postedBy || selectedProfile.iAm || '').toLowerCase().includes('builder') ? 'Call Builder' : 'Call Owner'}
+                             </span>
+                           </button>
 
-                       <button 
-                         onClick={() => handlePropertyContactCall(selectedProfile, true)}
-                         className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 active:scale-95"
-                       >
-                         <MessageSquare className="w-3.5 h-3.5" />
-                         <span>WhatsApp</span>
-                       </button>
+                           <button 
+                             onClick={() => handlePropertyContactCall(selectedProfile, true)}
+                             className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs p-2 sm:px-3.5 sm:py-2 rounded-xl shadow-xs transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 active:scale-95"
+                             title="WhatsApp"
+                           >
+                             <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                             <span className="hidden sm:inline">WhatsApp</span>
+                           </button>
 
-                       <button 
-                         onClick={() => {
-                           setEnquirySenderName(userName || '');
-                           setEnquirySenderPhone('');
-                           setEnquiryMessage(`Hi ${selectedProfile.contactName || 'Owner'}, I am interested in your property (${selectedProfile.category}). Please share details.`);
-                           setEnquiryModalProperty(selectedProfile);
-                         }}
-                         className="bg-slate-900 hover:bg-slate-800 text-white font-black text-xs px-4 py-2 rounded-xl shadow-xs transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer active:scale-95"
-                       >
-                         <Send className="w-3.5 h-3.5 text-white" />
-                         <span>Send Enquiry</span>
-                       </button>
+                           <button 
+                             onClick={() => {
+                               setEnquirySenderName(userName || '');
+                               setEnquirySenderPhone('');
+                               setEnquiryMessage(`Hi ${selectedProfile.contactName || 'Owner'}, I am interested in your property (${selectedProfile.category}). Please share details.`);
+                               setEnquiryModalProperty(selectedProfile);
+                             }}
+                             className="bg-slate-900 hover:bg-slate-800 text-white font-black text-xs px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-xs transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer active:scale-95"
+                           >
+                             <Send className="w-3.5 h-3.5 text-white shrink-0" />
+                             <span>Send Enquiry</span>
+                           </button>
+                         </div>
+                       )}
                      </div>
                    </div>
                 </div>
               ) : activeSpecialCategory === 'properties' && propertyMode === null ? (
                 <div className="w-full bg-white min-h-full flex flex-col">
-                  {/* Header */}
-                  <div className="border-b border-slate-200 px-3 sm:px-8 py-3 sm:py-4 text-left">
-                    <div className="max-w-5xl mx-auto space-y-3">
+                  {/* Header with soft light tinted background */}
+                  <div className="bg-gradient-to-b from-teal-50/80 via-emerald-50/30 to-slate-50/80 border-b border-teal-100/80 px-3 sm:px-8 py-3.5 sm:py-5 text-left shadow-2xs">
+                    <div className="max-w-5xl mx-auto space-y-3.5">
                       {/* Title */}
-                      <div className="flex items-center gap-2.5">
-                        <h2 className="text-base sm:text-xl font-black text-slate-900 tracking-tight">
-                          Boisar Real Estate
-                        </h2>
+                      <div className="flex items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">🏡</span>
+                          <h2 className="text-base sm:text-xl font-black text-slate-900 tracking-tight">
+                            Boisar Real Estate
+                          </h2>
+                        </div>
+                        <span className="text-[10px] font-extrabold text-teal-800 bg-teal-100/90 border border-teal-200/80 px-2.5 py-0.5 rounded-full shadow-2xs">
+                          Verified Properties
+                        </span>
                       </div>
 
                       {/* 3 Equal Buttons — Full Width Row */}
@@ -3105,17 +3325,17 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         <button
                           type="button"
                           onClick={() => setPropertyMode('buy')}
-                          className="py-2.5 sm:py-3 px-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black transition-all shadow-sm flex items-center justify-center gap-1 sm:gap-2 cursor-pointer active:scale-[0.97]"
+                          className="py-2.5 sm:py-3 px-1 sm:px-2 rounded-xl bg-gradient-to-r from-teal-900 via-slate-900 to-teal-950 hover:from-teal-800 hover:to-slate-800 text-white text-xs sm:text-sm font-black transition-all shadow-md hover:shadow-lg hover:shadow-teal-950/25 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.97] border-2 border-teal-400/60 hover:border-teal-300 ring-2 ring-teal-500/20"
                         >
-                          <Building className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
+                          <Building className="w-4 h-4 text-teal-300 shrink-0" />
                           <span>Buy</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => setPropertyMode('rent')}
-                          className="py-2.5 sm:py-3 px-1 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs font-black transition-all border-2 border-slate-200 hover:border-slate-400 flex items-center justify-center gap-1 sm:gap-2 cursor-pointer active:scale-[0.97]"
+                          className="py-2.5 sm:py-3 px-1 sm:px-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-black transition-all border-2 border-slate-200 hover:border-teal-400 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.97] shadow-xs hover:shadow-sm"
                         >
-                          <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-600 shrink-0" />
+                          <Home className="w-4 h-4 text-slate-700 shrink-0" />
                           <span>Rent</span>
                         </button>
                         <button
@@ -3129,15 +3349,51 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                             setActiveSpecialCategory(null);
                             setPostPropertyModalOpen(true);
                           }}
-                          className="py-2.5 sm:py-3 px-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white text-[11px] sm:text-xs font-black transition-all shadow-sm flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap"
+                          className="py-2.5 sm:py-3 px-1 sm:px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white text-[11px] sm:text-xs font-black transition-all shadow-sm hover:shadow-md hover:shadow-emerald-700/20 flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap"
                         >
-                          <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white shrink-0" />
+                          <PlusCircle className="w-4 h-4 text-white shrink-0" />
                           <span className="truncate">Post Property</span>
                         </button>
                       </div>
 
-                      {/* Quick Chips */}
-                      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                      {/* Quick Area Chips Row - Sleek Rounded Pills */}
+                      <div className="pt-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 select-none">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-0.5 mr-0.5">
+                          <MapPin className="w-3 h-3 text-teal-600" />
+                          Area:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setPropertyAreaFilter('All Areas')}
+                          className={`px-2.5 py-0.5 sm:py-1 rounded-full text-[10.5px] font-black whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
+                            propertyAreaFilter === 'All Areas'
+                              ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                              : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/80'
+                          }`}
+                        >
+                          All
+                        </button>
+                        {BOISAR_PROPERTY_AREAS.map((area) => (
+                          <button
+                            key={area}
+                            type="button"
+                            onClick={() => setPropertyAreaFilter(area === propertyAreaFilter ? 'All Areas' : area)}
+                            className={`px-2.5 py-0.5 sm:py-1 rounded-full text-[10.5px] font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
+                              propertyAreaFilter === area
+                                ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
+                                : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200/80 hover:border-slate-300'
+                            }`}
+                          >
+                            {area}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Quick Type Chips Row - Sleek Rounded Pills */}
+                      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 select-none">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0 mr-0.5">
+                          Quick:
+                        </span>
                         {[
                           { label: '1 BHK', mode: 'buy', bhk: '1 BHK', type: 'Flat/Apartment' },
                           { label: '2 BHK', mode: 'buy', bhk: '2 BHK', type: 'Flat/Apartment' },
@@ -3153,7 +3409,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                               setPropertyTypeFilter(chip.type);
                               setPropertyMode(chip.mode as any);
                             }}
-                            className="bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-3 py-1 rounded-full text-[11px] font-bold transition-all hover:border-slate-300 cursor-pointer shrink-0"
+                            className="bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 sm:py-1 rounded-full text-[10.5px] font-bold transition-all hover:border-slate-300 cursor-pointer shrink-0 whitespace-nowrap"
                           >
                             {chip.label}
                           </button>
@@ -3164,79 +3420,218 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
                   {/* Recent Listings */}
                   <div className="max-w-5xl mx-auto w-full p-4 sm:p-6 space-y-3 text-left flex-1 bg-slate-50/50">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                        Recent Listings ({((profilesState.properties || []).filter((p: any) => p.listingType === 'property')).length})
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => setPropertyMode('buy')}
-                        className="text-[11px] font-black text-slate-900 hover:underline cursor-pointer"
-                      >
-                        View All →
-                      </button>
-                    </div>
+                    {(() => {
+                      const allProps = (profilesState.properties || []).filter((p: any) => p.listingType === 'property');
+                      const filteredListings = allProps.filter((p: any) => {
+                        if (propertyAreaFilter !== 'All Areas') {
+                          const text = `${p.location || ''} ${p.addressLocality || ''} ${p.projectName || ''} ${p.title || ''} ${p.name || ''} ${p.category || ''}`.toLowerCase();
+                          if (!text.includes(propertyAreaFilter.toLowerCase())) return false;
+                        }
+                        if (propertyTypeFilter !== 'All Types') {
+                          const cat = (p.category || '').toLowerCase();
+                          if (propertyTypeFilter === 'Flat/Apartment' && !cat.includes('flat') && !cat.includes('apartment') && !cat.includes('bhk')) return false;
+                          if (propertyTypeFilter === 'Commercial' && !cat.includes('shop') && !cat.includes('office') && !cat.includes('commercial')) return false;
+                          if (propertyTypeFilter === 'Plot/Land' && !cat.includes('plot') && !cat.includes('land')) return false;
+                          if (propertyTypeFilter === 'Villa/House' && !cat.includes('villa') && !cat.includes('house') && !cat.includes('bungalow')) return false;
+                        }
+                        if (bhkFilter !== 'All BHK') {
+                          const cat = `${p.category || ''} ${p.name || ''} ${p.title || ''}`.toLowerCase();
+                          if (!cat.includes(bhkFilter.toLowerCase())) return false;
+                        }
+                        return true;
+                      }).sort((a: any, b: any) => {
+                        const isSoldA = Boolean(a.isSold || a.status?.toLowerCase().includes('sold') || a.status?.toLowerCase().includes('rented'));
+                        const isSoldB = Boolean(b.isSold || b.status?.toLowerCase().includes('sold') || b.status?.toLowerCase().includes('rented'));
+                        if (isSoldA !== isSoldB) return isSoldA ? 1 : -1;
 
-                    {((profilesState.properties || []).filter((p: any) => p.listingType === 'property')).length > 0 ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3.5">
-                        {((profilesState.properties || []).filter((p: any) => p.listingType === 'property').slice(0, 6)).map((property: any) => (
-                          <div
-                            key={property.id}
-                            onClick={() => setSelectedProfile(property)}
-                            className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 hover:border-slate-400 overflow-hidden shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col group"
-                          >
-                            <div className="aspect-[4/3] sm:aspect-[16/10] sm:h-40 relative bg-slate-950 overflow-hidden flex items-center justify-center">
-                              <img
-                                src={property.avatar || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'}
-                                alt={property.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                              />
-                              <div className="absolute top-2 left-2 flex items-center gap-1 z-10">
-                                <span className="bg-slate-900/90 text-white text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded shadow-xs">
-                                  {property.forAction === 'Rent' || property.category?.toLowerCase().includes('rent') ? 'RENT' : 'SALE'}
-                                </span>
-                              </div>
-                              {Boolean(property.video || (property.videos && property.videos.length > 0)) && (
-                                <div className="absolute top-2 right-2 bg-rose-600 text-white text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-xs z-10">
-                                  <span>🎥 Video</span>
-                                </div>
-                              )}
-                              <div className="absolute bottom-2 left-2 bg-white/95 text-slate-950 font-black text-[10.5px] sm:text-xs px-2 py-0.5 rounded shadow-xs z-10">
-                                {formatPrice(property.price || property.budget)}
-                              </div>
-                            </div>
+                        const isFeatA = Boolean(a.isFeatured || a.featured);
+                        const isFeatB = Boolean(b.isFeatured || b.featured);
+                        if (isFeatA !== isFeatB) return isFeatA ? -1 : 1;
 
-                            <div className="p-2 sm:p-3 flex-1 flex flex-col justify-between space-y-1">
-                              <div>
-                                <h4 className="text-[11px] sm:text-xs font-black text-slate-900 line-clamp-1">{property.name || property.title}</h4>
-                                <p className="text-[9.5px] sm:text-[10.5px] text-slate-500 font-medium mt-0.5 line-clamp-1">📍 {property.location || 'Boisar'}</p>
-                              </div>
-                              <span className="text-[9.5px] sm:text-[10px] font-bold text-teal-700">{property.category || 'Flat'}</span>
-                            </div>
+                        if (propertySortBy === 'price_low') return (Number(a.price) || 0) - (Number(b.price) || 0);
+                        if (propertySortBy === 'price_high') return (Number(b.price) || 0) - (Number(a.price) || 0);
+                        if (propertySortBy === 'newest') return (b.createdAt || '').localeCompare(a.createdAt || '');
+                        return 0;
+                      });
+
+                      return (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                              Recent Listings {propertyAreaFilter !== 'All Areas' ? `in ${propertyAreaFilter}` : ''} ({filteredListings.length})
+                            </h3>
+                            <button
+                              type="button"
+                              onClick={() => setPropertyMode('buy')}
+                              className="text-[11px] font-black text-slate-900 hover:underline cursor-pointer"
+                            >
+                              View All →
+                            </button>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center space-y-2">
-                        <p className="text-xs font-black text-slate-800">No properties listed yet</p>
-                        <p className="text-[11px] text-slate-500">Are you selling or renting a flat, shop, or plot in Boisar?</p>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!isLoggedIn) {
-                              showToast("Please login first to post your property.", "info", 4000);
-                              setLoginModalOpen(true);
-                              return;
-                            }
-                            setPostPropertyModalOpen(true);
-                          }}
-                          className="mt-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black px-4 py-2 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Post Your Property Free</span>
-                        </button>
-                      </div>
-                    )}
+
+                          {filteredListings.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3.5">
+                              {filteredListings.slice(0, 8).map((property: any) => {
+                                const isSoldOut = Boolean(property.isSold || property.status?.toLowerCase().includes('sold') || property.status?.toLowerCase().includes('rented'));
+                                const isRentProp = property.forAction === 'Rent' || property.category?.toLowerCase().includes('rent') || property.transactionType === 'Lease';
+                                const isFeaturedProp = Boolean(property.isFeatured || property.featured) && !isSoldOut;
+
+                                return (
+                                <div
+                                  key={property.id}
+                                  onClick={() => {
+                                    if (isSoldOut) {
+                                      showToast(isRentProp ? '🔒 This property is rented out and closed.' : '🔒 This property is sold out and closed.', 'info');
+                                      return;
+                                    }
+                                    setSelectedProfile(property);
+                                  }}
+                                  className={`rounded-xl sm:rounded-2xl border transition-all flex flex-row group text-left relative overflow-hidden h-[125px] sm:h-[150px] ${
+                                    isSoldOut
+                                      ? 'bg-slate-100/90 border-slate-300 opacity-70 grayscale-[35%] cursor-not-allowed select-none shadow-2xs'
+                                      : isFeaturedProp
+                                        ? 'cursor-pointer bg-white border-amber-300 shadow-sm hover:shadow-md ring-1 ring-amber-400/30'
+                                        : 'cursor-pointer bg-white border-slate-200 shadow-2xs hover:shadow-md'
+                                  }`}
+                                >
+                                  {/* Image Column - Uniform fixed thumbnail */}
+                                  <div className="w-[120px] xs:w-[130px] sm:w-[160px] shrink-0 h-full relative bg-slate-900 overflow-hidden flex items-center justify-center">
+                                    <img
+                                      src={property.avatar || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'}
+                                      alt={property.name}
+                                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isSoldOut ? 'grayscale-[50%]' : ''}`}
+                                    />
+
+                                    {/* Big Bold SOLD OUT / RENTED OUT Overlay */}
+                                    {isSoldOut && (
+                                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-20 p-2 text-center">
+                                        <div className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border-2 shadow-2xl transform -rotate-6 text-center tracking-wider ${
+                                          isRentProp 
+                                            ? 'bg-amber-500 border-amber-200 text-slate-950 font-black' 
+                                            : 'bg-rose-600 border-rose-300 text-white font-black'
+                                        }`}>
+                                          <span className="text-[10.5px] sm:text-xs font-black uppercase block leading-tight drop-shadow-sm">
+                                            {isRentProp ? 'RENTED OUT' : 'SOLD OUT'}
+                                          </span>
+                                          <span className="text-[7px] sm:text-[7.5px] font-extrabold uppercase opacity-90 block mt-0.5">
+                                            Not Available
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Featured Badge */}
+                                    {isFeaturedProp && (
+                                      <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full z-10 shadow-xs flex items-center gap-0.5 border border-amber-300/60">
+                                        <span>⭐ FEATURED</span>
+                                      </div>
+                                    )}
+
+                                    <div className="absolute top-1.5 left-1.5 bg-black/65 backdrop-blur-xs text-white text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-full z-10">
+                                      {property.gallery?.length || 1}+
+                                    </div>
+                                    {Boolean(property.video || (property.videos && property.videos.length > 0)) && (
+                                      <div className="absolute bottom-1.5 right-1.5 bg-rose-600/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs z-10">
+                                        <span>🎥 Video</span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Content Column - Uniform flex column */}
+                                  <div className="flex-1 p-2 sm:p-3 flex flex-col justify-between min-w-0 h-full">
+                                    <div>
+                                      <div className="flex justify-between items-start gap-1 mb-0.5">
+                                        <div className="space-y-0.5 min-w-0">
+                                          <span className="bg-teal-50 border border-teal-200 text-teal-700 text-[8.5px] sm:text-[10px] font-black px-1.5 py-0.2 rounded uppercase truncate max-w-[130px] sm:max-w-none inline-block">
+                                            {property.location || 'Boisar West'}
+                                          </span>
+                                          <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 leading-tight group-hover:text-teal-700 transition-colors line-clamp-1 mt-0.5">
+                                            {property.category || property.title || property.name}
+                                          </h4>
+                                          <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium line-clamp-1">
+                                            {property.projectName || 'Independent Property in Boisar'}
+                                          </p>
+                                        </div>
+                                        <span className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded shrink-0 ${
+                                          isSoldOut 
+                                            ? 'bg-slate-300 text-slate-700' 
+                                            : 'bg-slate-900 text-white'
+                                        }`}>
+                                          {isSoldOut ? (isRentProp ? 'RENTED' : 'SOLD') : (isRentProp ? 'RENT' : 'SALE')}
+                                        </span>
+                                      </div>
+
+                                      <div className="flex items-center gap-1 sm:gap-1.5 my-1 text-[8.5px] sm:text-[10px] text-slate-600 font-bold flex-wrap">
+                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{property.carpetArea || '650 sqft'}</span>
+                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{property.status || 'Ready'}</span>
+                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{property.floor ? `${property.floor}/${property.totalFloors}` : '2/4'}</span>
+                                      </div>
+                                    </div>
+
+                                    <div className="pt-1 border-t border-slate-100 flex items-center justify-between gap-1.5">
+                                      <div>
+                                        <span className="text-xs sm:text-sm font-black text-slate-900 block leading-tight">{formatPrice(property.price || property.budget)}</span>
+                                        <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold block truncate">{property.pricePerSqft || 'Boisar'}</span>
+                                      </div>
+                                      {isSoldOut ? (
+                                        <span className={`text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 border shrink-0 ${
+                                          isRentProp 
+                                            ? 'bg-amber-50 text-amber-800 border-amber-200' 
+                                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                                        }`}>
+                                          <Lock className="w-2.5 h-2.5 shrink-0" />
+                                          <span>{isRentProp ? 'Rented' : 'Sold Out'}</span>
+                                        </span>
+                                      ) : (
+                                        <span className="text-[10px] sm:text-xs font-bold text-teal-700 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                                          Details →
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center space-y-2">
+                              <p className="text-xs font-black text-slate-800">
+                                {propertyAreaFilter !== 'All Areas' ? `No properties found in ${propertyAreaFilter}` : 'No properties listed yet'}
+                              </p>
+                              <p className="text-[11px] text-slate-500">
+                                {propertyAreaFilter !== 'All Areas' ? `Be the first to list a property in ${propertyAreaFilter}!` : 'Are you selling or renting a flat, shop, or plot in Boisar?'}
+                              </p>
+                              <div className="flex items-center justify-center gap-2 pt-1">
+                                {propertyAreaFilter !== 'All Areas' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setPropertyAreaFilter('All Areas')}
+                                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black px-3 py-2 rounded-xl transition-all cursor-pointer"
+                                  >
+                                    Show All Areas
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (!isLoggedIn) {
+                                      showToast("Please login first to post your property.", "info", 4000);
+                                      setLoginModalOpen(true);
+                                      return;
+                                    }
+                                    setPostPropertyModalOpen(true);
+                                  }}
+                                  className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-black px-4 py-2 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                  <span>Post Your Property Free</span>
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
 
                     {/* 2 Sponsored Property Ad Slots */}
                     <div className="pt-2 space-y-2">
@@ -3375,26 +3770,26 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 </div>
               ) : activeSpecialCategory === 'properties' ? (
                 <div className="w-full bg-slate-50 min-h-full flex flex-col">
-                  {/* Top Bar with Buy/Rent Switcher */}
-                  <div className="sticky top-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-3 z-20 shadow-2xs">
-                    <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+                  {/* Top Bar with Buy/Rent Switcher & Compact Filters - Natural Scroll (Scrolls away, only seen at top) */}
+                  <div className="bg-white border-b border-slate-200 px-3 sm:px-6 py-2 sm:py-2.5 shadow-2xs">
+                    <div className="max-w-5xl mx-auto flex items-center justify-between gap-2">
                       {/* Left: Back button & Mode Switcher */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <button
                           type="button"
                           onClick={() => setPropertyMode(null)}
-                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold flex items-center gap-1 text-xs transition-colors cursor-pointer"
+                          className="p-1 sm:p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold flex items-center gap-1 text-xs transition-colors cursor-pointer"
                           title="Back to Real Estate Home"
                         >
-                          <ChevronLeft className="w-4 h-4 text-slate-800" />
+                          <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-800" />
                           <span className="hidden sm:inline text-xs font-bold text-slate-800">Home</span>
                         </button>
 
-                        <div className="flex items-center bg-slate-100 p-1 rounded-xl">
+                        <div className="flex items-center bg-slate-100 p-0.5 sm:p-1 rounded-lg sm:rounded-xl">
                           <button
                             type="button"
                             onClick={() => setPropertyMode('buy')}
-                            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                            className={`px-2.5 sm:px-3.5 py-1 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-black transition-all cursor-pointer ${
                               propertyMode === 'buy'
                                 ? 'bg-slate-900 text-white shadow-xs'
                                 : 'text-slate-600 hover:text-slate-900'
@@ -3405,7 +3800,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           <button
                             type="button"
                             onClick={() => setPropertyMode('rent')}
-                            className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                            className={`px-2.5 sm:px-3.5 py-1 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-black transition-all cursor-pointer ${
                               propertyMode === 'rent'
                                 ? 'bg-slate-900 text-white shadow-xs'
                                 : 'text-slate-600 hover:text-slate-900'
@@ -3427,7 +3822,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           }
                           setPostPropertyModalOpen(true);
                         }}
-                        className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-black px-3.5 py-2 rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                        className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[11px] sm:text-xs font-black px-2.5 sm:px-3.5 py-1.5 rounded-lg sm:rounded-xl transition-all shadow-xs flex items-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap"
                       >
                         <PlusCircle className="w-3.5 h-3.5 text-white" />
                         <span className="hidden sm:inline">Post Property</span>
@@ -3435,56 +3830,123 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                       </button>
                     </div>
 
-                    {/* Filter Dropdowns Bar */}
-                    <div className="max-w-5xl mx-auto pt-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar">
+                    {/* Filter Dropdowns Bar - Compact 2-col on mobile, 4-col on desktop */}
+                    <div className="max-w-5xl mx-auto pt-1.5 grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
                       {/* Type Filter */}
-                      <div className="relative shrink-0">
+                      <div className="relative min-w-0">
                         <select
                           value={propertyTypeFilter}
                           onChange={(e) => setPropertyTypeFilter(e.target.value)}
-                          className="bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-250 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer outline-none shadow-2xs"
+                          className={`w-full appearance-none pl-2.5 pr-6 py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer outline-none shadow-2xs border text-left truncate ${
+                            propertyTypeFilter !== 'All Types'
+                              ? 'bg-teal-50 border-teal-500 text-teal-900 font-extrabold ring-1 ring-teal-500/20'
+                              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-250 hover:border-slate-350'
+                          }`}
                         >
-                          <option value="All Types">All Types</option>
+                          <option value="All Types">🏠 All Types</option>
                           <option value="Flat/Apartment">Flat / Apartment</option>
-                          <option value="Commercial">Commercial / Shop</option>
+                          <option value="Commercial">Commercial</option>
                           <option value="Plot/Land">Plot / Land</option>
                           <option value="Villa/House">Villa / House</option>
                         </select>
+                        <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                       </div>
 
                       {/* BHK Filter */}
-                      <div className="relative shrink-0">
+                      <div className="relative min-w-0">
                         <select
                           value={bhkFilter}
                           onChange={(e) => setBhkFilter(e.target.value)}
-                          className="bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-250 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer outline-none shadow-2xs"
+                          className={`w-full appearance-none pl-2.5 pr-6 py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer outline-none shadow-2xs border text-left truncate ${
+                            bhkFilter !== 'All BHK'
+                              ? 'bg-teal-50 border-teal-500 text-teal-900 font-extrabold ring-1 ring-teal-500/20'
+                              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-250 hover:border-slate-350'
+                          }`}
                         >
-                          <option value="All BHK">All BHK</option>
+                          <option value="All BHK">🛏️ All BHK</option>
                           <option value="1 BHK">1 BHK</option>
                           <option value="2 BHK">2 BHK</option>
                           <option value="3 BHK">3 BHK</option>
                           <option value="4+ BHK">4+ BHK</option>
                         </select>
+                        <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      </div>
+
+                      {/* Area Filter Dropdown */}
+                      <div className="relative min-w-0">
+                        <select
+                          value={propertyAreaFilter}
+                          onChange={(e) => setPropertyAreaFilter(e.target.value)}
+                          className={`w-full appearance-none pl-2.5 pr-6 py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer outline-none shadow-2xs border text-left truncate ${
+                            propertyAreaFilter !== 'All Areas'
+                              ? 'bg-teal-50 border-teal-500 text-teal-900 font-extrabold ring-1 ring-teal-500/20'
+                              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-250 hover:border-slate-350'
+                          }`}
+                        >
+                          <option value="All Areas">📍 All Areas</option>
+                          {BOISAR_PROPERTY_AREAS.map((area) => (
+                            <option key={area} value={area}>{area}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                       </div>
 
                       {/* Sort Dropdown */}
-                      <div className="relative shrink-0 ml-auto">
+                      <div className="relative min-w-0">
                         <select
                           value={propertySortBy}
                           onChange={(e) => setPropertySortBy(e.target.value as any)}
-                          className="bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-250 px-2.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer outline-none shadow-2xs"
+                          className={`w-full appearance-none pl-2.5 pr-6 py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer outline-none shadow-2xs border text-left truncate ${
+                            propertySortBy !== 'relevance'
+                              ? 'bg-teal-50 border-teal-500 text-teal-900 font-extrabold ring-1 ring-teal-500/20'
+                              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-250 hover:border-slate-350'
+                          }`}
                         >
-                          <option value="relevance">Sort: Relevance</option>
-                          <option value="price_low">Price: Low to High</option>
-                          <option value="price_high">Price: High to Low</option>
-                          <option value="newest">Newest First</option>
+                          <option value="relevance">⚡ Relevance</option>
+                          <option value="price_low">💰 Price: Low</option>
+                          <option value="price_high">💎 Price: High</option>
+                          <option value="newest">🕒 Newest</option>
                         </select>
+                        <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                       </div>
+                    </div>
+
+                    {/* Quick Area Chips Row - Sleek Rounded Pills */}
+                    <div className="max-w-5xl mx-auto pt-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 select-none">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-0.5 mr-0.5">
+                        <MapPin className="w-3 h-3 text-teal-600" />
+                        Area:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setPropertyAreaFilter('All Areas')}
+                        className={`px-2.5 py-0.5 sm:py-1 rounded-full text-[10.5px] font-black whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
+                          propertyAreaFilter === 'All Areas'
+                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/80'
+                        }`}
+                      >
+                        All
+                      </button>
+                      {BOISAR_PROPERTY_AREAS.map((area) => (
+                        <button
+                          key={area}
+                          type="button"
+                          onClick={() => setPropertyAreaFilter(area === propertyAreaFilter ? 'All Areas' : area)}
+                          className={`px-2.5 py-0.5 sm:py-1 rounded-full text-[10.5px] font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
+                            propertyAreaFilter === area
+                              ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
+                              : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200/80 hover:border-slate-300'
+                          }`}
+                        >
+                          {area}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Listings Grid */}
-                  <div className="max-w-5xl mx-auto w-full p-4 sm:p-6 space-y-3.5 text-left flex-1">
+                  {/* Listings Grid - Responsive 2-column grid on desktop */}
+                  <div className="max-w-5xl mx-auto w-full p-2.5 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-4 text-left flex-1">
                     {((profilesState.properties || []).filter((p: any) => p.listingType === 'property'))
                       .filter((p: any) => {
                         if (propertyMode === 'buy') {
@@ -3500,28 +3962,31 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           const pBed = Number(p.bedrooms || 0);
                           if (num === '4+') {
                             if (!pText.includes('4 bhk') && !pText.includes('5 bhk') && pBed < 4) return false;
-                          } else if (num) {
-                            const numInt = parseInt(num);
-                            const hasBhkInText = pText.includes(`${num} bhk`) || pText.includes(`${num}bhk`) || pText.includes(`${num} bed`);
-                            const hasBedMatches = pBed === numInt;
-                            if (!hasBhkInText && !hasBedMatches) return false;
+                          } else if (num && !pText.includes(`${num} bhk`) && !pText.includes(`${num}bhk`) && pBed !== Number(num)) {
+                            return false;
                           }
                         }
                         if (propertyTypeFilter !== 'All Types') {
-                          const pText = `${p.category || ''} ${p.name || ''} ${p.title || ''} ${p.propertyType || ''}`.toLowerCase();
-                          if (propertyTypeFilter.includes('Flat') || propertyTypeFilter.includes('Apartment')) {
-                            if (!pText.includes('flat') && !pText.includes('apartment') && !pText.includes('bhk')) return false;
-                          } else if (propertyTypeFilter.includes('Commercial') || propertyTypeFilter.includes('Shop')) {
-                            if (!pText.includes('commercial') && !pText.includes('shop') && !pText.includes('office') && !pText.includes('showroom')) return false;
-                          } else if (propertyTypeFilter.includes('Plot') || propertyTypeFilter.includes('Land')) {
-                            if (!pText.includes('plot') && !pText.includes('land')) return false;
-                          } else if (propertyTypeFilter.includes('Villa') || propertyTypeFilter.includes('House')) {
-                            if (!pText.includes('villa') && !pText.includes('house') && !pText.includes('bungalow')) return false;
-                          }
+                          if (propertyTypeFilter.includes('Flat') && !p.category?.toLowerCase().includes('flat') && !p.category?.toLowerCase().includes('apartment') && !p.category?.toLowerCase().includes('bhk')) return false;
+                          if (propertyTypeFilter.includes('Commercial') && !p.category?.toLowerCase().includes('commercial') && !p.category?.toLowerCase().includes('shop') && !p.category?.toLowerCase().includes('office')) return false;
+                          if (propertyTypeFilter.includes('Plot') && !p.category?.toLowerCase().includes('plot') && !p.category?.toLowerCase().includes('land')) return false;
+                          if (propertyTypeFilter.includes('Villa') && !p.category?.toLowerCase().includes('villa') && !p.category?.toLowerCase().includes('house') && !p.category?.toLowerCase().includes('bungalow')) return false;
+                        }
+                        if (propertyAreaFilter !== 'All Areas') {
+                          const pLoc = `${p.location || ''} ${p.addressLocality || ''} ${p.projectName || ''} ${p.title || ''} ${p.name || ''} ${p.category || ''}`.toLowerCase();
+                          if (!pLoc.includes(propertyAreaFilter.toLowerCase())) return false;
                         }
                         return true;
                       })
                       .sort((a: any, b: any) => {
+                        const isSoldA = Boolean(a.isSold || a.status?.toLowerCase().includes('sold') || a.status?.toLowerCase().includes('rented'));
+                        const isSoldB = Boolean(b.isSold || b.status?.toLowerCase().includes('sold') || b.status?.toLowerCase().includes('rented'));
+                        if (isSoldA !== isSoldB) return isSoldA ? 1 : -1;
+
+                        const isFeatA = Boolean(a.isFeatured || a.featured);
+                        const isFeatB = Boolean(b.isFeatured || b.featured);
+                        if (isFeatA !== isFeatB) return isFeatA ? -1 : 1;
+
                         const priceA = parseFloat(String(a.price || a.budget || 0).replace(/[^\d.]/g, '')) || 0;
                         const priceB = parseFloat(String(b.price || b.budget || 0).replace(/[^\d.]/g, '')) || 0;
                         if (propertySortBy === 'price_low') return priceA - priceB;
@@ -3533,117 +3998,178 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         }
                         return 0;
                       })
-                      .map((profile: any) => (
+                      .map((profile: any) => {
+                        const isSoldOut = Boolean(profile.isSold || profile.status?.toLowerCase().includes('sold') || profile.status?.toLowerCase().includes('rented'));
+                        const isRentProp = profile.forAction === 'Rent' || profile.category?.toLowerCase().includes('rent') || profile.transactionType === 'Lease';
+                        const isFeaturedProp = Boolean(profile.isFeatured || profile.featured) && !isSoldOut;
+
+                        return (
                         <div 
                           key={profile.id}
-                          className="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer flex flex-col md:flex-row group text-left"
-                          onClick={() => setSelectedProfile(profile)}
+                          className={`rounded-xl sm:rounded-2xl border transition-all flex flex-row group text-left relative overflow-hidden h-[125px] sm:h-[155px] ${
+                            isSoldOut
+                              ? 'bg-slate-100/90 border-slate-300 opacity-70 grayscale-[35%] cursor-not-allowed select-none shadow-2xs'
+                              : isFeaturedProp
+                                ? 'cursor-pointer bg-white border-amber-300 shadow-sm hover:shadow-md ring-1 ring-amber-400/30'
+                                : 'cursor-pointer bg-white border-slate-200 shadow-2xs hover:shadow-md'
+                          }`}
+                          onClick={() => {
+                            if (isSoldOut) {
+                              showToast(isRentProp ? '🔒 This property is rented out and closed.' : '🔒 This property is sold out and closed.', 'info');
+                              return;
+                            }
+                            setSelectedProfile(profile);
+                          }}
                         >
-                          {/* Image Column */}
-                          <div className="w-full md:w-[240px] aspect-[16/10] md:h-auto relative shrink-0 bg-slate-900 overflow-hidden flex items-center justify-center">
-                            <img src={profile.avatar || '/majh-boisar-mb-logo.png'} alt={profile.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                            <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[9px] font-black px-2 py-0.5 rounded-full z-10">
-                              {profile.gallery?.length || 1}+ Photos
+                          {/* Image Column - Uniform compact thumbnail */}
+                          <div className="w-[120px] xs:w-[130px] sm:w-[160px] shrink-0 h-full relative bg-slate-900 overflow-hidden flex items-center justify-center">
+                            <img
+                              src={profile.avatar || '/majh-boisar-mb-logo.png'}
+                              alt={profile.name}
+                              className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isSoldOut ? 'grayscale-[50%]' : ''}`}
+                            />
+
+                            {/* Big Bold SOLD OUT / RENTED OUT Overlay */}
+                            {isSoldOut && (
+                              <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-20 p-2 text-center">
+                                <div className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border-2 shadow-2xl transform -rotate-6 text-center tracking-wider ${
+                                  isRentProp 
+                                    ? 'bg-amber-500 border-amber-200 text-slate-950 font-black' 
+                                    : 'bg-rose-600 border-rose-300 text-white font-black'
+                                }`}>
+                                  <span className="text-[10.5px] sm:text-xs font-black uppercase block leading-tight drop-shadow-sm">
+                                    {isRentProp ? 'RENTED OUT' : 'SOLD OUT'}
+                                  </span>
+                                  <span className="text-[7px] sm:text-[7.5px] font-extrabold uppercase opacity-90 block mt-0.5">
+                                    Not Available
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Featured Badge */}
+                            {isFeaturedProp && (
+                              <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full z-10 shadow-xs flex items-center gap-0.5 border border-amber-300/60">
+                                <span>⭐ FEATURED</span>
+                              </div>
+                            )}
+
+                            <div className="absolute top-1.5 left-1.5 bg-black/65 backdrop-blur-xs text-white text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-full z-10">
+                              {profile.gallery?.length || 1}+
                             </div>
                             {Boolean(profile.video || (profile.videos && profile.videos.length > 0)) && (
-                              <div className="absolute top-2 right-2 bg-rose-600/90 text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs z-10">
+                              <div className="absolute bottom-1.5 right-1.5 bg-rose-600/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs z-10">
                                 <span>🎥 Video</span>
                               </div>
                             )}
-                            <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-full z-10">
+                            <div className="hidden sm:block absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-xs text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full z-10">
                               Updated {profile.updatedAt || 'Recently'}
                             </div>
                           </div>
 
-                          {/* Content Column */}
-                          <div className="flex-1 p-4 flex flex-col justify-between">
+                          {/* Content Column - Compact & clean */}
+                          <div className="flex-1 p-2 sm:p-3.5 flex flex-col justify-between min-w-0">
                             <div>
-                              <div className="flex justify-between items-start gap-2 mb-1.5">
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="bg-teal-50 border border-teal-200 text-teal-700 text-[10px] font-black px-2 py-0.5 rounded uppercase">
+                              <div className="flex justify-between items-start gap-1 mb-1">
+                                <div className="space-y-0.5 min-w-0">
+                                  <div className="flex items-center gap-1 flex-wrap">
+                                    <span className="bg-teal-50 border border-teal-200 text-teal-700 text-[8.5px] sm:text-[10px] font-black px-1.5 py-0.2 rounded uppercase truncate max-w-[140px] sm:max-w-none">
                                       {profile.location || 'Boisar West'}
                                     </span>
                                   </div>
-                                  <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-snug group-hover:text-teal-700 transition-colors mt-1">
+                                  <h3 className="text-xs sm:text-base font-extrabold text-slate-900 leading-tight group-hover:text-teal-700 transition-colors line-clamp-1 mt-0.5">
                                     {profile.category}
                                   </h3>
-                                  <p className="text-xs text-slate-500 font-medium">{profile.projectName || 'Independent Property in Boisar'}</p>
+                                  <p className="text-[10px] sm:text-xs text-slate-500 font-medium line-clamp-1">{profile.projectName || 'Independent Property in Boisar'}</p>
                                 </div>
                                 <button 
                                   onClick={(e) => { e.stopPropagation(); }}
-                                  className="p-1.5 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                                  className="p-1 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors shrink-0"
                                 >
-                                  <Heart className="w-4 h-4" />
+                                  <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </button>
                               </div>
 
-                              {/* Specs Bar */}
-                              <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 grid grid-cols-3 gap-2 my-2 text-xs">
-                                <div>
-                                  <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider block">Carpet Area</span>
+                              {/* Specs Bar - Compact chips on mobile, grid on desktop */}
+                              <div className="flex sm:grid sm:grid-cols-3 items-center gap-1 sm:gap-2 my-1 sm:my-2 text-[9px] sm:text-xs text-slate-600 font-bold flex-wrap sm:bg-slate-50 sm:border sm:border-slate-100 sm:rounded-xl sm:p-2">
+                                <div className="bg-slate-100 sm:bg-transparent px-1.5 py-0.5 sm:p-0 rounded">
+                                  <span className="hidden sm:block text-[9px] text-slate-400 font-black uppercase tracking-wider">Carpet Area</span>
                                   <strong className="text-slate-800 font-black">{profile.carpetArea || '650 sqft'}</strong>
                                 </div>
-                                <div>
-                                  <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider block">Status</span>
-                                  <strong className="text-slate-800 font-black">{profile.status || 'Ready to Move'}</strong>
+                                <div className="bg-slate-100 sm:bg-transparent px-1.5 py-0.5 sm:p-0 rounded">
+                                  <span className="hidden sm:block text-[9px] text-slate-400 font-black uppercase tracking-wider">Status</span>
+                                  <strong className="text-slate-800 font-black truncate">{profile.status || 'Ready'}</strong>
                                 </div>
-                                <div>
-                                  <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider block">Floor</span>
-                                  <strong className="text-slate-800 font-black">{profile.floor ? `${profile.floor} of ${profile.totalFloors}` : '2 of 4'}</strong>
+                                <div className="bg-slate-100 sm:bg-transparent px-1.5 py-0.5 sm:p-0 rounded">
+                                  <span className="hidden sm:block text-[9px] text-slate-400 font-black uppercase tracking-wider">Floor</span>
+                                  <strong className="text-slate-800 font-black">{profile.floor ? `${profile.floor}/${profile.totalFloors}` : '2/4'}</strong>
                                 </div>
                               </div>
                             </div>
 
                             {/* Price & Action Buttons Bar */}
-                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap mt-2">
-                              <div>
-                                <span className="text-base sm:text-lg font-black text-slate-900">{formatPrice(profile.price)}</span>
-                                <span className="text-[10px] text-slate-400 font-bold block">{profile.pricePerSqft || 'Boisar'}</span>
+                            <div className="pt-1 sm:pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5 flex-wrap sm:flex-nowrap">
+                              <div className="min-w-0">
+                                <span className="text-xs sm:text-base font-black text-slate-900 block leading-tight">{formatPrice(profile.price)}</span>
+                                <span className="text-[8.5px] sm:text-[10px] text-slate-400 font-bold block truncate">{profile.pricePerSqft || 'Boisar'}</span>
                               </div>
 
-                              <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEnquiryModalProperty(profile);
-                                  }}
-                                  className="bg-slate-900 hover:bg-slate-800 text-white font-black text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                                >
-                                  <Mail className="w-3.5 h-3.5" />
-                                  <span>Send Enquiry</span>
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePropertyContactCall(profile, false);
-                                  }}
-                                  className={`text-white font-black text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95 ${
-                                    isPropertyContactUnlocked(profile.id) 
-                                      ? 'bg-emerald-600 hover:bg-emerald-700' 
-                                      : !isLoggedIn 
-                                        ? 'bg-slate-800 hover:bg-slate-900' 
-                                        : userUnlockedPropsState.length < 2 
-                                          ? 'bg-emerald-600 hover:bg-emerald-700' 
-                                          : 'bg-gradient-to-r from-amber-600 to-teal-700 hover:from-amber-700 hover:to-teal-800'
-                                  }`}
-                                >
-                                  <Phone className="w-3.5 h-3.5" />
-                                  <span>
-                                    {isPropertyContactUnlocked(profile.id) 
-                                      ? 'Call' 
-                                      : !isLoggedIn 
-                                        ? 'Call' 
-                                        : userUnlockedPropsState.length < 2 
-                                          ? 'Call (Free)' 
-                                          : 'Unlock Call'}
+                              {isSoldOut ? (
+                                <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
+                                  <span className={`text-[10px] sm:text-xs font-black px-2.5 sm:px-3 py-1.5 rounded-lg border flex items-center gap-1 ${
+                                    isRentProp 
+                                      ? 'bg-amber-50 text-amber-800 border-amber-300' 
+                                      : 'bg-rose-50 text-rose-700 border-rose-200'
+                                  }`}>
+                                    <Lock className="w-3 h-3" />
+                                    <span>{isRentProp ? 'Rented Out' : 'Sold Out'}</span>
                                   </span>
-                                </button>
-                              </div>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEnquiryModalProperty(profile);
+                                    }}
+                                    className="bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] sm:text-xs px-2 sm:px-3 py-1.5 rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                                  >
+                                    <Mail className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                    <span>Enquiry</span>
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePropertyContactCall(profile, false);
+                                    }}
+                                    className={`text-white font-black text-[10px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95 ${
+                                      isPropertyContactUnlocked(profile.id) 
+                                        ? 'bg-emerald-600 hover:bg-emerald-700' 
+                                        : !isLoggedIn 
+                                          ? 'bg-slate-800 hover:bg-slate-900' 
+                                          : userUnlockedPropsState.length < 2 
+                                            ? 'bg-emerald-600 hover:bg-emerald-700' 
+                                            : 'bg-gradient-to-r from-amber-600 to-teal-700 hover:from-amber-700 hover:to-teal-800'
+                                    }`}
+                                  >
+                                    <Phone className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                    <span>
+                                      {isPropertyContactUnlocked(profile.id) 
+                                        ? 'Call' 
+                                        : !isLoggedIn 
+                                          ? 'Call' 
+                                          : userUnlockedPropsState.length < 2 
+                                            ? 'Call' 
+                                            : 'Unlock'}
+                                    </span>
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     {(profilesState.properties || [])
                       .filter((p: any) => p.listingType === 'property')
                       .filter((p: any) => {
@@ -3663,25 +4189,46 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           if (propertyTypeFilter.includes('Villa') && !p.category?.toLowerCase().includes('villa') && !p.category?.toLowerCase().includes('house')) return false;
                           if (propertyTypeFilter.includes('Plot') && !p.category?.toLowerCase().includes('plot') && !p.category?.toLowerCase().includes('land')) return false;
                         }
+                        if (propertyAreaFilter !== 'All Areas') {
+                          const pLoc = `${p.location || ''} ${p.addressLocality || ''} ${p.projectName || ''} ${p.title || ''} ${p.name || ''} ${p.category || ''}`.toLowerCase();
+                          if (!pLoc.includes(propertyAreaFilter.toLowerCase())) return false;
+                        }
                         return true;
                       }).length === 0 && (
                       <div className="bg-white rounded-2xl p-8 text-center border border-slate-200 shadow-2xs my-4">
-                        <h3 className="text-sm sm:text-base font-black text-slate-800">No Property Listings Yet</h3>
-                        <p className="text-xs text-slate-500 font-medium mt-1">Post your property for sale or rent to reach genuine buyers across Boisar &amp; Palghar.</p>
-                        <button
-                          onClick={() => {
-                            if (!isLoggedIn) {
-                              showToast("Please login first to post your property.", "info", 4000);
-                              setLoginModalOpen(true);
-                            } else {
-                              setPostPropertyModalOpen(true);
-                            }
-                          }}
-                          className="mt-4 bg-[#0b5c47] hover:bg-[#074737] text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer inline-flex items-center gap-1.5"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Post Property Free</span>
-                        </button>
+                        <h3 className="text-sm sm:text-base font-black text-slate-800">
+                          {propertyAreaFilter !== 'All Areas' ? `No Properties Found in ${propertyAreaFilter}` : 'No Property Listings Yet'}
+                        </h3>
+                        <p className="text-xs text-slate-500 font-medium mt-1">
+                          {propertyAreaFilter !== 'All Areas' 
+                            ? `Try switching to "All Areas" or be the first to list a property in ${propertyAreaFilter}.` 
+                            : 'Post your property for sale or rent to reach genuine buyers across Boisar & Palghar.'}
+                        </p>
+                        <div className="flex items-center justify-center gap-2 pt-2">
+                          {propertyAreaFilter !== 'All Areas' && (
+                            <button
+                              type="button"
+                              onClick={() => setPropertyAreaFilter('All Areas')}
+                              className="mt-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer"
+                            >
+                              Show All Areas
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              if (!isLoggedIn) {
+                                showToast("Please login first to post your property.", "info", 4000);
+                                setLoginModalOpen(true);
+                              } else {
+                                setPostPropertyModalOpen(true);
+                              }
+                            }}
+                            className="mt-4 bg-[#0b5c47] hover:bg-[#074737] text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer inline-flex items-center gap-1.5"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Post Property Free</span>
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

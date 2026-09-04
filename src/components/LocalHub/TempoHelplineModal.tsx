@@ -72,6 +72,7 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!driverName.trim() || !phone.trim()) {
       alert("Please enter Business / Driver Name and Contact Phone!");
       return;
@@ -114,15 +115,19 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
           availability: saved.timing,
           image: saved.image || defaultImg
         };
-        setDriverList(prev => [newDriver, ...prev]);
-        setSuccessMsg('Packers & Movers / Tempo registered successfully in Database!');
+        if (saved.verified) {
+          setDriverList(prev => [newDriver, ...prev.filter(d => String(d.id) !== String(newDriver.id))]);
+          setSuccessMsg('🎉 Packers & Movers / Tempo registered successfully!');
+        } else {
+          setSuccessMsg('⏳ Tempo registered! Admin will verify and activate your listing shortly.');
+        }
         setTimeout(() => {
           setSuccessMsg('');
           setShowAddForm(false);
           setDriverName('');
           setPhone('');
           setImage('');
-        }, 1500);
+        }, 1800);
       }
     } catch (e) {
       console.warn('Error registering tempo to database:', e);
@@ -338,9 +343,21 @@ export default function TempoHelplineModal({ isOpen, onClose }: TempoHelplineMod
 
                   <button
                     type="submit"
-                    className="w-full bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 font-black text-xs py-3 rounded-xl shadow-md transition-all cursor-pointer mt-2"
+                    disabled={isSubmitting}
+                    className={`w-full font-black text-xs py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 mt-2 ${
+                      isSubmitting
+                        ? 'bg-amber-300 text-slate-700 cursor-not-allowed opacity-80'
+                        : 'bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-slate-950 cursor-pointer'
+                    }`}
                   >
-                    Submit & Register Tempo Driver
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin shrink-0" />
+                        <span>Registering Driver, Please Wait...</span>
+                      </>
+                    ) : (
+                      <span>Submit & Register Tempo Driver</span>
+                    )}
                   </button>
                 </form>
               )}

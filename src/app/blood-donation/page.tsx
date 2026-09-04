@@ -75,6 +75,18 @@ export default function BloodDonationPage() {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       setLocalMyDonorId(localStorage.getItem('majh_boisar_my_donor_id'));
+
+      const handleVisibility = () => {
+        if (document.visibilityState === 'visible') {
+          fetchDonors();
+        }
+      };
+      window.addEventListener('visibilitychange', handleVisibility);
+      window.addEventListener('focus', fetchDonors);
+      return () => {
+        window.removeEventListener('visibilitychange', handleVisibility);
+        window.removeEventListener('focus', fetchDonors);
+      };
     }
     fetchDonors();
   }, []);
@@ -95,7 +107,10 @@ export default function BloodDonationPage() {
   const fetchDonors = async () => {
     setLoadingDonors(true);
     try {
-      const res = await fetch('/api/blood-donors');
+      const res = await fetch('/api/blood-donors', {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) setDonors(data);
@@ -148,18 +163,23 @@ export default function BloodDonationPage() {
 
       if (res.ok) {
         const newDonor = await res.json();
-        setDonors(prev => [newDonor, ...prev]);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('majh_boisar_my_donor_id', String(newDonor.id));
-          localStorage.setItem('majh_boisar_my_donor_phone', String(newDonor.phone));
-          setLocalMyDonorId(String(newDonor.id));
+        if (newDonor.verified) {
+          setDonors(prev => [newDonor, ...prev.filter(d => d.id !== newDonor.id)]);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('majh_boisar_my_donor_id', String(newDonor.id));
+            localStorage.setItem('majh_boisar_my_donor_phone', String(newDonor.phone));
+            setLocalMyDonorId(String(newDonor.id));
+          }
+          alert("🎉 Thank you! Your voluntary donor profile is live in the Boisar Blood Donors list.");
+        } else {
+          alert("⏳ Thank you for volunteering! Your registration has been submitted. Admin will verify and activate your donor listing shortly.");
         }
         setRegisterModalOpen(false);
         setNewName("");
         setNewPhone("");
-        alert("🎉 Thank you! Your name is now listed in the Boisar Blood Donors list.");
       } else {
-        alert("Failed to register donor. Please try again.");
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || "Failed to register donor. Please try again.");
       }
     } catch (err) {
       console.error('Error registering donor:', err);

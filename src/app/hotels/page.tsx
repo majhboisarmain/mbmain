@@ -345,7 +345,7 @@ export default function HotelsPage() {
       // Create Instant Enquiry / Lead in Dashboard
       const newLead = {
         id: `lead_htl_${Date.now()}`,
-        businessId: Number(quickBookHotel.id.replace(/\D/g, '')) || 1,
+        businessId: Number(quickBookHotel.id.replace(/\D/g, '')) || 0,
         hotelId: quickBookHotel.id,
         customerName: guestName,
         customerPhone: guestPhone,
