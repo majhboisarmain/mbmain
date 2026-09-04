@@ -500,277 +500,146 @@ export default function HotelsPage() {
 
         </div>
 
-        {/* Results Header */}
-        <div className="flex items-center justify-between gap-2 mb-2 px-0.5 text-left">
-          <h2 className="text-xs sm:text-sm font-black text-slate-900 whitespace-nowrap">
-            {filteredAndSortedHotels.length} Hourly Hotels in Boisar
-          </h2>
-          <span className="text-[10.5px] sm:text-[11px] text-slate-500 font-medium whitespace-nowrap">
-            Flexible Short Stays · ₹0 Convenience Fee
-          </span>
-        </div>
-
-        {/* Hotel Cards List (Clean, Spacious, Easy to Understand) */}
-        <div className="space-y-4">
-          {filteredAndSortedHotels.map(hotel => {
-            const currentImgIdx = cardPhotoIndex[hotel.id] || 0;
-            const activePhoto = hotel.gallery[currentImgIdx] || hotel.gallery[0];
-            const thumbnails = hotel.gallery.slice(0, 4);
-
-            return (
-              <div 
-                key={hotel.id}
+        {/* If no hotels listed: Display Card List with Property Sold-Out Style Coming Soon Badges */}
+        {filteredAndSortedHotels.length === 0 ? (
+          <div className="space-y-3.5 my-2 text-left">
+            {/* Owner banner - subtle header strip */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 bg-purple-50/80 border border-purple-200/80 rounded-2xl px-4 py-2.5 text-xs text-purple-950 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🏨</span>
+                <div>
+                  <span className="font-extrabold text-slate-900">Are you a Hotel or Lodge Owner in Boisar?</span>
+                  <span className="text-slate-600 block text-[11px] sm:inline sm:ml-1">List your property & receive direct bookings.</span>
+                </div>
+              </div>
+              <button
+                type="button"
                 onClick={() => {
-                  if (hotel.isComingSoon) {
-                    showToast("🚀 Online booking for this hotel is launching soon! Are you the property owner? Click 'Register Hotel' to list your rooms.", "info", 4500);
+                  if (!isLoggedIn) {
+                    showToast("Please Sign In or Register first to list your hotel.", "info", 4000);
+                    setLoginModalOpen(true);
                     return;
                   }
-                  recordHotelClick(hotel.id, 'click');
-                  router.push(`/hotels/${hotel.slug}`);
+                  setIsAddHotelOpen(true);
                 }}
-                className={`bg-white rounded-3xl border transition-all p-3.5 sm:p-4 text-left group cursor-pointer ${
-                  (hotel as any).isPinnedTop 
-                    ? 'border-amber-400 ring-2 ring-amber-400/25 shadow-md hover:shadow-lg' 
-                    : 'border-slate-200 hover:border-purple-300 hover:shadow-md'
-                }`}
+                className="bg-purple-900 hover:bg-purple-800 text-white font-black text-[11px] px-3.5 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
               >
-                <div className="flex flex-col md:flex-row gap-4 lg:gap-5 items-stretch">
-                  
-                  {/* Left: Main Image (310px) + 4 Vertical Thumbnails (60px) = 380px Total */}
-                  <div 
-                    style={{ minWidth: '340px', maxWidth: '380px', height: '210px' }} 
-                    className="hidden sm:flex gap-2 shrink-0"
-                  >
-                    {/* Main Image with Carousel Controls & Top Badges Overlay */}
-                    <div className="relative flex-1 h-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 shrink-0">
-                      <img 
-                        src={activePhoto} 
-                        alt={hotel.name} 
-                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${hotel.isComingSoon ? 'grayscale-[25%]' : ''}`} 
-                      />
+                + Register Hotel Free
+              </button>
+            </div>
 
-                      {/* Big Bold COMING SOON Overlay (Matching Sold Out style) */}
-                      {hotel.isComingSoon && (
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-30 p-2 text-center pointer-events-none">
-                          <div className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border-2 border-amber-300 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-2xl transform -rotate-3 text-center tracking-wider">
-                            <span className="text-[11px] sm:text-xs font-black uppercase block leading-tight drop-shadow-sm flex items-center justify-center gap-1.5">
-                              <Sparkles className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
-                              COMING SOON
-                            </span>
-                            <span className="text-[7.5px] sm:text-[8px] font-extrabold uppercase opacity-95 block mt-0.5 tracking-wider">
-                              Online Booking Opening Soon
-                            </span>
-                          </div>
-                        </div>
-                      )}
+            {/* Generic Coming Soon Cards with Property Sold-Out style overlay */}
+            {[
+              {
+                id: 'cs-hotel-1',
+                tag: 'BOISAR WEST',
+                title: 'Deluxe AC Hourly Room Stay',
+                area: 'Boisar West · 3 mins to Railway Station',
+                specs: '3h / 6h / 12h Slots Available',
+                highlights: 'Couple Friendly · Pay at Check-in',
+                price: '₹499',
+                priceUnit: 'Starting from (3 Hrs)'
+              },
+              {
+                id: 'cs-hotel-2',
+                tag: 'TARAPUR MIDC',
+                title: 'Executive Transit Business Stay',
+                area: 'Tarapur MIDC Industrial Belt · Fast Connectivity',
+                specs: 'Day Rest & Night Stay Slots',
+                highlights: 'Work Desk · High Speed WiFi · Parking',
+                price: '₹599',
+                priceUnit: 'Starting from (3 Hrs)'
+              },
+              {
+                id: 'cs-hotel-3',
+                tag: 'STATION ROAD',
+                title: 'Station Transit AC Rest Stay',
+                area: 'Station Road, Boisar · Walkable to Station',
+                specs: 'Flexible Hourly Slots · 24/7 Check-in',
+                highlights: 'Local ID Accepted · Instant Entry',
+                price: '₹399',
+                priceUnit: 'Starting from (3 Hrs)'
+              }
+            ].map(item => (
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-3 sm:p-4 text-left shadow-xs transition-all relative overflow-hidden"
+              >
+                <div className="flex flex-col sm:flex-row gap-3.5 sm:gap-4 items-stretch">
+                  {/* Left Thumbnail with ROTATED COMING SOON STAMP (Matching Property SOLD OUT in media_1788548238991.png) */}
+                  <div className="relative w-full sm:w-[240px] md:w-[270px] h-[150px] sm:h-[160px] rounded-xl sm:rounded-2xl overflow-hidden bg-slate-900 shrink-0 select-none pointer-events-none">
+                    <div className="w-full h-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 flex flex-col items-center justify-center p-3 text-center">
+                      <Building2 className="w-12 h-12 text-slate-700/60 mb-1" />
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Boisar Stays</span>
+                    </div>
 
-                      {/* Top Badges & Rating Overlay on Image */}
-                      <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 flex-wrap pointer-events-none">
-                        {(hotel as any).isPinnedTop && (
-                          <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-md">
-                            👑 TOP RECOMMENDED
-                          </span>
-                        )}
-                        {hotel.badge && (
-                          <span className="bg-slate-900/85 backdrop-blur-xs text-white text-[9.5px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider shadow-md">
-                            {hotel.badge.replace(/[♦★⭐⚡]/g, '').trim()}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="absolute top-2 right-2 z-20 pointer-events-none">
-                        <span className="bg-emerald-600/95 backdrop-blur-xs text-white text-[11px] font-black px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-md">
-                          <Star className="w-3 h-3 fill-white text-white" />
-                          <span>{hotel.rating}</span>
-                          <span className="text-emerald-100 font-medium text-[9.5px]">({hotel.reviewsCount})</span>
+                    {/* Big Bold COMING SOON Overlay (Exact match to SOLD OUT overlay in HomeClient) */}
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-20 p-2 text-center">
+                      <div className="px-3 py-1.5 rounded-lg border-2 border-rose-300 shadow-2xl transform -rotate-6 text-center tracking-wider bg-rose-600 text-white font-black">
+                        <span className="text-xs sm:text-sm font-black uppercase block leading-tight drop-shadow-sm">
+                          COMING SOON
+                        </span>
+                        <span className="text-[7.5px] sm:text-[8px] font-extrabold uppercase opacity-90 block mt-0.5 tracking-wider">
+                          NOT AVAILABLE YET
                         </span>
                       </div>
-
-                      {/* Left / Right Nav Arrows */}
-                      <button
-                        type="button"
-                        onClick={(e) => handlePrevPhoto(e, hotel.id, hotel.gallery.length)}
-                        className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all z-20 cursor-pointer"
-                        title="Previous Photo"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={(e) => handleNextPhoto(e, hotel.id, hotel.gallery.length)}
-                        className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all z-20 cursor-pointer"
-                        title="Next Photo"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Column of 4 Vertical Thumbnail Photos */}
-                    <div style={{ width: '56px', minWidth: '56px' }} className="flex flex-col gap-1.5 shrink-0 h-full">
-                      {thumbnails.map((thumb, tIdx) => (
-                        <div
-                          key={tIdx}
-                          onClick={(e) => handleSelectThumbnail(e, hotel.id, tIdx)}
-                          className={`flex-1 rounded-xl overflow-hidden cursor-pointer border-2 transition-all bg-slate-100 relative ${
-                            currentImgIdx === tIdx ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200 opacity-75 hover:opacity-100'
-                          }`}
-                        >
-                          <img src={thumb} alt="thumb" className="w-full h-full object-cover" />
-                        </div>
-                      ))}
-                    </div>
-
-                  </div>
-
-                  {/* Mobile Photo Banner with Thumbnails, Controls & Overlays */}
-                  <div className="sm:hidden space-y-1.5 w-full">
-                    <div className="relative w-full h-[190px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 shrink-0">
-                      <img src={activePhoto} alt={hotel.name} className={`w-full h-full object-cover ${hotel.isComingSoon ? 'grayscale-[25%]' : ''}`} />
-
-                      {/* Mobile COMING SOON Overlay */}
-                      {hotel.isComingSoon && (
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-30 p-2 text-center pointer-events-none">
-                          <div className="px-3 py-1.5 rounded-xl border-2 border-amber-300 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black shadow-2xl transform -rotate-3 text-center tracking-wider">
-                            <span className="text-xs font-black uppercase block leading-tight drop-shadow-sm flex items-center justify-center gap-1">
-                              <Sparkles className="w-3.5 h-3.5 fill-slate-950 text-slate-950" />
-                              COMING SOON
-                            </span>
-                            <span className="text-[7.5px] font-extrabold uppercase opacity-95 block mt-0.5 tracking-wider">
-                              Online Booking Opening Soon
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Top Badges & Rating Overlay on Image */}
-                      <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 flex-wrap pointer-events-none">
-                        {(hotel as any).isPinnedTop && (
-                          <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-md">
-                            👑 TOP RECOMMENDED
-                          </span>
-                        )}
-                        {hotel.badge && (
-                          <span className="bg-slate-900/85 backdrop-blur-xs text-white text-[9.5px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider shadow-md">
-                            {hotel.badge.replace(/[♦★⭐⚡]/g, '').trim()}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="absolute top-2 right-2 z-20 pointer-events-none">
-                        <span className="bg-emerald-600/95 backdrop-blur-xs text-white text-[11px] font-black px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-md">
-                          <Star className="w-3 h-3 fill-white text-white" />
-                          <span>{hotel.rating}</span>
-                          <span className="text-emerald-100 font-medium text-[9.5px]">({hotel.reviewsCount})</span>
-                        </span>
-                      </div>
-
-                      {/* Nav Arrows */}
-                      <button
-                        type="button"
-                        onClick={(e) => handlePrevPhoto(e, hotel.id, hotel.gallery.length)}
-                        className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all z-20 cursor-pointer"
-                        title="Previous Photo"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={(e) => handleNextPhoto(e, hotel.id, hotel.gallery.length)}
-                        className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all z-20 cursor-pointer"
-                        title="Next Photo"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Mobile 4 Thumbnail Photos Strip */}
-                    <div className="grid grid-cols-4 gap-1.5">
-                      {thumbnails.map((thumb, tIdx) => (
-                        <div
-                          key={tIdx}
-                          onClick={(e) => handleSelectThumbnail(e, hotel.id, tIdx)}
-                          className={`h-11 rounded-lg overflow-hidden cursor-pointer border-2 transition-all bg-slate-100 relative ${
-                            currentImgIdx === tIdx ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200 opacity-75 hover:opacity-100'
-                          }`}
-                        >
-                          <img src={thumb} alt="thumb" className="w-full h-full object-cover" />
-                        </div>
-                      ))}
                     </div>
                   </div>
 
-                  {/* Right Column: Hotel Details & 3 Hourly Slot Pricing Buttons */}
-                  <div className="flex-1 min-w-0 flex flex-col justify-between space-y-2 py-0.5">
-                    
-                    {/* Header Info */}
-                    <div className="space-y-1.5">
+                  {/* Right Details */}
+                  <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                    <div>
+                      {/* Top Row: Location Tag + Status Pill */}
                       <div className="flex items-center justify-between gap-2">
-                        <h3 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-purple-900 transition-colors leading-tight">
-                          {hotel.name}
-                        </h3>
-                      </div>
-
-                      <div className="flex items-center gap-2.5 flex-wrap text-[11px] font-bold text-slate-500">
-                        <span className="flex items-center gap-1 text-slate-600">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{hotel.location}</span>
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-200">
+                          {item.tag}
                         </span>
-                        <span>•</span>
-                        <span className="text-purple-900 font-extrabold flex items-center gap-1">
-                          <Train className="w-3.5 h-3.5 text-purple-700" />
-                          <span>{hotel.nearStation ? '3 mins to Station' : '8 mins to Station'}</span>
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200">
+                          COMING SOON
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-4 text-xs font-bold text-slate-700 pt-0.5">
-                        <span className="flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5 text-purple-700" /> Couple Friendly
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Accepts Local ID
-                        </span>
-                      </div>
+                      {/* Generic Category Title (No business name) */}
+                      <h3 className="text-sm sm:text-base font-black text-slate-900 mt-1.5 leading-snug">
+                        {item.title}
+                      </h3>
 
-                      {/* Amenity Icons Row */}
-                      <div className="flex items-center gap-3.5 pt-1 text-slate-500 text-xs">
-                        <span className="flex items-center gap-1" title="Free Wi-Fi">
-                          <Wifi className="w-3.5 h-3.5 text-slate-500" />
-                          <span className="text-[11px] font-medium text-slate-600">Wi-Fi</span>
+                      {/* Location subtitle */}
+                      <p className="text-[11.5px] text-slate-500 font-medium mt-0.5 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span>{item.area}</span>
+                      </p>
+
+                      {/* Specs */}
+                      <div className="flex items-center gap-2 flex-wrap text-[11px] font-semibold text-slate-600 mt-2">
+                        <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700">
+                          {item.specs}
                         </span>
-                        <span className="flex items-center gap-1" title="AC Rooms">
-                          <Wind className="w-3.5 h-3.5 text-slate-500" />
-                          <span className="text-[11px] font-medium text-slate-600">AC</span>
+                        <span className="bg-purple-50 px-2 py-0.5 rounded-md text-purple-800 font-bold border border-purple-200/50">
+                          {item.highlights}
                         </span>
-                        <span className="flex items-center gap-1" title="Parking">
-                          <Car className="w-3.5 h-3.5 text-slate-500" />
-                          <span className="text-[11px] font-medium text-slate-600">Parking</span>
-                        </span>
-                        <span className="flex items-center gap-1" title="TV">
-                          <Tv className="w-3.5 h-3.5 text-slate-500" />
-                        </span>
-                        <span className="text-[11px] font-bold text-slate-400">+12 more</span>
                       </div>
                     </div>
 
-                    {/* Bottom Row: Pricing Structure or COMING SOON Locked state */}
-                    {hotel.isComingSoon ? (
-                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10.5px] sm:text-xs font-black px-3 py-1.5 rounded-xl border flex items-center gap-1.5 bg-amber-50 text-amber-800 border-amber-300 shadow-2xs">
-                            <Lock className="w-3.5 h-3.5 text-amber-700" />
-                            <span>Coming Soon</span>
-                          </span>
-                          <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium">
-                            Tariff &amp; Instant Booking Opening Soon
-                          </span>
+                    {/* Bottom Pricing & Action Row */}
+                    <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-base sm:text-lg font-black text-slate-900 leading-none">
+                          {item.price}
                         </div>
+                        <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
+                          {item.priceUnit}
+                        </span>
+                      </div>
 
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 text-[11px] font-bold border border-slate-200 select-none">
+                          <Lock className="w-3 h-3 text-slate-400" />
+                          <span>Coming Soon</span>
+                        </span>
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          onClick={() => {
                             if (!isLoggedIn) {
                               showToast("Please Sign In or Register first to list your hotel.", "info", 4000);
                               setLoginModalOpen(true);
@@ -778,133 +647,268 @@ export default function HotelsPage() {
                             }
                             setIsAddHotelOpen(true);
                           }}
-                          className="bg-purple-900 hover:bg-purple-950 text-white font-black text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ml-auto"
+                          className="text-[11px] font-extrabold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
                         >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Register Hotel</span>
+                          Register Hotel Free →
                         </button>
                       </div>
-                    ) : (
-                      <div className="pt-2 border-t border-slate-100 flex items-center gap-2 sm:gap-2.5">
-                        {hotel.offersHourly === false || (hotel.hourlyRate3h === 0 && !hotel.is3hAvailable) ? (
-                          <>
-                            {/* ☀️ Day Stay */}
-                            <div className="flex-1 bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-200 rounded-2xl py-2 px-3 text-center transition-all cursor-pointer">
-                              <span className="text-sm sm:text-base font-black text-emerald-950 block">
-                                ₹{hotel.dayRate || hotel.hourlyRate12h || hotel.nightRate}
-                              </span>
-                              <span className="text-[9.5px] font-bold text-emerald-700 block uppercase tracking-wider">
-                                ☀️ Day Stay
-                              </span>
-                            </div>
-
-                            {/* 🌙 Night Stay */}
-                            <div className="flex-1 bg-purple-50/70 hover:bg-purple-100/70 border border-purple-200 rounded-2xl py-2 px-3 text-center transition-all cursor-pointer">
-                              <span className="text-sm sm:text-base font-black text-purple-950 block">
-                                ₹{hotel.nightRate}
-                              </span>
-                              <span className="text-[9.5px] font-bold text-purple-800 block uppercase tracking-wider">
-                                🌙 Night Stay
-                              </span>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            {/* 3 Hrs */}
-                            <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
-                              <span className="text-sm sm:text-base font-black text-slate-900 block">
-                                ₹{hotel.hourlyRate3h}
-                              </span>
-                              <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
-                                3 Hrs
-                              </span>
-                            </div>
-
-                            {/* 6 Hrs */}
-                            <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
-                              {hotel.is6hAvailable ? (
-                                <>
-                                  <span className="text-sm sm:text-base font-black text-slate-900 block">
-                                    ₹{hotel.hourlyRate6h}
-                                  </span>
-                                  <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
-                                    6 Hrs
-                                  </span>
-                                </>
-                              ) : (
-                                <span className="text-xs font-bold text-slate-400 block py-1.5">Unavailable</span>
-                              )}
-                            </div>
-
-                            {/* 12 Hrs */}
-                            <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
-                              {hotel.is12hAvailable ? (
-                                <>
-                                  <span className="text-sm sm:text-base font-black text-slate-900 block">
-                                    ₹{hotel.hourlyRate12h}
-                                  </span>
-                                  <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
-                                    12 Hrs
-                                  </span>
-                                </>
-                              ) : (
-                                <span className="text-xs font-bold text-slate-400 block py-1.5">Unavailable</span>
-                              )}
-                            </div>
-                          </>
-                        )}
-
-                        {/* Action buttons */}
-                        <div className="flex items-center gap-1.5 pl-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              triggerWhatsApp(hotel, '3 Hours Stay', hotel.hourlyRate3h);
-                            }}
-                            className="p-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl transition-all cursor-pointer shadow-2xs"
-                            title="WhatsApp Hotel"
-                          >
-                            <MessageSquare className="w-4 h-4" />
-                          </button>
-
-                          <a
-                            href={`tel:${hotel.phone}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              recordHotelClick(hotel.id, 'call');
-                            }}
-                            className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl transition-all cursor-pointer border border-slate-200"
-                            title="Call Reception"
-                          >
-                            <Phone className="w-4 h-4" />
-                          </a>
-                        </div>
-
-                      </div>
-                    )}
-
+                    </div>
                   </div>
-
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Empty State when 0 hotels match */}
-        {filteredAndSortedHotels.length === 0 && (
-          <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-3 mt-6">
-            <Building2 className="w-12 h-12 text-slate-300 mx-auto" />
-            <h3 className="text-base font-black text-slate-800">No hotels matching your criteria</h3>
-            <p className="text-xs text-slate-500">Try changing your search query or switching to All Hotels.</p>
-            <button
-              onClick={() => { setSearchQuery(''); setActiveTab('All'); setSortBy('recommended'); }}
-              className="mt-2 text-xs font-black text-purple-900 bg-purple-50 px-4 py-2 rounded-xl border border-purple-200 cursor-pointer"
-            >
-              Reset Filters
-            </button>
+            ))}
           </div>
+        ) : (
+          <>
+            {/* Results Header */}
+            <div className="flex items-center justify-between gap-2 mb-2 px-0.5 text-left">
+              <h2 className="text-xs sm:text-sm font-black text-slate-900 whitespace-nowrap">
+                {filteredAndSortedHotels.length} Hourly Hotels in Boisar
+              </h2>
+              <span className="text-[10.5px] sm:text-[11px] text-slate-500 font-medium whitespace-nowrap">
+                Flexible Short Stays · ₹0 Convenience Fee
+              </span>
+            </div>
+
+            {/* Hotel Cards List */}
+            <div className="space-y-4">
+              {filteredAndSortedHotels.map(hotel => {
+                const currentImgIdx = cardPhotoIndex[hotel.id] || 0;
+                const activePhoto = hotel.gallery[currentImgIdx] || hotel.gallery[0];
+                const thumbnails = hotel.gallery.slice(0, 4);
+
+                return (
+                  <div 
+                    key={hotel.id}
+                    onClick={() => {
+                      recordHotelClick(hotel.id, 'click');
+                      router.push(`/hotels/${hotel.slug}`);
+                    }}
+                    className={`bg-white rounded-3xl border transition-all p-3.5 sm:p-4 text-left group cursor-pointer ${
+                      (hotel as any).isPinnedTop 
+                        ? 'border-amber-400 ring-2 ring-amber-400/25 shadow-md hover:shadow-lg' 
+                        : 'border-slate-200 hover:border-purple-300 hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex flex-col md:flex-row gap-4 lg:gap-5 items-stretch">
+                      {/* Left: Main Image */}
+                      <div 
+                        style={{ minWidth: '340px', maxWidth: '380px', height: '210px' }} 
+                        className="hidden sm:flex gap-2 shrink-0"
+                      >
+                        <div className="relative flex-1 h-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 shrink-0">
+                          <img 
+                            src={activePhoto} 
+                            alt={hotel.name} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                          />
+
+                          <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 flex-wrap pointer-events-none">
+                            {(hotel as any).isPinnedTop && (
+                              <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-md">
+                                👑 TOP RECOMMENDED
+                              </span>
+                            )}
+                            {hotel.badge && (
+                              <span className="bg-slate-900/85 backdrop-blur-xs text-white text-[9.5px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider shadow-md">
+                                {hotel.badge.replace(/[♦★⭐⚡]/g, '').trim()}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="absolute top-2 right-2 z-20 pointer-events-none">
+                            <span className="bg-emerald-600/95 backdrop-blur-xs text-white text-[11px] font-black px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-md">
+                              <Star className="w-3 h-3 fill-white text-white" />
+                              <span>{hotel.rating}</span>
+                              <span className="text-emerald-100 font-medium text-[9.5px]">({hotel.reviewsCount})</span>
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handlePrevPhoto(e, hotel.id, hotel.gallery.length)}
+                            className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all z-20 cursor-pointer"
+                            title="Previous Photo"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleNextPhoto(e, hotel.id, hotel.gallery.length)}
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all z-20 cursor-pointer"
+                            title="Next Photo"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div style={{ width: '56px', minWidth: '56px' }} className="flex flex-col gap-1.5 shrink-0 h-full">
+                          {thumbnails.map((thumb, tIdx) => (
+                            <div
+                              key={tIdx}
+                              onClick={(e) => handleSelectThumbnail(e, hotel.id, tIdx)}
+                              className={`flex-1 rounded-xl overflow-hidden cursor-pointer border-2 transition-all bg-slate-100 relative ${
+                                currentImgIdx === tIdx ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200 opacity-75 hover:opacity-100'
+                              }`}
+                            >
+                              <img src={thumb} alt="thumb" className="w-full h-full object-cover" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Mobile Photo Banner */}
+                      <div className="sm:hidden space-y-1.5 w-full">
+                        <div className="relative w-full h-[190px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 shrink-0">
+                          <img src={activePhoto} alt={hotel.name} className="w-full h-full object-cover" />
+
+                          <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 flex-wrap pointer-events-none">
+                            {(hotel as any).isPinnedTop && (
+                              <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-md">
+                                👑 TOP RECOMMENDED
+                              </span>
+                            )}
+                            {hotel.badge && (
+                              <span className="bg-slate-900/85 backdrop-blur-xs text-white text-[9.5px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider shadow-md">
+                                {hotel.badge.replace(/[♦★⭐⚡]/g, '').trim()}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="absolute top-2 right-2 z-20 pointer-events-none">
+                            <span className="bg-emerald-600/95 backdrop-blur-xs text-white text-[11px] font-black px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-md">
+                              <Star className="w-3 h-3 fill-white text-white" />
+                              <span>{hotel.rating}</span>
+                              <span className="text-emerald-100 font-medium text-[9.5px]">({hotel.reviewsCount})</span>
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handlePrevPhoto(e, hotel.id, hotel.gallery.length)}
+                            className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all z-20 cursor-pointer"
+                            title="Previous Photo"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => handleNextPhoto(e, hotel.id, hotel.gallery.length)}
+                            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all z-20 cursor-pointer"
+                            title="Next Photo"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {thumbnails.map((thumb, tIdx) => (
+                            <div
+                              key={tIdx}
+                              onClick={(e) => handleSelectThumbnail(e, hotel.id, tIdx)}
+                              className={`h-11 rounded-lg overflow-hidden cursor-pointer border-2 transition-all bg-slate-100 relative ${
+                                currentImgIdx === tIdx ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200 opacity-75 hover:opacity-100'
+                              }`}
+                            >
+                              <img src={thumb} alt="thumb" className="w-full h-full object-cover" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Right Column: Hotel Details & Hourly Slot Pricing */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between space-y-2 py-0.5">
+                        <div className="space-y-1.5">
+                          <h3 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-purple-900 transition-colors leading-tight">
+                            {hotel.name}
+                          </h3>
+
+                          <div className="flex items-center gap-2.5 flex-wrap text-[11px] font-bold text-slate-500">
+                            <span className="flex items-center gap-1 text-slate-600">
+                              <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                              <span>{hotel.location}</span>
+                            </span>
+                            <span>•</span>
+                            <span className="text-purple-900 font-extrabold flex items-center gap-1">
+                              <Train className="w-3.5 h-3.5 text-purple-700" />
+                              <span>{hotel.nearStation ? '3 mins to Station' : '8 mins to Station'}</span>
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-4 text-xs font-bold text-slate-700 pt-0.5">
+                            <span className="flex items-center gap-1.5">
+                              <Users className="w-3.5 h-3.5 text-purple-700" /> Couple Friendly
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> Accepts Local ID
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Bottom Row */}
+                        <div className="pt-2 border-t border-slate-100 flex items-center gap-2 sm:gap-2.5">
+                          <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
+                            <span className="text-sm sm:text-base font-black text-slate-900 block">
+                              ₹{hotel.hourlyRate3h}
+                            </span>
+                            <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                              3 Hrs
+                            </span>
+                          </div>
+
+                          <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
+                            <span className="text-sm sm:text-base font-black text-slate-900 block">
+                              ₹{hotel.hourlyRate6h}
+                            </span>
+                            <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                              6 Hrs
+                            </span>
+                          </div>
+
+                          <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
+                            <span className="text-sm sm:text-base font-black text-slate-900 block">
+                              ₹{hotel.hourlyRate12h}
+                            </span>
+                            <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                              12 Hrs
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 pl-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                triggerWhatsApp(hotel, '3 Hours Stay', hotel.hourlyRate3h);
+                              }}
+                              className="p-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl transition-all cursor-pointer shadow-2xs"
+                              title="WhatsApp Hotel"
+                            >
+                              <MessageSquare className="w-4 h-4" />
+                            </button>
+
+                            <a
+                              href={`tel:${hotel.phone}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                recordHotelClick(hotel.id, 'call');
+                              }}
+                              className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl transition-all cursor-pointer border border-slate-200"
+                              title="Call Reception"
+                            >
+                              <Phone className="w-4 h-4" />
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {/* Bottom Banner: Add Your Hotel (Slim & Compact) */}
