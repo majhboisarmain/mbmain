@@ -479,80 +479,27 @@ function ResortsPageContent() {
 
             </div>
 
-            {/* If no resorts listed: Display Card List with Property Sold-Out Style Coming Soon Badges */}
+            {/* If no resorts listed: Display Minimal Property Sold-Out Style Coming Soon Cards */}
             {filteredResorts.length === 0 ? (
               <div className="space-y-3.5 my-2 text-left">
-                {/* Owner banner - subtle header strip */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 bg-teal-50/80 border border-teal-200/80 rounded-2xl px-4 py-2.5 text-xs text-teal-950 shadow-2xs">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">🌴</span>
-                    <div>
-                      <span className="font-extrabold text-slate-900">Are you a Resort or Pool Villa Owner?</span>
-                      <span className="text-slate-600 block text-[11px] sm:inline sm:ml-1">List your villa & connect with weekend tourists.</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!isLoggedIn) {
-                        showToast("Please login first to list your resort or pool villa.", "info", 4000);
-                        setLoginModalOpen(true);
-                        return;
-                      }
-                      setIsListModalOpen(true);
-                    }}
-                    className="bg-teal-800 hover:bg-teal-700 text-white font-black text-[11px] px-3.5 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
-                  >
-                    + List Your Villa Free
-                  </button>
-                </div>
-
-                {/* Generic Coming Soon Cards with Property Sold-Out style overlay */}
                 {[
-                  {
-                    id: 'cs-resort-1',
-                    tag: 'KELWA BEACH',
-                    title: 'Beachfront Family Resort & Day Picnic',
-                    area: 'Kelwa Beach Road · Direct Beach Access',
-                    specs: 'Day Picnic & Overnight Stays',
-                    highlights: 'Swimming Pool · Coconut Garden · Home Food',
-                    price: '₹999',
-                    priceUnit: 'Starting / person (Day Picnic)'
-                  },
-                  {
-                    id: 'cs-resort-2',
-                    tag: 'BOISAR WEST',
-                    title: 'Private 3BHK Swimming Pool Villa',
-                    area: 'Boisar West Nature Belt · Complete Privacy',
-                    specs: 'Entire Villa · Up to 15 Guests',
-                    highlights: '24/7 Private Pool · BBQ Lawn · AC Rooms',
-                    price: '₹4,999',
-                    priceUnit: 'Starting / night (Full Villa)'
-                  },
-                  {
-                    id: 'cs-resort-3',
-                    tag: 'PALGHAR / MANOR',
-                    title: 'Nature Riverside Farmhouse Cottage',
-                    area: 'Manor Riverside Zone · Scenic Green Views',
-                    specs: 'Weekend Day Outing & Night Rest',
-                    highlights: 'Riverfront Deck · Bonfire · Green Farm',
-                    price: '₹3,499',
-                    priceUnit: 'Starting / night'
-                  }
+                  { id: 'cs-resort-1', tag: 'KELWA BEACH', area: 'Kelwa Beach' },
+                  { id: 'cs-resort-2', tag: 'BOISAR WEST', area: 'Boisar West' },
+                  { id: 'cs-resort-3', tag: 'PALGHAR / MANOR', area: 'Manor / Palghar' }
                 ].map(item => (
                   <div
                     key={item.id}
-                    className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-3 sm:p-4 text-left shadow-xs transition-all relative overflow-hidden"
+                    className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-3.5 sm:p-4 text-left shadow-xs transition-all relative overflow-hidden"
                   >
-                    <div className="flex flex-col sm:flex-row gap-3.5 sm:gap-4 items-stretch">
-                      {/* Left Thumbnail with ROTATED COMING SOON STAMP (Matching Property SOLD OUT in media_1788548238991.png) */}
-                      <div className="relative w-full sm:w-[240px] md:w-[270px] h-[150px] sm:h-[160px] rounded-xl sm:rounded-2xl overflow-hidden bg-slate-900 shrink-0 select-none pointer-events-none">
+                    <div className="flex flex-col sm:flex-row gap-3.5 sm:gap-5 items-center">
+                      {/* Left Thumbnail with ROTATED COMING SOON STAMP */}
+                      <div className="relative w-full sm:w-[220px] md:w-[250px] h-[130px] sm:h-[140px] rounded-xl sm:rounded-2xl overflow-hidden bg-slate-900 shrink-0 select-none pointer-events-none">
                         <div className="w-full h-full bg-gradient-to-br from-slate-900 via-teal-950 to-slate-950 flex flex-col items-center justify-center p-3 text-center">
-                          <Waves className="w-12 h-12 text-teal-700/60 mb-1" />
-                          <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">Resort &amp; Villa</span>
+                          <Waves className="w-10 h-10 text-teal-700/60 mb-1" />
+                          <span className="text-[9.5px] font-bold text-teal-400 uppercase tracking-widest">Resort &amp; Villa</span>
                         </div>
 
-                        {/* Big Bold COMING SOON Overlay (Exact match to SOLD OUT overlay in HomeClient) */}
+                        {/* Big Bold COMING SOON Overlay */}
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-20 p-2 text-center">
                           <div className="px-3 py-1.5 rounded-lg border-2 border-rose-300 shadow-2xl transform -rotate-6 text-center tracking-wider bg-rose-600 text-white font-black">
                             <span className="text-xs sm:text-sm font-black uppercase block leading-tight drop-shadow-sm">
@@ -565,72 +512,32 @@ function ResortsPageContent() {
                         </div>
                       </div>
 
-                      {/* Right Details */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                        <div>
-                          {/* Top Row: Location Tag + Status Pill */}
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-200">
-                              {item.tag}
-                            </span>
-                            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200">
-                              COMING SOON
-                            </span>
-                          </div>
-
-                          {/* Generic Category Title (No business name) */}
-                          <h3 className="text-sm sm:text-base font-black text-slate-900 mt-1.5 leading-snug">
-                            {item.title}
-                          </h3>
-
-                          {/* Location subtitle */}
-                          <p className="text-[11.5px] text-slate-500 font-medium mt-0.5 flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                            <span>{item.area}</span>
-                          </p>
-
-                          {/* Specs */}
-                          <div className="flex items-center gap-2 flex-wrap text-[11px] font-semibold text-slate-600 mt-2">
-                            <span className="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700">
-                              {item.specs}
-                            </span>
-                            <span className="bg-teal-50 px-2 py-0.5 rounded-md text-teal-800 font-bold border border-teal-200/60">
-                              {item.highlights}
-                            </span>
-                          </div>
+                      {/* Right: Only Location, Coming Soon & Locked Status */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-center py-1 w-full space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-200">
+                            {item.tag}
+                          </span>
+                          <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200">
+                            COMING SOON
+                          </span>
                         </div>
 
-                        {/* Bottom Pricing & Action Row */}
-                        <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-3">
-                          <div>
-                            <div className="text-base sm:text-lg font-black text-slate-900 leading-none">
-                              {item.price}
-                            </div>
-                            <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
-                              {item.priceUnit}
-                            </span>
-                          </div>
+                        <div>
+                          <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                            Coming Soon
+                          </h3>
+                          <p className="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>{item.area}</span>
+                          </p>
+                        </div>
 
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-500 text-[11px] font-bold border border-slate-200 select-none">
-                              <Lock className="w-3 h-3 text-slate-400" />
-                              <span>Coming Soon</span>
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (!isLoggedIn) {
-                                  showToast("Please login first to list your resort or pool villa.", "info", 4000);
-                                  setLoginModalOpen(true);
-                                  return;
-                                }
-                                setIsListModalOpen(true);
-                              }}
-                              className="text-[11px] font-extrabold text-teal-800 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2.5 py-1 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
-                            >
-                              List Your Villa Free →
-                            </button>
-                          </div>
+                        <div className="pt-1">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 text-slate-500 text-xs font-bold border border-slate-200 select-none">
+                            <Lock className="w-3.5 h-3.5 text-slate-400" />
+                            <span>Coming Soon</span>
+                          </span>
                         </div>
                       </div>
                     </div>
