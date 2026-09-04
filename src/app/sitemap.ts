@@ -28,6 +28,10 @@ const TOP_BOISAR_CATEGORIES = [
   'Furniture & Home Decor',
   'Car & Tempo Rental',
   'Event Planners & Banquet',
+  'Water Purifier Dealers',
+  'AC Service & Cooling',
+  'Pest Control Services',
+  'House Cleaning',
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

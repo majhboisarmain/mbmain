@@ -90,22 +90,22 @@ const SERVICE_CATEGORIES: ServiceCategory[] = [
   { id: 'maid', name: 'House Maid', query: 'House Maid', iconBg: 'bg-pink-50', iconColor: 'text-pink-600', borderColor: 'border-pink-200', iconType: 'maid' },
   { id: 'electrician', name: 'Electricians', query: 'Electrician', iconBg: 'bg-amber-50', iconColor: 'text-amber-600', borderColor: 'border-amber-200', iconType: 'electrician' },
   { id: 'plumber', name: 'Plumbers', query: 'Plumber', iconBg: 'bg-blue-50', iconColor: 'text-blue-600', borderColor: 'border-blue-200', iconType: 'plumber' },
+  { id: 'ro', name: 'RO Purifier', query: 'RO Purifier', iconBg: 'bg-cyan-50', iconColor: 'text-cyan-600', borderColor: 'border-cyan-200', iconType: 'ro' },
   { id: 'ac', name: 'AC Service', query: 'AC Repair', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-600', borderColor: 'border-emerald-200', iconType: 'ac' },
   { id: 'cook', name: 'Cook / Chef', query: 'Cook', iconBg: 'bg-amber-50', iconColor: 'text-amber-600', borderColor: 'border-amber-200', iconType: 'cook' },
   { id: 'driver', name: 'Car Driver', query: 'Car Driver', iconBg: 'bg-indigo-50', iconColor: 'text-indigo-600', borderColor: 'border-indigo-200', iconType: 'driver' },
   { id: 'carpenter', name: 'Carpenters', query: 'Carpenter', iconBg: 'bg-amber-100/70', iconColor: 'text-amber-800', borderColor: 'border-amber-300', iconType: 'carpenter' },
-  { id: 'painter', name: 'Painters', query: 'Painter', iconBg: 'bg-indigo-50', iconColor: 'text-indigo-600', borderColor: 'border-indigo-200', iconType: 'painter' },
   { id: 'more', name: 'More Services', query: 'Home Services', iconBg: 'bg-purple-50', iconColor: 'text-purple-600', borderColor: 'border-purple-200', iconType: 'more' },
 ];
 
 // Extended Categories for "More Services" (Clean & non-duplicate)
 const EXTENDED_CATEGORIES: ServiceCategory[] = [
+  { id: 'painter', name: 'Painters', query: 'Painter', iconBg: 'bg-indigo-50', iconColor: 'text-indigo-600', borderColor: 'border-indigo-200', iconType: 'painter' },
   { id: 'babysitter', name: 'Babysitter', query: 'Babysitter', iconBg: 'bg-purple-50', iconColor: 'text-purple-600', borderColor: 'border-purple-200', iconType: 'babysitter' },
   { id: 'deepclean', name: 'Deep Clean', query: 'Deep Clean', iconBg: 'bg-teal-50', iconColor: 'text-teal-600', borderColor: 'border-teal-200', iconType: 'deepclean' },
   { id: 'pest', name: 'Pest Control', query: 'Pest Control', iconBg: 'bg-sky-50', iconColor: 'text-sky-600', borderColor: 'border-sky-200', iconType: 'pest' },
   { id: 'movers', name: 'Packers & Movers', query: 'Packers & Movers', iconBg: 'bg-orange-50', iconColor: 'text-orange-600', borderColor: 'border-orange-200', iconType: 'movers' },
   { id: 'elderly', name: 'Elderly Care', query: 'Elderly Care', iconBg: 'bg-rose-50', iconColor: 'text-rose-600', borderColor: 'border-rose-200', iconType: 'elderly' },
-  { id: 'ro', name: 'RO Purifier', query: 'RO Purifier', iconBg: 'bg-cyan-50', iconColor: 'text-cyan-600', borderColor: 'border-cyan-200', iconType: 'ro' },
   { id: 'appliance', name: 'Washing Machine & Fridge', query: 'Appliance Repair', iconBg: 'bg-rose-50', iconColor: 'text-rose-600', borderColor: 'border-rose-200', iconType: 'appliance' },
   { id: 'cctv', name: 'CCTV & Security', query: 'CCTV', iconBg: 'bg-slate-100', iconColor: 'text-slate-700', borderColor: 'border-slate-300', iconType: 'cctv' },
   { id: 'solar', name: 'Solar Panels', query: 'Solar', iconBg: 'bg-yellow-50', iconColor: 'text-yellow-700', borderColor: 'border-yellow-200', iconType: 'solar' },
@@ -366,6 +366,16 @@ const POPULAR_SERVICES: PopularService[] = [
     reviews: 38,
     image: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=500&auto=format&fit=crop&q=80',
     desc: 'Pipe leak fix, bathroom tap & shower fitting, water tank & motor installation.'
+  },
+  {
+    id: 'pop-ro',
+    title: 'RO Purifier Service & Repair',
+    category: 'RO Purifier',
+    startingPrice: 'Starting ₹299',
+    rating: 4.8,
+    reviews: 45,
+    image: 'https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=500&auto=format&fit=crop&q=80',
+    desc: 'Filter replacement, membrane service, TDS adjustment, leakage repair & RO installation.'
   },
   {
     id: 'pop-3',
@@ -899,7 +909,7 @@ const isMatchingRole = (roleStr: string, catStr: string) => {
               Home
             </Link>
             <span className="text-slate-300">/</span>
-            <span className="text-teal-900 font-black truncate">Home Services &amp; Domestic Helpers in Boisar</span>
+            <h1 className="text-teal-900 font-black truncate inline-block text-xs">RO Purifier Repair &amp; Home Services in Boisar</h1>
           </div>
 
           <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold shrink-0">
@@ -1272,6 +1282,54 @@ const isMatchingRole = (roleStr: string, catStr: string) => {
             </div>
           </div>
         )}
+
+        {/* ── 6. GOOGLE RICH FAQ SECTION (Beating Justdial & Sulekha SEO) ── */}
+        <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs text-left space-y-3">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-2.5">
+            <Sparkles className="w-4 h-4 text-teal-700" />
+            <h2 className="text-xs sm:text-sm font-black text-slate-900">
+              Frequently Asked Questions: Home Services &amp; RO Repair in Boisar
+            </h2>
+          </div>
+
+          <div className="space-y-2.5 divide-y divide-slate-100">
+            <div className="pt-1.5">
+              <h3 className="text-xs font-black text-slate-800">
+                1. How to book RO Purifier repair &amp; water filter service in Boisar?
+              </h3>
+              <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
+                You can book verified RO technicians on Majh Boisar with 1-tap direct call or WhatsApp. Services include Kent, Aquaguard, Pureit &amp; Livpure filter cartridge change, membrane service, TDS adjustment, and motor repair starting at ₹199 visiting fee.
+              </p>
+            </div>
+
+            <div className="pt-2.5">
+              <h3 className="text-xs font-black text-slate-800">
+                2. What are the visiting charges for electricians, plumbers and AC technicians in Boisar?
+              </h3>
+              <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
+                Visiting and inspection charges start from ₹199 for electricians and plumbers in Boisar. AC service jet wash starts from ₹299. All providers give transparent upfront rates before beginning any work.
+              </p>
+            </div>
+
+            <div className="pt-2.5">
+              <h3 className="text-xs font-black text-slate-800">
+                3. Can I hire verified house maids, cooks, and drivers in Boisar?
+              </h3>
+              <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
+                Yes, Majh Boisar lists background-checked domestic helpers including house maids (cleaning, sweeping, mopping, utensil washing), home cooks (roti-sabji, full meals), and car drivers with duty timings and direct contact numbers.
+              </p>
+            </div>
+
+            <div className="pt-2.5">
+              <h3 className="text-xs font-black text-slate-800">
+                4. Are emergency repair services available in Tarapur MIDC and Boisar West?
+              </h3>
+              <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
+                Yes, on-call electricians, plumbers, and breakdown mechanics are available 24/7 for residential societies (Ostwal Empire, Navapur Road) and Tarapur MIDC industrial units.
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* 7. Bottom Banner (Slim & Compact) */}
         <div 

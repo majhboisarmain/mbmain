@@ -40,7 +40,9 @@ export const metadata: Metadata = {
     "tarapur midc jobs", "boisar midc job fair", "jobs in boisar", "urgent vacancy in tarapur", "chemical company jobs in tarapur", "tempo service near me", "tempo services in boisar",
     "chota hathi tempo boisar", "tempo helpline boisar", "car rental in boisar", "travels near me in boisar", "cab booking boisar", "auto rickshaw boisar",
     "restaurants in boisar", "food delivery boisar", "best cafe in boisar", "pure veg food boisar", "dhaba in boisar",
-    "blood donation in boisar", "boisar blood donors", "emergency blood boisar", "blood bank in boisar", "boisar helpline", "tarapur midc directory"
+    "blood donation in boisar", "boisar blood donors", "emergency blood boisar", "blood bank in boisar", "boisar helpline", "tarapur midc directory",
+    "ro repair boisar", "ro repair in boisar", "water purifier repair boisar", "home services boisar", "ac repair in boisar", "electrician in boisar", "plumber in boisar", "house maid in boisar",
+    "justdial boisar", "justdial alternative boisar", "housing boisar", "agoda boisar", "oyo hotels in boisar"
   ],
   authors: [{ name: "Majh Boisar" }],
   creator: "Majh Boisar",
@@ -183,30 +185,36 @@ const siteNavigationJsonLd = {
     {
       "@type": "SiteNavigationElement",
       "position": 4,
+      "name": "Home Services & RO Water Purifier Repair in Boisar",
+      "url": "https://majhboisar.in/services"
+    },
+    {
+      "@type": "SiteNavigationElement",
+      "position": 5,
       "name": "Find Jobs in Boisar & Tarapur MIDC",
       "url": "https://majhboisar.in/jobs"
     },
     {
       "@type": "SiteNavigationElement",
-      "position": 5,
+      "position": 6,
       "name": "Emergency Blood Donors in Boisar",
       "url": "https://majhboisar.in/blood-donation"
     },
     {
       "@type": "SiteNavigationElement",
-      "position": 6,
+      "position": 7,
       "name": "Advertise & Promote Business in Boisar",
       "url": "https://majhboisar.in/advertise"
     },
     {
       "@type": "SiteNavigationElement",
-      "position": 7,
+      "position": 8,
       "name": "Local Business Directory Search",
       "url": "https://majhboisar.in/search"
     },
     {
       "@type": "SiteNavigationElement",
-      "position": 8,
+      "position": 9,
       "name": "Partner & Business Dashboard",
       "url": "https://majhboisar.in/dashboard"
     }
