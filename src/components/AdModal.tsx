@@ -92,59 +92,89 @@ export default function AdModal({ isOpen, onClose, highlightedPackageName }: AdM
             <button
               type="button"
               onClick={() => setTab('autorickshaw')}
-              className={`py-1.5 px-2 rounded-lg font-black transition-all cursor-pointer text-center ${
+              className={`py-1.5 px-2 rounded-lg font-black transition-all cursor-pointer text-center flex items-center justify-center gap-1 ${
                 tab === 'autorickshaw' ? 'bg-white text-purple-950 shadow-xs' : 'text-slate-500'
               }`}
             >
-              🛺 Auto Posters
+              <span>🛺 Auto Posters</span>
+              <span className="bg-amber-400 text-slate-950 text-[8px] font-black px-1.5 py-0.2 rounded-full uppercase">
+                Soon
+              </span>
             </button>
           </div>
 
-          {/* Pricing List */}
-          <div className="space-y-2">
-            {currentPackages.map((pkg, i) => (
-              <div
-                key={i}
-                className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all ${
-                  pkg.isPopular ? 'bg-purple-50/60 border-purple-300 shadow-2xs' : 'bg-slate-50 border-slate-200'
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-sm shrink-0">
-                  {pkg.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="text-[11px] font-black text-slate-900 leading-tight">
-                      {pkg.name}
-                    </h4>
-                    {pkg.isPopular && (
-                      <span className="bg-purple-900 text-white text-[7px] font-black px-1.5 py-0.2 rounded uppercase">
-                        Popular
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[9px] text-slate-500 font-medium mt-0.5 line-clamp-1">
-                    {pkg.desc} · {pkg.duration}
-                  </p>
-                </div>
-                <div className="text-xs font-black text-purple-950 shrink-0">
-                  {pkg.price}
-                </div>
+          {/* Pricing List or Coming Soon */}
+          {tab === 'autorickshaw' ? (
+            <div className="bg-gradient-to-br from-purple-950 to-indigo-950 border border-purple-400/40 rounded-2xl p-4 text-center text-white space-y-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center text-xl mx-auto animate-pulse">
+                🛺
               </div>
-            ))}
-          </div>
+              <div>
+                <span className="inline-block bg-amber-400 text-slate-950 text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full mb-1">
+                  Coming Soon
+                </span>
+                <h4 className="text-xs font-black text-white">Auto Rickshaw Poster Ads</h4>
+                <p className="text-[10px] text-purple-200 mt-1 leading-snug">
+                  Physical printed ads on 100+ Auto Rickshaws across Boisar, Palghar &amp; Tarapur MIDC launching very soon!
+                </p>
+              </div>
+              <a
+                href="https://wa.me/917769947217?text=Hi%20Majh%20Boisar%2C%20I%20am%20interested%20in%20Auto%20Rickshaw%20Poster%20Ads%20once%20launched."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black text-[11px] py-2.5 rounded-xl transition-all shadow-xs cursor-pointer"
+              >
+                <span>Notify Me on WhatsApp</span>
+              </a>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-2">
+                {currentPackages.map((pkg, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all ${
+                      pkg.isPopular ? 'bg-purple-50/60 border-purple-300 shadow-2xs' : 'bg-slate-50 border-slate-200'
+                    }`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-sm shrink-0">
+                      {pkg.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className="text-[11px] font-black text-slate-900 leading-tight">
+                          {pkg.name}
+                        </h4>
+                        {pkg.isPopular && (
+                          <span className="bg-purple-900 text-white text-[7px] font-black px-1.5 py-0.2 rounded uppercase">
+                            Popular
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[9px] text-slate-500 font-medium mt-0.5 line-clamp-1">
+                        {pkg.desc} · {pkg.duration}
+                      </p>
+                    </div>
+                    <div className="text-xs font-black text-purple-950 shrink-0">
+                      {pkg.price}
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-          {/* WhatsApp CTA Button */}
-          <div className="pt-1">
-            <a
-              href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar!%20I%20want%20to%20book%20an%20advertising%20slot."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black text-xs py-3 rounded-xl transition-all shadow-md cursor-pointer"
-            >
-              <span>Chat on WhatsApp to Book Slot</span>
-            </a>
-          </div>
+              {/* WhatsApp CTA Button */}
+              <div className="pt-1">
+                <a
+                  href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar!%20I%20want%20to%20book%20an%20advertising%20slot."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-black text-xs py-3 rounded-xl transition-all shadow-md cursor-pointer"
+                >
+                  <span>Chat on WhatsApp to Book Slot</span>
+                </a>
+              </div>
+            </>
+          )}
 
         </div>
       </div>

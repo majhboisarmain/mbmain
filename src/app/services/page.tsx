@@ -515,6 +515,23 @@ function ServicesPageContent() {
     setShowAddForm(true);
   };
 
+  const isDomesticHelperCategory = (catStr: string) => {
+    if (!catStr) return false;
+    const c = catStr.toLowerCase().trim();
+    return (
+      c.includes('maid') ||
+      c.includes('cook') ||
+      c.includes('chef') ||
+      c.includes('driver') ||
+      c.includes('babysitter') ||
+      c.includes('elderly') ||
+      c.includes('baby') ||
+      c.includes('domestic') ||
+      c.includes('kamwali') ||
+      c.includes('bai')
+    );
+  };
+
   // Load live profiles from PostgreSQL database and sync any local items
   const loadLiveProfiles = async () => {
     try {
@@ -529,47 +546,52 @@ function ServicesPageContent() {
           const loadedHelpers: DomesticHelper[] = [];
 
           dbList.forEach((item: any) => {
-            const defaultImg = item.category?.includes('Maid') ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=80'
-              : item.category?.includes('Driver') ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80'
-              : item.category?.includes('Cook') ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=80'
-              : item.category?.includes('Babysitter') ? 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=500&auto=format&fit=crop&q=80'
-              : item.category?.includes('Plumber') ? 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=500&auto=format&fit=crop&q=80'
-              : item.category?.includes('AC') ? 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop&q=80'
+            const cat = item.category || item.role || '';
+            const isHelper = isDomesticHelperCategory(cat);
+            const defaultImg = cat.includes('Maid') ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=500&auto=format&fit=crop&q=80'
+              : cat.includes('Driver') ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80'
+              : cat.includes('Cook') ? 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=80'
+              : cat.includes('Babysitter') ? 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=500&auto=format&fit=crop&q=80'
+              : cat.includes('Plumber') ? 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=500&auto=format&fit=crop&q=80'
+              : cat.includes('AC') ? 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop&q=80'
               : 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=500&auto=format&fit=crop&q=80';
 
-            const providerItem: ServiceProvider = {
-              id: String(item.id),
-              name: item.name,
-              category: item.category,
-              experience: item.experience || 'Experienced in Boisar',
-              phone: item.phone,
-              location: item.location || 'Boisar West',
-              visitingFee: item.visitingFee || '₹199 Inspection',
-              allowCalls: item.allowCalls !== false,
-              rating: item.rating || 5.0,
-              reviewsCount: item.reviewsCount || 1,
-              verified: item.verified !== false,
-              featured: Boolean(item.featured),
-              image: item.image || defaultImg
-            };
-            loadedProviders.push(providerItem);
+            const cleanFee = String(item.visitingFee || item.expectedSalary || '₹199 Inspection').replace(/💰/g, '').trim();
 
-            loadedHelpers.push({
-              id: String(item.id),
-              name: item.name,
-              role: item.category,
-              timing: item.timing || 'Available On-Demand',
-              experience: item.experience || 'Experienced in Boisar',
-              expectedSalary: item.visitingFee || 'Starting ₹250 / Call for Rates',
-              location: item.location || 'Boisar West',
-              phone: item.phone,
-              allowCalls: item.allowCalls !== false,
-              rating: item.rating || 5.0,
-              reviewsCount: item.reviewsCount || 1,
-              verified: item.verified !== false,
-              featured: Boolean(item.featured),
-              image: item.image || defaultImg
-            });
+            if (isHelper) {
+              loadedHelpers.push({
+                id: String(item.id),
+                name: item.name,
+                role: cat,
+                timing: item.timing || 'Available On-Demand',
+                experience: item.experience || 'Experienced in Boisar',
+                expectedSalary: cleanFee,
+                location: item.location || 'Boisar West',
+                phone: item.phone,
+                allowCalls: item.allowCalls !== false,
+                rating: item.rating || 5.0,
+                reviewsCount: item.reviewsCount || 1,
+                verified: item.verified !== false,
+                featured: Boolean(item.featured),
+                image: item.image || defaultImg
+              });
+            } else {
+              loadedProviders.push({
+                id: String(item.id),
+                name: item.name,
+                category: cat,
+                experience: item.experience || 'Experienced in Boisar',
+                phone: item.phone,
+                location: item.location || 'Boisar West',
+                visitingFee: cleanFee,
+                allowCalls: item.allowCalls !== false,
+                rating: item.rating || 5.0,
+                reviewsCount: item.reviewsCount || 1,
+                verified: item.verified !== false,
+                featured: Boolean(item.featured),
+                image: item.image || defaultImg
+              });
+            }
           });
 
           loadedProviders.sort((a, b) => {
@@ -613,7 +635,7 @@ function ServicesPageContent() {
                     experience: item.experience || '3+ Yrs Experience',
                     phone: item.phone,
                     location: item.location || 'Boisar West',
-                    visitingFee: item.visitingFee || item.expectedSalary || '₹199 Inspection',
+                    visitingFee: String(item.visitingFee || item.expectedSalary || '₹199 Inspection').replace(/💰/g, '').trim(),
                     timing: item.timing || 'Available On-Demand',
                     allowCalls: item.allowCalls !== false,
                     image: item.image
@@ -626,27 +648,27 @@ function ServicesPageContent() {
               if (refreshed.ok) {
                 const refreshedList = await refreshed.json();
                 if (Array.isArray(refreshedList)) {
-                  setProviders(refreshedList.map((x: any) => ({
+                  setProviders(refreshedList.filter((x: any) => !isDomesticHelperCategory(x.category || x.role)).map((x: any) => ({
                     id: String(x.id),
                     name: x.name,
                     category: x.category,
                     experience: x.experience,
                     phone: x.phone,
                     location: x.location,
-                    visitingFee: x.visitingFee,
+                    visitingFee: String(x.visitingFee || '₹199 Inspection').replace(/💰/g, '').trim(),
                     allowCalls: x.allowCalls !== false,
                     rating: x.rating || 5.0,
                     reviewsCount: x.reviewsCount || 1,
                     verified: x.verified !== false,
                     image: x.image
                   })));
-                  setDomesticHelpers(refreshedList.map((x: any) => ({
+                  setDomesticHelpers(refreshedList.filter((x: any) => isDomesticHelperCategory(x.category || x.role)).map((x: any) => ({
                     id: String(x.id),
                     name: x.name,
                     role: x.category,
                     timing: x.timing || 'Available On-Demand',
                     experience: x.experience,
-                    expectedSalary: x.visitingFee,
+                    expectedSalary: String(x.visitingFee || 'Starting ₹250').replace(/💰/g, '').trim(),
                     location: x.location,
                     phone: x.phone,
                     allowCalls: x.allowCalls !== false,
@@ -904,25 +926,28 @@ function ServicesPageContent() {
       };
 
       if (saved.verified) {
-        setProviders(prev => [newProvider, ...prev.filter(p => String(p.id) !== String(newProvider.id))]);
-        setDomesticHelpers(prev => [
-          {
-            id: String(saved.id),
-            name: saved.name,
-            role: saved.category,
-            timing: saved.timing || 'Available On-Demand',
-            experience: saved.experience,
-            expectedSalary: saved.visitingFee,
-            location: saved.location,
-            phone: saved.phone,
-            allowCalls: saved.allowCalls !== false,
-            rating: saved.rating || 5.0,
-            reviewsCount: saved.reviewsCount || 1,
-            verified: true,
-            image: newProvider.image
-          },
-          ...prev.filter(h => String(h.id) !== String(newProvider.id))
-        ]);
+        if (isDomesticHelperCategory(saved.category)) {
+          setDomesticHelpers(prev => [
+            {
+              id: String(saved.id),
+              name: saved.name,
+              role: saved.category,
+              timing: saved.timing || 'Available On-Demand',
+              experience: saved.experience,
+              expectedSalary: String(saved.visitingFee || '₹199 Inspection').replace(/💰/g, '').trim(),
+              location: saved.location,
+              phone: saved.phone,
+              allowCalls: saved.allowCalls !== false,
+              rating: saved.rating || 5.0,
+              reviewsCount: saved.reviewsCount || 1,
+              verified: true,
+              image: newProvider.image
+            },
+            ...prev.filter(h => String(h.id) !== String(newProvider.id))
+          ]);
+        } else {
+          setProviders(prev => [newProvider, ...prev.filter(p => String(p.id) !== String(newProvider.id))]);
+        }
 
         if (typeof window !== 'undefined') {
           try {
@@ -1031,16 +1056,22 @@ function ServicesPageContent() {
       };
 
       if (saved.verified) {
-        setDomesticHelpers(prev => [newHelper, ...prev.filter(h => String(h.id) !== String(newHelper.id))]);
-        setProviders(prev => [newProvider, ...prev.filter(p => String(p.id) !== String(newProvider.id))]);
-
-        if (typeof window !== 'undefined') {
-          try {
-            const currentH = JSON.parse(localStorage.getItem('majh_boisar_domestic_helpers') || '[]');
-            localStorage.setItem('majh_boisar_domestic_helpers', JSON.stringify([newHelper, ...currentH.filter((h: any) => String(h.id) !== String(newHelper.id))]));
-            const currentP = JSON.parse(localStorage.getItem('majh_boisar_tech_list') || '[]');
-            localStorage.setItem('majh_boisar_tech_list', JSON.stringify([newProvider, ...currentP.filter((p: any) => String(p.id) !== String(newProvider.id))]));
-          } catch (e) {}
+        if (isDomesticHelperCategory(saved.category || helperRole)) {
+          setDomesticHelpers(prev => [newHelper, ...prev.filter(h => String(h.id) !== String(newHelper.id))]);
+          if (typeof window !== 'undefined') {
+            try {
+              const currentH = JSON.parse(localStorage.getItem('majh_boisar_domestic_helpers') || '[]');
+              localStorage.setItem('majh_boisar_domestic_helpers', JSON.stringify([newHelper, ...currentH.filter((h: any) => String(h.id) !== String(newHelper.id))]));
+            } catch (e) {}
+          }
+        } else {
+          setProviders(prev => [newProvider, ...prev.filter(p => String(p.id) !== String(newProvider.id))]);
+          if (typeof window !== 'undefined') {
+            try {
+              const currentP = JSON.parse(localStorage.getItem('majh_boisar_tech_list') || '[]');
+              localStorage.setItem('majh_boisar_tech_list', JSON.stringify([newProvider, ...currentP.filter((p: any) => String(p.id) !== String(newProvider.id))]));
+            } catch (e) {}
+          }
         }
 
         // Automatically navigate to active category
@@ -1097,8 +1128,16 @@ function ServicesPageContent() {
 
   // Filtered Domestic Helpers
   const filteredDomesticHelpers = useMemo(() => {
+    // If a non-helper category is selected (e.g. RO Purifier, Electricians, etc.), DO NOT show domestic helpers section
+    if (selectedCategory !== 'All' && !isDomesticHelperCategory(selectedCategory)) {
+      return [];
+    }
+
     return domesticHelpers
       .filter(h => {
+        // Must be a domestic helper category
+        if (!isDomesticHelperCategory(h.role)) return false;
+
         // If user selected a specific category, STRICTLY match that category
         if (selectedCategory !== 'All') {
           if (!isMatchingRole(h.role, selectedCategory)) {
@@ -1128,8 +1167,16 @@ function ServicesPageContent() {
 
   // Filtered providers
   const filteredProviders = useMemo(() => {
+    // If a domestic helper category is selected (e.g. House Maid, Cook, Driver), DO NOT show technicians section
+    if (selectedCategory !== 'All' && isDomesticHelperCategory(selectedCategory)) {
+      return [];
+    }
+
     return providers
       .filter(p => {
+        // Providers must NOT be domestic helpers
+        if (isDomesticHelperCategory(p.category)) return false;
+
         if (selectedCategory !== 'All') {
           if (!isMatchingRole(p.category, selectedCategory)) {
             return false;
@@ -1140,11 +1187,11 @@ function ServicesPageContent() {
 
         const matchSearch = !searchQuery.trim() ||
           p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.location?.toLowerCase().includes(searchQuery.toLowerCase());
+          p.category?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.location?.toLowerCase().includes(searchQuery.toLowerCase());
 
-      return matchArea && matchSearch;
-    });
+        return matchArea && matchSearch;
+      });
   }, [providers, selectedCategory, selectedArea, searchQuery]);
 
   return (
@@ -1339,7 +1386,7 @@ function ServicesPageContent() {
                             <span>{helper.location} • {helper.experience}</span>
                           </p>
                           <p className="text-[11px] font-black text-pink-700 leading-snug">
-                            💰 {helper.expectedSalary}
+                            {helper.expectedSalary?.replace(/💰/g, '').trim()}
                           </p>
                         </div>
                       </div>
@@ -1388,7 +1435,7 @@ function ServicesPageContent() {
               <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-3">
                 <div className="border-b border-slate-100 pb-2.5">
                   <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
-                    {selectedCategory} Technicians &amp; Experts
+                    {selectedCategory}{" "}Technicians &amp; Experts
                   </h3>
                   <p className="text-[11px] text-slate-500 font-medium">1-Tap direct phone call &amp; WhatsApp with verified professionals</p>
                 </div>
@@ -1421,7 +1468,7 @@ function ServicesPageContent() {
                             <span>{tech.location} • {tech.experience}</span>
                           </p>
                           <p className="text-[11px] text-teal-700 font-black mt-1">
-                            {tech.visitingFee}
+                            {tech.visitingFee?.replace(/💰/g, '').trim()}
                           </p>
                         </div>
                       </div>
@@ -1600,7 +1647,7 @@ function ServicesPageContent() {
 
                         <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px]">
                           <span className="text-slate-500 font-bold truncate">{p.experience}</span>
-                          <span className="font-black text-teal-800 shrink-0">{p.visitingFee}</span>
+                          <span className="font-black text-teal-800 shrink-0">{p.visitingFee?.replace(/💰/g, '').trim()}</span>
                         </div>
                       </div>
 

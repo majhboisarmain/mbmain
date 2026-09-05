@@ -212,8 +212,9 @@ export default function AdminPanelPage() {
 
   // Real Estate Property Subscription Plan Prices
   const [propPlanFreePrice, setPropPlanFreePrice] = useState('₹0');
-  const [propPlanProPrice, setPropPlanProPrice] = useState('₹499/mo');
-  const [propPlanBuilderPrice, setPropPlanBuilderPrice] = useState('₹1,499/mo');
+  const [propPlan1499Price, setPropPlan1499Price] = useState('₹1,499');
+  const [propPlan2999Price, setPropPlan2999Price] = useState('₹2,999');
+  const [propPlan4999Price, setPropPlan4999Price] = useState('₹4,999');
 
   const [loading, setLoading] = useState(true);
   const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'queue' | 'home_restaurants' | 'hotel_management' | 'resort_management' | 'listings' | 'users' | 'leads' | 'reviews' | 'ad_orders' | 'ad_pricing' | 'categories' | 'logs' | 'deletion_requests' | 'jobs_management' | 'property_management' | 'spam_reports' | 'system_storage'>('queue');
@@ -1300,6 +1301,20 @@ export default function AdminPanelPage() {
           }
         }
       } catch (e) {}
+
+      try {
+        const savedPrices = localStorage.getItem('majh_boisar_subscription_prices');
+        if (savedPrices) {
+          const p = JSON.parse(savedPrices);
+          if (p.propPlanFreePrice) setPropPlanFreePrice(p.propPlanFreePrice);
+          if (p.propPlan1499Price) setPropPlan1499Price(p.propPlan1499Price);
+          if (p.propPlan2999Price) setPropPlan2999Price(p.propPlan2999Price);
+          if (p.propPlan4999Price) setPropPlan4999Price(p.propPlan4999Price);
+          if (p.bizPlanFreePrice) setBizPlanFreePrice(p.bizPlanFreePrice);
+          if (p.bizPlanProPrice) setBizPlanProPrice(p.bizPlanProPrice);
+          if (p.bizPlanVipPrice) setBizPlanVipPrice(p.bizPlanVipPrice);
+        }
+      } catch (e) {}
     }
   }, []);
 
@@ -1538,8 +1553,9 @@ export default function AdminPanelPage() {
         bizPlanProPrice,
         bizPlanVipPrice,
         propPlanFreePrice,
-        propPlanProPrice,
-        propPlanBuilderPrice
+        propPlan1499Price,
+        propPlan2999Price,
+        propPlan4999Price
       };
 
       if (typeof window !== 'undefined') {
@@ -2586,6 +2602,35 @@ export default function AdminPanelPage() {
       }
     } catch (err) {
       console.error('Error deleting property:', err);
+    }
+  };
+
+  const handleAdminChangePropertyVipBadge = (propId: number | string, vipBadge: string) => {
+    try {
+      setSpecialProfiles((prev: any) => {
+        const next = {
+          ...prev,
+          properties: (prev.properties || []).map((p: any) => String(p.id) === String(propId) ? { ...p, vipBadge, hasDirectCall: Boolean(vipBadge) } : p)
+        };
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('majh_boisar_special_profiles', JSON.stringify(next));
+        }
+        return next;
+      });
+
+      setAdminPropertyList((prev: any[]) => prev.map(p => String(p.id) === String(propId) ? { ...p, vipBadge, hasDirectCall: Boolean(vipBadge) } : p));
+
+      if (typeof window !== 'undefined') {
+        const badgesLookup = JSON.parse(localStorage.getItem('majh_boisar_property_vip_badges') || '{}');
+        badgesLookup[String(propId)] = vipBadge;
+        localStorage.setItem('majh_boisar_property_vip_badges', JSON.stringify(badgesLookup));
+        window.dispatchEvent(new Event('storage'));
+      }
+
+      logEvent(`Updated VIP Badge for Property ID ${propId} to: ${vipBadge || 'Standard / None'}`);
+      alert(`🎉 Property VIP Badge updated to "${vipBadge || 'Standard / None'}"! Live synced across Boisar.`);
+    } catch (err) {
+      console.error('Error changing VIP badge:', err);
     }
   };
 
@@ -6139,43 +6184,46 @@ export default function AdminPanelPage() {
                 <div className="bg-emerald-50/50 border border-emerald-200/80 p-4 rounded-2xl space-y-3">
                   <div>
                     <h4 className="text-xs font-black text-emerald-900 uppercase tracking-wider flex items-center gap-1.5">
-                      <Coins className="w-4 h-4 text-emerald-600" /> Real Estate Property Plans Pricing
+                      <Coins className="w-4 h-4 text-emerald-600" /> Real Estate Property Plans Pricing (₹1,499: 30 Days | ₹2,999 &amp; ₹4,999: 1st Month 50 Days Offer)
                     </h4>
-                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">Admin can change pricing for property owner & agent listing passes.</p>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">Admin can change pricing for property owner &amp; agent listing passes across Boisar.</p>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-bold text-slate-700">
-                    <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-1">
-                      <label className="block text-[10px] text-slate-400 font-black uppercase">Free Owner Plan</label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-bold text-slate-700">
+                    <div className="bg-white p-3.5 rounded-xl border border-teal-200 space-y-1">
+                      <label className="block text-[10px] text-teal-700 font-black uppercase tracking-wider">₹1,499 Package (2 Properties + Map)</label>
                       <input
                         type="text"
-                        value={propPlanFreePrice}
-                        onChange={e => setPropPlanFreePrice(e.target.value)}
-                        placeholder="₹0"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-black text-slate-800 focus:outline-none focus:border-emerald-500"
+                        value={propPlan1499Price}
+                        onChange={e => setPropPlan1499Price(e.target.value)}
+                        placeholder="₹1,499"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-black text-teal-700 focus:outline-none focus:border-teal-500"
                       />
+                      <span className="text-[9.5px] text-slate-400 font-medium block">2 Properties • Google Map • Direct Calling (30 Days)</span>
                     </div>
 
-                    <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-1">
-                      <label className="block text-[10px] text-emerald-600 font-black uppercase">Pro Agent Pass (Monthly)</label>
+                    <div className="bg-white p-3.5 rounded-xl border border-emerald-200 space-y-1">
+                      <label className="block text-[10px] text-emerald-700 font-black uppercase tracking-wider">₹2,999 Package (3 Properties + Map)</label>
                       <input
                         type="text"
-                        value={propPlanProPrice}
-                        onChange={e => setPropPlanProPrice(e.target.value)}
-                        placeholder="₹499/mo"
+                        value={propPlan2999Price}
+                        onChange={e => setPropPlan2999Price(e.target.value)}
+                        placeholder="₹2,999"
                         className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-black text-emerald-700 focus:outline-none focus:border-emerald-500"
                       />
+                      <span className="text-[9.5px] text-slate-400 font-medium block">3 Properties • Google Map • Direct Calling</span>
                     </div>
 
-                    <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-1">
-                      <label className="block text-[10px] text-indigo-600 font-black uppercase">Builder Pass (Monthly)</label>
+                    <div className="bg-white p-3.5 rounded-xl border border-purple-200 space-y-1">
+                      <label className="block text-[10px] text-purple-700 font-black uppercase tracking-wider">₹4,999 Package (5 Properties + 2 Feat)</label>
                       <input
                         type="text"
-                        value={propPlanBuilderPrice}
-                        onChange={e => setPropPlanBuilderPrice(e.target.value)}
-                        placeholder="₹1,499/mo"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-black text-indigo-700 focus:outline-none focus:border-emerald-500"
+                        value={propPlan4999Price}
+                        onChange={e => setPropPlan4999Price(e.target.value)}
+                        placeholder="₹4,999"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-black text-purple-700 focus:outline-none focus:border-purple-500"
                       />
+                      <span className="text-[9.5px] text-slate-400 font-medium block">5 Properties • 2 Cat Featured • Map • Direct Call</span>
                     </div>
                   </div>
                 </div>
@@ -6283,9 +6331,14 @@ export default function AdminPanelPage() {
                       </h3>
                       <p className="text-[11px] text-slate-500 font-medium mt-0.5">Edit the pricing, auto count, duration, and feature bullets displayed on the Auto Posters tab.</p>
                     </div>
-                    <span className="bg-purple-100 text-purple-900 border border-purple-200 text-[10px] font-black px-2.5 py-0.5 rounded-full">
-                      Physical Road Branding
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="bg-amber-400/20 text-amber-700 border border-amber-400/40 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                        ⏳ Status: Coming Soon
+                      </span>
+                      <span className="bg-purple-100 text-purple-900 border border-purple-200 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                        Physical Road Branding
+                      </span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -7034,6 +7087,191 @@ export default function AdminPanelPage() {
                   </div>
                 </div>
 
+                {/* ── 🏢 REAL ESTATE OWNER SUBSCRIPTION AUDIT & ACTIVE PLANS ── */}
+                {(() => {
+                  let subsList: any[] = [];
+                  if (typeof window !== 'undefined') {
+                    try {
+                      const rawSubs = localStorage.getItem('majh_boisar_property_subscriptions');
+                      if (rawSubs) {
+                        subsList = JSON.parse(rawSubs);
+                      }
+                    } catch (e) {}
+                  }
+
+                  // Count totals
+                  const totalSubCount = subsList.length;
+                  const totalSubRevenue = subsList.reduce((acc, curr) => acc + (Number(curr.priceNum) || 0), 0);
+                  const activeSubs = subsList.filter(s => {
+                    const days = s.expiryDate ? Math.ceil((new Date(s.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+                    return days > 0;
+                  });
+
+                  return (
+                    <div className="bg-gradient-to-br from-teal-950 via-slate-900 to-emerald-950 border-2 border-teal-500/30 rounded-3xl p-5 sm:p-6 shadow-md text-white space-y-4">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-teal-500/20 pb-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="bg-emerald-500 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                              Real Estate Revenue &amp; Plans Audit
+                            </span>
+                            <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black px-2 py-0.5 rounded-full">
+                              🎁 1st Mo Offer (+20d Free on ₹2,999 &amp; ₹4,999)
+                            </span>
+                          </div>
+                          <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                            <Building className="w-5 h-5 text-emerald-400" />
+                            Owner &amp; Agent Property Subscriptions
+                          </h3>
+                          <p className="text-xs text-slate-300 font-medium mt-0.5">
+                            Real-time tracking of who purchased which package (₹1,499 / ₹2,999 / ₹4,999), expiry countdowns &amp; direct calling privileges.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+                          <div className="bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 text-right">
+                            <span className="text-[10px] text-slate-400 block font-bold uppercase">Total Revenue</span>
+                            <span className="text-base font-black text-emerald-400">₹{totalSubRevenue.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 text-right">
+                            <span className="text-[10px] text-slate-400 block font-bold uppercase">Active Plans</span>
+                            <span className="text-base font-black text-teal-300">{activeSubs.length} / {totalSubCount}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {subsList.length === 0 ? (
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center text-slate-400 space-y-1.5">
+                          <p className="text-xs font-bold text-slate-300">No Property Subscriptions Activated Yet</p>
+                          <p className="text-[11px] text-slate-400 max-w-md mx-auto">
+                            When an owner or agent activates a ₹1,499 (2 Props), ₹2,999 (3 Props), or ₹4,999 (5 Props) plan from their Property Dashboard, it will immediately appear here with start date, 50-day countdown, and direct call status.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto no-scrollbar rounded-2xl border border-white/10">
+                          <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
+                            <thead className="bg-white/10 text-slate-300 uppercase text-[9.5px] font-black tracking-wider border-b border-white/10">
+                              <tr>
+                                <th className="px-3.5 py-3">Owner / Agent</th>
+                                <th className="px-3.5 py-3">Package Tier</th>
+                                <th className="px-3.5 py-3">Amount</th>
+                                <th className="px-3.5 py-3">Start Date</th>
+                                <th className="px-3.5 py-3">Validity &amp; Expiry</th>
+                                <th className="px-3.5 py-3">Features &amp; Quota</th>
+                                <th className="px-3.5 py-3 text-right">Direct Action</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5 bg-slate-900/60">
+                              {subsList.map((sub: any, idx: number) => {
+                                const daysLeft = sub.expiryDate 
+                                  ? Math.max(0, Math.ceil((new Date(sub.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                                  : 0;
+                                const isActive = daysLeft > 0;
+                                const cleanPhone = (sub.phone || '').replace(/\D/g, '');
+
+                                return (
+                                  <tr key={sub.id || idx} className="hover:bg-white/5 transition-colors">
+                                    <td className="px-3.5 py-3">
+                                      <div className="font-extrabold text-white">{sub.ownerName || 'Property Owner'}</div>
+                                      <div className="text-[11px] text-teal-400 font-mono mt-0.5">+91 {sub.phone}</div>
+                                    </td>
+                                    <td className="px-3.5 py-3">
+                                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                        sub.priceNum === 4999 || sub.planId === 'BuilderVIP_4999'
+                                          ? 'bg-purple-500/20 text-purple-300 border border-purple-400/30'
+                                          : sub.priceNum === 2999 || sub.planId === 'ProAgent_2999'
+                                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
+                                            : 'bg-teal-500/20 text-teal-300 border border-teal-400/30'
+                                      }`}>
+                                        {sub.planName || (sub.planId === 'StarterPass_1499' ? '₹1,499 Package (2 Props)' : sub.planId === 'ProAgent_2999' ? '₹2,999 Package (3 Props)' : '₹4,999 Package (5 Props)')}
+                                      </span>
+                                    </td>
+                                    <td className="px-3.5 py-3 font-black text-white text-sm">
+                                      ₹{(sub.priceNum || 1499).toLocaleString('en-IN')}
+                                    </td>
+                                    <td className="px-3.5 py-3 text-[11px] text-slate-400">
+                                      {sub.startDate ? new Date(sub.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Live'}
+                                    </td>
+                                    <td className="px-3.5 py-3">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
+                                          isActive 
+                                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                                            : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                        }`}>
+                                          {isActive ? `✅ ${daysLeft} Days Left` : '❌ Expired'}
+                                        </span>
+                                        {Number(sub.bonusDays) > 0 ? (
+                                          <span className="text-[9.5px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded">
+                                            +20d Free (1st Mo)
+                                          </span>
+                                        ) : (
+                                          <span className="text-[9.5px] bg-slate-700/50 text-slate-300 border border-slate-600 px-1.5 py-0.5 rounded">
+                                            Standard 30d
+                                          </span>
+                                        )}
+                                       </div>
+                                       <div className="text-[10px] text-slate-400 mt-1">
+                                         Expiry: {sub.expiryDate ? new Date(sub.expiryDate).toLocaleDateString('en-IN') : (Number(sub.bonusDays) > 0 ? '50 Days' : '30 Days')}
+                                       </div>
+                                    </td>
+                                    <td className="px-3.5 py-3">
+                                      <div className="space-y-0.5 text-[10.5px]">
+                                        <div className="text-slate-200 font-bold">
+                                          • Limit: <strong className="text-teal-300">{sub.propLimit || 2} Properties</strong>
+                                          {sub.featuredCount ? ` (+${sub.featuredCount} Featured in 2 Cat)` : ''}
+                                        </div>
+                                        <div className="text-emerald-400 font-medium">
+                                          • Google Map: <strong className="font-bold">Enabled</strong>
+                                        </div>
+                                        <div className="text-emerald-400 font-medium">
+                                          • Direct Call: <strong className="font-bold">Zero Quota for Buyers</strong>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="px-3.5 py-3 text-right">
+                                      <div className="flex items-center justify-end gap-1.5">
+                                        {cleanPhone && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              const msg = encodeURIComponent(`Hi ${sub.ownerName || 'Property Owner'}, regarding your ${sub.planName} on Majh Boisar...`);
+                                              window.open(`https://wa.me/91${cleanPhone}?text=${msg}`, '_blank');
+                                            }}
+                                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer"
+                                          >
+                                            WhatsApp
+                                          </button>
+                                        )}
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (confirm(`Remove subscription record for ${sub.ownerName || sub.phone}?`)) {
+                                              const updated = subsList.filter((_, i) => i !== idx);
+                                              if (typeof window !== 'undefined') {
+                                                localStorage.setItem('majh_boisar_property_subscriptions', JSON.stringify(updated));
+                                                localStorage.removeItem(`majh_boisar_property_plan_${sub.phone}`);
+                                                window.location.reload();
+                                              }
+                                            }
+                                          }}
+                                          className="bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 font-bold text-[10px] px-2 py-1.5 rounded-lg transition-all cursor-pointer"
+                                        >
+                                          Delete
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                   <div>
                     <h3 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
@@ -7159,6 +7397,45 @@ export default function AdminPanelPage() {
                               <div><span className="text-slate-400 block text-[9px] uppercase font-bold">Action / Type:</span> {prop.forAction || 'Sale'} • {prop.propertyType || 'Flat'}</div>
                               <div className="col-span-2"><span className="text-slate-400 block text-[9px] uppercase font-bold">Owner / Agent:</span> {propOwner} (+91 {propPhone})</div>
                             </div>
+
+                            {/* Admin Direct VIP Badge Controller */}
+                            {(() => {
+                              const vipBadgesLookup = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('majh_boisar_property_vip_badges') || '{}') : {};
+                              const currentVipBadge = prop.vipBadge || vipBadgesLookup[String(prop.id)] || '';
+
+                              return (
+                                <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-xs">👑</span>
+                                    <span className="text-[10.5px] font-black text-slate-700 uppercase tracking-wider">Badge:</span>
+                                    {currentVipBadge ? (
+                                      <span className={`text-[9.5px] font-black px-2 py-0.5 rounded-full border ${
+                                        currentVipBadge === 'VIP Developer' 
+                                          ? 'bg-purple-100 text-purple-900 border-purple-300' 
+                                          : currentVipBadge === 'VIP Broker' 
+                                            ? 'bg-blue-100 text-blue-900 border-blue-300' 
+                                            : 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                                      }`}>
+                                        👑 {currentVipBadge}
+                                      </span>
+                                    ) : (
+                                      <span className="text-[9.5px] text-slate-400 font-bold">Standard (None)</span>
+                                    )}
+                                  </div>
+
+                                  <select
+                                    value={currentVipBadge || ''}
+                                    onChange={(e) => handleAdminChangePropertyVipBadge(prop.id, e.target.value)}
+                                    className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-[11px] font-extrabold text-slate-800 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-2xs w-full sm:w-auto"
+                                  >
+                                    <option value="">No VIP Badge (Standard)</option>
+                                    <option value="VIP Broker">👑 VIP Broker</option>
+                                    <option value="VIP Owner">👑 VIP Owner</option>
+                                    <option value="VIP Developer">👑 VIP Developer</option>
+                                  </select>
+                                </div>
+                              );
+                            })()}
                           </div>
 
                           <div className="flex items-center gap-2 pt-2 border-t border-slate-100 flex-wrap sm:flex-nowrap">

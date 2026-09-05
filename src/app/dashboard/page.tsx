@@ -1645,7 +1645,7 @@ function DashboardContent() {
 
   // Checkout modal states
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
-  const [checkoutPlan, setCheckoutPlan] = useState<'Starter' | 'Pro' | 'Basic' | 'OwnerPass' | 'ProAgent' | 'BuilderPass' | null>(null);
+  const [checkoutPlan, setCheckoutPlan] = useState<'Starter' | 'Pro' | 'Basic' | 'OwnerPass' | 'ProAgent' | 'BuilderPass' | 'StarterPass_1499' | 'ProAgent_2999' | 'BuilderVIP_4999' | string | null>(null);
   const [couponApplied, setCouponApplied] = useState(false);
   const [paymentMode, setPaymentMode] = useState<'upi' | 'card' | 'net'>('upi');
   const [upiRefId, setUpiRefId] = useState('');
@@ -4035,67 +4035,210 @@ function DashboardContent() {
                 {/* TAB 3: SUBSCRIPTION MANAGER */}
                 {propertySubTab === 'subscription' && (
                   <div className="space-y-4">
-                    <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm">
-                      <h3 className="text-sm font-black text-slate-800">Real Estate Boost & Agent Subscription</h3>
-                      <p className="text-xs text-slate-500 font-medium">Upgrade to get 5x more buyer leads and featured listing rank.</p>
-                    </div>
+                    {(() => {
+                      const userPhone = loggedInUser?.phone || '';
+                      let activeSubData: any = null;
+                      if (typeof window !== 'undefined' && userPhone) {
+                        try {
+                          const rawList = localStorage.getItem('majh_boisar_property_subscriptions');
+                          if (rawList) {
+                            const subs = JSON.parse(rawList);
+                            if (Array.isArray(subs)) {
+                              const found = subs.find((s: any) => s.phone === userPhone);
+                              if (found) activeSubData = found;
+                            }
+                          }
+                          if (!activeSubData) {
+                            const legacyPlan = localStorage.getItem(`majh_boisar_property_plan_${userPhone}`);
+                            if (legacyPlan && legacyPlan !== 'Free') {
+                              activeSubData = {
+                                planId: legacyPlan,
+                                planName: legacyPlan === 'StarterPass_1499' ? 'Starter Growth Pass (₹1,499)' : legacyPlan === 'ProAgent_2999' ? 'Pro Agent Pass (₹2,999)' : legacyPlan === 'BuilderVIP_4999' ? 'VIP Builder Pass (₹4,999)' : `${legacyPlan} Pass`,
+                                priceNum: legacyPlan === 'StarterPass_1499' ? 1499 : legacyPlan === 'ProAgent_2999' ? 2999 : 4999,
+                                startDate: new Date().toISOString(),
+                                expiryDate: new Date(Date.now() + 50 * 24 * 60 * 60 * 1000).toISOString(),
+                                daysRemaining: 50,
+                                bonusDays: 20
+                              };
+                            }
+                          }
+                        } catch (e) {}
+                      }
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {(() => {
-                        const activePropPlan = typeof window !== 'undefined' ? (localStorage.getItem(`majh_boisar_property_plan_${loggedInUser?.phone}`) || 'Free') : 'Free';
-                        const adminPrices = JSON.parse(typeof window !== 'undefined' ? (localStorage.getItem('majh_boisar_subscription_prices') || '{}') : '{}');
+                      const daysLeft = activeSubData?.expiryDate 
+                        ? Math.max(0, Math.ceil((new Date(activeSubData.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                        : 0;
+                      const isSubActive = activeSubData && daysLeft > 0;
 
-                        const plansList = [
-                          { id: 'Free', title: 'Free Owner Plan', price: adminPrices.propPlanFreePrice || '₹0', features: ['1 Free Active Listing', 'Standard Search Rank', 'Basic Buyer Contact Form'], limit: 1 },
-                          { id: 'Owner', title: 'Verified Owner Pass', price: adminPrices.propPlanOwnerPrice || '₹199/mo', features: ['3 Direct Owner Listings', 'Verified Owner Badge', 'Direct WhatsApp & Phone Leads', 'Priority Buyer Contact'], limit: 3 },
-                          { id: 'Pro', title: 'Pro Agent Pass', price: adminPrices.propPlanProPrice || '₹499/mo', features: ['5 Active Listings', 'Verified Agent Badge', '5x Direct WhatsApp Leads', 'Featured Banner'], limit: 5 },
-                          { id: 'Builder', title: 'Builder Pass', price: adminPrices.propPlanBuilderPrice || '₹1,499/mo', features: ['10 Active Listings / Projects', 'Dedicated Account Manager', 'Super Admin Priority Placement', 'Social Media Promo'], limit: 10 }
-                        ];
-
-                        return plansList.map((plan) => {
-                          const isCurrent = activePropPlan === plan.id;
-                          return (
-                            <div key={plan.id} className={`bg-white border rounded-2xl p-5 shadow-sm flex flex-col justify-between ${isCurrent ? 'border-teal-500 ring-2 ring-teal-500/20' : 'border-slate-200'}`}>
-                              <div>
-                                <div className="flex justify-between items-center mb-2">
-                                  <h4 className="text-sm font-black text-slate-800">{plan.title}</h4>
-                                  {isCurrent && <span className="bg-teal-100 text-teal-800 text-[9px] font-black px-2 py-0.5 rounded uppercase">Active</span>}
-                                </div>
-                                <p className="text-xl font-black text-teal-700 mb-4">{plan.price}</p>
-                                <ul className="space-y-2 text-xs font-medium text-slate-600 mb-6">
-                                  {plan.features.map((f, i) => (
-                                    <li key={i} className="flex items-center gap-1.5 text-slate-700">
-                                      <span className="text-teal-600 font-black">✓</span> <span>{f}</span>
-                                    </li>
-                                  ))}
-                                </ul>
+                      return (
+                        <>
+                          <div className="bg-gradient-to-r from-teal-900 via-slate-900 to-emerald-950 border border-teal-500/30 p-5 sm:p-6 rounded-2xl shadow-md text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                <span className="bg-emerald-500 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                  Special Launch Offer
+                                </span>
+                                <span className="bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[10px] font-black px-2 py-0.5 rounded-full">
+                                  🎁 1st Month Offer: +20 Days Free on ₹2,999 &amp; ₹4,999 Plans
+                                </span>
                               </div>
-
-                              <button
-                                onClick={() => {
-                                  if (isCurrent) return;
-                                  if (plan.id === 'Free') {
-                                    localStorage.setItem(`majh_boisar_property_plan_${loggedInUser?.phone}`, 'Free');
-                                    alert('Switched to Free Owner Plan.');
-                                    window.location.reload();
-                                  } else {
-                                    const targetPlan = plan.id === 'Owner' ? 'OwnerPass' : plan.id === 'Pro' ? 'ProAgent' : 'BuilderPass';
-                                    setCheckoutPlan(targetPlan);
-                                    setCheckoutModalOpen(true);
-                                  }
-                                }}
-                                className={`w-full py-2.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer ${isCurrent
-                                    ? 'bg-slate-100 text-slate-500 cursor-default'
-                                    : 'bg-teal-600 hover:bg-teal-700 text-white shadow-sm'
-                                  }`}
-                              >
-                                {isCurrent ? 'Current Active Plan' : `Upgrade to ${plan.title}`}
-                              </button>
+                              <h3 className="text-base sm:text-lg font-black text-white">Real Estate Packages & Direct Call Passes</h3>
+                              <p className="text-xs text-slate-300 font-medium max-w-xl mt-1 leading-relaxed">
+                                Paid plan listings get Google Map location enabled & direct buyer calls (buyers can call directly without consuming their 2 free call limits while your plan is active).
+                              </p>
                             </div>
-                          );
-                        });
-                      })()}
-                    </div>
+
+                            {isSubActive && (
+                              <div className="bg-white/10 backdrop-blur-md border border-emerald-400/40 p-3.5 rounded-xl text-left shrink-0 sm:min-w-[200px]">
+                                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider block">Your Active Plan</span>
+                                <p className="text-sm font-black text-white">{activeSubData.planName}</p>
+                                <div className="mt-1 flex items-center gap-1.5 text-xs text-emerald-300 font-bold">
+                                  <span>⏳ {daysLeft} Days Remaining</span>
+                                  {activeSubData?.bonusDays > 0 ? (
+                                    <span className="text-[10px] bg-emerald-500/20 px-1.5 py-0.2 rounded border border-emerald-400/30">+20d Free (1st Mo)</span>
+                                  ) : (
+                                    <span className="text-[10px] bg-slate-700/50 px-1.5 py-0.2 rounded text-slate-300">1 Month Plan</span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            {(() => {
+                              const activePropPlan = typeof window !== 'undefined' ? (localStorage.getItem(`majh_boisar_property_plan_${loggedInUser?.phone}`) || '') : '';
+                              const adminPrices = JSON.parse(typeof window !== 'undefined' ? (localStorage.getItem('majh_boisar_subscription_prices') || '{}') : '{}');
+
+                              const plansList = [
+                                {
+                                  id: 'StarterPass_1499',
+                                  title: '₹1,499 Package',
+                                  subtitle: '2 Properties Listing',
+                                  price: adminPrices.propPlan1499Price || '₹1,499',
+                                  badge: 'Standard 1 Month (30 Days)',
+                                  validity: '30 Days (1 Month)',
+                                  popular: true,
+                                  features: [
+                                    '2 Properties Allowed to Post',
+                                    'Google Map Location Enabled',
+                                    'Direct Call to Owner (Zero buyer quota used)',
+                                    'Direct WhatsApp Chat with Buyers',
+                                    'Verified Property Badge',
+                                    '30 Days Validity (1 Month)'
+                                  ],
+                                  limit: 2
+                                },
+                                {
+                                  id: 'ProAgent_2999',
+                                  title: '₹2,999 Package',
+                                  subtitle: '3 Properties Listing',
+                                  price: adminPrices.propPlan2999Price || '₹2,999',
+                                  badge: '1st Month: +20 Days Free Bonus',
+                                  validity: '50 Days (30d + 20 Days Free for 1st Month)',
+                                  features: [
+                                    '3 Properties Allowed to Post',
+                                    'Google Map Location Enabled',
+                                    'Direct Call to Owner (Zero buyer quota used)',
+                                    'Direct WhatsApp Chat with Buyers',
+                                    'Priority Search Ranking in Boisar',
+                                    '1st Month: 50 Days (30d + 20d Free Bonus)'
+                                  ],
+                                  limit: 3
+                                },
+                                {
+                                  id: 'BuilderVIP_4999',
+                                  title: '₹4,999 Package',
+                                  subtitle: '5 Properties + 2 Category Featured',
+                                  price: adminPrices.propPlan4999Price || '₹4,999',
+                                  badge: '1st Month: 2 Cat Feat + 20d Free',
+                                  validity: '50 Days (30d + 20 Days Free for 1st Month)',
+                                  highlight: true,
+                                  features: [
+                                    '5 Properties Allowed to Post',
+                                    '2 Properties Featured in 2 Categories',
+                                    'Google Map Location Enabled',
+                                    'Direct Call to Owner (Zero buyer quota used)',
+                                    '#1 Top / Pinned Listing in Boisar',
+                                    'VIP Developer / Builder Badge',
+                                    '1st Month: 50 Days (30d + 20d Free Bonus)'
+                                  ],
+                                  limit: 5
+                                }
+                              ];
+
+                              return plansList.map((plan) => {
+                                const isCurrent = activePropPlan === plan.id;
+                                return (
+                                  <div 
+                                    key={plan.id} 
+                                    className={`bg-white border rounded-2xl p-5 shadow-sm flex flex-col justify-between transition-all ${
+                                      plan.highlight 
+                                        ? 'border-purple-300 ring-2 ring-purple-500/20 bg-gradient-to-b from-purple-50/20 to-white' 
+                                        : plan.popular 
+                                          ? 'border-teal-500 ring-2 ring-teal-500/20' 
+                                          : isCurrent 
+                                            ? 'border-emerald-500 ring-2 ring-emerald-500/20' 
+                                            : 'border-slate-200 hover:border-slate-300'
+                                    }`}
+                                  >
+                                    <div>
+                                      <div className="flex justify-between items-start mb-2 gap-1">
+                                        <div>
+                                          <h4 className="text-base font-black text-slate-900 leading-tight">{plan.title}</h4>
+                                          <p className="text-[11px] font-bold text-teal-700 mt-0.5">{plan.subtitle}</p>
+                                          {plan.badge && (
+                                            <span className="text-[9.5px] font-black text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full inline-block mt-1.5">
+                                              {plan.badge}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {isCurrent && (
+                                          <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded uppercase shrink-0">
+                                            Active
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <div className="my-3">
+                                        <p className="text-2xl font-black text-slate-950">{plan.price}</p>
+                                        <span className="text-[10px] text-slate-500 font-bold block">{plan.validity}</span>
+                                      </div>
+
+                                      <ul className="space-y-2 text-xs font-medium text-slate-600 mb-6 border-t border-slate-100 pt-3">
+                                        {plan.features.map((f, i) => (
+                                          <li key={i} className="flex items-start gap-1.5 text-slate-700">
+                                            <span className="text-teal-600 font-black shrink-0 mt-0.5">✓</span> 
+                                            <span className="leading-snug text-[11px] font-semibold">{f}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (isCurrent) return;
+                                        setCheckoutPlan(plan.id);
+                                        setCheckoutModalOpen(true);
+                                      }}
+                                      className={`w-full py-2.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer text-center ${
+                                        isCurrent
+                                          ? 'bg-slate-100 text-slate-500 cursor-default'
+                                          : plan.highlight 
+                                            ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm'
+                                            : 'bg-teal-600 hover:bg-teal-700 text-white shadow-sm'
+                                      }`}
+                                    >
+                                      {isCurrent ? 'Current Active Plan' : `Activate ${plan.title}`}
+                                    </button>
+                                  </div>
+                                );
+                              });
+                            })()}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
@@ -8507,28 +8650,28 @@ function DashboardContent() {
                     desc: '5 Gallery Photos + 10 Catalog Items'
                   };
                 }
-                if (plan === 'OwnerPass') {
+                if (plan === 'StarterPass_1499' || plan === 'OwnerPass') {
                   return {
-                    name: 'Verified Owner Pass',
-                    price: '₹199',
-                    amountNum: 199,
-                    desc: '3 Direct Owner Listings + Verified Owner Badge + Direct Leads'
-                  };
-                }
-                if (plan === 'ProAgent') {
-                  return {
-                    name: 'Pro Agent Pass',
-                    price: '₹499',
-                    amountNum: 499,
-                    desc: '5 Active Listings + Verified Agent Badge + 5x WhatsApp Leads'
-                  };
-                }
-                if (plan === 'BuilderPass') {
-                  return {
-                    name: 'Builder / VIP Pass',
+                    name: '₹1,499 Package (2 Properties)',
                     price: '₹1,499',
                     amountNum: 1499,
-                    desc: '10 Active Listings / Projects + Rank #1 Priority'
+                    desc: '2 Property Listings Allowed + Google Map Location + Direct Calling (Standard 30 Days Validity: 1 Month)'
+                  };
+                }
+                if (plan === 'ProAgent_2999' || plan === 'ProAgent') {
+                  return {
+                    name: '₹2,999 Package (3 Properties)',
+                    price: '₹2,999',
+                    amountNum: 2999,
+                    desc: '3 Property Listings Allowed + Google Map Location + Direct Calling (1st Month Offer: 50 Days - 30d + 20 Days Free Bonus)'
+                  };
+                }
+                if (plan === 'BuilderVIP_4999' || plan === 'BuilderPass') {
+                  return {
+                    name: '₹4,999 Package (5 Properties + 2 Featured)',
+                    price: '₹4,999',
+                    amountNum: 4999,
+                    desc: '5 Property Listings Allowed + 2 Category Featured Listings + Google Map Location + Direct Calling (1st Month Offer: 50 Days - 30d + 20 Days Free Bonus)'
                   };
                 }
                 return {
@@ -8637,36 +8780,32 @@ function DashboardContent() {
                     </div>
                   ) : (
                     <div className="space-y-2 mb-3">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-[10px] text-slate-800 font-black uppercase tracking-wider">Payment Method</label>
-                        <span className="text-[8px] font-black bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">⚡ Instant UPI / QR</span>
-                      </div>
-
-                      <div className="bg-amber-50/50 border border-amber-200 rounded-xl sm:rounded-2xl p-2.5 sm:p-3 space-y-2.5 animate-in fade-in duration-200">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-18 h-18 sm:w-20 sm:h-20 bg-white border border-amber-300 rounded-xl p-0.5 shadow-xs shrink-0 flex flex-col items-center justify-center">
-                            <img loading="lazy" decoding="async" src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=majhboisar@upi&pn=Majh%20Boisar&am=${planInfo.amountNum}&cu=INR`)}`} alt="UPI QR Code" className="w-full h-full object-contain" />
-                          </div>
-                          <div className="text-left space-y-0.5 text-[9px] font-bold text-amber-900 flex-1 min-w-0">
-                            <p className="font-black text-amber-950 leading-tight text-[11px]">Scan &amp; Pay via GPay / PhonePe / Paytm</p>
-                            <p className="text-[9px] text-amber-800 font-medium truncate">Send to: <strong className="text-slate-900 font-mono bg-white px-1 py-0.5 rounded border border-amber-300">majhboisar@upi</strong></p>
-                            <p className="text-[8px] text-amber-700 font-medium">Enter 12-digit UTR/Ref number below after payment.</p>
-                          </div>
+                      {/* Direct Pay QR Code */}
+                      <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-center text-center space-y-2.5 mb-2">
+                        <div className="flex items-center gap-1.5 text-xs font-black text-slate-800">
+                          <QrCode className="w-4 h-4 text-teal-600" />
+                          <span>Scan with any UPI App</span>
                         </div>
-
-                        <div>
-                          <label className="block text-[8px] text-amber-900 font-black uppercase tracking-wider mb-0.5">UPI Ref ID / UTR Number (12 Digits) *</label>
-                          <input
-                            type="text"
-                            required
-                            maxLength={12}
-                            value={upiRefId}
-                            onChange={e => setUpiRefId(e.target.value.replace(/\D/g, ''))}
-                            placeholder="e.g. 308912345678"
-                            className="w-full bg-white border border-amber-300 rounded-lg sm:rounded-xl px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-amber-500 font-mono tracking-widest text-slate-800 font-bold"
+                        <div className="w-40 h-40 bg-white p-2 rounded-xl border border-slate-200 shadow-inner flex items-center justify-center">
+                          <img
+                            src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=9307294733@okaxis%26pn=MajhBoisar%26cu=INR"
+                            alt="Majh Boisar UPI Payment QR"
+                            className="w-full h-full object-contain"
                           />
                         </div>
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-center w-full">
+                          <span className="text-[10px] text-slate-400 block font-bold uppercase">Official UPI ID</span>
+                          <span className="text-xs font-black text-slate-800 tracking-wider">9307294733@okaxis</span>
+                        </div>
                       </div>
+
+                      {/* Direct UPI Link Button */}
+                      <a
+                        href="upi://pay?pa=9307294733@okaxis&pn=MajhBoisar&cu=INR"
+                        className="w-full py-2.5 rounded-xl border border-teal-500 bg-teal-50 hover:bg-teal-100 text-teal-800 font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <span>Tap to Open UPI App Directly</span>
+                      </a>
                     </div>
                   )}
                 </>
@@ -8674,15 +8813,6 @@ function DashboardContent() {
             })()}
 
             {/* Checkout Action Buttons */}
-            <a
-              href={`https://wa.me/917769947217?text=${encodeURIComponent(`Hello Admin! I want to subscribe to the ${checkoutPlan} Plan on Majh Boisar. Please activate for me.`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer mb-2"
-            >
-              <span>💬 Subscribe via WhatsApp Admin</span>
-            </a>
-
             <div className="flex gap-2 mt-auto">
               <button
                 type="button"
@@ -8695,16 +8825,90 @@ function DashboardContent() {
                 type="button"
                 onClick={async () => {
                   setCheckoutModalOpen(false);
-                  if (checkoutPlan === 'OwnerPass' || checkoutPlan === 'ProAgent' || checkoutPlan === 'BuilderPass') {
-                    const savedPlanId = checkoutPlan === 'OwnerPass' ? 'Owner' : checkoutPlan === 'ProAgent' ? 'Pro' : 'Builder';
+                  const isPropPlan = checkoutPlan === 'StarterPass_1499' || checkoutPlan === 'ProAgent_2999' || checkoutPlan === 'BuilderVIP_4999' || checkoutPlan === 'OwnerPass' || checkoutPlan === 'ProAgent' || checkoutPlan === 'BuilderPass';
+                  
+                  if (isPropPlan) {
+                    const normalizedPlanId = (checkoutPlan === 'StarterPass_1499' || checkoutPlan === 'OwnerPass') 
+                      ? 'StarterPass_1499' 
+                      : (checkoutPlan === 'ProAgent_2999' || checkoutPlan === 'ProAgent') 
+                        ? 'ProAgent_2999' 
+                        : 'BuilderVIP_4999';
+
+                    const planDetailsMap: Record<string, any> = {
+                      'StarterPass_1499': {
+                        name: '₹1,499 Package (2 Properties)',
+                        priceNum: 1499,
+                        propLimit: 2,
+                        featuredCount: 0
+                      },
+                      'ProAgent_2999': {
+                        name: '₹2,999 Package (3 Properties)',
+                        priceNum: 2999,
+                        propLimit: 3,
+                        featuredCount: 0
+                      },
+                      'BuilderVIP_4999': {
+                        name: '₹4,999 Package (5 Properties + 2 Featured)',
+                        priceNum: 4999,
+                        propLimit: 5,
+                        featuredCount: 2
+                      }
+                    };
+
+                    const meta = planDetailsMap[normalizedPlanId];
+                    const phone = loggedInUser?.phone || '9820123456';
+                    const ownerName = loggedInUser?.name || 'Property Owner';
+                    const startDate = new Date().toISOString();
+                    const is1499 = normalizedPlanId === 'StarterPass_1499';
+                    const validityDays = is1499 ? 30 : 50;
+                    const bonusDays = is1499 ? 0 : 20;
+                    const expiryDate = new Date(Date.now() + validityDays * 24 * 60 * 60 * 1000).toISOString();
+
+                    const newSub = {
+                      id: `prop_sub_${Date.now()}`,
+                      phone,
+                      ownerName,
+                      planId: normalizedPlanId,
+                      planName: meta.name,
+                      priceNum: meta.priceNum,
+                      propLimit: meta.propLimit,
+                      featuredCount: meta.featuredCount,
+                      startDate,
+                      validityDays,
+                      bonusDays,
+                      expiryDate,
+                      status: 'Active',
+                      hasDirectCall: true,
+                      hasGoogleMap: true,
+                      createdAt: startDate
+                    };
+
                     if (typeof window !== 'undefined') {
-                      localStorage.setItem(`majh_boisar_property_plan_${loggedInUser?.phone}`, savedPlanId);
+                      localStorage.setItem(`majh_boisar_property_plan_${phone}`, normalizedPlanId);
+                      
+                      try {
+                        const existingSubsRaw = localStorage.getItem('majh_boisar_property_subscriptions');
+                        let subsList: any[] = existingSubsRaw ? JSON.parse(existingSubsRaw) : [];
+                        if (!Array.isArray(subsList)) subsList = [];
+                        // Replace or prepend for this phone
+                        subsList = subsList.filter((s: any) => s.phone !== phone);
+                        subsList.unshift(newSub);
+                        localStorage.setItem('majh_boisar_property_subscriptions', JSON.stringify(subsList));
+                        window.dispatchEvent(new Event('storage'));
+                        window.dispatchEvent(new Event('majh_boisar_property_subscriptions_updated'));
+                      } catch (e) {
+                        console.error('Error saving property subscription:', e);
+                      }
                     }
-                    const planName = checkoutPlan === 'OwnerPass' ? 'Verified Owner Pass (₹199/mo)' : checkoutPlan === 'ProAgent' ? 'Pro Agent Pass (₹499/mo)' : 'Builder Pass (₹1,499/mo)';
-                    alert(`🎉 Congratulations! Your ${planName} has been activated successfully!`);
+
+                    if (is1499) {
+                      alert(`🎉 Congratulations! Your ${meta.name} has been activated successfully!\n\n• Validity: 30 Days (Standard 1 Month)\n• Property Limit: ${meta.propLimit} Properties\n• Direct Call: Enabled (Buyers can call directly without consuming their free quota)\n• Google Map Location: Enabled`);
+                    } else {
+                      alert(`🎉 Congratulations! Your ${meta.name} has been activated successfully!\n\n• Validity: 50 Days (1st Month Offer: 30 Days + 20 Days Free Bonus)\n• Property Limit: ${meta.propLimit} Properties\n• Direct Call: Enabled (Buyers can call directly without consuming their free quota)\n• Google Map Location: Enabled`);
+                    }
                     window.location.reload();
                   } else if (checkoutPlan) {
-                    await handleUpgradeSubscription(checkoutPlan);
+                    await handleUpgradeSubscription(checkoutPlan as any);
                     if (couponApplied) {
                       alert('🎉 Welcome! Your 1-Month Free Trial has been activated successfully!');
                     } else {

@@ -618,19 +618,97 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
     setUserUnlockedPropsState(getUserUnlockedProps());
   }, [isLoggedIn, userPhoneKey]);
 
+  // Check if owner has VIP Builder & Developer Plan (₹4,999)
+  const isVipBuilder = (profile: any) => {
+    if (!profile) return false;
+    if (profile.isVipBuilder || profile.isBuilderVIP || profile.planId === 'BuilderVIP_4999') return true;
+    const ownerPhone = (profile.contactPhone || profile.phone || '').replace(/\D/g, '');
+    if (!ownerPhone) return false;
+
+    if (typeof window !== 'undefined') {
+      try {
+        const rawSubs = localStorage.getItem('majh_boisar_property_subscriptions');
+        if (rawSubs) {
+          const subs = JSON.parse(rawSubs);
+          if (Array.isArray(subs)) {
+            const found = subs.find((s: any) => (s.phone || '').replace(/\D/g, '') === ownerPhone && s.planId === 'BuilderVIP_4999');
+            if (found) {
+              const days = found.expiryDate ? Math.ceil((new Date(found.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+              if (days > 0) return true;
+            }
+          }
+        }
+        const legacyPlan = localStorage.getItem(`majh_boisar_property_plan_${ownerPhone}`);
+        if (legacyPlan === 'BuilderVIP_4999') return true;
+      } catch (e) {}
+    }
+    return false;
+  };
+
+  // Check assigned or plan VIP Badge: 'VIP Broker' | 'VIP Owner' | 'VIP Developer' | null
+  const getPropertyVipBadge = (profile: any): 'VIP Broker' | 'VIP Owner' | 'VIP Developer' | null => {
+    if (!profile) return null;
+    // 1. Explicit assigned badge on profile or in local lookup
+    if (profile.vipBadge) return profile.vipBadge as any;
+    if (typeof window !== 'undefined') {
+      try {
+        const badgesLookup = JSON.parse(localStorage.getItem('majh_boisar_property_vip_badges') || '{}');
+        if (badgesLookup[String(profile.id)]) return badgesLookup[String(profile.id)];
+      } catch (e) {}
+    }
+    // 2. Fallback to subscriber plan
+    if (isVipBuilder(profile)) return 'VIP Developer';
+    return null;
+  };
+
+  // Check if this property has direct free owner calls enabled via owner's active paid subscription plan or VIP badge
+  const hasDirectOwnerCall = (profile: any) => {
+    if (!profile) return false;
+    // 1. Explicit property flag or verification or assigned VIP badge
+    if (profile.hasDirectCall || getPropertyVipBadge(profile)) return true;
+    
+    // 2. Check property owner's phone against active subscriptions
+    const ownerPhone = (profile.contactPhone || profile.phone || '').replace(/\D/g, '');
+    if (!ownerPhone) return false;
+
+    if (typeof window !== 'undefined') {
+      try {
+        const rawSubs = localStorage.getItem('majh_boisar_property_subscriptions');
+        if (rawSubs) {
+          const subs = JSON.parse(rawSubs);
+          if (Array.isArray(subs)) {
+            const found = subs.find((s: any) => (s.phone || '').replace(/\D/g, '') === ownerPhone);
+            if (found) {
+              const days = found.expiryDate ? Math.ceil((new Date(found.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+              if (days > 0) return true;
+            }
+          }
+        }
+        // Fallback: check legacy direct plan key
+        const legacyPlan = localStorage.getItem(`majh_boisar_property_plan_${ownerPhone}`);
+        if (legacyPlan && legacyPlan !== 'Free') return true;
+      } catch (e) {}
+    }
+    return false;
+  };
+
   // Is this property unlocked for this user?
-  const isPropertyContactUnlocked = (propId: string | number) => {
+  const isPropertyContactUnlocked = (propId: string | number, profile?: any) => {
+    if (profile && hasDirectOwnerCall(profile)) return true;
     if (!isLoggedIn) return false;
     return userUnlockedPropsState.includes(String(propId));
   };
 
   // Masked phone display helper
-  const formatPropertyPhoneDisplay = (rawPhone: string, propId: string | number) => {
+  const formatPropertyPhoneDisplay = (rawPhone: string, propId: string | number, profile?: any) => {
+    if (profile && hasDirectOwnerCall(profile)) {
+      return `📞 +91 ${rawPhone || '9820123456'} (Direct Call Free)`;
+    }
     if (!isLoggedIn) {
       const digits = rawPhone.replace(/\D/g, '');
       return `🔒 +91 98•••• ••${digits ? digits.slice(-2) : '21'} (Login to View)`;
     }
-    if (isPropertyContactUnlocked(propId)) {
+    if (isPropertyContactUnlocked(propId, profile)) {
       return `+91 ${rawPhone || '9820123456'}`;
     }
     // If not unlocked yet:
@@ -661,6 +739,23 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       return;
     }
 
+    const phoneNum = (profile.contactPhone || profile.phone || '9820123456').replace(/\D/g, '');
+    const ownerName = profile.contactName || profile.postedBy || 'Owner';
+
+    // 0. SPECIAL BENEFIT: If owner has active paid plan (₹1,499 / ₹2,999 / ₹4,999) -> DIRECT CALL WITHOUT CONSUMING FREE CALLS QUOTA!
+    if (hasDirectOwnerCall(profile)) {
+      if (showToast) {
+        showToast('⚡ Direct Call to Owner! This property has an active verified pass. Zero quota deducted from your account.', 'success', 4000);
+      }
+      if (isWhatsapp) {
+        const msg = encodeURIComponent(`Hi ${ownerName}, I saw your property listing on Majh Boisar (${profile.category || 'property'}). Is it available for inspection?`);
+        window.open(`https://wa.me/91${phoneNum}?text=${msg}`, '_blank');
+      } else {
+        window.location.href = `tel:+91${phoneNum}`;
+      }
+      return;
+    }
+
     if (!isLoggedIn) {
       if (showToast) {
         showToast('🔒 Please login to view owner contact details & access 2 Free Calls.', 'info');
@@ -676,8 +771,6 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
     // 1. Already unlocked previously for this user
     if (unlockedList.includes(propIdStr)) {
-      const phoneNum = (profile.contactPhone || profile.phone || '9820123456').replace(/\D/g, '');
-      const ownerName = profile.contactName || profile.postedBy || 'Owner';
       if (isWhatsapp) {
         const msg = encodeURIComponent(`Hi ${ownerName}, I saw your property listing on Majh Boisar (${profile.category}). Is it available?`);
         window.open(`https://wa.me/91${phoneNum}?text=${msg}`, '_blank');
@@ -702,8 +795,6 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
         alert(`🎉 Contact Unlocked!\n\nYou have used ${updated.length} of 2 Free Calls. (${freeCallsRemaining} Free Call Remaining)`);
       }
 
-      const phoneNum = (profile.contactPhone || profile.phone || '9820123456').replace(/\D/g, '');
-      const ownerName = profile.contactName || profile.postedBy || 'Owner';
       if (isWhatsapp) {
         const msg = encodeURIComponent(`Hi ${ownerName}, I saw your property listing on Majh Boisar (${profile.category}). Is it available?`);
         window.open(`https://wa.me/91${phoneNum}?text=${msg}`, '_blank');
@@ -2774,6 +2865,20 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                               const isBuilder = role.toLowerCase().includes('builder') || role.toLowerCase().includes('developer');
                               const isOwner = role.toLowerCase().includes('owner');
                               
+                              const vipBadge = getPropertyVipBadge(selectedProfile);
+                              if (vipBadge) {
+                                return (
+                                  <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-md flex items-center gap-1 shadow-xs border ${
+                                    vipBadge === 'VIP Developer'
+                                      ? 'bg-gradient-to-r from-purple-900 via-purple-950 to-indigo-950 text-amber-300 border-amber-400/80'
+                                      : vipBadge === 'VIP Broker'
+                                        ? 'bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-950 text-cyan-300 border-cyan-400/80'
+                                        : 'bg-gradient-to-r from-emerald-900 via-teal-950 to-slate-950 text-emerald-300 border-emerald-400/80'
+                                  }`}>
+                                    <span>👑 {vipBadge}</span>
+                                  </span>
+                                );
+                              }
                               if (isAgent) {
                                 return (
                                   <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
@@ -2843,15 +2948,15 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                               )}
                             </p>
                           </div>
-                          {selectedProfile.mapUrl && (
+                          {(selectedProfile.mapUrl || hasDirectOwnerCall(selectedProfile)) && (
                             <a
-                              href={selectedProfile.mapUrl}
+                              href={selectedProfile.mapUrl || `https://maps.google.com/?q=${encodeURIComponent(`${selectedProfile.projectName || selectedProfile.category || 'Property'}, ${selectedProfile.address || selectedProfile.location || 'Boisar'}`)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1 text-[10.5px] sm:text-[11px] font-black text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-2.5 py-1 rounded-lg shrink-0 transition-colors w-fit shadow-2xs cursor-pointer active:scale-95"
                             >
                               <MapPin className="w-3 h-3 text-blue-600 shrink-0" />
-                              <span>Google Map ↗</span>
+                              <span>Google Map Directions ↗</span>
                             </a>
                           )}
                         </div>
@@ -3170,8 +3275,8 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           const ownerName = selectedProfile.contactName || selectedProfile.name || 'Owner';
                           const postedByRole = selectedProfile.postedBy || 'Owner';
 
-                          const isUnlocked = isPropertyContactUnlocked(selectedProfile.id);
-                          const phoneDisplay = formatPropertyPhoneDisplay(rawPhone, selectedProfile.id);
+                          const isUnlocked = isPropertyContactUnlocked(selectedProfile.id, selectedProfile);
+                          const phoneDisplay = formatPropertyPhoneDisplay(rawPhone, selectedProfile.id, selectedProfile);
 
                           return (
                             <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3 text-left">
@@ -3486,7 +3591,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                                     }
                                     setSelectedProfile(property);
                                   }}
-                                  className={`rounded-xl sm:rounded-2xl border transition-all flex flex-row group text-left relative overflow-hidden h-[125px] sm:h-[150px] ${
+                                  className={`rounded-xl sm:rounded-2xl border transition-all flex flex-row group text-left relative overflow-hidden h-[135px] sm:h-[150px] ${
                                     isSoldOut
                                       ? 'bg-slate-100/90 border-slate-300 opacity-70 grayscale-[35%] cursor-not-allowed select-none shadow-2xs'
                                       : isFeaturedProp
@@ -3495,11 +3600,11 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                                   }`}
                                 >
                                   {/* Image Column - Uniform fixed thumbnail */}
-                                  <div className="w-[120px] xs:w-[130px] sm:w-[160px] shrink-0 h-full relative bg-slate-900 overflow-hidden flex items-center justify-center">
+                                  <div className="w-[115px] xs:w-[125px] sm:w-[160px] shrink-0 h-full relative bg-slate-900 overflow-hidden">
                                     <img
                                       src={property.avatar || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'}
                                       alt={property.name}
-                                      className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isSoldOut ? 'grayscale-[50%]' : ''}`}
+                                      className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isSoldOut ? 'grayscale-[50%]' : ''}`}
                                     />
 
                                     {/* Big Bold SOLD OUT / RENTED OUT Overlay */}
@@ -3568,7 +3673,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                                       </div>
                                     </div>
 
-                                    <div className="pt-1 border-t border-slate-100 flex items-center justify-between gap-1.5">
+                                    <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-1.5 mt-auto">
                                       <div>
                                         <span className="text-xs sm:text-sm font-black text-slate-900 block leading-tight">{formatPrice(property.price || property.budget)}</span>
                                         <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold block truncate">{property.pricePerSqft || 'Boisar'}</span>
@@ -4006,7 +4111,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         return (
                         <div 
                           key={profile.id}
-                          className={`rounded-xl sm:rounded-2xl border transition-all flex flex-row group text-left relative overflow-hidden h-[125px] sm:h-[155px] ${
+                          className={`rounded-xl sm:rounded-2xl border transition-all flex flex-row group text-left relative overflow-hidden h-[165px] sm:h-[172px] ${
                             isSoldOut
                               ? 'bg-slate-100/90 border-slate-300 opacity-70 grayscale-[35%] cursor-not-allowed select-none shadow-2xs'
                               : isFeaturedProp
@@ -4022,11 +4127,11 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           }}
                         >
                           {/* Image Column - Uniform compact thumbnail */}
-                          <div className="w-[120px] xs:w-[130px] sm:w-[160px] shrink-0 h-full relative bg-slate-900 overflow-hidden flex items-center justify-center">
+                          <div className="w-[115px] xs:w-[125px] sm:w-[160px] shrink-0 h-full relative bg-slate-900 overflow-hidden">
                             <img
                               src={profile.avatar || '/majh-boisar-mb-logo.png'}
                               alt={profile.name}
-                              className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isSoldOut ? 'grayscale-[50%]' : ''}`}
+                              className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isSoldOut ? 'grayscale-[50%]' : ''}`}
                             />
 
                             {/* Big Bold SOLD OUT / RENTED OUT Overlay */}
@@ -4047,12 +4152,39 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                               </div>
                             )}
 
-                            {/* Featured Badge */}
-                            {isFeaturedProp && (
-                              <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full z-10 shadow-xs flex items-center gap-0.5 border border-amber-300/60">
-                                <span>⭐ FEATURED</span>
-                              </div>
-                            )}
+                            {/* VIP Badge (Developer / Broker / Owner) OR Featured Badge */}
+                            {(() => {
+                              const vipBadge = getPropertyVipBadge(profile);
+                              if (vipBadge === 'VIP Developer') {
+                                return (
+                                  <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-purple-800 via-purple-950 to-indigo-950 text-amber-300 text-[8px] sm:text-[8.5px] font-black px-2 py-0.5 rounded-full z-10 shadow-md flex items-center gap-1 border border-amber-400/80">
+                                    <span>👑 VIP DEVELOPER</span>
+                                  </div>
+                                );
+                              }
+                              if (vipBadge === 'VIP Broker') {
+                                return (
+                                  <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-blue-800 via-indigo-950 to-slate-950 text-cyan-300 text-[8px] sm:text-[8.5px] font-black px-2 py-0.5 rounded-full z-10 shadow-md flex items-center gap-1 border border-cyan-400/80">
+                                    <span>👑 VIP BROKER</span>
+                                  </div>
+                                );
+                              }
+                              if (vipBadge === 'VIP Owner') {
+                                return (
+                                  <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-emerald-800 via-teal-950 to-slate-950 text-emerald-300 text-[8px] sm:text-[8.5px] font-black px-2 py-0.5 rounded-full z-10 shadow-md flex items-center gap-1 border border-emerald-400/80">
+                                    <span>👑 VIP OWNER</span>
+                                  </div>
+                                );
+                              }
+                              if (isFeaturedProp) {
+                                return (
+                                  <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full z-10 shadow-xs flex items-center gap-0.5 border border-amber-300/60">
+                                    <span>⭐ FEATURED</span>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
 
                             <div className="absolute top-1.5 left-1.5 bg-black/65 backdrop-blur-xs text-white text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-full z-10">
                               {profile.gallery?.length || 1}+
@@ -4068,14 +4200,47 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           </div>
 
                           {/* Content Column - Compact & clean */}
-                          <div className="flex-1 p-2 sm:p-3.5 flex flex-col justify-between min-w-0">
+                          <div className="flex-1 p-2 sm:p-3 flex flex-col justify-between min-w-0 h-full">
                             <div>
-                              <div className="flex justify-between items-start gap-1 mb-1">
-                                <div className="space-y-0.5 min-w-0">
-                                  <div className="flex items-center gap-1 flex-wrap">
+                              <div className="flex justify-between items-start gap-1 mb-0.5">
+                                <div className="space-y-0.5 min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
                                     <span className="bg-teal-50 border border-teal-200 text-teal-700 text-[8.5px] sm:text-[10px] font-black px-1.5 py-0.2 rounded uppercase truncate max-w-[140px] sm:max-w-none">
                                       {profile.location || 'Boisar West'}
                                     </span>
+                                    {/* Google Map location badge enabled for mapUrl or paid packages */}
+                                    {(profile.mapUrl || hasDirectOwnerCall(profile)) && (
+                                      <a
+                                        href={profile.mapUrl || `https://maps.google.com/?q=${encodeURIComponent(`${profile.projectName || profile.category || 'Property'}, ${profile.addressLocality || profile.location || 'Boisar'}`)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="inline-flex items-center gap-0.5 text-[8.5px] sm:text-[9.5px] font-extrabold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-1.5 py-0.2 rounded transition-colors"
+                                      >
+                                        <MapPin className="w-2.5 h-2.5 text-blue-600 shrink-0" />
+                                        <span>Map ↗</span>
+                                      </a>
+                                    )}
+                                    {hasDirectOwnerCall(profile) && (
+                                      <span className="inline-flex items-center gap-0.5 text-[8.5px] sm:text-[9.5px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
+                                        ⚡ Direct Call Free
+                                      </span>
+                                    )}
+                                    {(() => {
+                                      const vipBadge = getPropertyVipBadge(profile);
+                                      if (!vipBadge) return null;
+                                      return (
+                                        <span className={`inline-flex items-center gap-0.5 text-[8.5px] sm:text-[9.5px] font-black px-1.5 py-0.2 rounded border ${
+                                          vipBadge === 'VIP Developer'
+                                            ? 'text-purple-900 bg-purple-50 border-purple-300'
+                                            : vipBadge === 'VIP Broker'
+                                              ? 'text-blue-900 bg-blue-50 border-blue-300'
+                                              : 'text-emerald-900 bg-emerald-50 border-emerald-300'
+                                        }`}>
+                                          👑 {vipBadge}
+                                        </span>
+                                      );
+                                    })()}
                                   </div>
                                   <h3 className="text-xs sm:text-base font-extrabold text-slate-900 leading-tight group-hover:text-teal-700 transition-colors line-clamp-1 mt-0.5">
                                     {profile.category}
@@ -4091,7 +4256,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                               </div>
 
                               {/* Specs Bar - Compact chips on mobile, grid on desktop */}
-                              <div className="flex sm:grid sm:grid-cols-3 items-center gap-1 sm:gap-2 my-1 sm:my-2 text-[9px] sm:text-xs text-slate-600 font-bold flex-wrap sm:bg-slate-50 sm:border sm:border-slate-100 sm:rounded-xl sm:p-2">
+                              <div className="flex sm:grid sm:grid-cols-3 items-center gap-1 sm:gap-2 my-1 text-[8.5px] sm:text-xs text-slate-600 font-bold flex-wrap sm:bg-slate-50 sm:border sm:border-slate-100 sm:rounded-xl sm:p-2">
                                 <div className="bg-slate-100 sm:bg-transparent px-1.5 py-0.5 sm:p-0 rounded">
                                   <span className="hidden sm:block text-[9px] text-slate-400 font-black uppercase tracking-wider">Carpet Area</span>
                                   <strong className="text-slate-800 font-black">{profile.carpetArea || '650 sqft'}</strong>
@@ -4108,7 +4273,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                             </div>
 
                             {/* Price & Action Buttons Bar */}
-                            <div className="pt-1 sm:pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5 flex-wrap sm:flex-nowrap">
+                            <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-1.5 flex-wrap sm:flex-nowrap mt-auto pb-0.5">
                               <div className="min-w-0">
                                 <span className="text-xs sm:text-base font-black text-slate-900 block leading-tight">{formatPrice(profile.price)}</span>
                                 <span className="text-[8.5px] sm:text-[10px] text-slate-400 font-bold block truncate">{profile.pricePerSqft || 'Boisar'}</span>
@@ -4128,22 +4293,27 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                               ) : (
                                 <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
                                   <button
+                                    type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      setEnquirySenderName(userName || '');
+                                      setEnquirySenderPhone('');
+                                      setEnquiryMessage(`Hi ${profile.contactName || 'Owner'}, I am interested in your property (${profile.category || 'listing'}). Please share details.`);
                                       setEnquiryModalProperty(profile);
                                     }}
-                                    className="bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] sm:text-xs px-2 sm:px-3 py-1.5 rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95"
+                                    className="bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] sm:text-xs px-2.5 sm:px-3 py-1.5 rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95 shrink-0"
                                   >
                                     <Mail className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                     <span>Enquiry</span>
                                   </button>
                                   <button
+                                    type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handlePropertyContactCall(profile, false);
                                     }}
-                                    className={`text-white font-black text-[10px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95 ${
-                                      isPropertyContactUnlocked(profile.id) 
+                                    className={`text-white font-black text-[10px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95 shrink-0 ${
+                                      isPropertyContactUnlocked(profile.id, profile) 
                                         ? 'bg-emerald-600 hover:bg-emerald-700' 
                                         : !isLoggedIn 
                                           ? 'bg-slate-800 hover:bg-slate-900' 
@@ -4154,13 +4324,15 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                                   >
                                     <Phone className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                                     <span>
-                                      {isPropertyContactUnlocked(profile.id) 
-                                        ? 'Call' 
-                                        : !isLoggedIn 
+                                      {hasDirectOwnerCall(profile)
+                                        ? 'Direct Call'
+                                        : isPropertyContactUnlocked(profile.id, profile) 
                                           ? 'Call' 
-                                          : userUnlockedPropsState.length < 2 
+                                          : !isLoggedIn 
                                             ? 'Call' 
-                                            : 'Unlock'}
+                                            : userUnlockedPropsState.length < 2 
+                                              ? 'Call' 
+                                              : 'Unlock'}
                                     </span>
                                   </button>
                                 </div>

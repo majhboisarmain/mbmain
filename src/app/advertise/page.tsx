@@ -189,83 +189,131 @@ export default function AdvertisePage() {
             }`}
           >
             <span>🛺 Auto Posters</span>
+            <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+              Coming Soon
+            </span>
           </button>
         </div>
 
-        {/* Auto Rickshaw Note */}
+        {/* ── AUTO RICKSHAW POSTERS (COMING SOON) ── */}
         {activeTab === 'autorickshaw' && (
-          <div className="bg-amber-100 border border-amber-300 text-amber-950 p-2.5 rounded-xl text-xs font-bold text-center">
-            Poster printing + Fitting on Autos + 30 Days daily city roaming included.
+          <div className="bg-gradient-to-br from-purple-950 via-slate-900 to-indigo-950 border-2 border-purple-500/40 rounded-3xl p-6 sm:p-8 text-center text-white space-y-4 shadow-xl">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-purple-500/20 border border-purple-400/30 text-3xl shadow-inner animate-pulse">
+              🛺
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-1.5 bg-amber-400 text-slate-950 text-[10px] font-black uppercase px-3 py-0.5 rounded-full tracking-wider mb-2 shadow-xs">
+                ⏳ Coming Soon in Boisar
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-white">
+                Auto Rickshaw Poster Ads (Coming Soon)
+              </h3>
+              <p className="text-xs sm:text-sm text-purple-200/90 font-medium max-w-lg mx-auto mt-2 leading-relaxed">
+                Take your business branding directly onto the roads of Boisar! 100+ Auto Rickshaws roaming Boisar Railway Station, Tarapur MIDC, and local colonies with your printed posters will be launched very soon.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mx-auto pt-2 text-left">
+              <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 space-y-1">
+                <span className="text-base">📍</span>
+                <h4 className="text-xs font-black text-white">Daily Road Exposure</h4>
+                <p className="text-[10.5px] text-purple-200">Continuous roaming across Station, Market &amp; MIDC gates.</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 space-y-1">
+                <span className="text-base">🖨️</span>
+                <h4 className="text-xs font-black text-white">Turnkey Printing &amp; Fitting</h4>
+                <p className="text-[10.5px] text-purple-200">High-grade vinyl printing &amp; secure auto hood mounting included.</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-3.5 space-y-1">
+                <span className="text-base">🎁</span>
+                <h4 className="text-xs font-black text-white">Early Bird Pre-Booking</h4>
+                <p className="text-[10.5px] text-purple-200">Register your interest today to get exclusive launch discounts.</p>
+              </div>
+            </div>
+
+            <div className="pt-3">
+              <a
+                href="https://wa.me/917769947217?text=Hi%20Majh%20Boisar%2C%20I%20am%20interested%20in%20Auto%20Rickshaw%20Poster%20Advertising%20once%20it%20launches.%20Please%20notify%20me%20for%20early%20booking%21"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs sm:text-sm px-6 py-3 rounded-2xl shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
+              >
+                <MessageSquare className="w-4 h-4 fill-white shrink-0" />
+                <span>Pre-Register / Notify Me on WhatsApp</span>
+              </a>
+            </div>
           </div>
         )}
 
-        {/* 3 Grid Boxes */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
-          {currentList.map((pkg) => (
-            <div
-              key={pkg.id}
-              className={`bg-white rounded-2xl border-2 p-4 shadow-2xs flex flex-col justify-between ${
-                pkg.tag === 'Popular'
-                  ? 'border-purple-600 ring-2 ring-purple-600/20'
-                  : 'border-slate-200'
-              }`}
-            >
-              <div className="space-y-2.5">
-                
-                {/* Header Tag */}
-                <div className="flex items-center justify-between">
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase ${
-                    pkg.tag === 'Popular' ? 'bg-amber-400 text-slate-950' : 'bg-slate-900 text-white'
-                  }`}>
-                    {pkg.tag}
-                  </span>
-                  <span className="text-xs font-bold text-slate-400">{pkg.duration}</span>
-                </div>
-
-                {/* Title & Price */}
-                <div>
-                  <h3 className="text-base font-black text-slate-900 leading-tight">
-                    {pkg.name}
-                  </h3>
-                  <div className="text-2xl font-black text-purple-950 mt-1">
-                    {pkg.price}
+        {/* ── WEBSITE ADS GRID ── */}
+        {activeTab === 'website' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-stretch">
+            {currentList.map((pkg) => (
+              <div
+                key={pkg.id}
+                className={`bg-white rounded-2xl border-2 p-4 shadow-2xs flex flex-col justify-between ${
+                  pkg.tag === 'Popular'
+                    ? 'border-purple-600 ring-2 ring-purple-600/20'
+                    : 'border-slate-200'
+                }`}
+              >
+                <div className="space-y-2.5">
+                  
+                  {/* Header Tag */}
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase ${
+                      pkg.tag === 'Popular' ? 'bg-amber-400 text-slate-950' : 'bg-slate-900 text-white'
+                    }`}>
+                      {pkg.tag}
+                    </span>
+                    <span className="text-xs font-bold text-slate-400">{pkg.duration}</span>
                   </div>
-                </div>
 
-                {/* Description */}
-                <p className="text-xs text-slate-600 font-medium bg-slate-50 p-2 rounded-lg border border-slate-200">
-                  {pkg.desc}
-                </p>
-
-                {/* 3 Simple Points */}
-                <div className="space-y-1.5 pt-1">
-                  {pkg.points.map((pt, pIdx) => (
-                    <div key={pIdx} className="flex items-center gap-2 text-xs text-slate-800 font-semibold">
-                      <div className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                        <Check className="w-3 h-3 text-emerald-700 stroke-[3]" />
-                      </div>
-                      <span>{pt}</span>
+                  {/* Title & Price */}
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 leading-tight">
+                      {pkg.name}
+                    </h3>
+                    <div className="text-2xl font-black text-purple-950 mt-1">
+                      {pkg.price}
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-xs text-slate-600 font-medium bg-slate-50 p-2 rounded-lg border border-slate-200">
+                    {pkg.desc}
+                  </p>
+
+                  {/* 3 Simple Points */}
+                  <div className="space-y-1.5 pt-1">
+                    {pkg.points.map((pt, pIdx) => (
+                      <div key={pIdx} className="flex items-center gap-2 text-xs text-slate-800 font-semibold">
+                        <div className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                          <Check className="w-3 h-3 text-emerald-700 stroke-[3]" />
+                        </div>
+                        <span>{pt}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+
+                {/* Book Button */}
+                <div className="pt-4 mt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => openWhatsApp(pkg.name, pkg.price, pkg.duration)}
+                    className="w-full bg-[#25D366] hover:bg-[#20bd5a] active:scale-98 text-white font-black text-xs py-2.5 px-3 rounded-xl transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 fill-white shrink-0" />
+                    <span>Book on WhatsApp</span>
+                  </button>
                 </div>
 
               </div>
-
-              {/* Book Button */}
-              <div className="pt-4 mt-3 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => openWhatsApp(pkg.name, pkg.price, pkg.duration)}
-                  className="w-full bg-[#25D366] hover:bg-[#20bd5a] active:scale-98 text-white font-black text-xs py-2.5 px-3 rounded-xl transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <MessageSquare className="w-3.5 h-3.5 fill-white shrink-0" />
-                  <span>Book on WhatsApp</span>
-                </button>
-              </div>
-
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Simple Bottom Help Box */}
         <div className="bg-white border border-slate-200 rounded-2xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-center sm:text-left">
