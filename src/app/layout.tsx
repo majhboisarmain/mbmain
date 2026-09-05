@@ -168,8 +168,8 @@ const siteNavigationJsonLd = {
     {
       "@type": "SiteNavigationElement",
       "position": 1,
-      "name": "Hotels & Hourly Day-Stay in Boisar",
-      "url": "https://majhboisar.in/hotels"
+      "name": "Properties in Boisar — Flats, Plots & 1/2 BHK",
+      "url": "https://majhboisar.in/properties"
     },
     {
       "@type": "SiteNavigationElement",
@@ -180,44 +180,38 @@ const siteNavigationJsonLd = {
     {
       "@type": "SiteNavigationElement",
       "position": 3,
-      "name": "Find Real Estate & Properties in Boisar",
-      "url": "https://majhboisar.in/properties"
-    },
-    {
-      "@type": "SiteNavigationElement",
-      "position": 4,
-      "name": "Home Services & RO Water Purifier Repair in Boisar",
+      "name": "Home Services & Repairs in Boisar",
       "url": "https://majhboisar.in/services"
     },
     {
       "@type": "SiteNavigationElement",
+      "position": 4,
+      "name": "Hotels & Hourly Day-Stay in Boisar",
+      "url": "https://majhboisar.in/hotels"
+    },
+    {
+      "@type": "SiteNavigationElement",
       "position": 5,
+      "name": "Travels in Boisar — Tour & Travels, Cabs & Transport",
+      "url": "https://majhboisar.in/hire-vehicle"
+    },
+    {
+      "@type": "SiteNavigationElement",
+      "position": 6,
       "name": "Find Jobs in Boisar & Tarapur MIDC",
       "url": "https://majhboisar.in/jobs"
     },
     {
       "@type": "SiteNavigationElement",
-      "position": 6,
+      "position": 7,
       "name": "Emergency Blood Donors in Boisar",
       "url": "https://majhboisar.in/blood-donation"
     },
     {
       "@type": "SiteNavigationElement",
-      "position": 7,
+      "position": 8,
       "name": "Advertise & Promote Business in Boisar",
       "url": "https://majhboisar.in/advertise"
-    },
-    {
-      "@type": "SiteNavigationElement",
-      "position": 8,
-      "name": "Local Business Directory Search",
-      "url": "https://majhboisar.in/search"
-    },
-    {
-      "@type": "SiteNavigationElement",
-      "position": 9,
-      "name": "Partner & Business Dashboard",
-      "url": "https://majhboisar.in/dashboard"
     }
   ]
 };
@@ -424,6 +418,10 @@ export default function RootLayout({
                   {/* Slim Footer Links Row */}
                   <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[11px] font-medium text-slate-600">
                     <a href="/" className="hover:text-teal-600 transition-colors">Home</a>
+                    <span className="text-slate-300">•</span>
+                    <a href="/properties" className="hover:text-teal-600 transition-colors">Properties</a>
+                    <span className="text-slate-300">•</span>
+                    <a href="/services" className="hover:text-teal-600 transition-colors">Home Services</a>
                     <span className="text-slate-300">•</span>
                     <a href="/jobs" className="hover:text-teal-600 transition-colors">Jobs</a>
                     <span className="text-slate-300">•</span>
