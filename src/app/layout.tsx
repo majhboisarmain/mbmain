@@ -174,32 +174,32 @@ const siteNavigationJsonLd = {
     {
       "@type": "SiteNavigationElement",
       "position": 2,
-      "name": "Resorts & Pool Villas in Boisar & Kelwa Beach",
-      "url": "https://majhboisar.in/resorts"
-    },
-    {
-      "@type": "SiteNavigationElement",
-      "position": 3,
       "name": "Home Services & Repairs in Boisar",
       "url": "https://majhboisar.in/services"
     },
     {
       "@type": "SiteNavigationElement",
-      "position": 4,
+      "position": 3,
       "name": "Hotels & Hourly Day-Stay in Boisar",
       "url": "https://majhboisar.in/hotels"
     },
     {
       "@type": "SiteNavigationElement",
-      "position": 5,
+      "position": 4,
       "name": "Travels in Boisar — Tour & Travels, Cabs & Transport",
       "url": "https://majhboisar.in/hire-vehicle"
     },
     {
       "@type": "SiteNavigationElement",
-      "position": 6,
+      "position": 5,
       "name": "Find Jobs in Boisar & Tarapur MIDC",
       "url": "https://majhboisar.in/jobs"
+    },
+    {
+      "@type": "SiteNavigationElement",
+      "position": 6,
+      "name": "Resorts & Pool Villas in Boisar & Kelwa Beach",
+      "url": "https://majhboisar.in/resorts"
     },
     {
       "@type": "SiteNavigationElement",
@@ -423,7 +423,13 @@ export default function RootLayout({
                     <span className="text-slate-300">•</span>
                     <a href="/services" className="hover:text-teal-600 transition-colors">Home Services</a>
                     <span className="text-slate-300">•</span>
+                    <a href="/hotels" className="hover:text-teal-600 transition-colors">Hotels</a>
+                    <span className="text-slate-300">•</span>
+                    <a href="/hire-vehicle" className="hover:text-teal-600 transition-colors">Travels</a>
+                    <span className="text-slate-300">•</span>
                     <a href="/jobs" className="hover:text-teal-600 transition-colors">Jobs</a>
+                    <span className="text-slate-300">•</span>
+                    <a href="/resorts" className="hover:text-teal-600 transition-colors">Resorts</a>
                     <span className="text-slate-300">•</span>
                     <a href="/blood-donation" className="hover:text-teal-600 transition-colors">Blood Donors</a>
                     <span className="text-slate-300">•</span>
