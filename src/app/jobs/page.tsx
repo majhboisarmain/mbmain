@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import { 
   Search, Briefcase, MapPin, Building2, Phone, MessageSquare, 
-  PlusCircle, CheckCircle2, ArrowRight
+  PlusCircle, CheckCircle2, ArrowRight, Sparkles
 } from 'lucide-react';
 
 interface Job {
@@ -102,26 +102,45 @@ export default function JobsBoard() {
     window.open(`https://wa.me/${cleanPhone.startsWith('91') ? cleanPhone : '91' + cleanPhone}?text=${msg}`, '_blank');
   };
 
-  const handlePostJobWhatsApp = (e: React.FormEvent) => {
+  const [isSubmittingJob, setIsSubmittingJob] = useState(false);
+  const [postJobSuccess, setPostJobSuccess] = useState(false);
+
+  const handlePostJobSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!postTitle || !postCompany || !postPhone) {
-      alert('Please fill all required fields (Company, Job Title, Mobile Number).');
+      showToast('Please fill all required fields (Company, Job Title, Mobile Number).', 'warning');
       return;
     }
-    const adminPhone = '919022388123';
-    const msg = encodeURIComponent(
-      `*New Job Vacancy Submission on Majh Boisar* 💼\n\n` +
-      `🏢 *Company / Shop:* ${postCompany}\n` +
-      `📌 *Job Title:* ${postTitle}\n` +
-      `💰 *Salary:* ${postSalary || 'Negotiable'}\n` +
-      `📍 *Location:* ${postLocation}\n` +
-      `⏳ *Type:* ${postType}\n` +
-      `📞 *HR Contact:* ${postPhone}\n` +
-      `📝 *Details:* ${postDesc || 'Immediate joining in Boisar.'}\n\n` +
-      `Please verify and list this vacancy on the Majh Boisar portal.`
-    );
-    window.open(`https://wa.me/${adminPhone}?text=${msg}`, '_blank');
-    setShowPostModal(false);
+
+    setIsSubmittingJob(true);
+    try {
+      const res = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company: postCompany.trim(),
+          title: postTitle.trim(),
+          salary: postSalary.trim() || 'Negotiable',
+          location: postLocation.trim() || 'Boisar',
+          jobType: postType,
+          phone: postPhone.trim(),
+          description: postDesc.trim() || `${postTitle} required at ${postCompany}.`,
+          status: 'Pending'
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to submit job posting.');
+      }
+
+      setPostJobSuccess(true);
+      showToast('Job submitted for admin approval!', 'success', 5000);
+    } catch (err: any) {
+      showToast(err?.message || 'Error submitting job. Please try again.', 'error');
+    } finally {
+      setIsSubmittingJob(false);
+    }
   };
 
   useEffect(() => {
@@ -294,18 +313,18 @@ export default function JobsBoard() {
           )}
         </div>
 
-        {/* Employer Hiring Box */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left mt-4">
+        {/* Employer Hiring Box (Simple & Compact) */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left mt-4 shadow-2xs">
           <div>
-            <h4 className="text-xs font-black text-slate-900">Are you hiring staff in Boisar or Tarapur MIDC?</h4>
-            <p className="text-[11px] text-slate-500 font-medium">
+            <h4 className="text-xs sm:text-sm font-black text-slate-900">Are you hiring staff in Boisar or Tarapur MIDC?</h4>
+            <p className="text-[11px] text-slate-500 font-medium mt-0.5">
               Post your job vacancy for free and get direct candidate enquiries.
             </p>
           </div>
           <button
             type="button"
             onClick={handleOpenPostModal}
-            className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer shrink-0"
+            className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer shrink-0 shadow-xs"
           >
             Post a Vacancy
           </button>
@@ -332,101 +351,159 @@ export default function JobsBoard() {
               </button>
             </div>
 
-            <form onSubmit={handlePostJobWhatsApp} className="space-y-2">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Company / Shop Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Acme Pharma / Royal Hotel"
-                  value={postCompany}
-                  onChange={(e) => setPostCompany(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white"
-                />
-              </div>
+            {postJobSuccess ? (
+              <div className="py-6 px-2 text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
+                <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+                
+                <div className="space-y-1">
+                  <h4 className="text-base font-black text-slate-900">Job Sent for Admin Approval! ⏳</h4>
+                  <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+                    Aapka job vacancy successfully submit ho gaya hai. Admin review aur approval ke baad ye portal par sabhi job seekers ko dikhega.
+                  </p>
+                </div>
 
-              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-left space-y-1 text-xs">
+                  <div className="flex justify-between items-center text-slate-500 text-[11px]">
+                    <span>Company:</span>
+                    <span className="font-bold text-slate-800">{postCompany}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-500 text-[11px]">
+                    <span>Role:</span>
+                    <span className="font-bold text-slate-800">{postTitle}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-500 text-[11px]">
+                    <span>Location:</span>
+                    <span className="font-bold text-slate-800">{postLocation}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-500 text-[11px]">
+                    <span>Status:</span>
+                    <span className="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[10px]">
+                      Pending Approval
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPostModal(false);
+                    setPostJobSuccess(false);
+                    setPostTitle('');
+                    setPostSalary('');
+                    setPostDesc('');
+                  }}
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer shadow-sm"
+                >
+                  Close &amp; View Job Board
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handlePostJobSubmit} className="space-y-2">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Job Title *</label>
+                  <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Company / Shop Name *</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Accounts Executive"
-                    value={postTitle}
-                    onChange={(e) => setPostTitle(e.target.value)}
+                    placeholder="e.g. Acme Pharma / Royal Hotel"
+                    value={postCompany}
+                    onChange={(e) => setPostCompany(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white"
                   />
                 </div>
 
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Job Title *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Accounts Executive"
+                      value={postTitle}
+                      onChange={(e) => setPostTitle(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Salary *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. ₹20,000 - ₹25,000"
+                      value={postSalary}
+                      onChange={(e) => setPostSalary(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Location in Boisar *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Tarapur MIDC / Ostwal"
+                      value={postLocation}
+                      onChange={(e) => setPostLocation(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Job Type</label>
+                    <select
+                      value={postType}
+                      onChange={(e) => setPostType(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white"
+                    >
+                      <option value="Full Time">Full Time</option>
+                      <option value="Part Time">Part Time</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Salary *</label>
+                  <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Contact / WhatsApp Mobile *</label>
                   <input
-                    type="text"
+                    type="tel"
                     required
-                    placeholder="e.g. ₹20,000 - ₹25,000"
-                    value={postSalary}
-                    onChange={(e) => setPostSalary(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white"
+                    placeholder="10-digit mobile number"
+                    value={postPhone}
+                    onChange={(e) => setPostPhone(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white font-mono"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Location in Boisar *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Tarapur MIDC / Ostwal"
-                    value={postLocation}
-                    onChange={(e) => setPostLocation(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white"
-                  />
-                </div>
 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Job Type</label>
-                  <select
-                    value={postType}
-                    onChange={(e) => setPostType(e.target.value)}
+                  <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Short Job Details</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Skills, timings, etc."
+                    value={postDesc}
+                    onChange={(e) => setPostDesc(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white"
-                  >
-                    <option value="Full Time">Full Time</option>
-                    <option value="Part Time">Part Time</option>
-                  </select>
+                  ></textarea>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-slate-600 mb-0.5">WhatsApp Mobile *</label>
-                <input
-                  type="tel"
-                  required
-                  placeholder="10-digit mobile number"
-                  value={postPhone}
-                  onChange={(e) => setPostPhone(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Short Job Details</label>
-                <textarea
-                  rows={2}
-                  placeholder="Skills, timings, etc."
-                  value={postDesc}
-                  onChange={(e) => setPostDesc(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:bg-white"
-                ></textarea>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer shadow-sm"
-              >
-                Publish Job via WhatsApp →
-              </button>
-            </form>
+                <button
+                  type="submit"
+                  disabled={isSubmittingJob}
+                  className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer shadow-sm flex items-center justify-center gap-2"
+                >
+                  {isSubmittingJob ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Submitting for Approval...</span>
+                    </>
+                  ) : (
+                    <span>Submit Job for Admin Approval →</span>
+                  )}
+                </button>
+              </form>
+            )}
 
           </div>
         </div>

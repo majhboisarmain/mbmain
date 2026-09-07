@@ -10,7 +10,8 @@ import MyHotelPassesModal from './MyHotelPassesModal';
 import QRScannerModal from './QRScannerModal';
 import {
   Search, MapPin, User, Shield, Briefcase, ChevronDown, Check,
-  Menu, X, LogOut, Building, Layers, HelpCircle, MessageSquare, ChevronRight, Smartphone, Download, Ticket, Plus, QrCode
+  Menu, X, LogOut, Building, Layers, HelpCircle, MessageSquare, ChevronRight, Smartphone, Download, Ticket, Plus, QrCode,
+  Sparkles, Heart, Utensils, Car, Stethoscope, Building2
 } from 'lucide-react';
 
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
@@ -251,8 +252,8 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Middle Search Bar */}
-          <div className="flex-1 max-w-lg min-w-0 transition-all duration-300 relative z-50">
+          {/* Middle Search Bar (Desktop / Tablet - Mobile search is placed inside drawer for spacious view) */}
+          <div className="hidden sm:flex flex-1 max-w-lg min-w-0 transition-all duration-300 relative z-50">
             {showHeaderSearch && (
               <form onSubmit={handleNavSearchSubmit} className="flex items-center gap-1.5 w-full min-w-0">
                 {/* Location Select (Map pin circle button - Hidden on Mobile) */}
@@ -793,151 +794,163 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Nav Drawer (Clean, Compact & Sleek) */}
+        {/* Mobile Nav Drawer (Clean, Modern & Fully Organized) */}
         {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-x-0 top-[52px] sm:top-[56px] bottom-0 bg-white z-[9999] overflow-y-auto p-3 space-y-2 shadow-2xl text-left border-t border-slate-200 animate-in slide-in-from-top-2 duration-150">
-            <div className="max-w-md mx-auto space-y-2">
+          <div className="md:hidden fixed inset-x-0 top-[52px] sm:top-[56px] bottom-0 bg-slate-100/90 backdrop-blur-md z-[9999] overflow-y-auto p-3.5 shadow-2xl text-left border-t border-slate-200 animate-in slide-in-from-top-2 duration-150">
+            <div className="max-w-md mx-auto space-y-3 pb-8">
             
-            {/* User Profile Header if Logged In */}
-            {isLoggedIn && (
-              <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200/80 rounded-xl p-2 flex items-center justify-between shadow-2xs">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
-                    {userName ? userName.charAt(0).toUpperCase() : 'U'}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11.5px] font-black text-slate-900 truncate">Hi, {userName || 'User'}</p>
-                    <p className="text-[9.5px] text-teal-700 font-extrabold truncate">{loggedInUser?.phone || 'Verified User'}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditName(loggedInUser?.name || userName || '');
-                      setEditEmail(loggedInUser?.email || '');
-                      setSettingsSuccess('');
-                      setSettingsModalOpen(true);
-                      setMobileMenuOpen(false);
-                    }}
-                    className="text-[9.5px] font-black text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 px-2 py-1 rounded-lg transition-colors cursor-pointer"
-                  >
-                    ⚙️ Settings
-                  </button>
-                  <button
-                    onClick={() => {
-                      logout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="text-[9.5px] font-black text-rose-600 bg-white border border-rose-200 hover:bg-rose-50 px-2 py-1 rounded-lg transition-colors cursor-pointer"
-                  >
-                    Logout
-                  </button>
-                </div>
-              </div>
-            )}
-
-
-            {/* 2. Business & Partner Section */}
-            <div className="space-y-0.5 bg-slate-50 p-2 rounded-xl border border-slate-200">
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block px-1.5 py-0.5">
-                For Business &amp; Owners
-              </span>
-
-              <Link
-                href="/dashboard"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">🏪</span>
-                  <span>{hasRegisteredBusiness ? 'Business Dashboard' : 'List Your Business'}</span>
-                </div>
-                <span className="text-[8.5px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.2 rounded">Free</span>
-              </Link>
-
-              <Link
-                href="/advertise"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">📢</span>
-                  <span>Advertise With Us</span>
-                </div>
-                <ChevronRight className="w-3 h-3 text-slate-400" />
-              </Link>
-
-              {isLoggedIn && currentRole === 'Admin' && (
-                <Link
-                  href="/adminmb"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-slate-800 hover:bg-white hover:text-teal-700 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">🛡️</span>
-                    <span>Admin Control Panel</span>
-                  </div>
-                  <ChevronRight className="w-3 h-3 text-slate-400" />
-                </Link>
-              )}
-            </div>
-
-            {/* 4. Support & Direct WhatsApp */}
-            <div>
-              <a
-                href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar%20Support,"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11.5px] font-black transition-all shadow-xs cursor-pointer"
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>Chat on WhatsApp Support</span>
-              </a>
-            </div>
-
-            {/* 5. Account & Auth Footer */}
-            <div className="pt-1.5 border-t border-slate-200">
+              {/* 1. User Header or Guest Sign-In Card */}
               {isLoggedIn ? (
-                <div className="flex items-center justify-between gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditName(loggedInUser?.name || userName || '');
-                      setEditEmail(loggedInUser?.email || '');
-                      setSettingsSuccess('');
-                      setSettingsModalOpen(true);
-                      setMobileMenuOpen(false);
-                    }}
-                    className="flex-1 text-center py-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold transition-all cursor-pointer"
-                  >
-                    ⚙️ Settings
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      logout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="flex-1 text-center py-1.5 px-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-black border border-rose-200 transition-all cursor-pointer"
-                  >
-                    🚪 Logout
-                  </button>
+                <div className="bg-white border border-teal-200/80 rounded-2xl p-3 flex items-center justify-between shadow-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
+                      {userName ? userName.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-slate-900 truncate">Hi, {userName || 'User'}</p>
+                      <p className="text-[10.5px] text-teal-700 font-extrabold truncate">{loggedInUser?.phone || 'Verified User'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditName(loggedInUser?.name || userName || '');
+                        setEditEmail(loggedInUser?.email || '');
+                        setSettingsSuccess('');
+                        setSettingsModalOpen(true);
+                        setMobileMenuOpen(false);
+                      }}
+                      className="text-[10px] font-black text-slate-700 bg-slate-50 border border-slate-200 hover:bg-slate-100 px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer"
+                    >
+                      ⚙️ Settings
+                    </button>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="text-[10px] font-black text-rose-600 bg-rose-50 border border-rose-200 hover:bg-rose-100 px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setLoginModalOpen(true);
-                  }}
-                  className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11.5px] font-black transition-all cursor-pointer text-center shadow-xs"
-                >
-                  Sign In / Register Account
-                </button>
+                <div className="bg-white border border-slate-200 rounded-2xl p-3 flex items-center justify-between shadow-xs text-left">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-10 h-10 rounded-2xl bg-rose-50 text-[#e62238] flex items-center justify-center font-black text-sm shrink-0 border border-rose-100">
+                      <User className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-black text-slate-900 leading-tight">Welcome to Majh Boisar</p>
+                      <p className="text-[10.5px] text-slate-400 font-medium truncate">Sign in to your account</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setLoginModalOpen(true);
+                    }}
+                    className="bg-[#e62238] hover:bg-[#cc1b30] text-white font-black text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    <span>Sign In</span>
+                  </button>
+                </div>
               )}
-            </div>
+
+
+
+              {/* 4. For Business & Shop Owners */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-3 space-y-1.5 shadow-xs text-left">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block border-b border-slate-100 pb-1">
+                  For Business &amp; Shop Owners
+                </span>
+
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-50 hover:text-teal-700 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🏪</span>
+                    <div>
+                      <p className="font-extrabold leading-tight">{hasRegisteredBusiness ? 'My Business Dashboard' : 'List Your Business Free'}</p>
+                      <p className="text-[9.5px] text-slate-400 font-normal">Get listed in Boisar &amp; MIDC directory</p>
+                    </div>
+                  </div>
+                  <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">FREE</span>
+                </Link>
+
+                <Link
+                  href="/jobs"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-50 hover:text-teal-700 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">💼</span>
+                    <div>
+                      <p className="font-extrabold leading-tight">Post a Job Vacancy</p>
+                      <p className="text-[9.5px] text-slate-400 font-normal">Hire staff with direct candidate calls</p>
+                    </div>
+                  </div>
+                  <span className="text-[9px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full">Hiring</span>
+                </Link>
+
+                <Link
+                  href="/advertise"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-between p-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-50 hover:text-teal-700 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">📢</span>
+                    <div>
+                      <p className="font-extrabold leading-tight">Advertise With Us</p>
+                      <p className="text-[9.5px] text-slate-400 font-normal">Sponsored banners &amp; top ranks</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                </Link>
+
+                {isLoggedIn && currentRole === 'Admin' && (
+                  <Link
+                    href="/adminmb"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-between p-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-50 hover:text-teal-700 transition-colors border-t border-slate-100 pt-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">🛡️</span>
+                      <span className="font-extrabold text-teal-800">Admin Control Panel</span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  </Link>
+                )}
+              </div>
+
+              {/* 5. Support & Direct WhatsApp */}
+              <div className="space-y-2">
+                <a
+                  href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar%20Support,"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs font-black transition-all shadow-sm cursor-pointer"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Chat on WhatsApp Support (+91 7769947217)</span>
+                </a>
+
+                <Link
+                  href="/download-app"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full py-2 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 text-xs font-extrabold transition-all shadow-2xs"
+                >
+                  <Smartphone className="w-4 h-4 text-teal-600" />
+                  <span>Install Majh Boisar Mobile App</span>
+                </Link>
+              </div>
 
             </div>
           </div>

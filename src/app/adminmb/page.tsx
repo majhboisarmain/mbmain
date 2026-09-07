@@ -225,6 +225,7 @@ export default function AdminPanelPage() {
   const [registeredUsers, setRegisteredUsers] = useState<any[]>([]);
   const [deletionRequests, setDeletionRequests] = useState<DeletionRequest[]>([]);
   const [adminJobsList, setAdminJobsList] = useState<any[]>([]);
+  const [adminJobFilter, setAdminJobFilter] = useState<'all' | 'pending' | 'open' | 'closed'>('all');
 
   // Homepage Featured Restaurants Management States
   const [adminHomeRestaurants, setAdminHomeRestaurants] = useState<HomeFeaturedRestaurant[]>(() => {
@@ -2655,6 +2656,66 @@ export default function AdminPanelPage() {
     }
   };
 
+  const handleApproveJob = async (jobId: number) => {
+    try {
+      const res = await fetch(`/api/jobs/${jobId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'Open' })
+      });
+      if (res.ok) {
+        setAdminJobsList(prev => prev.map(j => j.id === jobId ? { ...j, status: 'Open' } : j));
+        logEvent(`Approved Job Vacancy ID: ${jobId} -> Status: Open`);
+        alert('🎉 Job vacancy approved and published! It is now visible to all users on the Jobs portal.');
+      } else {
+        alert('Failed to approve job vacancy.');
+      }
+    } catch (e) {
+      console.error('Error approving job:', e);
+      alert('Error approving job vacancy.');
+    }
+  };
+
+  const handleToggleJobStatus = async (job: any) => {
+    const newStatus = job.status === 'Open' ? 'Closed' : 'Open';
+    try {
+      const res = await fetch(`/api/jobs/${job.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (res.ok) {
+        setAdminJobsList(prev => prev.map(j => j.id === job.id ? { ...j, status: newStatus } : j));
+        logEvent(`Toggled Job ID: ${job.id} status to ${newStatus}`);
+        alert(`Job status updated to: ${newStatus}`);
+      } else {
+        alert('Failed to update job status.');
+      }
+    } catch (e) {
+      console.error('Error toggling job status:', e);
+      alert('Error updating job status.');
+    }
+  };
+
+  const handleDeleteJob = async (jobId: number, title?: string) => {
+    if (!confirm(`Are you sure you want to delete job vacancy${title ? ` "${title}"` : ''}?`)) return;
+    try {
+      const res = await fetch(`/api/jobs/${jobId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setAdminJobsList(prev => prev.filter(j => j.id !== jobId));
+        logEvent(`Deleted Job Vacancy ID: ${jobId}`);
+        alert('Job vacancy deleted successfully.');
+      } else {
+        alert('Failed to delete job vacancy.');
+      }
+    } catch (e) {
+      console.error('Error deleting job:', e);
+      alert('Error deleting job.');
+    }
+  };
+
   const downloadCSV = (filename: string, rows: Record<string, any>[]) => {
     if (!rows || rows.length === 0) {
       alert("No data available to export.");
@@ -2805,6 +2866,7 @@ export default function AdminPanelPage() {
   const pendingSpecialists = Object.entries(specialProfiles).flatMap(([cat, list]: any) =>
     (list || []).filter((p: any) => !p.verified).map((p: any) => ({ ...p, catKey: cat }))
   );
+  const pendingJobs = adminJobsList.filter(j => j.status === 'Pending');
   const premiumCount = businesses.filter(b => b.premium).length;
 
   // Dynamic SaaS Recurring Revenue calculation
@@ -2936,7 +2998,7 @@ export default function AdminPanelPage() {
             {/* Clean Admin Subtabs Navigation */}
             <div className="flex gap-1 border-b border-slate-200 pb-px overflow-x-auto no-scrollbar -mx-1 px-1">
               {[
-                { val: 'queue', label: `Pending Approvals (${pendingVerifications + pendingSpecialists.length + pendingHotels.length})`, icon: <ShieldCheck className="w-3.5 h-3.5" />, highlight: (pendingVerifications + pendingSpecialists.length + pendingHotels.length) > 0 },
+                { val: 'queue', label: `Pending Approvals (${pendingVerifications + pendingSpecialists.length + pendingHotels.length + pendingJobs.length})`, icon: <ShieldCheck className="w-3.5 h-3.5" />, highlight: (pendingVerifications + pendingSpecialists.length + pendingHotels.length + pendingJobs.length) > 0 },
                 { val: 'home_restaurants', label: `Home Dining & Cafes (${adminHomeRestaurants.length})`, icon: <Utensils className="w-3.5 h-3.5 text-orange-600" /> },
                 { val: 'hotel_management', label: `Hotels & Resorts (${adminHotelsList.length + adminResortsList.length})`, icon: <Building2 className="w-3.5 h-3.5 text-amber-500" />, highlight: pendingHotels.length > 0 },
                 { val: 'listings', label: `Directory Listings (${businesses.length})`, icon: <Building className="w-3.5 h-3.5" /> },
@@ -2946,7 +3008,7 @@ export default function AdminPanelPage() {
                 { val: 'ad_orders', label: `Ad Orders (${adOrders.length})`, icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" /> },
                 { val: 'leads', label: `Logged Leads (${leads.length})`, icon: <ClipboardCheck className="w-3.5 h-3.5" /> },
                 { val: 'reviews', label: `Reviews (${reviews.length})`, icon: <MessageSquare className="w-3.5 h-3.5" /> },
-                { val: 'jobs_management', label: `Jobs Portal (${adminJobsList.length})`, icon: <Briefcase className="w-3.5 h-3.5 text-indigo-600" /> },
+                { val: 'jobs_management', label: `Jobs Portal (${adminJobsList.length})${pendingJobs.length > 0 ? ` (${pendingJobs.length} Pending)` : ''}`, icon: <Briefcase className="w-3.5 h-3.5 text-indigo-600" />, highlight: pendingJobs.length > 0 },
                 { val: 'property_management', label: `Real Estate Properties (${adminPropertyList.length})`, icon: <Building className="w-3.5 h-3.5 text-emerald-600" /> },
                 { val: 'system_storage', label: `Storage, Postgres & SMS`, icon: <HardDrive className="w-3.5 h-3.5 text-teal-600" /> },
                 { val: 'categories', label: `Categories Management (${customAdminCategories.length})`, icon: <Layers className="w-3.5 h-3.5 text-teal-600" /> },
@@ -3048,7 +3110,7 @@ export default function AdminPanelPage() {
                   <p className="text-[11px] text-slate-500 font-medium mt-0.5">Approve and verify shop directories, specialist network profiles, and hotel partner applications.</p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 text-left">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 text-left">
                   {/* Column 1: Shop Listings queue */}
                   <div className="space-y-3">
                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-wider border-b pb-1 flex items-center justify-between">
@@ -3176,6 +3238,77 @@ export default function AdminPanelPage() {
                                   className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black px-3 py-1 rounded-lg transition-colors cursor-pointer shadow-xs"
                                 >
                                   Approve & Go Live
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Column 4: Job Vacancies Queue */}
+                  <div className="space-y-3">
+                    <h4 className="text-[10px] font-black text-indigo-900 uppercase tracking-wider border-b pb-1 flex items-center justify-between">
+                      <span>💼 Job Vacancies</span>
+                      <span className="bg-indigo-100 text-indigo-900 px-1.5 py-0.2 rounded font-bold">{pendingJobs.length}</span>
+                    </h4>
+                    {pendingJobs.length === 0 ? (
+                      <p className="text-xs text-slate-400 py-4 text-center font-bold">No pending job vacancies.</p>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {pendingJobs.map((j: any) => (
+                          <div key={j.id} className="bg-indigo-50/50 border border-indigo-200 p-3 rounded-xl space-y-2 text-xs shadow-xs">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <h5 className="font-extrabold text-slate-900 leading-tight">{j.title}</h5>
+                                <p className="text-[10px] text-indigo-900 font-bold mt-0.5">
+                                  {j.company || j.business?.name || 'Boisar Employer'} • {j.location || 'Boisar'}
+                                </p>
+                                <p className="text-[10px] text-slate-600 font-medium mt-0.5">
+                                  💰 {j.salary || 'Best in Industry'} • {j.type || 'Full Time'}
+                                </p>
+                              </div>
+                              <span className="bg-amber-100 text-amber-900 text-[9px] font-black px-1.5 py-0.5 rounded shrink-0">
+                                ⏳ Pending
+                              </span>
+                            </div>
+
+                            {j.description && (
+                              <p className="text-[11px] text-slate-600 line-clamp-2 bg-white/80 p-2 rounded-lg border border-indigo-100 italic">
+                                "{j.description}"
+                              </p>
+                            )}
+
+                            {/* Contact & Actions */}
+                            <div className="flex items-center justify-between gap-2 pt-1 border-t border-indigo-100">
+                              <div className="flex items-center gap-1 text-[11px] font-bold">
+                                {j.phone || j.business?.phone ? (
+                                  <a 
+                                    href={`tel:${j.phone || j.business?.phone}`} 
+                                    className="text-indigo-900 hover:underline flex items-center gap-0.5"
+                                    title="Call Employer"
+                                  >
+                                    📞 {j.phone || j.business?.phone}
+                                  </a>
+                                ) : (
+                                  <span className="text-slate-400 text-[10px]">No Phone</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteJob(j.id, j.title)}
+                                  className="bg-rose-50 hover:bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-1 rounded-lg border border-rose-200 transition-colors cursor-pointer"
+                                >
+                                  Reject
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleApproveJob(j.id)}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black px-3 py-1 rounded-lg transition-colors cursor-pointer shadow-xs"
+                                >
+                                  Approve &amp; Go Live
                                 </button>
                               </div>
                             </div>
@@ -6748,9 +6881,40 @@ export default function AdminPanelPage() {
                   </button>
                 </div>
 
+                {/* Jobs Management Filter Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mt-2">
+                  {[
+                    { id: 'all', label: `All Vacancies (${adminJobsList.length})` },
+                    { id: 'pending', label: `Pending Approval (${pendingJobs.length})`, highlight: pendingJobs.length > 0 },
+                    { id: 'open', label: `Live & Active (${adminJobsList.filter(j => j.status === 'Open' || !j.status).length})` },
+                    { id: 'closed', label: `Closed (${adminJobsList.filter(j => j.status === 'Closed').length})` },
+                  ].map(f => (
+                    <button
+                      key={f.id}
+                      onClick={() => setAdminJobFilter(f.id as any)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                        adminJobFilter === f.id
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : f.highlight
+                          ? 'bg-amber-100 text-amber-900 border border-amber-300 font-extrabold animate-pulse'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+
                 {/* Jobs Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {adminJobsList.map((job) => {
+                  {adminJobsList
+                    .filter(j => {
+                      if (adminJobFilter === 'pending') return j.status === 'Pending';
+                      if (adminJobFilter === 'open') return j.status === 'Open' || !j.status;
+                      if (adminJobFilter === 'closed') return j.status === 'Closed';
+                      return true;
+                    })
+                    .map((job) => {
                     const fallbackImg = job.image || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop&q=80';
 
                     return (
@@ -6763,13 +6927,19 @@ export default function AdminPanelPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-1">
-                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${job.status === 'Closed' ? 'bg-slate-200 text-slate-700' : 'bg-emerald-100 text-emerald-800'}`}>
-                                  {job.status || 'Open'}
-                                </span>
+                                {job.status === 'Pending' ? (
+                                  <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase bg-amber-100 text-amber-900 border border-amber-300 animate-pulse flex items-center gap-1">
+                                    <span>⏳</span> Pending Approval
+                                  </span>
+                                ) : (
+                                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${job.status === 'Closed' ? 'bg-slate-200 text-slate-700' : 'bg-emerald-100 text-emerald-800'}`}>
+                                    {job.status || 'Open'}
+                                  </span>
+                                )}
                                 <span className="text-xs font-black text-indigo-600">{job.salary || job.salaryRange}</span>
                               </div>
                               <h4 className="text-sm font-extrabold text-slate-900 leading-snug mt-1 truncate">{job.title}</h4>
-                              <p className="text-xs font-bold text-slate-500 truncate">{job.company || job.businessName || 'Boisar Employer'}</p>
+                              <p className="text-xs font-bold text-slate-500 truncate">{job.company || job.businessName || job.business?.name || 'Boisar Employer'}</p>
                             </div>
                           </div>
 
@@ -6779,10 +6949,10 @@ export default function AdminPanelPage() {
                             <div><span className="text-slate-400 block text-[9px] uppercase font-bold">Job Type:</span> <span className="font-bold text-slate-800">{job.type || 'Full Time'}</span></div>
                             <div><span className="text-slate-400 block text-[9px] uppercase font-bold">Experience:</span> <span className="font-bold text-slate-800">{job.experience || 'Fresher / Any'}</span></div>
                             <div><span className="text-slate-400 block text-[9px] uppercase font-bold">Candidates:</span> <span className="font-bold text-indigo-700">{job.applicants || (job.applications ? job.applications.length : 0)} Applicants</span></div>
-                            {job.phone && (
+                            {(job.phone || job.business?.phone) && (
                               <div className="col-span-2 pt-1 border-t border-slate-200/60">
                                 <span className="text-slate-400 block text-[9px] uppercase font-bold">Employer Contact:</span>
-                                <span className="font-extrabold text-emerald-700">+91 {job.phone}</span>
+                                <span className="font-extrabold text-emerald-700">+91 {job.phone || job.business?.phone}</span>
                               </div>
                             )}
                           </div>
@@ -6796,23 +6966,24 @@ export default function AdminPanelPage() {
 
                         {/* Card Actions */}
                         <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                          {job.status === 'Pending' ? (
+                            <button
+                              onClick={() => handleApproveJob(job.id)}
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-xs py-1.5 rounded-lg transition-all text-center cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+                            >
+                              <CheckCircle className="w-3.5 h-3.5" />
+                              <span>Approve &amp; Publish</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleToggleJobStatus(job)}
+                              className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs py-1.5 rounded-lg transition-colors text-center cursor-pointer"
+                            >
+                              {job.status === 'Closed' ? 'Re-Open Vacancy' : 'Close Vacancy'}
+                            </button>
+                          )}
                           <button
-                            onClick={() => {
-                              const newStatus = job.status === 'Closed' ? 'Open' : 'Closed';
-                              setAdminJobsList(prev => prev.map(j => j.id === job.id ? { ...j, status: newStatus } : j));
-                              alert(`Job "${job.title}" status changed to ${newStatus}`);
-                            }}
-                            className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs py-1.5 rounded-lg transition-colors text-center cursor-pointer"
-                          >
-                            {job.status === 'Closed' ? 'Re-Open Vacancy' : 'Close Vacancy'}
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (confirm(`Are you sure you want to delete job vacancy "${job.title}"?`)) {
-                                setAdminJobsList(prev => prev.filter(j => j.id !== job.id));
-                                alert('Job vacancy deleted.');
-                              }
-                            }}
+                            onClick={() => handleDeleteJob(job.id, job.title)}
                             className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs px-3 py-1.5 rounded-lg border border-rose-200 transition-colors cursor-pointer"
                             title="Delete Job"
                           >
@@ -6822,6 +6993,17 @@ export default function AdminPanelPage() {
                       </div>
                     );
                   })}
+
+                  {adminJobsList.filter(j => {
+                    if (adminJobFilter === 'pending') return j.status === 'Pending';
+                    if (adminJobFilter === 'open') return j.status === 'Open' || !j.status;
+                    if (adminJobFilter === 'closed') return j.status === 'Closed';
+                    return true;
+                  }).length === 0 && (
+                    <div className="col-span-full py-12 text-center text-slate-400 font-bold text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                      No jobs found in this tab.
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -9706,32 +9888,43 @@ export default function AdminPanelPage() {
             </div>
 
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
                 if (!adminJobTitle.trim() || !adminJobCompany.trim()) {
                   alert('Please enter Job Title and Company Name');
                   return;
                 }
 
-                const newJob = {
-                  id: Date.now(),
-                  title: adminJobTitle.trim(),
-                  company: adminJobCompany.trim(),
-                  category: adminJobCategory,
-                  salary: adminJobSalary.trim() || 'Attractive Salary',
-                  location: adminJobLocation.trim() || 'Boisar',
-                  type: adminJobType,
-                  experience: adminJobExperience,
-                  phone: adminJobPhone.replace(/\D/g, '') || '9820123456',
-                  image: adminJobImage.trim() || 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop&q=80',
-                  description: adminJobDescription.trim() || `${adminJobTitle} at ${adminJobCompany} in Boisar.`,
-                  status: 'Open',
-                  applicants: 0
-                };
+                try {
+                  const res = await fetch('/api/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      title: adminJobTitle.trim(),
+                      company: adminJobCompany.trim(),
+                      category: adminJobCategory,
+                      salary: adminJobSalary.trim() || 'Attractive Salary',
+                      location: adminJobLocation.trim() || 'Boisar',
+                      jobType: adminJobType,
+                      phone: adminJobPhone.replace(/\D/g, '') || '9820123456',
+                      description: adminJobDescription.trim() || `${adminJobTitle} at ${adminJobCompany} in Boisar.`,
+                      status: 'Open'
+                    })
+                  });
 
-                setAdminJobsList(prev => [newJob, ...prev]);
-                setAdminJobModalOpen(false);
-                alert(`🎉 Job "${newJob.title}" at ${newJob.company} has been published!`);
+                  if (res.ok) {
+                    const createdJob = await res.json();
+                    setAdminJobsList(prev => [createdJob, ...prev]);
+                    setAdminJobModalOpen(false);
+                    alert(`🎉 Job "${adminJobTitle}" at ${adminJobCompany} has been published!`);
+                  } else {
+                    const err = await res.json();
+                    alert(err?.error || 'Failed to publish job.');
+                  }
+                } catch (err) {
+                  console.error('Error posting admin job:', err);
+                  alert('Failed to publish job.');
+                }
               }}
               className="space-y-4 text-xs font-bold text-slate-700"
             >

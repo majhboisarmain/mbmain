@@ -56,15 +56,36 @@ export default function JobsOnboarding() {
     }
   }, [business]);
 
-  const handleGiverSubmit = (e: React.FormEvent) => {
+  const handleGiverSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmittingGiver(true);
-    // Mock API Call
-    setTimeout(() => {
-      setIsSubmittingGiver(false);
+    try {
+      const res = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: business?.id,
+          company: giverBusiness || business?.name,
+          title: giverTitle.trim(),
+          jobType: giverJobType,
+          salary: giverSalary.trim() || 'Best in Industry',
+          location: giverAddress.trim() || business?.location || 'Boisar',
+          phone: giverContact.trim() || business?.phone,
+          description: giverDesc.trim(),
+          status: 'Pending'
+        })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data?.error || 'Failed to submit job vacancy');
+      }
       setGiverSuccess(true);
-      setTimeout(() => router.push('/dashboard'), 1500);
-    }, 1000);
+      setTimeout(() => router.push('/dashboard'), 2000);
+    } catch (err: any) {
+      alert(err.message || 'Failed to submit job.');
+    } finally {
+      setIsSubmittingGiver(false);
+    }
   };
 
   // 1. Loading State
@@ -145,8 +166,8 @@ export default function JobsOnboarding() {
             {giverSuccess ? (
               <div className="py-12 text-center space-y-3">
                 <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto" />
-                <h3 className="text-xl font-black text-slate-800">Job Posted!</h3>
-                <p className="text-sm text-slate-500">Redirecting you to the business dashboard...</p>
+                <h3 className="text-xl font-black text-slate-800">Job Sent for Admin Approval! ⏳</h3>
+                <p className="text-sm text-slate-500">Your job vacancy has been sent to Admin for verification. Once approved, it will be visible to everyone.</p>
               </div>
             ) : (
               <>

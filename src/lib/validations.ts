@@ -37,16 +37,21 @@ export const businessSchema = z.object({
 // 3. Job posting schema
 export const jobSchema = z.object({
   title: z.string().min(3, 'Job title must be at least 3 characters').max(100, 'Job title cannot exceed 100 characters'),
-  businessId: z.string().min(1, 'Business ID is required'),
+  businessId: z.union([z.string(), z.number()]).optional(),
+  company: z.string().optional(),
+  businessName: z.string().optional(),
   category: z.string().optional(),
   location: z.string().max(100).optional(),
   jobType: z.enum(['Full Time', 'Part Time', 'Contract', 'Freelance', 'Internship']).optional(),
+  type: z.string().optional(),
   salary: z.string().max(50).optional(),
   description: z.string().max(2000, 'Description cannot exceed 2000 characters').optional(),
   requirements: z.string().max(1000).optional(),
+  phone: phoneSchema.optional(),
   contactPhone: phoneSchema.optional(),
   contactEmail: z.string().email().optional().or(z.literal('')),
-});
+  status: z.string().optional(),
+}).passthrough();
 
 // 4. Property posting schema
 export const propertySchema = z.object({
