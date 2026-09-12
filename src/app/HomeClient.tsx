@@ -2282,9 +2282,10 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
             <div className="flex flex-row gap-3 sm:gap-4 h-full bg-slate-50 border border-slate-200/70 rounded-3xl p-2.5 shadow-sm">
 
               {/* Promo Card 1 - Real Estate */}
-              <div
+              <Link
+                href="/properties"
                 onClick={() => { setActiveSpecialCategory('properties'); setSelectedProfile(null); }}
-                className="flex-1 min-h-[135px] sm:min-h-[160px] lg:min-h-0 lg:h-full rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group relative border border-slate-200"
+                className="flex-1 min-h-[135px] sm:min-h-[160px] lg:min-h-0 lg:h-full rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group relative border border-slate-200 block"
               >
                 <img
                   loading="eager"
@@ -2298,7 +2299,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 <div className="absolute bottom-2 left-2">
                   <span className="bg-teal-600/90 backdrop-blur text-white text-[9px] font-black px-2 py-0.5 rounded-full">🏠 Property</span>
                 </div>
-              </div>
+              </Link>
 
               {/* Promo Card 2 - Careers */}
               <Link
@@ -2384,7 +2385,21 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           <span className="text-[9.5px] sm:text-[10.5px] font-bold text-slate-400 whitespace-nowrap shrink-0">1-Tap Direct Access</span>
         </div>
 
-        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-9 lg:grid-cols-9 gap-2.5 sm:gap-3.5">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-10 gap-2.5 sm:gap-3.5">
+
+          {/* 0. Properties in Boisar */}
+          <Link
+            href="/properties"
+            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group block"
+          >
+            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
+              <img 
+                src="/imagess/find best real estate.png" 
+                alt="Properties & Flats in Boisar"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+              />
+            </div>
+          </Link>
 
           {/* 1. Home Services */}
           <div

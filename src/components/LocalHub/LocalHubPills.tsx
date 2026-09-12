@@ -36,6 +36,12 @@ export default function LocalHubPills() {
   // Cards sorted to highlight fresh utilities not shown in the top section
   const localCards = [
     {
+      id: 'properties',
+      title: 'Properties & Flats in Boisar',
+      image: '/imagess/find best real estate.png',
+      onClick: () => router.push('/properties')
+    },
+    {
       id: 'blood',
       title: 'Blood Donors',
       image: '/imagess/blood donor.png',
