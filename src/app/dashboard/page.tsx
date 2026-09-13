@@ -10122,48 +10122,48 @@ _Powered by Majh Boisar (majhboisar.com)_`
                     </div>
                   </div>
 
-                  {/* Promo Code section inside Checkout */}
-                  <div className="bg-teal-50/40 border border-teal-100 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 mb-2.5 space-y-1.5">
-                    <label className="block text-[9px] sm:text-[10px] text-teal-800 font-bold uppercase tracking-wider">🏷️ Apply Coupon Code</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={couponInput}
-                        onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                        placeholder="e.g. MAJHBOISAR149"
-                        className="flex-1 bg-white border border-teal-200 rounded-xl px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-teal-500 text-slate-800 font-bold"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCouponErrorMsg('');
-                          setCouponSuccessMsg('');
-                          const code = couponInput.trim().toUpperCase();
+                  {/* Promo Code section inside Checkout - ONLY SHOWN TO ADMIN */}
+                  {(isAdminAuth || currentRole === 'Admin') && (
+                    <div className="bg-teal-50/40 border border-teal-100 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 mb-2.5 space-y-1.5 animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[9px] sm:text-[10px] text-teal-800 font-bold uppercase tracking-wider">🏷️ Admin Promo / Waiver Code</label>
+                        <span className="text-[9px] font-black bg-teal-100 text-teal-800 px-1.5 py-0.5 rounded">Admin Only</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={couponInput}
+                          onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                          placeholder="e.g. ADMINPROP or ADMINBIZ"
+                          className="flex-1 bg-white border border-teal-200 rounded-xl px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-teal-500 text-slate-800 font-bold"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCouponErrorMsg('');
+                            setCouponSuccessMsg('');
+                            const code = couponInput.trim().toUpperCase();
 
-                          if (code === 'MAJHBOISAR99MB' || code === 'MAJHBOISAR99') {
-                            setCouponApplied(true);
-                            setCouponSuccessMsg('🎉 Cash Coupon Applied! 1st Month Free activated.');
-                          } else if (code === 'MAJHBOISAR149MB' || code === 'MAJHBOISAR149') {
-                            setCouponApplied(true);
-                            setCouponSuccessMsg('🎉 Cash Coupon Applied! 1st Month Free activated.');
-                          } else if (code === 'MAJHBOISAR499MB' || code === 'MAJHBOISAR499') {
-                            setCouponApplied(true);
-                            setCouponSuccessMsg('🎉 Cash Coupon Applied! 1st Month Free activated.');
-                          } else if (code === 'MAJHBOISAR1499' || code === 'MAJHBOISAR1499MB') {
-                            setCouponApplied(true);
-                            setCouponSuccessMsg('🎉 Cash Coupon Applied! 1st Month Free activated.');
-                          } else {
-                            setCouponErrorMsg('Invalid coupon code.');
-                          }
-                        }}
-                        className="bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-[11px] px-4 py-1.5 rounded-xl transition-all cursor-pointer shadow-sm border border-teal-800 shrink-0"
-                      >
-                        Apply
-                      </button>
+                            const isPropCoupon = ['ADMINPROP', 'MAJHPROP', 'PROP100', 'MAJHBOISAR1499', 'MAJHBOISAR2999', 'MAJHBOISAR4999'].includes(code);
+                            const isBizCoupon = ['ADMINBIZ', 'MAJHBIZ', 'BIZ100', 'MAJHBOISAR99', 'MAJHBOISAR149', 'MAJHBOISAR349'].includes(code);
+                            const isMasterCoupon = ['MAJHBOISAR', 'ADMINFREE', 'ADMIN100', 'MAJHADMIN', 'ADMIN'].includes(code);
+
+                            if (isPropCoupon || isBizCoupon || isMasterCoupon) {
+                              setCouponApplied(true);
+                              setCouponSuccessMsg('🎉 100% Admin Promo Code Applied! Package activated for free.');
+                            } else {
+                              setCouponErrorMsg('Invalid coupon code. Try "ADMINPROP" or "ADMINBIZ".');
+                            }
+                          }}
+                          className="bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-[11px] px-4 py-1.5 rounded-xl transition-all cursor-pointer shadow-sm border border-teal-800 shrink-0"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                      {couponSuccessMsg && <p className="text-[9px] font-bold text-emerald-600">{couponSuccessMsg}</p>}
+                      {couponErrorMsg && <p className="text-[9px] font-bold text-rose-600">{couponErrorMsg}</p>}
                     </div>
-                    {couponSuccessMsg && <p className="text-[9px] font-bold text-emerald-600">{couponSuccessMsg}</p>}
-                    {couponErrorMsg && <p className="text-[9px] font-bold text-rose-600">{couponErrorMsg}</p>}
-                  </div>
+                  )}
 
                   {/* Bill Details */}
                   <div className="space-y-1 text-[11px] text-slate-600 mb-2.5 border-b border-slate-100 pb-2 font-semibold">

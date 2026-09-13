@@ -5951,38 +5951,43 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
               </div>
             </div>
 
-            {/* Coupon Entry */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 text-left space-y-2">
-              <label className="block text-[10px] text-slate-455 font-bold uppercase tracking-wider">Promo / Coupon Code</label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Enter code (e.g. MAJHBOISAR99)"
-                  value={specialistCouponInput}
-                  onChange={(e) => setSpecialistCouponInput(e.target.value)}
-                  className="flex-1 bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 uppercase"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const code = specialistCouponInput.trim().toUpperCase();
-                    if (code === 'MAJHBOISAR99') {
-                      setSpecialistCouponApplied(true);
-                      setSpecialistCouponSuccess('Coupon applied successfully! 100% discount applied.');
-                      setSpecialistCouponError('');
-                    } else {
-                      setSpecialistCouponError('Invalid coupon code!');
-                      setSpecialistCouponSuccess('');
-                    }
-                  }}
-                  className="bg-slate-850 hover:bg-slate-750 text-white text-xs font-black px-4 py-2 rounded-xl transition-all cursor-pointer"
-                >
-                  Apply
-                </button>
+            {/* Coupon Entry - Only shown if Admin */}
+            {currentRole === 'Admin' && (
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 text-left space-y-2 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between">
+                  <label className="block text-[10px] text-slate-455 font-bold uppercase tracking-wider">Admin Promo / Waiver Code</label>
+                  <span className="text-[9px] font-black bg-teal-100 text-teal-800 px-1.5 py-0.5 rounded">Admin Only</span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter code (e.g. ADMINBIZ or MAJHBOISAR)"
+                    value={specialistCouponInput}
+                    onChange={(e) => setSpecialistCouponInput(e.target.value)}
+                    className="flex-1 bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const code = specialistCouponInput.trim().toUpperCase();
+                      if (['MAJHBOISAR', 'ADMINBIZ', 'ADMIN100', 'ADMIN', 'MAJHBOISAR99'].includes(code)) {
+                        setSpecialistCouponApplied(true);
+                        setSpecialistCouponSuccess('Coupon applied successfully! 100% discount applied.');
+                        setSpecialistCouponError('');
+                      } else {
+                        setSpecialistCouponError('Invalid coupon code!');
+                        setSpecialistCouponSuccess('');
+                      }
+                    }}
+                    className="bg-slate-850 hover:bg-slate-750 text-white text-xs font-black px-4 py-2 rounded-xl transition-all cursor-pointer"
+                  >
+                    Apply
+                  </button>
+                </div>
+                {specialistCouponSuccess && <p className="text-[10px] text-emerald-600 font-extrabold">{specialistCouponSuccess}</p>}
+                {specialistCouponError && <p className="text-[10px] text-rose-500 font-extrabold">{specialistCouponError}</p>}
               </div>
-              {specialistCouponSuccess && <p className="text-[10px] text-emerald-600 font-extrabold">{specialistCouponSuccess}</p>}
-              {specialistCouponError && <p className="text-[10px] text-rose-500 font-extrabold">{specialistCouponError}</p>}
-            </div>
+            )}
 
             {/* Payment Method Selector */}
             {!specialistCouponApplied && (
