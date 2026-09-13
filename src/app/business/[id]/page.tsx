@@ -7,11 +7,10 @@ import { useApp } from '@/context/AppContext';
 import {
   Phone, MessageSquare, MapPin, Clock, Star,
   CheckCircle, ArrowLeft, Send, Sparkles, AlertCircle, ShoppingBag,
-  ChevronRight, ChevronLeft, User, Heart, Share2, Info, X, Bookmark, Copy, Edit3, Mail, Building2, QrCode,
+  ChevronRight, ChevronLeft, User, Heart, Share2, Info, X, Bookmark, Copy, Edit3, Mail, Building2,
   Truck, Plus, Minus, Trash2, ArrowRight
 } from 'lucide-react';
 import { specialProfiles } from '@/lib/mockProfiles';
-import BusinessQRStandeeModal from '@/components/BusinessQRStandeeModal';
 
 interface Review {
   id: number;
@@ -93,7 +92,6 @@ export default function BusinessDetailsPage() {
   // Bookmark and Share state
   const [isFavorite, setIsFavorite] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [isStandeeModalOpen, setIsStandeeModalOpen] = useState(false);
 
   const isOwnerOrAdmin = Boolean(
     isLoggedIn && (

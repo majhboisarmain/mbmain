@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { BOISAR_FOOD_DIRECTORY, FoodItem } from '@/lib/foodDiningData';
 import { useApp } from '@/context/AppContext';
-import BusinessQRStandeeModal from '@/components/BusinessQRStandeeModal';
 
 interface CartItem {
   name: string;
@@ -49,10 +48,6 @@ function FoodPageContent() {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
-
-  // QR Standee Modal State
-  const [isStandeeModalOpen, setIsStandeeModalOpen] = useState(false);
-  const [standeeTargetResto, setStandeeTargetResto] = useState<FoodItem | null>(null);
 
   // Comprehensive List Your Restaurant Modal State
   const [isListModalOpen, setIsListModalOpen] = useState(false);
@@ -134,7 +129,7 @@ function FoodPageContent() {
 
   // Lock background scrolling when modals are open
   useEffect(() => {
-    if (selectedRestoForMenu || isListModalOpen || isOrderSummaryOpen || isMyOrdersModalOpen || isStandeeModalOpen) {
+    if (selectedRestoForMenu || isListModalOpen || isOrderSummaryOpen || isMyOrdersModalOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -142,7 +137,7 @@ function FoodPageContent() {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [selectedRestoForMenu, isListModalOpen, isOrderSummaryOpen, isMyOrdersModalOpen, isStandeeModalOpen]);
+  }, [selectedRestoForMenu, isListModalOpen, isOrderSummaryOpen, isMyOrdersModalOpen]);
 
   // Sync category & table from URL params
   useEffect(() => {
@@ -426,9 +421,7 @@ function FoodPageContent() {
     };
 
     setIsListModalOpen(false);
-    setStandeeTargetResto(tempResto);
-    setIsStandeeModalOpen(true);
-    showToast(`🎉 Listing Submitted! Here is your Official Table-Top QR Standee Pack!`, 'success', 6000);
+    showToast(`🎉 Food Listing Submitted Successfully!`, 'success', 5000);
 
     // Reset form
     setNewRestoName('');
@@ -1381,7 +1374,7 @@ function FoodPageContent() {
                     List Your Food Joint (Free)
                   </h3>
                   <p className="text-[11px] text-amber-100 font-medium">
-                    Get listed on Majh Boisar &amp; receive your Official Table-Top QR Standee pack
+                    Get listed on Majh Boisar &amp; receive direct customer orders &amp; inquiries
                   </p>
                 </div>
               </div>
@@ -1990,7 +1983,7 @@ function FoodPageContent() {
                 <div className="flex items-center gap-2 border-b border-orange-100 pb-1.5">
                   <span className="text-base">🪑</span>
                   <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                    3. Facilities &amp; Table QR Standee Setup
+                    3. Dining &amp; Facilities Setup
                   </h4>
                 </div>
 
@@ -2093,7 +2086,7 @@ function FoodPageContent() {
                   className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs font-black text-white bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 shadow-md cursor-pointer transition-all active:scale-95 flex items-center gap-2"
                 >
                   <Sparkles className="w-4 h-4 text-amber-200" />
-                  <span>Submit Listing &amp; Get Table QR Standee 🚀</span>
+                  <span>Submit Food Listing 🚀</span>
                 </button>
               </div>
 
@@ -2236,28 +2229,7 @@ function FoodPageContent() {
         </div>
       )}
 
-      {/* ── OFFICIAL QR STANDEE MODAL INTEGRATION ── */}
-      {standeeTargetResto && (
-        <BusinessQRStandeeModal
-          isOpen={isStandeeModalOpen}
-          onClose={() => {
-            setIsStandeeModalOpen(false);
-            setStandeeTargetResto(null);
-          }}
-          business={{
-            id: standeeTargetResto.id,
-            name: standeeTargetResto.name,
-            category: standeeTargetResto.categoryLabel,
-            location: standeeTargetResto.location,
-            phone: standeeTargetResto.phone,
-            whatsapp: standeeTargetResto.whatsapp,
-            rating: standeeTargetResto.rating,
-            reviewsCount: standeeTargetResto.reviewsCount,
-            customUrl: typeof window !== 'undefined' ? `${window.location.origin}/food?id=${standeeTargetResto.id}` : `https://majhboisar.in/food?id=${standeeTargetResto.id}`,
-            customOffer: `🍽️ ${standeeTargetResto.speciality} • ${standeeTargetResto.discount || 'Special Foodie Deal'}`
-          }}
-        />
-      )}
+
 
     </div>
   );

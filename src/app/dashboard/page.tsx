@@ -17,8 +17,6 @@ import {
   Utensils, Bell, Receipt, Printer, Volume2, VolumeX, Coffee, ChevronDown,
   Wifi, Wind, Car, Tv, Bath, Zap, Building2, ShieldCheck, Waves
 } from 'lucide-react';
-import dynamic from 'next/dynamic';
-const BusinessQRStandeeModal = dynamic(() => import('@/components/BusinessQRStandeeModal'), { ssr: false });
 import { compressImage } from '@/lib/imageCompressor';
 import { CATEGORY_CATALOG } from '@/lib/categoryMapping';
 const toTitleCase = (str: string) => {
@@ -129,7 +127,6 @@ function DashboardContent() {
   const [selectedId, setSelectedId] = useState<number>(bizIdParam ? Number(bizIdParam) : 1);
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isStandeeModalOpen, setIsStandeeModalOpen] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<'analytics' | 'hotel_bookings' | 'turf_bookings' | 'kitchen_orders' | 'leads' | 'catalog' | 'reviews' | 'settings' | 'subscription' | 'jobs' | 'property_leads'>(
     (tabParam as any) || (hotelIdParam || hotelNameParam ? 'hotel_bookings' : 'analytics')
   );
@@ -3502,9 +3499,6 @@ _Powered by Majh Boisar (majhboisar.com)_`
       // Fetch the user's businesses and switch to their new listing
       await fetchBusinessesList();
       setSelectedId(createdObj.id);
-
-      // Auto-open Official Printable QR Standee for the business owner!
-      setIsStandeeModalOpen(true);
     } catch (err: any) {
       setCreateBizError(err.message || 'Error occurred while creating business listing.');
     } finally {
@@ -5265,17 +5259,6 @@ _Powered by Majh Boisar (majhboisar.com)_`
                       </div>
 
                       <div className="flex items-center gap-2 sm:gap-3 text-xs shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => setIsStandeeModalOpen(true)}
-                          className="bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-black text-[10.5px] px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95"
-                          title="Download Official Printable QR Standee for Your Counter"
-                        >
-                          <QrCode className="w-3.5 h-3.5 text-amber-700" />
-                          <span className="hidden sm:inline">Official</span>
-                          <span>QR Standee</span>
-                        </button>
-
                         <div className="hidden sm:flex items-center gap-1">
                           <Award className="w-3.5 h-3.5 text-rose-500" />
                           <span className="text-[10px] text-slate-400 font-bold">Plan:</span>
@@ -5387,16 +5370,6 @@ _Powered by Majh Boisar (majhboisar.com)_`
                           >
                             {kitchenAudioEnabled ? <Volume2 className="w-3.5 h-3.5 text-amber-600" /> : <VolumeX className="w-3.5 h-3.5 text-slate-400" />}
                             <span>Sound: {kitchenAudioEnabled ? 'ON' : 'OFF'}</span>
-                          </button>
-
-                          {/* Print Table QR Standees */}
-                          <button
-                            type="button"
-                            onClick={() => setIsStandeeModalOpen(true)}
-                            className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
-                          >
-                            <QrCode className="w-3.5 h-3.5" />
-                            <span>Print Table QRs</span>
                           </button>
 
                           {/* Add Manual Order */}
@@ -11776,15 +11749,6 @@ _Powered by Majh Boisar (majhboisar.com)_`
             </div>
           </div>
         </div>
-      )}
-
-      {/* Official Printable QR Standee Modal for Dashboard */}
-      {business && (
-        <BusinessQRStandeeModal
-          isOpen={isStandeeModalOpen}
-          onClose={() => setIsStandeeModalOpen(false)}
-          business={business}
-        />
       )}
 
       {/* 🚨 Confirmation Modal: Request Listing Deletion */}

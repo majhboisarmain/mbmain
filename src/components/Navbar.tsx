@@ -8,10 +8,9 @@ import { useLanguage } from '@/context/LanguageContext';
 import dynamic from 'next/dynamic';
 import LoginModal from './LoginModal';
 const MyHotelPassesModal = dynamic(() => import('./MyHotelPassesModal'), { ssr: false });
-const QRScannerModal = dynamic(() => import('./QRScannerModal'), { ssr: false });
 import {
   Search, MapPin, User, Shield, Briefcase, ChevronDown, Check,
-  Menu, X, LogOut, Building, Layers, HelpCircle, MessageSquare, ChevronRight, Smartphone, Download, Ticket, Plus, QrCode,
+  Menu, X, LogOut, Building, Layers, HelpCircle, MessageSquare, ChevronRight, Smartphone, Download, Ticket, Plus,
   Sparkles, Heart, Utensils, Car, Stethoscope, Building2
 } from 'lucide-react';
 
@@ -60,8 +59,6 @@ export default function Navbar() {
 
   const [navSearchQuery, setNavSearchQuery] = useState('');
   const [navLocation, setNavLocation] = useState('All');
-  const [isQRScannerOpen, setIsQRScannerOpen] = useState(false);
-
   const [isNavSearchFocused, setIsNavSearchFocused] = useState(false);
   const [navMatchingBusinesses, setNavMatchingBusinesses] = useState<any[]>([]);
 
@@ -301,14 +298,6 @@ export default function Navbar() {
                         <X className="w-3 h-3" />
                       </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => setIsQRScannerOpen(true)}
-                      className="p-1 rounded-full hover:bg-teal-50 text-slate-400 hover:text-teal-700 transition-colors cursor-pointer shrink-0"
-                      title="Scan Majh Boisar Shop QR Standee"
-                    >
-                      <QrCode className="w-3.5 h-3.5" />
-                    </button>
                   </div>
                   <button
                     type="submit"
@@ -1148,12 +1137,6 @@ export default function Navbar() {
       <MyHotelPassesModal
         isOpen={isHotelPassesModalOpen}
         onClose={() => setIsHotelPassesModalOpen(false)}
-      />
-
-      {/* In-App Shop & Standee QR Scanner Modal */}
-      <QRScannerModal
-        isOpen={isQRScannerOpen}
-        onClose={() => setIsQRScannerOpen(false)}
       />
     </>
   );
