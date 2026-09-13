@@ -355,6 +355,7 @@ export default function HotelsPage() {
       guestName,
       guestPhone,
       idProof,
+      roomCategory: 'Deluxe AC Room',
       stayType: selectedSlotDuration === 'night' ? 'Night Stay' : `Hourly (${selectedSlotDuration})`,
       timeSlot: calculatedWindow,
       date: bookingDate,
@@ -367,6 +368,27 @@ export default function HotelsPage() {
     try {
       const existing = JSON.parse(localStorage.getItem('majh_boisar_hotel_bookings') || '[]');
       localStorage.setItem('majh_boisar_hotel_bookings', JSON.stringify([newBooking, ...existing]));
+
+      // Save to central PostgreSQL DB
+      fetch('/api/hotel-bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hotelId: parseInt(quickBookHotel.id.replace(/\D/g, '')) || null,
+          hotelSlug: quickBookHotel.slug || quickBookHotel.id,
+          hotelName: quickBookHotel.name,
+          hotelPhone: quickBookHotel.phone,
+          hotelAddress: quickBookHotel.address,
+          guestName,
+          guestPhone,
+          roomCategory: newBooking.roomCategory,
+          stayType: newBooking.stayType,
+          timeSlot: calculatedWindow,
+          checkInDate: bookingDate,
+          totalAmount: price,
+          notes: `Pass Ref: ${ref} · ID: ${idProof}`
+        })
+      }).catch(e => console.error('[Hotel Booking DB Error]:', e));
 
       // Create Instant Enquiry / Lead in Dashboard
       const newLead = {
@@ -1330,6 +1352,40 @@ export default function HotelsPage() {
                   const savedUser = JSON.parse(localStorage.getItem('majh_boisar_user_hotels') || '[]');
                   localStorage.setItem('majh_boisar_user_hotels', JSON.stringify([newHotelItem, ...savedUser]));
 
+                  // Save to central PostgreSQL DB
+                  fetch('/api/hotels', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      name: newHotelItem.name,
+                      tagline: newHotelItem.tagline,
+                      category: newHotelItem.category,
+                      location: newHotelItem.location,
+                      address: newHotelItem.address,
+                      landmark: newHotelItem.landmark,
+                      phone: newHotelItem.phone,
+                      whatsapp: newHotelItem.whatsapp,
+                      hourlyRate3h: newHotelItem.hourlyRate3h,
+                      hourlyRate6h: newHotelItem.hourlyRate6h,
+                      hourlyRate12h: newHotelItem.hourlyRate12h,
+                      nightRate: newHotelItem.nightRate,
+                      is3hAvailable: newHotelItem.is3hAvailable,
+                      is6hAvailable: newHotelItem.is6hAvailable,
+                      is12hAvailable: newHotelItem.is12hAvailable,
+                      isNightAvailable: newHotelItem.isNightAvailable,
+                      isCoupleFriendly: newHotelItem.isCoupleFriendly,
+                      acceptsLocalId: newHotelItem.acceptsLocalId,
+                      nearStation: newHotelItem.nearStation,
+                      nearMidc: newHotelItem.nearMidc,
+                      gallery: newHotelItem.gallery,
+                      amenities: newHotelItem.amenities,
+                      description: newHotelItem.description,
+                      rules: newHotelItem.rules,
+                      rooms: newHotelItem.rooms,
+                      createdBy: loggedInUser?.phone || newHotelItem.phone
+                    })
+                  }).catch(e => console.error('[Hotel Add DB Error]:', e));
+
                   if (typeof window !== 'undefined') {
                     localStorage.setItem(`majh_boisar_hotel_day_stay_timing_${newHotelItem.slug}`, newHotelItem.dayStayTimingWindow || '09:00 AM – 07:00 PM');
                     localStorage.setItem(`majh_boisar_hotel_night_checkin_${newHotelItem.slug}`, newHotelItem.nightStayCheckIn || '12:00 PM');
@@ -1341,7 +1397,9 @@ export default function HotelsPage() {
                     window.dispatchEvent(new Event('storage'));
                     window.dispatchEvent(new CustomEvent('boisar_hotel_created', { detail: newHotelItem }));
                   }
-                } catch (e) {}
+                } catch (e) {
+                  console.error('[Hotel Add Local Error]:', e);
+                }
 
                 alert(`🎉 Hotel Application Submitted!\n\n"${newHotelItem.name}" has been submitted for Admin Verification.\n\nOur team will verify reception phone (+91 ${newHotelItem.phone}) and activate your hotel listing on the Majh Boisar Directory with 0% commission.`);
                 setIsAddHotelOpen(false);

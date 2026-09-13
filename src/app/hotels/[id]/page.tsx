@@ -423,9 +423,30 @@ export default function HotelDetailPage() {
     recordHotelClick(hotel.id, 'book');
 
     try {
-      // 1. Save Hotel Booking Pass
+      // 1. Save Hotel Booking Pass locally
       const existing = JSON.parse(localStorage.getItem('majh_boisar_hotel_bookings') || '[]');
       localStorage.setItem('majh_boisar_hotel_bookings', JSON.stringify([passObj, ...existing]));
+
+      // Save to central PostgreSQL DB
+      fetch('/api/hotel-bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hotelId: parseInt(hotel.id.replace(/\D/g, '')) || null,
+          hotelSlug: hotel.slug || hotel.id,
+          hotelName: hotel.name,
+          hotelPhone: hotel.phone,
+          hotelAddress: hotel.address,
+          guestName,
+          guestPhone,
+          roomCategory: passObj.roomCategory,
+          stayType: passObj.stayType,
+          timeSlot: calculatedWindow,
+          checkInDate,
+          totalAmount: finalPayableTariff,
+          notes: `Pass Ref: ${ref} · ID: ${idProofType}`
+        })
+      }).catch(e => console.error('[Hotel [id] DB Booking Error]:', e));
 
       // 2. Create Instant Enquiry / Lead in Dashboard Leads Inbox
       const roomLabel = roomTypePreference === 'ac' ? 'Deluxe AC Room' : 'Standard Non-AC Room';

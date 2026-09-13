@@ -31,24 +31,56 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
   const { isLoggedIn, loggedInUser, setLoginModalOpen } = useApp();
   const [passes, setPasses] = useState<HotelBookingPass[]>([]);
 
-  const loadPasses = () => {
+  const loadPasses = async () => {
     if (!isLoggedIn || !loggedInUser?.phone) {
       setPasses([]);
       return;
     }
+    const userPhoneClean = (loggedInUser.phone || '').replace(/\D/g, '');
+    let localPasses: HotelBookingPass[] = [];
     try {
       const stored: HotelBookingPass[] = JSON.parse(localStorage.getItem('majh_boisar_hotel_bookings') || '[]');
       const hiddenIds: string[] = JSON.parse(localStorage.getItem('majh_boisar_user_hidden_passes') || '[]');
-      const userPhoneClean = (loggedInUser.phone || '').replace(/\D/g, '');
-      
-      // Strictly show passes that belong to THIS logged-in user's phone
-      const myPasses = stored.filter(p => {
+      localPasses = stored.filter(p => {
         const guestPhoneClean = (p.guestPhone || '').replace(/\D/g, '');
-        return guestPhoneClean === userPhoneClean && !hiddenIds.includes(p.id);
+        return (guestPhoneClean.slice(-10) === userPhoneClean.slice(-10)) && !hiddenIds.includes(p.id);
       });
-      setPasses(myPasses);
+      setPasses(localPasses);
     } catch (e) {
-      setPasses([]);
+      console.error('[Passes Local Storage Error]:', e);
+    }
+
+    // Parallel sync with central database
+    try {
+      const res = await fetch(`/api/hotel-bookings?phone=${userPhoneClean}`);
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.bookings)) {
+        const hiddenIds: string[] = JSON.parse(localStorage.getItem('majh_boisar_user_hidden_passes') || '[]');
+        const dbPasses: HotelBookingPass[] = data.bookings
+          .filter((b: any) => !hiddenIds.includes(b.id))
+          .map((b: any) => ({
+            id: b.id,
+            hotelId: String(b.hotelId || b.hotelSlug || ''),
+            hotelName: b.hotelName,
+            hotelPhone: b.hotelPhone || '',
+            hotelAddress: b.hotelAddress || '',
+            guestName: b.guestName,
+            guestPhone: b.guestPhone,
+            roomCategory: b.roomCategory,
+            stayType: b.stayType,
+            timeSlot: b.timeSlot,
+            date: b.checkInDate,
+            totalAmount: Number(b.totalAmount) || 0,
+            status: b.status,
+            createdAt: b.createdAt
+          }));
+
+        const seen = new Set(dbPasses.map(p => p.id));
+        const merged = [...dbPasses, ...localPasses.filter(p => !seen.has(p.id))];
+        setPasses(merged);
+      }
+    } catch (e) {
+      console.error('[Passes DB Fetch Error]:', e);
     }
   };
 

@@ -17,7 +17,8 @@ import {
   Utensils, Bell, Receipt, Printer, Volume2, VolumeX, Coffee, ChevronDown,
   Wifi, Wind, Car, Tv, Bath, Zap, Building2, ShieldCheck, Waves
 } from 'lucide-react';
-import BusinessQRStandeeModal from '@/components/BusinessQRStandeeModal';
+import dynamic from 'next/dynamic';
+const BusinessQRStandeeModal = dynamic(() => import('@/components/BusinessQRStandeeModal'), { ssr: false });
 import { compressImage } from '@/lib/imageCompressor';
 import { CATEGORY_CATALOG } from '@/lib/categoryMapping';
 const toTitleCase = (str: string) => {
@@ -753,53 +754,7 @@ function DashboardContent() {
         } catch (e) {}
       }
     }
-    return [
-      {
-        id: 'MB-HTL-819201',
-        hotelName: 'Freesia by Express Inn',
-        guestName: 'Rohit Sharma',
-        guestPhone: '9820123456',
-        roomCategory: 'Deluxe AC Room',
-        stayType: 'hourly',
-        timeSlot: '12:00 PM - 03:00 PM (3 Hours)',
-        date: 'Today',
-        checkInDate: 'Today',
-        assignedRoom: '101',
-        totalAmount: '699',
-        status: 'Confirmed',
-        createdAt: '1 hour ago'
-      },
-      {
-        id: 'MB-HTL-948123',
-        hotelName: 'Freesia by Express Inn',
-        guestName: 'Pooja Verma',
-        guestPhone: '9123456789',
-        roomCategory: 'Standard Non-AC Room',
-        stayType: 'hourly',
-        timeSlot: '01:00 PM - 07:00 PM (6 Hours)',
-        date: 'Today',
-        checkInDate: 'Today',
-        assignedRoom: '103',
-        totalAmount: '799',
-        status: 'Checked-In (Active Stay)',
-        createdAt: '3 hours ago'
-      },
-      {
-        id: 'MB-HTL-301984',
-        hotelName: 'Freesia by Express Inn',
-        guestName: 'Anil Deshmukh',
-        guestPhone: '9833445566',
-        roomCategory: 'Deluxe AC Room',
-        stayType: 'night',
-        timeSlot: 'Night Stay (12:00 PM - 11:00 AM)',
-        date: 'Tonight',
-        checkInDate: 'Tonight',
-        assignedRoom: '105',
-        totalAmount: '1899',
-        status: 'Confirmed',
-        createdAt: 'Yesterday'
-      }
-    ];
+    return [];
   });
 
   const [hotelBookingFilter, setHotelBookingFilter] = useState<'All' | 'Confirmed' | 'Checked-In' | 'Completed' | 'Cancelled'>('All');
@@ -820,19 +775,52 @@ function DashboardContent() {
   });
   const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
 
-  // Reload bookings from localStorage
+  // Reload bookings from central DB and local storage
   useEffect(() => {
-    const loadHotelBookings = () => {
+    const loadHotelBookings = async () => {
+      let local: any[] = [];
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('majh_boisar_hotel_bookings');
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
             if (Array.isArray(parsed)) {
-              setHotelBookingsList(parsed.filter(item => item && typeof item === 'object'));
+              local = parsed.filter(item => item && typeof item === 'object');
+              setHotelBookingsList(local);
             }
-          } catch (e) {}
+          } catch (e) {
+            console.error('[Dashboard Local Bookings Error]:', e);
+          }
         }
+      }
+
+      // Parallel sync with central database
+      try {
+        const res = await fetch('/api/hotel-bookings?all=true');
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.bookings)) {
+          const dbBookings = data.bookings.map((b: any) => ({
+            id: b.id,
+            hotelId: b.hotelId,
+            hotelSlug: b.hotelSlug,
+            hotelName: b.hotelName,
+            guestName: b.guestName,
+            guestPhone: b.guestPhone,
+            roomCategory: b.roomCategory,
+            stayType: b.stayType,
+            timeSlot: b.timeSlot,
+            date: b.checkInDate || 'Today',
+            checkInDate: b.checkInDate || 'Today',
+            totalAmount: b.totalAmount,
+            status: b.status,
+            createdAt: b.createdAt
+          }));
+          const seen = new Set(dbBookings.map((b: any) => b.id));
+          const merged = [...dbBookings, ...local.filter(l => !seen.has(l.id))];
+          setHotelBookingsList(merged);
+        }
+      } catch (e) {
+        console.error('[Dashboard DB Bookings Error]:', e);
       }
     };
     loadHotelBookings();

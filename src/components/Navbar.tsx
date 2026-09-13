@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useApp, Role } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
+import dynamic from 'next/dynamic';
 import LoginModal from './LoginModal';
-import MyHotelPassesModal from './MyHotelPassesModal';
-import QRScannerModal from './QRScannerModal';
+const MyHotelPassesModal = dynamic(() => import('./MyHotelPassesModal'), { ssr: false });
+const QRScannerModal = dynamic(() => import('./QRScannerModal'), { ssr: false });
 import {
   Search, MapPin, User, Shield, Briefcase, ChevronDown, Check,
   Menu, X, LogOut, Building, Layers, HelpCircle, MessageSquare, ChevronRight, Smartphone, Download, Ticket, Plus, QrCode,

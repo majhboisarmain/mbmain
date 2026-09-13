@@ -295,6 +295,28 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
     try {
       const existing = JSON.parse(localStorage.getItem('majh_boisar_hotel_bookings') || '[]');
       localStorage.setItem('majh_boisar_hotel_bookings', JSON.stringify([newBooking, ...existing]));
+
+      // Save to central PostgreSQL Database
+      fetch('/api/hotel-bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hotelId: (selectedHotel as any)?.id ? parseInt(String((selectedHotel as any).id).replace(/\D/g, '')) || null : null,
+          hotelSlug: (selectedHotel as any)?.slug || selectedHotel.id,
+          hotelName: selectedHotel.name,
+          hotelPhone: selectedHotel.phone,
+          hotelAddress: selectedHotel.address,
+          guestName,
+          guestPhone,
+          roomCategory,
+          stayType,
+          timeSlot: stayType === 'hourly' ? `${hourlyDuration} (Check-in ${checkInTime})` : 'Night Stay',
+          checkInDate,
+          checkOutDate,
+          totalAmount: calculatedPrice,
+          notes: specialRequest
+        })
+      }).catch(e => console.error('[Hotel Booking DB Save Error]:', e));
     } catch (err) {
       console.error(err);
     }
@@ -349,12 +371,34 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
     const updated = [newHotel, ...hotelList];
     setHotelList(updated);
     try {
-      // Save to both stores for redundancy
+      // Save to local storage for instant fallback
       const savedV2 = JSON.parse(localStorage.getItem('majh_boisar_custom_hotels_v2') || '[]');
       localStorage.setItem('majh_boisar_custom_hotels_v2', JSON.stringify([newHotel, ...savedV2]));
 
       const saved = JSON.parse(localStorage.getItem('majh_boisar_user_hotels') || '[]');
       localStorage.setItem('majh_boisar_user_hotels', JSON.stringify([newHotel, ...saved]));
+
+      // Save to central PostgreSQL DB
+      fetch('/api/hotels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newHotel.name,
+          category: newHotel.category,
+          location: newHotel.location,
+          address: newHotel.address,
+          phone: newHotel.phone,
+          whatsapp: newHotel.whatsapp,
+          hourlyRate3h: newHotel.hourlyRate3h,
+          hourlyRate6h: newHotel.hourlyRate6h,
+          hourlyRate12h: newHotel.hourlyRate12h,
+          nightRate: newHotel.nightRate,
+          amenities: newHotel.amenities,
+          gallery: newHotel.image ? [newHotel.image] : [],
+          description: newHotel.description,
+          createdBy: loggedInUser?.phone || newHotel.phone
+        })
+      }).catch(e => console.error('[Hotel DB Save Error]:', e));
 
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('storage'));

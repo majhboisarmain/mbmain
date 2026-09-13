@@ -267,4 +267,68 @@ model HomeTechnician {
   createdAt    DateTime @default(now())
 }
 
+model Hotel {
+  id               Int            @id @default(autoincrement())
+  slug             String         @unique
+  name             String
+  tagline          String?
+  category         String         @default("Budget") // Luxury, Executive, Budget, Boutique, Residency
+  badge            String?
+  offerBadge       String?
+  suitabilityTag   String?
+  location         String         @default("Boisar")
+  address          String
+  landmark         String?
+  phone            String
+  whatsapp         String
+  rating           Float          @default(4.5)
+  reviewsCount     Int            @default(0)
+  hourlyRate3h     Float          @default(499)
+  hourlyRate6h     Float          @default(799)
+  hourlyRate12h    Float          @default(1199)
+  nightRate        Float          @default(1499)
+  is3hAvailable    Boolean        @default(true)
+  is6hAvailable    Boolean        @default(true)
+  is12hAvailable   Boolean        @default(true)
+  isNightAvailable Boolean        @default(true)
+  isCoupleFriendly Boolean        @default(true)
+  acceptsLocalId   Boolean        @default(true)
+  nearStation      Boolean        @default(false)
+  nearMidc         Boolean        @default(false)
+  isComingSoon     Boolean        @default(false)
+  gallery          String?        // JSON string of image URLs
+  amenities        String?        // JSON string of amenities
+  description      String?
+  rules            String?        // JSON string of rules
+  rooms            String?        // JSON string of rooms
+  status           String         @default("Active") // Active, Pending, Inactive
+  createdBy        String?        // Owner's registered phone
+  createdAt        DateTime       @default(now())
+
+  bookings         HotelBooking[]
+}
+
+model HotelBooking {
+  id           String    @id @default(uuid())
+  hotelId      Int?
+  hotelSlug    String?
+  hotelName    String
+  hotelPhone   String?
+  hotelAddress String?
+  guestName    String
+  guestPhone   String
+  roomCategory String?   @default("Standard AC")
+  stayType     String?   @default("hourly") // hourly, night
+  timeSlot     String?   // e.g. "3 Hours (11:00 AM - 2:00 PM)"
+  checkInDate  String?
+  checkOutDate String?
+  totalAmount  Float     @default(0)
+  status       String    @default("Confirmed") // Confirmed, Cancelled, Completed
+  notes        String?
+  createdAt    DateTime  @default(now())
+
+  hotel        Hotel?    @relation(fields: [hotelId], references: [id], onDelete: SetNull)
+}
+
+
 
