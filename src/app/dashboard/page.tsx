@@ -3291,6 +3291,77 @@ _Powered by Majh Boisar (majhboisar.com)_`
     }
   };
 
+  const handleActivatePropertyPlan = (normalizedPlanId: 'StarterPass_1499' | 'ProAgent_2999' | 'BuilderVIP_4999') => {
+    const planDetailsMap: Record<string, any> = {
+      'StarterPass_1499': {
+        name: '₹1,499 Package (2 Properties)',
+        priceNum: 1499,
+        propLimit: 2,
+        featuredCount: 0
+      },
+      'ProAgent_2999': {
+        name: '₹2,999 Package (3 Properties)',
+        priceNum: 2999,
+        propLimit: 3,
+        featuredCount: 0
+      },
+      'BuilderVIP_4999': {
+        name: '₹4,999 Package (5 Properties + 2 Featured)',
+        priceNum: 4999,
+        propLimit: 5,
+        featuredCount: 2
+      }
+    };
+
+    const meta = planDetailsMap[normalizedPlanId] || planDetailsMap['StarterPass_1499'];
+    const phone = loggedInUser?.phone || '9820123456';
+    const ownerName = loggedInUser?.name || 'Property Owner';
+    const startDate = new Date().toISOString();
+    const is1499 = normalizedPlanId === 'StarterPass_1499';
+    const validityDays = is1499 ? 30 : 50;
+    const bonusDays = is1499 ? 0 : 20;
+    const expiryDate = new Date(Date.now() + validityDays * 24 * 60 * 60 * 1000).toISOString();
+
+    const newSub = {
+      id: `prop_sub_${Date.now()}`,
+      phone,
+      ownerName,
+      planId: normalizedPlanId,
+      planName: meta.name,
+      priceNum: meta.priceNum,
+      propLimit: meta.propLimit,
+      featuredCount: meta.featuredCount,
+      startDate,
+      validityDays,
+      bonusDays,
+      expiryDate,
+      status: 'Active',
+      hasDirectCall: true,
+      hasGoogleMap: true,
+      createdAt: startDate
+    };
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`majh_boisar_property_plan_${phone}`, normalizedPlanId);
+      try {
+        const existingSubsRaw = localStorage.getItem('majh_boisar_property_subscriptions');
+        let subsList: any[] = existingSubsRaw ? JSON.parse(existingSubsRaw) : [];
+        if (!Array.isArray(subsList)) subsList = [];
+        subsList = subsList.filter((s: any) => s.phone !== phone);
+        subsList.unshift(newSub);
+        localStorage.setItem('majh_boisar_property_subscriptions', JSON.stringify(subsList));
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new Event('majh_boisar_property_subscriptions_updated'));
+      } catch (e) {
+        console.error('Error saving property subscription:', e);
+      }
+    }
+    showToast(`⚡ [Admin 1-Click] ${meta.name} activated successfully!`, 'success', 5000);
+    setTimeout(() => {
+      window.location.reload();
+    }, 800);
+  };
+
   // Wizard Step Validators
   const validateStep1 = () => {
     if (!newBizName.trim()) {
@@ -5080,20 +5151,31 @@ _Powered by Majh Boisar (majhboisar.com)_`
 
                                     <button
                                       type="button"
-                                      onClick={() => {
+                                      onClick={async () => {
                                         if (isCurrent) return;
+                                        if (isAdminAuth || currentRole === 'Admin') {
+                                          await handleUpgradeSubscription(plan.id as any);
+                                          showToast(`⚡ [Admin Direct] ${plan.title} activated successfully!`, 'success', 5000);
+                                          return;
+                                        }
                                         setCheckoutPlan(plan.id);
                                         setCheckoutModalOpen(true);
                                       }}
                                       className={`w-full py-2.5 rounded-xl font-extrabold text-xs transition-all cursor-pointer text-center ${
                                         isCurrent
                                           ? 'bg-slate-100 text-slate-500 cursor-default'
-                                          : plan.highlight 
-                                            ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm'
-                                            : 'bg-teal-600 hover:bg-teal-700 text-white shadow-sm'
+                                          : (isAdminAuth || currentRole === 'Admin')
+                                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md'
+                                            : plan.highlight 
+                                              ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm'
+                                              : 'bg-teal-600 hover:bg-teal-700 text-white shadow-sm'
                                       }`}
                                     >
-                                      {isCurrent ? 'Current Active Plan' : `Activate ${plan.title}`}
+                                      {isCurrent 
+                                        ? 'Current Active Plan' 
+                                        : (isAdminAuth || currentRole === 'Admin')
+                                          ? `⚡ 1-Click Activate ${plan.title} (Admin Free)`
+                                          : `Activate ${plan.title}`}
                                     </button>
                                   </div>
                                 );
@@ -9837,23 +9919,34 @@ _Powered by Majh Boisar (majhboisar.com)_`
                                 ) : (
                                   <button
                                     onClick={() => {
+                                      if (isAdminAuth || currentRole === 'Admin') {
+                                        const normalized = (plan.tier === 'Starter' || plan.tier === 'OwnerPass')
+                                          ? 'StarterPass_1499'
+                                          : (plan.tier === 'Pro' || plan.tier === 'ProAgent')
+                                            ? 'ProAgent_2999'
+                                            : 'BuilderVIP_4999';
+                                        handleActivatePropertyPlan(normalized as any);
+                                        return;
+                                      }
                                       setCheckoutPlan(plan.tier as any);
-                                      setCouponApplied(false);
-                                      setCouponInput('');
-                                      setCouponSuccessMsg('');
-                                      setCouponErrorMsg('');
                                       setCheckoutModalOpen(true);
                                     }}
                                     disabled={isActive}
                                     className={`w-full py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer shadow-md hover:shadow-lg active:scale-95 text-white ${
                                       isActive
                                         ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed shadow-none'
-                                        : plan.tier === 'Starter'
-                                          ? 'bg-teal-600 hover:bg-teal-700 shadow-teal-500/20'
-                                          : 'bg-gradient-to-r from-amber-500 to-emerald-600 hover:from-amber-600 hover:to-emerald-700 shadow-emerald-500/20'
+                                        : (isAdminAuth || currentRole === 'Admin')
+                                          ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'
+                                          : plan.tier === 'Starter'
+                                            ? 'bg-teal-600 hover:bg-teal-700 shadow-teal-500/20'
+                                            : 'bg-gradient-to-r from-amber-500 to-emerald-600 hover:from-amber-600 hover:to-emerald-700 shadow-emerald-500/20'
                                     }`}
                                   >
-                                    {isActive ? '✓ Current Plan' : `Upgrade to ${plan.tier} — ${plan.price}/mo`}
+                                    {isActive 
+                                      ? '✓ Current Plan' 
+                                      : (isAdminAuth || currentRole === 'Admin')
+                                        ? `⚡ 1-Click Activate ${plan.tier} (Admin Free)`
+                                        : `Upgrade to ${plan.tier} — ${plan.price}/mo`}
                                   </button>
                                 )}
                               </div>
@@ -10122,46 +10215,14 @@ _Powered by Majh Boisar (majhboisar.com)_`
                     </div>
                   </div>
 
-                  {/* Promo Code section inside Checkout - ONLY SHOWN TO ADMIN */}
+                  {/* Admin Master Notice (Free Bypass) */}
                   {(isAdminAuth || currentRole === 'Admin') && (
-                    <div className="bg-teal-50/40 border border-teal-100 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 mb-2.5 space-y-1.5 animate-in fade-in duration-200">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-[9px] sm:text-[10px] text-teal-800 font-bold uppercase tracking-wider">🏷️ Admin Promo / Waiver Code</label>
-                        <span className="text-[9px] font-black bg-teal-100 text-teal-800 px-1.5 py-0.5 rounded">Admin Only</span>
+                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl sm:rounded-2xl p-3 mb-2.5 text-xs font-bold leading-relaxed flex items-center gap-2">
+                      <span className="text-base">⚡</span>
+                      <div>
+                        <p className="font-extrabold uppercase text-[9.5px]">Admin Master Access Active</p>
+                        <p className="text-[10px] text-emerald-700 font-medium">As Admin, this package will be activated instantly with 100% free bypass.</p>
                       </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={couponInput}
-                          onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                          placeholder="e.g. ADMINPROP or ADMINBIZ"
-                          className="flex-1 bg-white border border-teal-200 rounded-xl px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-teal-500 text-slate-800 font-bold"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCouponErrorMsg('');
-                            setCouponSuccessMsg('');
-                            const code = couponInput.trim().toUpperCase();
-
-                            const isPropCoupon = ['ADMINPROP', 'MAJHPROP', 'PROP100', 'MAJHBOISAR1499', 'MAJHBOISAR2999', 'MAJHBOISAR4999'].includes(code);
-                            const isBizCoupon = ['ADMINBIZ', 'MAJHBIZ', 'BIZ100', 'MAJHBOISAR99', 'MAJHBOISAR149', 'MAJHBOISAR349'].includes(code);
-                            const isMasterCoupon = ['MAJHBOISAR', 'ADMINFREE', 'ADMIN100', 'MAJHADMIN', 'ADMIN'].includes(code);
-
-                            if (isPropCoupon || isBizCoupon || isMasterCoupon) {
-                              setCouponApplied(true);
-                              setCouponSuccessMsg('🎉 100% Admin Promo Code Applied! Package activated for free.');
-                            } else {
-                              setCouponErrorMsg('Invalid coupon code. Try "ADMINPROP" or "ADMINBIZ".');
-                            }
-                          }}
-                          className="bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-[11px] px-4 py-1.5 rounded-xl transition-all cursor-pointer shadow-sm border border-teal-800 shrink-0"
-                        >
-                          Apply
-                        </button>
-                      </div>
-                      {couponSuccessMsg && <p className="text-[9px] font-bold text-emerald-600">{couponSuccessMsg}</p>}
-                      {couponErrorMsg && <p className="text-[9px] font-bold text-rose-600">{couponErrorMsg}</p>}
                     </div>
                   )}
 
@@ -10171,9 +10232,9 @@ _Powered by Majh Boisar (majhboisar.com)_`
                       <span>Plan Charge</span>
                       <span>{planInfo.price}.00</span>
                     </div>
-                    {couponApplied && (
+                    {(isAdminAuth || currentRole === 'Admin') && (
                       <div className="flex justify-between text-emerald-650 font-black">
-                        <span>Promo Code Discount (1st Month Free)</span>
+                        <span>Admin Master Waiver</span>
                         <span>-{planInfo.price}.00</span>
                       </div>
                     )}
@@ -10181,21 +10242,13 @@ _Powered by Majh Boisar (majhboisar.com)_`
                     <div className="flex justify-between text-slate-850 text-xs sm:text-sm font-black">
                       <span>Total Amount Due</span>
                       <span>
-                        {couponApplied ? '₹0.00' : `${planInfo.price}.00`}
+                        {(isAdminAuth || currentRole === 'Admin') ? '₹0.00' : `${planInfo.price}.00`}
                       </span>
                     </div>
                   </div>
 
-                  {/* Payment Details (Disabled if ₹0 balance due) */}
-                  {couponApplied ? (
-                    <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-3 mb-2.5 text-xs font-bold leading-relaxed flex items-center gap-2">
-                      <span className="text-base">🎁</span>
-                      <div>
-                        <p className="font-extrabold uppercase text-[9px]">Free Trial Active!</p>
-                        <p className="text-[9px] text-emerald-700 font-medium">Coupon has cleared the balance. You can activate the plan immediately for free.</p>
-                      </div>
-                    </div>
-                  ) : (
+                  {/* Payment Details (Hidden for Admin) */}
+                  {(isAdminAuth || currentRole === 'Admin') ? null : (
                     <div className="space-y-2 mb-3">
                       {/* Direct Pay QR Code */}
                       <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-center text-center space-y-2.5 mb-2">
@@ -10335,7 +10388,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
                 }}
                 className="flex-1 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-extrabold text-xs shadow-md hover:shadow-lg transition-all hover:scale-[1.01] cursor-pointer text-center"
               >
-                {couponApplied ? 'Activate Free Trial' : 'Pay & Activate'}
+                {(isAdminAuth || currentRole === 'Admin') ? '⚡ Confirm & Activate (Admin Bypass)' : 'Pay & Activate'}
               </button>
             </div>
 

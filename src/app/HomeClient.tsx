@@ -5946,46 +5946,19 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
               <div className="border-t border-slate-200/80 pt-2.5 mt-3 flex justify-between items-center">
                 <strong className="text-xs font-black text-slate-800 uppercase">Total Amount</strong>
                 <strong className="text-sm font-black text-teal-650">
-                  {specialistCouponApplied ? '₹0.00' : (specialistCheckoutPlan === 'Pro' ? '₹49.00' : '₹99.00')}
+                  {(specialistCouponApplied || currentRole === 'Admin') ? '₹0.00' : (specialistCheckoutPlan === 'Pro' ? '₹49.00' : '₹99.00')}
                 </strong>
               </div>
             </div>
 
-            {/* Coupon Entry - Only shown if Admin */}
+            {/* Admin Bypass Notice (No Coupon Needed) */}
             {currentRole === 'Admin' && (
-              <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 text-left space-y-2 animate-in fade-in duration-200">
-                <div className="flex items-center justify-between">
-                  <label className="block text-[10px] text-slate-455 font-bold uppercase tracking-wider">Admin Promo / Waiver Code</label>
-                  <span className="text-[9px] font-black bg-teal-100 text-teal-800 px-1.5 py-0.5 rounded">Admin Only</span>
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 mb-4 text-left flex items-center gap-2">
+                <span className="text-base">⚡</span>
+                <div>
+                  <p className="text-[10px] font-extrabold text-emerald-900 uppercase tracking-wider">Admin Direct Free Activation</p>
+                  <p className="text-[10px] text-emerald-700 font-medium">As Admin, this specialist listing activates directly with ₹0 charge.</p>
                 </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Enter code (e.g. ADMINBIZ or MAJHBOISAR)"
-                    value={specialistCouponInput}
-                    onChange={(e) => setSpecialistCouponInput(e.target.value)}
-                    className="flex-1 bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 uppercase"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const code = specialistCouponInput.trim().toUpperCase();
-                      if (['MAJHBOISAR', 'ADMINBIZ', 'ADMIN100', 'ADMIN', 'MAJHBOISAR99'].includes(code)) {
-                        setSpecialistCouponApplied(true);
-                        setSpecialistCouponSuccess('Coupon applied successfully! 100% discount applied.');
-                        setSpecialistCouponError('');
-                      } else {
-                        setSpecialistCouponError('Invalid coupon code!');
-                        setSpecialistCouponSuccess('');
-                      }
-                    }}
-                    className="bg-slate-850 hover:bg-slate-750 text-white text-xs font-black px-4 py-2 rounded-xl transition-all cursor-pointer"
-                  >
-                    Apply
-                  </button>
-                </div>
-                {specialistCouponSuccess && <p className="text-[10px] text-emerald-600 font-extrabold">{specialistCouponSuccess}</p>}
-                {specialistCouponError && <p className="text-[10px] text-rose-500 font-extrabold">{specialistCouponError}</p>}
               </div>
             )}
 
