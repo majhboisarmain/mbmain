@@ -853,12 +853,13 @@ function DashboardContent() {
   };
 
   const handleExportHotelRegisterCSV = () => {
-    if (hotelBookingsList.length === 0) {
+    const targetBookings = isAdminAuth ? hotelBookingsList : specificHotelBookings;
+    if (targetBookings.length === 0) {
       alert('No booking records to export yet.');
       return;
     }
     const headers = ['Pass ID', 'Hotel Name', 'Guest Name', 'WhatsApp Phone', 'Stay Mode', 'Time Window', 'Check-In Date', 'Assigned Room', 'Total (INR)', 'Coupon Code', 'Discount (INR)', 'Status', 'Recorded At'];
-    const rows = hotelBookingsList.map(b => [
+    const rows = targetBookings.map(b => [
       b.id || '',
       `"${(b.hotelName || '').replace(/"/g, '""')}"`,
       `"${(b.guestName || '').replace(/"/g, '""')}"`,
@@ -6265,7 +6266,8 @@ _Powered by Majh Boisar (majhboisar.com)_`
 
                         {/* Booking Passes Grid */}
                         {(() => {
-                          const filtered = hotelBookingsList.filter(b => {
+                          const baseList = isAdminAuth ? hotelBookingsList : specificHotelBookings;
+                          const filtered = baseList.filter(b => {
                             if (!b) return false;
                             const matchesFilter = hotelBookingFilter === 'All' || (b?.status || '').includes(hotelBookingFilter);
                             const q = hotelSearchQuery.toLowerCase();

@@ -44,18 +44,21 @@ export async function GET(request: NextRequest) {
     let query = 'SELECT * FROM "HotelBooking"';
     const params: any[] = [];
 
-    if (!all) {
-      if (guestPhone) {
-        const clean10 = guestPhone.replace(/\D/g, '').slice(-10);
-        query += ' WHERE "guestPhone" LIKE $1';
-        params.push(`%${clean10}%`);
-      } else if (hotelId) {
-        query += ' WHERE "hotelId" = $1';
-        params.push(Number(hotelId));
-      } else if (hotelSlug) {
-        query += ' WHERE "hotelSlug" = $1';
-        params.push(hotelSlug);
-      }
+    if (all) {
+      // Returned for admin / authorized dashboard
+    } else if (guestPhone) {
+      const clean10 = guestPhone.replace(/\D/g, '').slice(-10);
+      query += ' WHERE "guestPhone" LIKE $1';
+      params.push(`%${clean10}%`);
+    } else if (hotelId) {
+      query += ' WHERE "hotelId" = $1';
+      params.push(Number(hotelId));
+    } else if (hotelSlug) {
+      query += ' WHERE "hotelSlug" = $1';
+      params.push(hotelSlug);
+    } else {
+      // Security fallback: do not return all bookings if no identifier provided
+      return NextResponse.json({ success: true, bookings: [] });
     }
 
     query += ' ORDER BY "createdAt" DESC';
