@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {
-  title: 'Emergency Blood Donors & Blood Banks in Boisar | Majh Boisar',
-  description: 'Find voluntary blood donors and 24/7 blood bank helpline contacts in Boisar, Tarapur MIDC & Palghar. Search blood groups A+, B+, AB+, O+, A-, B-, AB-, O-. Register as a donor today.',
+  title: 'Emergency Blood Donors in Boisar & Palghar — Free Helpline',
+  description: 'Find voluntary blood donors & 24/7 blood bank helpline contacts in Boisar, Tarapur MIDC & Palghar. Search blood groups A+, B+, AB+, O+ directly.',
   keywords: [
     'blood donation boisar',
     'blood donors in boisar',

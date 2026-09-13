@@ -3,8 +3,8 @@ import React from 'react';
 import { BOISAR_HOTELS } from '@/lib/hotelsData';
 
 export const metadata: Metadata = {
-  title: 'Hotels in Boisar from ₹349 — Book at Lowest Price | Hourly & Night Stays — Majh Boisar',
-  description: '🔥 Book verified Hotels in Boisar at the cheapest price starting ₹349! Flexible 3h, 6h hourly slots & overnight stay. 100% Couple Friendly, Local ID Accepted & Pay at Hotel Desk. Book your room in 30 seconds on Majh Boisar.',
+  title: 'Hotels in Boisar from ₹349 — Hourly & Night Stay',
+  description: 'Book verified couple-friendly hotels in Boisar from ₹349. 3h/6h hourly slots & night stays near Railway Station & Tarapur MIDC with Pay at Hotel Desk.',
   keywords: [
     'hotels in boisar',
     'book hotels in boisar cheapest price',
@@ -27,8 +27,8 @@ export const metadata: Metadata = {
     canonical: 'https://majhboisar.in/hotels',
   },
   openGraph: {
-    title: 'Hotels in Boisar from ₹349 — Book Now at Lowest Price | Majh Boisar',
-    description: '🔥 Book verified Hotels in Boisar at the cheapest price starting ₹349! Flexible 3h, 6h slots & night stays. 100% Couple Friendly, Local ID Accepted & Pay at Desk.',
+    title: 'Hotels in Boisar from ₹349 — Hourly & Night Stay | Majh Boisar',
+    description: 'Book verified couple-friendly hotels in Boisar from ₹349. 3h/6h hourly slots & night stays near Railway Station & Tarapur MIDC with Pay at Hotel Desk.',
     url: 'https://majhboisar.in/hotels',
     siteName: 'Majh Boisar Hotels',
     locale: 'en_IN',

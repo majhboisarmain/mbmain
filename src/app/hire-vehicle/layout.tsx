@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {
-  title: 'Travels in Boisar — Tour & Travels, Cabs, Tempo, Car Rental, Taxi & Bus Service | Majh Boisar',
-  description: 'Top Travels in Boisar & Tarapur MIDC. Book verified Tour & Travels, local & outstation AC cabs, taxi booking, tempo transport (Chota Hathi, Pickup), self-drive cars, and tourist buses with direct driver contacts & 0% commission.',
+  title: 'Tempo Service & Travels in Boisar — Chota Hathi & Cabs',
+  description: 'Book verified Tour & Travels, AC cabs, and tempo transport (Chota Hathi, Pickup) in Boisar & Tarapur MIDC. Direct driver contact with 0% brokerage.',
   keywords: [
     'travels in boisar',
     'travel agency in boisar',

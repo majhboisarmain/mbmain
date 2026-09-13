@@ -27,8 +27,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Majh Boisar (Majha Boisar / माझं बोईसर) — Boisar's #1 City Directory & Search Engine",
-  description: "Official Majh Boisar (Majha Boisar / Maza Boisar / माझं बोईसर) local search engine & city directory. Find 800+ verified Doctors, Shops, Real Estate Properties, Tempo Helplines, Tarapur MIDC Jobs, Blood Donors & Services in Boisar, Palghar.",
+  title: {
+    default: "Majh Boisar — Boisar's #1 City Directory, Hotels & Local Search",
+    template: "%s | Majh Boisar",
+  },
+  description: "Official Majh Boisar (माझं बोईसर) local search engine. Find verified hotels from ₹349, flats for sale/rent, resorts, doctors, Tarapur MIDC jobs & tempo services in Boisar, Palghar.",
   keywords: [
     "majh boisar", "majha boisar", "maza boisar", "majhe boisar", "maze boisar", "majhboisar", "majhaboisar", "mazaboisar", "boisar majh", "boisar maza", "boisar majha", "boisar city",
     "माझं बोईसर", "माझा बोईसर", "माझे बोईसर", "बोईसर माझं", "बोईसर", "boisar portal", "boisar city directory", "boisar info", "boisar local search",

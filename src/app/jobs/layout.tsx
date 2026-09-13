@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {
-  title: 'Jobs in Boisar & Tarapur MIDC — 500+ Direct Vacancies & Walk-In Interviews | Majh Boisar',
-  description: 'Find direct hiring jobs in Boisar & Tarapur MIDC. Daily updated vacancies for Chemical Plants, Pharma, Engineering, ITI, Diploma, Helper, Driver, Accounts, Sales, and Office Staff. 0% Consultancy fees, contact HR directly on WhatsApp & Call.',
+  title: 'Jobs in Boisar & Tarapur MIDC — Latest Vacancies 2026',
+  description: 'Find direct hiring jobs in Boisar & Tarapur MIDC. Daily updated vacancies for Chemical Plants, Pharma, Engineering, ITI & Office Staff with direct HR contact.',
   keywords: [
     'jobs in boisar',
     'tarapur midc jobs',

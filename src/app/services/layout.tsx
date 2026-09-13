@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {
-  title: 'RO Purifier Repair & Home Services in Boisar — Electricians, Plumbers & AC Technicians | Majh Boisar',
-  description: 'Book verified RO Purifier repair, water filter service, AC repair, electricians, plumbers & domestic helpers in Boisar, Palghar. 1-Tap direct WhatsApp & phone call with upfront rates.',
+  title: 'Home Services in Boisar — RO, Electrician, Plumber & AC',
+  description: 'Book verified RO Purifier repair, AC service, electricians, plumbers & carpenters in Boisar & Tarapur MIDC. 1-Tap direct WhatsApp & call with upfront rates.',
   keywords: [
     'ro repair in boisar',
     'ro purifier service boisar',

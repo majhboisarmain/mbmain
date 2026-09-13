@@ -3,9 +3,11 @@ import type { Metadata } from 'next';
 import HomeClient from './HomeClient';
 
 export const metadata: Metadata = {
-  title: "Majh Boisar — Boisar's #1 City Directory & Local Search Engine",
+  title: {
+    absolute: "Majh Boisar — Boisar's #1 City Directory, Hotels & Local Search",
+  },
   description:
-    'Majh Boisar is the #1 local business directory for Boisar, Tarapur MIDC, and Palghar. Find verified doctors, hospitals, plumbers, electricians, salons, real estate agents, coaching classes, restaurants and more.',
+    'Official Majh Boisar (माझं बोईसर) local search engine. Find verified hotels from ₹349, flats for sale/rent, resorts, doctors, Tarapur MIDC jobs & tempo services in Boisar, Palghar.',
   keywords: 'jobs in boisar, job boisar, gym in boisar, doctor in boisar, hospital boisar, ashirwad clinic boisar, plumber boisar, electrician boisar, grocery shop boisar, coaching classes boisar, salon boisar, hotel boisar, real estate boisar, tarapur midc services, local business boisar, boisar directory, majh boisar, palghar local search, part time jobs in boisar, hiring in boisar, local vacancies boisar',
   authors: [{ name: 'MajhBoisar Team' }],
   openGraph: {

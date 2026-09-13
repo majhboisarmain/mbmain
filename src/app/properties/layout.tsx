@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {
-  title: 'Properties in Boisar — Flats, 1/2/3 BHK Apartments, Plots & Shops For Sale & Rent | Majh Boisar Real Estate',
-  description: 'Explore 150+ verified properties for sale and rent in Boisar, Palghar. Buy 1 BHK, 2 BHK, 3 BHK flats, builder projects, row houses, commercial shops & industrial plots in Ostwal Empire, Tata Housing, Boisar West & Tarapur MIDC with 0% brokerage direct owner contacts.',
+  title: 'Properties in Boisar — 1 & 2 BHK Flats For Sale & Rent',
+  description: 'Find 150+ verified 1 BHK, 2 BHK flats, plots & shops for sale and rent in Boisar West, Ostwal Empire & MIDC. Direct owner contact with 0% brokerage.',
   keywords: [
     'properties in boisar',
     'property in boisar',

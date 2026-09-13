@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {
-  title: "Best Restaurants & Cafes in Boisar — Dining, Food Delivery & Pure Veg | Majh Boisar",
-  description: "Explore top 100+ verified cafes, family dining restaurants, pure veg thalis, fast food, Agri-Koli seafood, and rooftop party lounges in Boisar & Tarapur MIDC. Get direct digital menu, deals & WhatsApp table reservations with 0% commission.",
+  title: "Food Delivery & Top Restaurants in Boisar — Order Online",
+  description: "Order food online & explore top 100+ verified cafes, family restaurants & pure veg thalis in Boisar. Digital menus & direct WhatsApp table reservation.",
   keywords: [
     "restaurants in boisar",
     "best cafe in boisar",

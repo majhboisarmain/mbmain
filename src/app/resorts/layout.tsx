@@ -3,8 +3,8 @@ import React from 'react';
 import { resortsData, ResortVilla } from '@/lib/resortsData';
 
 export const metadata: Metadata = {
-  title: 'Resorts & Pool Villas in Boisar, Kelwa Beach & Palghar | Majh Boisar',
-  description: 'Book verified Weekend Picnic Resorts, Private Pool Villas, and Kelwa Beach Farmhouses in Boisar, Palghar & Dahanu. Day picnic packages, couple friendly stays with private pool and DJ sound.',
+  title: 'Resorts in Boisar & Kelwa Beach — Pool Villas & Stays',
+  description: 'Book verified day picnic resorts, private pool villas & beachside farmhouses in Boisar, Kelwa Beach & Palghar. Best rates, family & couple friendly.',
   keywords: [
     'resorts in boisar',
     'kelwa beach resort',
