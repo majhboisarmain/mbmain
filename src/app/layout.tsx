@@ -47,9 +47,12 @@ export const metadata: Metadata = {
     "ro repair boisar", "ro repair in boisar", "water purifier repair boisar", "home services boisar", "ac repair in boisar", "electrician in boisar", "plumber in boisar", "house maid in boisar",
     "justdial boisar", "justdial alternative boisar", "housing boisar", "agoda boisar", "oyo hotels in boisar"
   ],
-  authors: [{ name: "Majh Boisar" }],
-  creator: "Majh Boisar",
-  publisher: "Majh Boisar",
+  authors: [
+    { name: "Ganesh Bhadane", url: "https://majhboisar.in" },
+    { name: "Majh Boisar" }
+  ],
+  creator: "Ganesh Bhadane (B.Tech Computer Engineer)",
+  publisher: "Ganesh Bhadane — Founder & Lead Engineer, Majh Boisar",
   metadataBase: new URL("https://majhboisar.in"),
   icons: {
     icon: [
@@ -145,12 +148,43 @@ const websiteJsonLd = {
   "description": "Official Majh Boisar (Majha Boisar / Maza Boisar / माझं बोईसर) city directory and local search engine. Find gyms, resorts, hotels, tempo services, Tarapur MIDC jobs, properties, blood donors, and 800+ businesses in Boisar & Palghar."
 };
 
+const ganeshBhadanePersonJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Ganesh Bhadane",
+  "jobTitle": "Founder & Lead Software Engineer",
+  "description": "Ganesh Bhadane is a B.Tech Computer Engineer and the Founder of Majh Boisar (माझं बोईसर) — Boisar's #1 verified hyperlocal digital search engine and city ecosystem.",
+  "alumniOf": {
+    "@type": "EducationalOrganization",
+    "name": "Bachelor of Technology in Computer Engineering (B.Tech Computer Science)"
+  },
+  "knowsAbout": [
+    "Computer Engineering",
+    "Software Development",
+    "Hyperlocal Search Engines",
+    "Digital Ecosystems",
+    "Next.js & Web Development",
+    "Local Commerce & City Tech"
+  ],
+  "url": "https://majhboisar.in",
+  "sameAs": [
+    "https://instagram.com/majhboisar"
+  ]
+};
+
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "Majh Boisar",
+  "alternateName": ["Majha Boisar", "Maza Boisar", "माझं बोईसर"],
   "url": "https://majhboisar.in",
   "logo": "https://majhboisar.in/majh-boisar-mb-logo.png",
+  "founder": {
+    "@type": "Person",
+    "name": "Ganesh Bhadane",
+    "jobTitle": "Founder & Lead Software Engineer",
+    "description": "B.Tech Computer Engineer and creator of Majh Boisar hyperlocal super-app."
+  },
   "sameAs": [
     "https://instagram.com/majhboisar",
     "https://facebook.com/majhboisar"
@@ -265,7 +299,9 @@ const localBusinessDirectoryJsonLd = {
   },
   "founder": {
     "@type": "Person",
-    "name": "Ganesh Bhadane"
+    "name": "Ganesh Bhadane",
+    "jobTitle": "Founder & Lead Software Engineer",
+    "description": "Ganesh Bhadane is a B.Tech Computer Engineer and the Founder & Architect of Majh Boisar."
   }
 };
 
@@ -275,10 +311,10 @@ const localFaqJsonLd = {
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "Who is the founder of Majh Boisar?",
+      "name": "Who is the owner and founder of Majh Boisar?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Majh Boisar (माझं बोईसर) was founded by Ganesh Bhadane with the vision of building a unified, hyperlocal super-app and digital ecosystem for the citizens, businesses, and workforce of Boisar and Tarapur MIDC."
+        "text": "Majh Boisar (माझं बोईसर) was founded and developed by Ganesh Bhadane, a professional B.Tech Computer Engineer. He built Majh Boisar as a modern, high-speed hyperlocal city directory and digital super-app connecting residents, businesses, hotels, real estate, and industries across Boisar and Tarapur MIDC."
       }
     },
     {
@@ -286,7 +322,7 @@ const localFaqJsonLd = {
       "name": "What is Majh Boisar (माझं बोईसर)?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Majh Boisar (majhboisar.in) is Boisar's #1 official local search engine and verified business directory founded by Ganesh Bhadane. It connects Boisar residents with 800+ verified doctors, hospitals, hotels, resorts, housemaids, electricians, plumbers, real estate flats, and daily Tarapur MIDC jobs."
+        "text": "Majh Boisar (majhboisar.in) is Boisar's #1 official local search engine and verified business directory created by Ganesh Bhadane (B.Tech Computer Engineer). It connects Boisar residents with 800+ verified doctors, hospitals, hotels, resorts, housemaids, electricians, plumbers, real estate flats, and daily Tarapur MIDC jobs."
       }
     },
     {
@@ -369,6 +405,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(ganeshBhadanePersonJsonLd) }}
         />
         <script
           type="application/ld+json"

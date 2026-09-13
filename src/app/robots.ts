@@ -40,7 +40,19 @@ export default function robots(): MetadataRoute.Robots {
         ],
       },
       {
-        userAgent: ['Googlebot', 'Bingbot', 'Googlebot-Image', 'Googlebot-Favicon', 'Google-Favicon'],
+        userAgent: [
+          'Googlebot', 
+          'Bingbot', 
+          'Googlebot-Image', 
+          'Googlebot-Favicon', 
+          'Google-Favicon',
+          'Google-Extended',
+          'GPTBot',
+          'ChatGPT-User',
+          'ClaudeBot',
+          'PerplexityBot',
+          'Applebot'
+        ],
         allow: [
           '/',
           '/favicon.ico',
