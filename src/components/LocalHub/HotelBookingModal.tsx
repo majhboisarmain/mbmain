@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '@/context/AppContext';
 import { useRouter } from 'next/navigation';
-import { calculateStayWindow } from '@/lib/hotelsData';
+import { calculateStayWindow, getAllHotels, normalizeHotelAmenity } from '@/lib/hotelsData';
 import HotelTimePicker from '@/components/HotelTimePicker';
 import { 
   Building2, 
@@ -57,140 +57,9 @@ export interface HotelListing {
   description: string;
 }
 
-export const INITIAL_HOTELS: HotelListing[] = [
-  {
-    id: 'hotel-1',
-    name: 'Freesia by Express Inn',
-    category: 'Luxury',
-    hourlyRate3h: 599,
-    hourlyRate6h: 999,
-    hourlyRate12h: 1499,
-    nightRate: 1899,
-    rating: 4.4,
-    reviewsCount: 142,
-    location: 'Ostwal Empire, Boisar',
-    address: 'Ostwal Empire Main Road, Near Reliance Trends, Boisar (W)',
-    phone: '8149998666',
-    whatsapp: '918149998666',
-    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
-    amenities: ['AC Deluxe', 'Free High-Speed Wi-Fi', 'Couple Friendly (Local IDs OK)', 'In-house Restaurant', '24/7 Room Service', 'Swimming Pool', 'Power Backup'],
-    isCoupleFriendly: true,
-    isHourlyFriendly: true,
-    nearStation: false,
-    nearMidc: true,
-    description: 'Premier 3-star hospitality experience in Boisar with luxury AC rooms, multi-cuisine restaurant, and 100% private hourly & overnight stays.'
-  },
-  {
-    id: 'hotel-2',
-    name: 'Hotel Sarovar Residency',
-    category: 'Executive',
-    hourlyRate3h: 499,
-    hourlyRate6h: 799,
-    hourlyRate12h: 1199,
-    nightRate: 1499,
-    rating: 4.2,
-    reviewsCount: 98,
-    location: 'MIDC Road, Salwad, Boisar',
-    address: 'Opp. Tarapur MIDC Gate No. 2, Salwad, Boisar',
-    phone: '9657187919',
-    whatsapp: '919657187919',
-    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80',
-    amenities: ['AC Executive', 'Free Wi-Fi', 'Couple Friendly', 'Conference Hall', 'In-house Dining', 'Free Parking', 'CCTV Security'],
-    isCoupleFriendly: true,
-    isHourlyFriendly: true,
-    nearStation: false,
-    nearMidc: true,
-    description: 'Top business & transit hotel near Tarapur MIDC with hygienic rooms, 3-hour quick refresh packages, and round-the-clock desk service.'
-  },
-  {
-    id: 'hotel-3',
-    name: 'Blugent Residency',
-    category: 'Boutique',
-    hourlyRate3h: 549,
-    hourlyRate6h: 899,
-    hourlyRate12h: 1299,
-    nightRate: 1699,
-    rating: 4.3,
-    reviewsCount: 115,
-    location: 'Navapur Road, Boisar',
-    address: 'Navapur Road, Near Boisar Bus Depot & Market, Boisar (W)',
-    phone: '9122522591',
-    whatsapp: '919122522591',
-    image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&auto=format&fit=crop&q=80',
-    amenities: ['Deluxe AC Rooms', 'Free Wi-Fi', 'Couple Friendly', 'Smart TV / OTT', 'Sanitized Beds', '24h Hot Water', 'Daily Housekeeping'],
-    isCoupleFriendly: true,
-    isHourlyFriendly: true,
-    nearStation: true,
-    nearMidc: false,
-    description: 'Boutique modern rooms with aesthetic interior decor, comfortable queen-size beds, and flexible day-use hourly booking options.'
-  },
-  {
-    id: 'hotel-4',
-    name: 'Hotel Boisar Residency',
-    category: 'Residency',
-    hourlyRate3h: 399,
-    hourlyRate6h: 699,
-    hourlyRate12h: 999,
-    nightRate: 1199,
-    rating: 4.0,
-    reviewsCount: 82,
-    location: 'Station Road, Boisar',
-    address: '2 Mins Walk from Boisar Railway Station (West Exit), Boisar',
-    phone: '9822014455',
-    whatsapp: '919822014455',
-    image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop&q=80',
-    amenities: ['Walk to Station', 'AC / Non-AC', 'Free Wi-Fi', 'Couple Friendly', 'Luggage Storage', '24h Front Desk'],
-    isCoupleFriendly: true,
-    isHourlyFriendly: true,
-    nearStation: true,
-    nearMidc: false,
-    description: 'Directly opposite Boisar station platform entrance. Super convenient for travelers, railway commuters, and short transit stays.'
-  },
-  {
-    id: 'hotel-5',
-    name: 'Hotel Sai Residency',
-    category: 'Budget',
-    hourlyRate3h: 349,
-    hourlyRate6h: 599,
-    hourlyRate12h: 849,
-    nightRate: 999,
-    rating: 3.9,
-    reviewsCount: 64,
-    location: 'Katkar Pada, Boisar',
-    address: 'Katkar Pada Naka, Near Palghar Highway, Boisar (E)',
-    phone: '9822334455',
-    whatsapp: '919822334455',
-    image: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&auto=format&fit=crop&q=80',
-    amenities: ['Budget Friendly', 'Clean Linens', 'AC Available', 'Free Parking', '24h Hot Water', 'Couple Friendly'],
-    isCoupleFriendly: true,
-    isHourlyFriendly: true,
-    nearStation: false,
-    nearMidc: false,
-    description: 'Affordable and clean accommodation for budget travelers and short staycations with transparent pricing and zero hidden charges.'
-  },
-  {
-    id: 'hotel-6',
-    name: 'Hotel Galaxy & Suites',
-    category: 'Executive',
-    hourlyRate3h: 599,
-    hourlyRate6h: 949,
-    hourlyRate12h: 1399,
-    nightRate: 1799,
-    rating: 4.1,
-    reviewsCount: 76,
-    location: 'MIDC Gate, Tarapur',
-    address: 'Tarapur MIDC Main Gate, Near Bank of Baroda, Boisar',
-    phone: '9876543210',
-    whatsapp: '919876543210',
-    image: 'https://images.unsplash.com/photo-1591088398332-8a7791972843?w=800&auto=format&fit=crop&q=80',
-    amenities: ['Business Suites', 'High-Speed Wi-Fi', 'Corporate GST Invoice', 'Restaurant & Room Service', 'Power Backup', 'Free Parking'],
-    isCoupleFriendly: true,
-    isHourlyFriendly: true,
-    nearStation: false,
-    nearMidc: true,
-    description: 'Corporate business hotel equipped with dedicated workstations, high speed internet, and corporate guest billing for Tarapur MIDC companies.'
-  }
-];
+// All demo hotels removed — real hotels loaded dynamically
+export const INITIAL_HOTELS: HotelListing[] = [];
+
 
 interface HotelBookingModalProps {
   isOpen: boolean;
@@ -250,11 +119,57 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
   const [newHotelImage, setNewHotelImage] = useState('');
   const [newHotelDesc, setNewHotelDesc] = useState('');
 
-  // User listed custom hotels
-  const [hotelList, setHotelList] = useState<HotelListing[]>(INITIAL_HOTELS);
+  // Load all live hotels from hotelsData & custom hotels
+  const loadMergedHotels = (): HotelListing[] => {
+    try {
+      const allLive = getAllHotels();
+      const mappedLive: HotelListing[] = allLive.map(h => ({
+        id: h.id || h.slug,
+        name: h.name,
+        category: (h.category as any) || 'Executive',
+        hourlyRate3h: h.hourlyRate3h || 499,
+        hourlyRate6h: h.hourlyRate6h || 799,
+        hourlyRate12h: h.hourlyRate12h || 1199,
+        nightRate: h.nightRate || 1499,
+        rating: h.rating || 4.5,
+        reviewsCount: h.reviewsCount || 50,
+        location: h.location || 'Boisar',
+        address: h.address || `${h.location}, Boisar`,
+        phone: h.phone,
+        whatsapp: h.whatsapp || h.phone,
+        image: (h.gallery && h.gallery.length > 0) ? h.gallery[0] : (h as any).image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
+        amenities: (h.amenities || []).map((a: any) => typeof a === 'string' ? a : a.name),
+        isCoupleFriendly: h.isCoupleFriendly ?? true,
+        isHourlyFriendly: h.offersHourly !== false,
+        nearStation: Boolean(h.nearStation),
+        nearMidc: Boolean(h.nearMidc),
+        description: h.description || h.tagline || ''
+      }));
 
-  // Sync user info on open
+      const liveNames = new Set(mappedLive.map(h => h.name.toLowerCase().trim()));
+      const extraInitials = INITIAL_HOTELS.filter(h => !liveNames.has(h.name.toLowerCase().trim()));
+      return [...mappedLive, ...extraInitials];
+    } catch (e) {
+      return INITIAL_HOTELS;
+    }
+  };
+
+  // User listed custom hotels synced with live data
+  const [hotelList, setHotelList] = useState<HotelListing[]>(() => {
+    if (typeof window !== 'undefined') {
+      return loadMergedHotels();
+    }
+    return INITIAL_HOTELS;
+  });
+
+  // Sync user info and live hotels on open
   useEffect(() => {
+    const refreshModalHotels = () => {
+      const updated = loadMergedHotels();
+      setHotelList(updated);
+      return updated;
+    };
+
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       if (loggedInUser) {
@@ -262,21 +177,15 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
         setGuestPhone(prev => prev || loggedInUser.phone || '');
       }
 
-      // Load custom hotels from localStorage
-      try {
-        const saved = localStorage.getItem('majh_boisar_user_hotels');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setHotelList([...parsed, ...INITIAL_HOTELS]);
-          }
-        }
-      } catch (e) {
-        console.error(e);
-      }
+      const currentList = refreshModalHotels();
 
       if (initialHotelId) {
-        const target = INITIAL_HOTELS.find(h => h.id === initialHotelId);
+        const cleanTargetId = initialHotelId.toLowerCase().trim();
+        const target = currentList.find(h => 
+          h.id.toLowerCase().trim() === cleanTargetId || 
+          h.name.toLowerCase().trim() === cleanTargetId ||
+          h.name.toLowerCase().replace(/\s+/g, '-') === cleanTargetId
+        );
         if (target) {
           setSelectedHotel(target);
           setView('book');
@@ -287,8 +196,18 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
       setView('browse');
       setSelectedHotel(null);
     }
+
+    const handleCustomUpdate = () => {
+      refreshModalHotels();
+    };
+
+    window.addEventListener('storage', refreshModalHotels);
+    window.addEventListener('majh_boisar_hotel_updated', handleCustomUpdate);
+
     return () => {
       document.body.style.overflow = '';
+      window.removeEventListener('storage', refreshModalHotels);
+      window.removeEventListener('majh_boisar_hotel_updated', handleCustomUpdate);
     };
   }, [isOpen, initialHotelId, loggedInUser]);
 

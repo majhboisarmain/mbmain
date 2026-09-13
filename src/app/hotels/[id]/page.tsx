@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { 
   Building2, 
   MapPin, 
@@ -48,7 +48,7 @@ import {
   CheckSquare,
   QrCode
 } from 'lucide-react';
-import { BOISAR_HOTELS, HotelItem, getHotelBySlugOrId, recordHotelClick, calculateStayWindow } from '@/lib/hotelsData';
+import { BOISAR_HOTELS, HotelItem, getHotelBySlugOrId, recordHotelClick, calculateStayWindow, normalizeHotelAmenity, deduplicateRules } from '@/lib/hotelsData';
 import { useApp } from '@/context/AppContext';
 import HotelTimePicker from '@/components/HotelTimePicker';
 import MyHotelPassesModal from '@/components/MyHotelPassesModal';
@@ -56,6 +56,7 @@ import MyHotelPassesModal from '@/components/MyHotelPassesModal';
 export default function HotelDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { loggedInUser, isLoggedIn, setLoginModalOpen } = useApp();
 
   const [mounted, setMounted] = useState(false);
@@ -142,7 +143,7 @@ export default function HotelDetailPage() {
   };
 
   // Booking Form States
-  const [stayMode, setStayMode] = useState<'hourly' | 'night'>('hourly');
+  const [stayMode, setStayMode] = useState<'hourly' | 'day' | 'night'>('night');
   const [hourlySlot, setHourlySlot] = useState<'3h' | '6h' | '12h'>('3h');
   const [checkInTime, setCheckInTime] = useState('11:00 AM');
   const [checkInDate, setCheckInDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -178,83 +179,131 @@ export default function HotelDetailPage() {
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [newReviewComment, setNewReviewComment] = useState('');
 
-  // Live Room Availability from Hotelier Desk
-  const [roomAvailability, setRoomAvailability] = useState<{ ac: boolean; non_ac: boolean }>({ ac: true, non_ac: true });
-
-  // Coupon System (e.g. BOISAR100, WELCOME50, MAJHBOISAR)
+  // Coupon state
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; label: string } | null>(null);
   const [couponError, setCouponError] = useState('');
   const [showCouponBox, setShowCouponBox] = useState(false);
 
-  // Function to refresh user's passes count
   const refreshUserPasses = () => {
-    if (!isLoggedIn || !loggedInUser?.phone) {
-      setUserPassCount(0);
-      return;
-    }
     try {
-      const stored = JSON.parse(localStorage.getItem('majh_boisar_hotel_bookings') || '[]');
-      const hiddenIds = JSON.parse(localStorage.getItem('majh_boisar_user_hidden_passes') || '[]');
-      const userPhoneClean = (loggedInUser.phone || '').replace(/\D/g, '');
-      const myPasses = stored.filter((p: any) => {
-        const guestPhoneClean = (p.guestPhone || '').replace(/\D/g, '');
-        return guestPhoneClean === userPhoneClean && !hiddenIds.includes(p.id);
-      });
-      setUserPassCount(myPasses.length);
+      const allPasses = JSON.parse(localStorage.getItem('majh_boisar_hotel_bookings') || '[]');
+      if (Array.isArray(allPasses)) {
+        const userPasses = allPasses.filter(
+          (p: any) => p && (
+            (loggedInUser?.phone && p.guestPhone === loggedInUser.phone) ||
+            p.hotelId === id
+          )
+        );
+        setUserPassCount(userPasses.length);
+      }
     } catch (e) {
-      setUserPassCount(0);
+      console.error(e);
     }
   };
 
   useEffect(() => {
     refreshUserPasses();
-  }, [isLoggedIn, loggedInUser]);
+  }, [id, loggedInUser]);
 
+  // Live Room Availability from Hotelier Desk
+  const [roomAvailability, setRoomAvailability] = useState<{ ac: boolean; non_ac: boolean }>({ ac: true, non_ac: true });
+
+  // Load hotel details
   useEffect(() => {
     if (!id) return;
-    const found = getHotelBySlugOrId(id);
-    if (found) {
-      setHotel(found);
-
-      // Load Room Availability for this Hotel
-      try {
-        const savedAvail = localStorage.getItem(`majh_boisar_hotel_availability_${found.id}`);
-        if (savedAvail) {
-          const parsed = JSON.parse(savedAvail);
-          setRoomAvailability(parsed);
-          if (!parsed.ac && parsed.non_ac) {
-            setRoomTypePreference('non_ac');
+    const refreshHotel = () => {
+      const found = getHotelBySlugOrId(id);
+      if (found) {
+        // Load custom rules & tag if saved in localStorage
+        try {
+          const directSavedRules = localStorage.getItem(`majh_boisar_hotel_rules_${found.id}`) ||
+                                   localStorage.getItem(`majh_boisar_hotel_rules_${found.slug}`);
+          if (directSavedRules) {
+            const parsed = JSON.parse(directSavedRules);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              found.rules = deduplicateRules(parsed);
+            }
+          } else if (found.rules && found.rules.length > 0) {
+            found.rules = deduplicateRules(found.rules);
           }
-        }
-      } catch (e) {}
+          const directSavedTag = localStorage.getItem(`majh_boisar_hotel_rules_tag_${found.id}`) ||
+                                 localStorage.getItem(`majh_boisar_hotel_rules_tag_${found.slug}`);
+          if (directSavedTag) {
+            (found as any).houseRulesTag = directSavedTag;
+          }
+        } catch (e) {}
 
-      try {
-        const saved = JSON.parse(localStorage.getItem(`majh_boisar_hotel_reviews_${found.id}`) || '[]');
-        setReviewsList([...saved, ...(found.reviews || [])]);
-      } catch (e) {
-        setReviewsList(found.reviews || []);
+        setHotel(found);
+        const stayQuery = searchParams?.get('stay');
+        if (stayQuery === 'day') {
+          if (found.offersHourly !== false) {
+            setStayMode('hourly');
+            setHourlySlot('12h');
+          } else {
+            setStayMode('day');
+          }
+        } else if (stayQuery === 'night') {
+          setStayMode('night');
+        } else if (stayQuery === 'hourly') {
+          setStayMode('hourly');
+          setHourlySlot('3h');
+        } else if (found.offersHourly === false) {
+          setStayMode('day');
+        }
+
+        // Load Room Availability for this Hotel
+        try {
+          const savedAvail = localStorage.getItem(`majh_boisar_hotel_availability_${found.id}`);
+          if (savedAvail) {
+            const parsed = JSON.parse(savedAvail);
+            setRoomAvailability(parsed);
+            if (!parsed.ac && parsed.non_ac) {
+              setRoomTypePreference('non_ac');
+            }
+          }
+        } catch (e) {}
+
+        try {
+          const saved = JSON.parse(localStorage.getItem(`majh_boisar_hotel_reviews_${found.id}`) || '[]');
+          setReviewsList([...saved, ...(found.reviews || [])]);
+        } catch (e) {
+          setReviewsList(found.reviews || []);
+        }
+        recordHotelClick(found.id, 'view');
+        
+        // Load Analytics
+        try {
+          const stored = JSON.parse(localStorage.getItem('majh_boisar_hotel_analytics') || '{}');
+          const hotelStats = stored[found.id] || { 
+            views: found.viewsCount || 342, 
+            clicks: found.clicksCount || 89, 
+            whatsapp: 42, 
+            call: 28, 
+            book: found.bookingsCount || 19 
+          };
+          setAnalyticsData(hotelStats);
+        } catch (e) {}
       }
-      recordHotelClick(found.id, 'view');
-      
-      // Load Analytics
-      try {
-        const stored = JSON.parse(localStorage.getItem('majh_boisar_hotel_analytics') || '{}');
-        const hotelStats = stored[found.id] || { 
-          views: found.viewsCount || 342, 
-          clicks: found.clicksCount || 89, 
-          whatsapp: 42, 
-          call: 28, 
-          book: found.bookingsCount || 19 
-        };
-        setAnalyticsData(hotelStats);
-      } catch (e) {}
-    }
+    };
+
+    refreshHotel();
 
     if (loggedInUser) {
       setGuestName(loggedInUser.name || '');
       setGuestPhone(loggedInUser.phone || '');
     }
+
+    const handleCustomUpdate = () => {
+      refreshHotel();
+    };
+
+    window.addEventListener('storage', refreshHotel);
+    window.addEventListener('majh_boisar_hotel_updated', handleCustomUpdate);
+    return () => {
+      window.removeEventListener('storage', refreshHotel);
+      window.removeEventListener('majh_boisar_hotel_updated', handleCustomUpdate);
+    };
   }, [id, loggedInUser]);
 
   // Price Calculation with AC / Non-AC
@@ -264,11 +313,14 @@ export default function HotelDetailPage() {
     const rate3h = isAc ? hotel.hourlyRate3h : Math.max(399, hotel.hourlyRate3h - 200);
     const rate6h = isAc ? hotel.hourlyRate6h : Math.max(599, hotel.hourlyRate6h - 300);
     const rate12h = isAc ? hotel.hourlyRate12h : Math.max(899, hotel.hourlyRate12h - 400);
+    const dayRate = isAc ? ((hotel as any).dayRate || hotel.hourlyRate12h || Math.max(799, Math.round(hotel.nightRate * 0.75))) : Math.max(599, Math.round(((hotel as any).dayRate || hotel.hourlyRate12h || hotel.nightRate * 0.75) - 200));
     const nightRate = isAc ? hotel.nightRate : Math.max(999, hotel.nightRate - 500);
 
     if (stayMode === 'hourly') {
       const base = hourlySlot === '3h' ? rate3h : hourlySlot === '6h' ? rate6h : rate12h;
       return base * roomsCount;
+    } else if (stayMode === 'day') {
+      return dayRate * roomsCount;
     } else {
       try {
         const d1 = new Date(checkInDate);
@@ -349,10 +401,10 @@ export default function HotelDetailPage() {
       hotelName: hotel.name,
       hotelPhone: hotel.phone,
       hotelAddress: hotel.address,
-      stayType: stayMode === 'hourly' ? `Hourly (${hourlySlot})` : 'Night Stay',
-      timeSlot: stayMode === 'hourly' ? calculatedWindow : 'Overnight Check-in',
+      stayType: stayMode === 'hourly' ? `Hourly (${hourlySlot})` : stayMode === 'day' ? 'Day Stay' : 'Night Stay',
+      timeSlot: stayMode === 'hourly' ? calculatedWindow : stayMode === 'day' ? ((hotel as any).dayStayTimingWindow || '09:00 AM – 07:00 PM') : `Overnight (${(hotel as any).nightStayCheckIn || '12:00 PM'} to ${(hotel as any).nightStayCheckOut || '11:00 AM'})`,
       date: checkInDate,
-      checkOutDate: stayMode === 'night' ? checkOutDate : null,
+      checkOutDate: stayMode === 'night' ? checkOutDate : checkInDate,
       roomCategory: roomTypePreference === 'ac' ? '❄️ AC Room' : '🌀 Non-AC Room',
       assignedRoom: 'Allotted at Front Desk',
       roomsCount,
@@ -559,52 +611,56 @@ export default function HotelDetailPage() {
                   </div>
                 </div>
 
-                {/* Right: 2 Stacked Side Photos */}
-                <div style={{ width: '230px', minWidth: '230px' }} className="hidden sm:flex flex-col gap-2 h-full shrink-0">
-                  {/* Side Photo 1 */}
-                  <div 
-                    onClick={() => {
-                      setGalleryModalIdx(1 % allPhotos.length);
-                      setIsGalleryModalOpen(true);
-                    }}
-                    className={`flex-1 rounded-2xl overflow-hidden relative cursor-pointer border-2 transition-all bg-slate-900 ${
-                      activePhotoIdx === (1 % hotel.gallery.length) ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200 hover:opacity-90'
-                    }`}
-                    title="Click to view photo"
-                  >
-                    <img 
-                      src={allPhotos[1] || hotel.gallery[0]} 
-                      alt="Room View 2" 
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" 
-                    />
-                  </div>
-
-                  {/* Side Photo 2 with +Count */}
-                  <div 
-                    onClick={() => {
-                      setGalleryModalIdx(2 % allPhotos.length);
-                      setIsGalleryModalOpen(true);
-                    }}
-                    className={`flex-1 rounded-2xl overflow-hidden relative cursor-pointer border-2 transition-all bg-slate-900 group ${
-                      activePhotoIdx === (2 % hotel.gallery.length) ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200'
-                    }`}
-                    title="Click to open all photos"
-                  >
-                    <img 
-                      src={allPhotos[2] || hotel.gallery[0]} 
-                      alt="Room View 3" 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
-                    <div className="absolute inset-0 bg-slate-950/65 group-hover:bg-slate-950/45 backdrop-blur-[1px] transition-colors flex flex-col items-center justify-center text-white cursor-pointer">
-                      <span className="text-2xl font-black tracking-tight text-white drop-shadow-md">
-                        +{Math.max(1, allPhotos.length - 2)}
-                      </span>
-                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-300">
-                        View All Photos
-                      </span>
+                {/* Right: Stacked Side Photos (Only if hotel has multiple distinct photos) */}
+                {allPhotos.length > 1 && (
+                  <div style={{ width: '230px', minWidth: '230px' }} className="hidden sm:flex flex-col gap-2 h-full shrink-0">
+                    {/* Side Photo 1 */}
+                    <div 
+                      onClick={() => {
+                        setGalleryModalIdx(1 % allPhotos.length);
+                        setIsGalleryModalOpen(true);
+                      }}
+                      className={`flex-1 rounded-2xl overflow-hidden relative cursor-pointer border-2 transition-all bg-slate-900 ${
+                        activePhotoIdx === 1 ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200 hover:opacity-90'
+                      }`}
+                      title="Click to view photo"
+                    >
+                      <img 
+                        src={allPhotos[1]} 
+                        alt="Room View 2" 
+                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" 
+                      />
                     </div>
+
+                    {/* Side Photo 2 with +Count (if 3 or more photos) */}
+                    {allPhotos.length > 2 && (
+                      <div 
+                        onClick={() => {
+                          setGalleryModalIdx(2 % allPhotos.length);
+                          setIsGalleryModalOpen(true);
+                        }}
+                        className={`flex-1 rounded-2xl overflow-hidden relative cursor-pointer border-2 transition-all bg-slate-900 group ${
+                          activePhotoIdx === 2 ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200'
+                        }`}
+                        title="Click to open all photos"
+                      >
+                        <img 
+                          src={allPhotos[2]} 
+                          alt="Room View 3" 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                        />
+                        <div className="absolute inset-0 bg-slate-950/65 group-hover:bg-slate-950/45 backdrop-blur-[1px] transition-colors flex flex-col items-center justify-center text-white cursor-pointer">
+                          <span className="text-2xl font-black tracking-tight text-white drop-shadow-md">
+                            +{Math.max(1, allPhotos.length - 2)}
+                          </span>
+                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-300">
+                            View All Photos
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
 
               </div>
 
@@ -663,103 +719,159 @@ export default function HotelDetailPage() {
                 </p>
               </div>
 
-              {/* Station & MIDC Proximity: Balanced 2-Column Grid */}
-              <div className="grid grid-cols-2 gap-2 text-xs font-bold text-slate-700">
-                <div className="bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 flex items-center gap-1.5">
-                  <Train className="w-3.5 h-3.5 text-purple-700 shrink-0" />
-                  <span className="truncate">{(hotel as any).stationDistance || (hotel.nearStation ? '3 mins to Boisar Station' : '8 mins to Station')}</span>
+              {/* Station & MIDC Proximity: Compact auto-width pills without stretched empty space */}
+              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-700">
+                <div className="inline-flex items-center gap-1.5 bg-slate-50/90 px-3 py-1.5 rounded-xl border border-slate-200/90 w-fit">
+                  <Train className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                  <span>{(hotel as any).stationDistance || (hotel.nearStation ? '3 mins to Boisar Station' : '8 mins to Station')}</span>
                 </div>
-                <div className="bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-indigo-700 shrink-0" />
-                  <span className="truncate">{(hotel as any).midcDistance || (hotel.nearMidc ? '5 mins to Tarapur MIDC' : '5 mins to MIDC')}</span>
-                </div>
-              </div>
-
-              {/* 3 Core Value Highlights: Balanced 3-Column Grid */}
-              <div className="grid grid-cols-3 gap-1.5 pt-1 border-t border-slate-100 text-[11px] sm:text-xs font-bold text-center">
-                <div className="bg-purple-50 text-purple-950 px-1.5 py-1.5 rounded-xl border border-purple-100 flex items-center justify-center gap-1">
-                  <Users className="w-3 h-3 text-purple-700 shrink-0" />
-                  <span className="truncate">Couples 18+</span>
-                </div>
-                <div className="bg-emerald-50 text-emerald-950 px-1.5 py-1.5 rounded-xl border border-emerald-100 flex items-center justify-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-emerald-700 shrink-0" />
-                  <span className="truncate">100% Safe</span>
-                </div>
-                <div className="bg-amber-50 text-amber-950 px-1.5 py-1.5 rounded-xl border border-amber-100 flex items-center justify-center gap-1">
-                  <Clock className="w-3 h-3 text-amber-700 shrink-0" />
-                  <span className="truncate">24/7 Check-in</span>
+                <div className="inline-flex items-center gap-1.5 bg-slate-50/90 px-3 py-1.5 rounded-xl border border-slate-200/90 w-fit">
+                  <Building2 className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                  <span>{(hotel as any).midcDistance || (hotel.nearMidc ? '5 mins to Tarapur MIDC' : '5 mins to MIDC')}</span>
                 </div>
               </div>
 
-              {/* What is in the room: Clean Lucide Icons Row like Card */}
+              {/* 3 Core Value Highlights: Compact auto-width pills */}
+              <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 text-xs font-semibold">
+                <div className="inline-flex items-center gap-1.5 bg-slate-50/80 text-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200/90 w-fit">
+                  <Users className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                  <span>{(hotel as any).coupleBadgeText || 'Couples 18+'}</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 bg-slate-50/80 text-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200/90 w-fit">
+                  <ShieldCheck className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                  <span>{(hotel as any).safetyBadgeText || '100% Safe'}</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 bg-slate-50/80 text-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200/90 w-fit">
+                  <Clock className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                  <span>{(hotel as any).checkinBadgeText || '24/7 Check-in'}</span>
+                </div>
+              </div>
+
+              {/* What is in the room & Hotel: Dynamic Amenities (Clean Without Background) */}
               <div className="pt-2 border-t border-slate-100 space-y-2">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
-                  What is in the room:
+                  What is in the room &amp; Hotel:
                 </span>
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-700">
-                  <span className="flex items-center gap-1.5 font-bold" title="Free Fast Wi-Fi">
-                    <Wifi className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="text-slate-700">Wi-Fi</span>
-                  </span>
-                  <span className="flex items-center gap-1.5 font-bold" title="AC Rooms">
-                    <Wind className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="text-slate-700">AC</span>
-                  </span>
-                  <span className="flex items-center gap-1.5 font-bold" title="Free Parking">
-                    <Car className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="text-slate-700">Parking</span>
-                  </span>
-                  <span className="flex items-center gap-1.5 font-bold" title="TV">
-                    <Tv className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="text-slate-700">TV</span>
-                  </span>
-                  <span className="flex items-center gap-1.5 font-bold" title="Hot Water Shower">
-                    <Bath className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="text-slate-700">Hot Water</span>
-                  </span>
-                  <span className="flex items-center gap-1.5 font-bold" title="Clean Bedding">
-                    <Sparkles className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="text-slate-700">Clean Linens</span>
-                  </span>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-700 pt-0.5">
+                  {(() => {
+                    const rawList = hotel.amenities && hotel.amenities.length > 0
+                      ? hotel.amenities
+                      : ['Wi-Fi', 'AC', 'Parking', 'TV', 'Hot Water', 'Clean Linens'];
+
+                    return rawList.map((am: any, i: number) => {
+                      const rawName = typeof am === 'string' ? am : am.name;
+                      const name = normalizeHotelAmenity(rawName);
+                      const lower = name.toLowerCase();
+
+                      let iconNode = <Sparkles className="w-3.5 h-3.5 text-slate-500 shrink-0" />;
+                      if (lower.includes('wi-fi') || lower.includes('wifi') || lower.includes('internet')) {
+                        iconNode = <Wifi className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
+                      } else if (lower === 'ac' || lower.includes('air condition') || lower.includes('airvent')) {
+                        iconNode = <Wind className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
+                      } else if (lower.includes('parking') || lower.includes('car')) {
+                        iconNode = <Car className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
+                      } else if (lower.includes('tv') || lower.includes('television')) {
+                        iconNode = <Tv className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
+                      } else if (lower.includes('water') || lower.includes('shower') || lower.includes('geyser') || lower.includes('bath')) {
+                        iconNode = <Bath className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
+                      } else if (lower.includes('linens') || lower.includes('bed')) {
+                        iconNode = <Sparkles className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
+                      } else if (lower.includes('power') || lower.includes('backup') || lower.includes('generator')) {
+                        iconNode = <Zap className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
+                      } else if (lower.includes('service') || lower.includes('desk') || lower.includes('reception')) {
+                        iconNode = <Coffee className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
+                      } else if (lower.includes('lift') || lower.includes('elevator')) {
+                        iconNode = <Building2 className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
+                      } else if (lower.includes('security') || lower.includes('cctv') || lower.includes('safe')) {
+                        iconNode = <ShieldCheck className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
+                      } else if (lower.includes('restaurant') || lower.includes('dining') || lower.includes('food')) {
+                        iconNode = <Utensils className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
+                      }
+
+                      return (
+                        <div key={i} className="flex items-center gap-1.5 font-medium text-slate-700">
+                          {iconNode}
+                          <span className="text-slate-800 font-semibold">{name}</span>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
 
             </div>
 
-
-
             {/* Section 3: Simple House Rules (Balanced & Clean) */}
-            <div className="bg-emerald-50/70 rounded-2xl border border-emerald-200 p-3.5 sm:p-4 shadow-2xs space-y-2.5 text-left">
-              <div className="flex items-center justify-between border-b border-emerald-200/60 pb-2">
-                <h3 className="text-xs sm:text-sm font-black text-emerald-950 flex items-center gap-1.5">
+            <div className="bg-slate-50/70 rounded-2xl border border-slate-200 p-3.5 sm:p-4 shadow-2xs space-y-2.5 text-left">
+              <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                <h3 className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Simple House Rules</span>
                 </h3>
-                <span className="text-[10px] font-extrabold text-emerald-900 bg-emerald-200/80 px-2 py-0.5 rounded-md">
-                  Easy 2-Min Check-in
+                <span className="text-[10px] font-extrabold text-slate-700 bg-slate-200/80 px-2 py-0.5 rounded-md">
+                  {(hotel as any).houseRulesTag || 'Easy 2-Min Check-in'}
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700 font-medium">
-                <div className="flex items-center gap-2">
-                  <span className="text-emerald-700 font-black text-sm">✓</span>
-                  <span>18+ Valid Govt ID Required (Aadhaar/DL)</span>
+                {deduplicateRules(hotel.rules && hotel.rules.length > 0 ? hotel.rules : [
+                  '18+ Valid Govt ID Required (Aadhaar / DL / DigiLocker)',
+                  'Couples & Local Boisar IDs Warmly Welcome',
+                  '24/7 Flexible Check-in & Standard Check-out',
+                  'Check-out timings strictly observed for room sanitization',
+                  'Visitors allowed in Reception Lobby only'
+                ]).map((rule, rIdx) => (
+                  <div key={rIdx} className="flex items-center gap-2">
+                    <span className="text-emerald-700 font-black text-sm">✓</span>
+                    <span>{rule.replace(/^✓\s*/, '')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 4: Stay Timings & Check-in / Check-out Windows */}
+            <div className="bg-slate-50/70 rounded-2xl border border-slate-200 p-3.5 sm:p-4 shadow-2xs space-y-2.5 text-left">
+              <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                <h3 className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-purple-700 shrink-0" />
+                  <span>Check-in &amp; Check-out Timings</span>
+                </h3>
+                <span className="text-[10px] font-extrabold text-purple-800 bg-purple-100 px-2 py-0.5 rounded-md">
+                  Official Timing Window
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                {/* Day Stay Window */}
+                <div className="bg-white border border-slate-200/80 rounded-xl p-3 flex items-start gap-2.5">
+                  <span className="text-xl">☀️</span>
+                  <div>
+                    <span className="text-xs font-black text-slate-900 block">Day Stay (Same-Day Rest)</span>
+                    <span className="text-xs font-bold text-amber-700 block mt-0.5">
+                      {(hotel as any).dayStayTimingWindow || '09:00 AM – 07:00 PM'}
+                    </span>
+                    <span className="text-[10.5px] text-slate-500 font-medium block mt-0.5">
+                      Check-out on the same day by 07:00 PM
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-emerald-700 font-black text-sm">✓</span>
-                  <span>Couples &amp; Local Boisar IDs Warmly Welcome</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-emerald-700 font-black text-sm">✓</span>
-                  <span>24/7 Flexible Hourly &amp; Night Check-in</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-emerald-700 font-black text-sm">✓</span>
-                  <span>Fresh Sanitized Linens &amp; Free Wi-Fi</span>
+
+                {/* Night Stay Window */}
+                <div className="bg-white border border-slate-200/80 rounded-xl p-3 flex items-start gap-2.5">
+                  <span className="text-xl">🌙</span>
+                  <div>
+                    <span className="text-xs font-black text-slate-900 block">Night Stay (Overnight)</span>
+                    <span className="text-xs font-bold text-indigo-700 block mt-0.5">
+                      In: {(hotel as any).nightStayCheckIn || '12:00 PM'} · Out: {(hotel as any).nightStayCheckOut || '11:00 AM'}
+                    </span>
+                    <span className="text-[10.5px] text-slate-500 font-medium block mt-0.5">
+                      Standard overnight stay with next-day morning check-out
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Section 4: Guest Reviews (Simple, Clean & Understandable) */}
+            {/* Section 5: Guest Reviews (Simple, Clean & Understandable) */}
             <div className="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 shadow-2xs space-y-3 text-left">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                 <div>
@@ -935,11 +1047,11 @@ export default function HotelDetailPage() {
                       Select Stay Duration:
                     </label>
                     <div className="grid grid-cols-2 gap-1.5">
-                      {[
+                      {(hotel.offersHourly !== false ? [
                         { 
                           id: '3h', 
                           title: '3 Hours', 
-                          desc: 'Short Day Stay',
+                          desc: 'Window: 9 AM – 7 PM',
                           price: roomTypePreference === 'ac' ? hotel.hourlyRate3h : Math.max(399, hotel.hourlyRate3h - 200),
                           active: stayMode === 'hourly' && hourlySlot === '3h',
                           onClick: () => { setStayMode('hourly'); setHourlySlot('3h'); }
@@ -947,33 +1059,52 @@ export default function HotelDetailPage() {
                         { 
                           id: '6h', 
                           title: '6 Hours', 
-                          desc: 'Half Day Stay',
+                          desc: 'Window: 9 AM – 7 PM',
                           price: roomTypePreference === 'ac' ? hotel.hourlyRate6h : Math.max(599, hotel.hourlyRate6h - 300),
                           active: stayMode === 'hourly' && hourlySlot === '6h',
                           onClick: () => { setStayMode('hourly'); setHourlySlot('6h'); }
                         },
                         { 
                           id: '12h', 
-                          title: '12 Hours', 
-                          desc: 'Full Day Stay',
+                          title: '☀️ 12h Day Stay', 
+                          desc: (hotel as any).dayStayTimingWindow || '09:00 AM – 07:00 PM',
                           price: roomTypePreference === 'ac' ? hotel.hourlyRate12h : Math.max(899, hotel.hourlyRate12h - 400),
                           active: stayMode === 'hourly' && hourlySlot === '12h',
                           onClick: () => { setStayMode('hourly'); setHourlySlot('12h'); }
                         },
                         { 
                           id: 'night', 
-                          title: 'Overnight', 
-                          desc: 'Night Stay',
+                          title: '🌙 Night Stay', 
+                          desc: `In: ${(hotel as any).nightStayCheckIn || '12:00 PM'} · Out: ${(hotel as any).nightStayCheckOut || '11:00 AM'}`,
                           price: roomTypePreference === 'ac' ? hotel.nightRate : Math.max(999, hotel.nightRate - 500),
                           active: stayMode === 'night',
                           onClick: () => setStayMode('night')
                         }
-                      ].map(slot => (
+                      ] : [
+                        {
+                          id: 'day',
+                          title: '☀️ Day Stay',
+                          desc: (hotel as any).dayStayTimingWindow || '09:00 AM – 07:00 PM',
+                          timingLabel: 'Same-Day Rest',
+                          price: roomTypePreference === 'ac' ? ((hotel as any).dayRate || hotel.hourlyRate12h || Math.max(799, Math.round(hotel.nightRate * 0.75))) : Math.max(599, Math.round(((hotel as any).dayRate || hotel.hourlyRate12h || hotel.nightRate * 0.75) - 200)),
+                          active: stayMode === 'day',
+                          onClick: () => setStayMode('day')
+                        },
+                        {
+                          id: 'night',
+                          title: '🌙 Night Stay',
+                          desc: `In: ${(hotel as any).nightStayCheckIn || '12:00 PM'} · Out: ${(hotel as any).nightStayCheckOut || '11:00 AM'}`,
+                          timingLabel: 'Overnight Stay',
+                          price: roomTypePreference === 'ac' ? hotel.nightRate : Math.max(999, hotel.nightRate - 500),
+                          active: stayMode === 'night',
+                          onClick: () => setStayMode('night')
+                        }
+                      ]).map(slot => (
                         <button
                           type="button"
                           key={slot.id}
                           onClick={slot.onClick}
-                          className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                          className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                             slot.active
                               ? 'bg-purple-900 text-white font-black border-purple-950 shadow-xs ring-2 ring-purple-600/30'
                               : 'bg-slate-50 text-slate-700 font-bold border-slate-200 hover:bg-slate-100'
@@ -985,7 +1116,9 @@ export default function HotelDetailPage() {
                               ₹{slot.price}
                             </span>
                           </div>
-                          <span className="text-[9.5px] opacity-75 block mt-0.5">{slot.desc}</span>
+                          <span className={`text-[10px] block mt-1 font-semibold ${slot.active ? 'text-purple-200' : 'text-slate-500'}`}>
+                            ⏰ {slot.desc}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -1011,6 +1144,13 @@ export default function HotelDetailPage() {
                           durationSlot={hourlySlot}
                           label="Check-in Time"
                         />
+                      ) : stayMode === 'day' ? (
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 mb-1">Day Window Check-out</label>
+                          <div className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 truncate">
+                            Same Day (by 07:00 PM)
+                          </div>
+                        </div>
                       ) : (
                         <div>
                           <label className="block text-[10px] font-bold text-slate-600 mb-1">Check-out Date</label>

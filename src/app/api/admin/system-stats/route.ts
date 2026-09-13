@@ -1,9 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { verifyJwtToken } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const token = request.cookies.get('majh_admin_token')?.value;
+  const verified = token ? verifyJwtToken<{ role?: string }>(token) : null;
+  if (!verified || verified.role !== 'Admin') {
+    return NextResponse.json({ error: 'Unauthorized: Admin privileges required' }, { status: 401 });
+  }
   try {
     // 1. Fetch record counts across all models
     const [

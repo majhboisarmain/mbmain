@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { getAllHotels } from '@/lib/hotelsData';
+import { getAllHotels, normalizeHotelAmenity, deduplicateRules } from '@/lib/hotelsData';
 import {
   BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, AreaChart, Area
@@ -14,7 +14,8 @@ import {
   ArrowUpRight, Plus, Trash2, Check, X, ShieldAlert, Award, Star,
   TrendingUp, Activity, Layers, Coins, Globe, Clock, Mail, MapPin,
   FileText, ArrowRight, ArrowLeft, Briefcase, Trophy, Gamepad2, Edit, Search, Lock, Unlock, QrCode,
-  Utensils, Bell, Receipt, Printer, Volume2, VolumeX, Coffee, ChevronDown
+  Utensils, Bell, Receipt, Printer, Volume2, VolumeX, Coffee, ChevronDown,
+  Wifi, Wind, Car, Tv, Bath, Zap, Building2, ShieldCheck, Waves
 } from 'lucide-react';
 import BusinessQRStandeeModal from '@/components/BusinessQRStandeeModal';
 import { compressImage } from '@/lib/imageCompressor';
@@ -101,20 +102,29 @@ function DashboardContent() {
   const hotelNameParam = searchParams?.get('hotelName');
   const bizIdParam = searchParams?.get('bizId') || searchParams?.get('id') || searchParams?.get('businessId');
 
-  const isAdminAuth = Boolean(
-    currentRole === 'Admin' ||
-    loggedInUser?.email === 'majhboisar@gmail.com' ||
-    loggedInUser?.phone === '9307294733' ||
-    (loggedInUser?.phone || '').replace(/\D/g, '').endsWith('9307294733') ||
-    (loggedInUser?.name || '').toLowerCase().includes('admin') ||
-    (typeof window !== 'undefined' && (
-      sessionStorage.getItem('majh_boisar_adminmb_auth') === 'unlocked' ||
-      localStorage.getItem('majh_boisar_role') === 'Admin' ||
-      localStorage.getItem('majh_boisar_admin_logged_in') === 'true'
-    ))
-  );
+  // SECURE: Admin auth is ONLY verified via server-side JWT cookie
+  const [isAdminAuth, setIsAdminAuth] = useState(false);
 
-  const [businessesList, setBusinessesList] = useState<{ id: number; name: string; category?: string }[]>([]);
+  useEffect(() => {
+    let mounted = true;
+    async function verifyAdminSession() {
+      try {
+        const res = await fetch('/api/auth/admin-verify');
+        const data = await res.json().catch(() => ({}));
+        if (mounted && data?.authenticated) {
+          setIsAdminAuth(true);
+          setRole('Admin');
+        }
+      } catch {
+        // Not admin — no bypass possible
+      }
+    }
+    verifyAdminSession();
+    return () => { mounted = false; };
+  }, [setRole]);
+
+
+  const [businessesList, setBusinessesList] = useState<{ id: number; name: string; category?: string; hotelRefId?: string; hotelSlug?: string }[]>([]);
   const [selectedId, setSelectedId] = useState<number>(bizIdParam ? Number(bizIdParam) : 1);
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
@@ -124,66 +134,142 @@ function DashboardContent() {
   );
 
   // Directly open & manage hotel dashboard when hotelId or hotelName is passed (e.g. from Admin Panel)
+  // Auto-detect hotel owner by phone or query param with STRICT phone verification
   useEffect(() => {
+    if (!isLoggedIn && !isAdminAuth) {
+      setLoading(false);
+      return;
+    }
+
+    const userPhoneClean = (
+      loggedInUser?.phone || 
+      (isLoggedIn && typeof window !== 'undefined' ? (localStorage.getItem('majh_boisar_phone') || JSON.parse(localStorage.getItem('majh_boisar_user') || '{}')?.phone) : '') || 
+      ''
+    ).replace(/\D/g, '').slice(-10);
+
+    const allH = getAllHotels();
+    let match = null;
+    let matchIndex = -1;
+
+    // 1. Direct param match if passed (Allowed freely for Admin, or verified by phone for partner)
     if (hotelIdParam || hotelNameParam) {
-      const isAdmin = currentRole === 'Admin' || 
-        loggedInUser?.email === 'majhboisar@gmail.com' || 
-        loggedInUser?.phone === '9307294733' || 
-        (loggedInUser?.phone || '').replace(/\D/g, '').endsWith('9307294733') ||
-        (loggedInUser?.name || '').toLowerCase().includes('admin');
-
-      const userPhone = (loggedInUser?.phone || '').replace(/\D/g, '');
-
-      try {
-        const allH = getAllHotels();
-        const match = allH.find(h => 
-          (hotelIdParam && h.id === hotelIdParam) || 
-          (hotelIdParam && h.slug === hotelIdParam) ||
+      if (isAdminAuth) {
+        matchIndex = allH.findIndex(h => 
+          (hotelIdParam && (h.id === hotelIdParam || h.slug === hotelIdParam)) ||
           (hotelNameParam && h.name.toLowerCase() === hotelNameParam.toLowerCase())
         );
-        if (match) {
-          const hotelPhone = (match.phone || '').replace(/\D/g, '');
-          const hotelWhatsapp = (match.whatsapp || '').replace(/\D/g, '');
-          const isOwner = userPhone && (userPhone === hotelPhone || userPhone === hotelWhatsapp);
-
-          // Security check: ONLY Admin or the verified Hotel Owner can access this hotel
-          if (!isAdmin && !isOwner) {
-            showToast('🔒 Access Restricted: Only Admin and the Hotel Owner can manage this hotel.', 'error');
-            return;
+        if (matchIndex !== -1) match = allH[matchIndex];
+      } else if (userPhoneClean) {
+        // Strict Privacy: Non-admin can ONLY load param if their registered phone matches
+        const candidate = allH.find(h => 
+          (hotelIdParam && (h.id === hotelIdParam || h.slug === hotelIdParam)) ||
+          (hotelNameParam && h.name.toLowerCase() === hotelNameParam.toLowerCase())
+        );
+        if (candidate) {
+          const hp = (candidate.phone || '').replace(/\D/g, '').slice(-10);
+          const hw = (candidate.whatsapp || '').replace(/\D/g, '').slice(-10);
+          if (userPhoneClean.endsWith(hp) || hp.endsWith(userPhoneClean) || userPhoneClean.endsWith(hw) || hw.endsWith(userPhoneClean)) {
+            match = candidate;
+            matchIndex = allH.findIndex(h => h.id === candidate.id);
           }
-
-          setBusiness({
-            id: 99000,
-            name: match.name,
-            category: 'Hotels',
-            description: match.tagline || 'Verified Hotel Partner in Boisar',
-            address: match.address || `${match.location}, Boisar`,
-            phone: match.phone,
-            whatsapp: match.whatsapp || match.phone,
-            website: null,
-            email: null,
-            workingHours: '24 Hours Open',
-            image: (match.gallery && match.gallery.length > 0 && match.gallery[0]) ? match.gallery[0] : ((match as any).image || '/majh-boisar-mb-logo.png'),
-            location: match.location || 'Boisar',
-            views: 650,
-            phoneClicks: 120,
-            whatsappClicks: 85,
-            directionClicks: 45,
-            websiteClicks: 18,
-            subscription: 'Admin Verified',
-            premium: true,
-            verified: true,
-            rating: match.rating || 4.8,
-            reviewCount: match.reviewsCount || 15,
-            products: [],
-            services: [],
-            reviews: (match.reviews || []).map((r, i) => ({ id: i + 1, userName: r.userName, rating: r.rating, comment: r.comment, createdAt: r.date })),
-            leads: []
-          });
-          setActiveSubTab('hotel_bookings');
-          setLoading(false);
         }
-      } catch (err) {}
+      }
+    }
+
+    // 2. Auto-detect by user phone number upon login or registration
+    if (!match && userPhoneClean && !isAdminAuth) {
+      matchIndex = allH.findIndex(h => {
+        const hp = (h.phone || '').replace(/\D/g, '').slice(-10);
+        const hw = (h.whatsapp || '').replace(/\D/g, '').slice(-10);
+        return userPhoneClean.endsWith(hp) || hp.endsWith(userPhoneClean) || userPhoneClean.endsWith(hw) || hw.endsWith(userPhoneClean);
+      });
+      if (matchIndex !== -1) match = allH[matchIndex];
+    }
+
+    if (match) {
+      const assignedId = 99000 + (matchIndex >= 0 ? matchIndex : 0);
+      setSelectedId(assignedId);
+
+      setBusiness({
+        id: assignedId,
+        name: match.name,
+        category: 'Hotels',
+        description: match.tagline || 'Verified Hotel Partner in Boisar',
+        address: match.address || `${match.location}, Boisar`,
+        phone: match.phone,
+        whatsapp: match.whatsapp || match.phone,
+        website: null,
+        email: null,
+        workingHours: '24 Hours Open',
+        image: (match.gallery && match.gallery.length > 0 && match.gallery[0]) ? match.gallery[0] : ((match as any).image || '/majh-boisar-mb-logo.png'),
+        location: match.location || 'Boisar',
+        views: 650,
+        phoneClicks: 120,
+        whatsappClicks: 85,
+        directionClicks: 45,
+        websiteClicks: 18,
+        subscription: 'Admin Verified',
+        premium: true,
+        verified: true,
+        rating: match.rating || 4.4,
+        reviewCount: match.reviewsCount || 88,
+        products: [],
+        services: [],
+        reviews: (match.reviews || []).map((r, i) => ({ id: i + 1, userName: r.userName, rating: r.rating, comment: r.comment, createdAt: r.date })),
+        leads: []
+      });
+
+      // Update state for hotel profile and rates
+      setHotelProfileName(match.name);
+      setHotelProfileTagline(match.tagline || 'Verified Hotel Partner in Boisar');
+      setHotelProfileDescription(match.description || 'Clean and comfortable rooms equipped with AC, high-speed Wi-Fi, 24x7 hot water, and sanitized washrooms.');
+      setHotelProfilePhone(match.phone);
+      setHotelProfileWhatsapp(match.whatsapp || match.phone);
+      setHotelProfileAddress(match.address || `${match.location}, Boisar`);
+      setHotelProfileArea(match.location || 'Boisar West');
+      setHotelProfileCategory(match.category || 'Executive / 3-Star');
+      if (match.gallery && match.gallery.length > 0) {
+        setHotelDashboardGallery(match.gallery);
+      }
+      if (match.amenities && match.amenities.length > 0) {
+        const normList = Array.from(new Set(
+          match.amenities.map((a: any) => normalizeHotelAmenity(typeof a === 'string' ? a : a.name)).filter(Boolean)
+        ));
+        setHotelProfileAmenities(normList);
+      }
+      const savedMatchRules = localStorage.getItem(`majh_boisar_hotel_rules_${match.id}`) ||
+                              localStorage.getItem(`majh_boisar_hotel_rules_${match.slug}`);
+      if (savedMatchRules) {
+        try {
+          const parsed = JSON.parse(savedMatchRules);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setHotelProfileRules(deduplicateRules(parsed).join('\n'));
+          }
+        } catch (e) {}
+      } else if (match.rules && match.rules.length > 0) {
+        setHotelProfileRules(deduplicateRules(match.rules).join('\n'));
+      }
+      if ((match as any).stationDistance) setHotelProfileStationDist((match as any).stationDistance);
+      if ((match as any).midcDistance) setHotelProfileMidcDist((match as any).midcDistance);
+      if ((match as any).coupleBadgeText) setHotelProfileCoupleBadge((match as any).coupleBadgeText);
+      if ((match as any).safetyBadgeText) setHotelProfileSafetyBadge((match as any).safetyBadgeText);
+      if ((match as any).checkinBadgeText) setHotelProfileCheckinBadge((match as any).checkinBadgeText);
+      const savedMatchTag = localStorage.getItem(`majh_boisar_hotel_rules_tag_${match.id}`) ||
+                            localStorage.getItem(`majh_boisar_hotel_rules_tag_${match.slug}`);
+      if (savedMatchTag) {
+        setHotelProfileRulesTag(savedMatchTag);
+      } else if ((match as any).houseRulesTag) {
+        setHotelProfileRulesTag((match as any).houseRulesTag);
+      }
+      if (match.rooms && match.rooms.length > 0) {
+        setAcRate3h(String(match.rooms[0].hourly3h || 699));
+        setAcRate6h(String(match.rooms[0].hourly6h || 1099));
+        setAcRate12h(String(match.rooms[0].hourly12h || 1599));
+        setAcRateNight(String(match.rooms[0].nightRate || 1899));
+      }
+
+      setActiveSubTab('hotel_bookings');
+      setLoading(false);
     }
   }, [hotelIdParam, hotelNameParam, currentRole, loggedInUser]);
 
@@ -214,7 +300,7 @@ function DashboardContent() {
       );
       if (activeSubTab === 'hotel_bookings' && !isHotel) {
         setActiveSubTab('analytics');
-      } else if (isHotel && (hotelIdParam || hotelNameParam || tabParam === 'hotel_bookings')) {
+      } else if (isHotel) {
         setActiveSubTab('hotel_bookings');
       }
     }
@@ -222,7 +308,9 @@ function DashboardContent() {
 
   // Specialist & Property dashboard states
   const [specialProfile, setSpecialProfile] = useState<any>(null);
-  const [dashboardMode, setDashboardMode] = useState<'shop' | 'specialist' | 'property'>(modeParam === 'property' ? 'property' : 'shop');
+  const [dashboardMode, setDashboardMode] = useState<'shop' | 'specialist' | 'property' | 'hotel'>(
+    modeParam === 'property' ? 'property' : ((hotelIdParam || hotelNameParam || tabParam === 'hotel_bookings') ? 'hotel' : 'shop')
+  );
   // Property Editing States
   const defaultUserProps: any[] = [];
 
@@ -654,31 +742,69 @@ function DashboardContent() {
   const [manualDuration, setManualDuration] = useState('1 Hour');
   const [manualRate, setManualRate] = useState('₹250');
 
-  // ── HOTEL BOOKINGS DESK STATE ──
+  // ── HOTEL BOOKINGS DESK STATE (MAJH BOISAR ONLINE PORTAL BOOKINGS ONLY) ──
   const [hotelBookingsList, setHotelBookingsList] = useState<any[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('majh_boisar_hotel_bookings');
       if (saved) {
-        try { return JSON.parse(saved); } catch (e) {}
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed.filter(item => item && typeof item === 'object');
+        } catch (e) {}
       }
     }
-    return [];
+    return [
+      {
+        id: 'MB-HTL-819201',
+        hotelName: 'Freesia by Express Inn',
+        guestName: 'Rohit Sharma',
+        guestPhone: '9820123456',
+        roomCategory: 'Deluxe AC Room',
+        stayType: 'hourly',
+        timeSlot: '12:00 PM - 03:00 PM (3 Hours)',
+        date: 'Today',
+        checkInDate: 'Today',
+        assignedRoom: '101',
+        totalAmount: '699',
+        status: 'Confirmed',
+        createdAt: '1 hour ago'
+      },
+      {
+        id: 'MB-HTL-948123',
+        hotelName: 'Freesia by Express Inn',
+        guestName: 'Pooja Verma',
+        guestPhone: '9123456789',
+        roomCategory: 'Standard Non-AC Room',
+        stayType: 'hourly',
+        timeSlot: '01:00 PM - 07:00 PM (6 Hours)',
+        date: 'Today',
+        checkInDate: 'Today',
+        assignedRoom: '103',
+        totalAmount: '799',
+        status: 'Checked-In (Active Stay)',
+        createdAt: '3 hours ago'
+      },
+      {
+        id: 'MB-HTL-301984',
+        hotelName: 'Freesia by Express Inn',
+        guestName: 'Anil Deshmukh',
+        guestPhone: '9833445566',
+        roomCategory: 'Deluxe AC Room',
+        stayType: 'night',
+        timeSlot: 'Night Stay (12:00 PM - 11:00 AM)',
+        date: 'Tonight',
+        checkInDate: 'Tonight',
+        assignedRoom: '105',
+        totalAmount: '1899',
+        status: 'Confirmed',
+        createdAt: 'Yesterday'
+      }
+    ];
   });
 
   const [hotelBookingFilter, setHotelBookingFilter] = useState<'All' | 'Confirmed' | 'Checked-In' | 'Completed' | 'Cancelled'>('All');
   const [hotelSearchQuery, setHotelSearchQuery] = useState('');
   
-  // Manual Walk-in Hotel Booking Form States
-  const [manualHotelGuestName, setManualHotelGuestName] = useState('');
-  const [manualHotelGuestPhone, setManualHotelGuestPhone] = useState('');
-  const [manualHotelName, setManualHotelName] = useState('');
-  const [manualHotelStayType, setManualHotelStayType] = useState<'hourly' | 'night'>('hourly');
-  const [manualHotelDuration, setManualHotelDuration] = useState('3h');
-  const [manualHotelTimeSlot, setManualHotelTimeSlot] = useState('12:00 PM - 03:00 PM (3 Hours)');
-  const [manualHotelDate, setManualHotelDate] = useState('Today');
-  const [manualHotelRoomCategory, setManualHotelRoomCategory] = useState('Deluxe AC Room');
-  const [manualHotelRoomNo, setManualHotelRoomNo] = useState('101');
-  const [manualHotelAmount, setManualHotelAmount] = useState('699');
 
   // ── SUBSCRIPTION BILLING & ORDER HISTORY STATE ──
   const [billingHistory, setBillingHistory] = useState<any[]>(() => {
@@ -701,7 +827,10 @@ function DashboardContent() {
         const saved = localStorage.getItem('majh_boisar_hotel_bookings');
         if (saved) {
           try {
-            setHotelBookingsList(JSON.parse(saved));
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed)) {
+              setHotelBookingsList(parsed.filter(item => item && typeof item === 'object'));
+            }
           } catch (e) {}
         }
       }
@@ -793,45 +922,6 @@ function DashboardContent() {
     }
   };
 
-  const handleAddManualHotelBooking = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!manualHotelGuestName.trim() || !manualHotelGuestPhone.trim()) {
-      alert('Please enter guest name and phone number.');
-      return;
-    }
-
-    const ref = `MB-HTL-${Math.floor(100000 + Math.random() * 900000)}`;
-    const newBooking = {
-      id: ref,
-      hotelId: business?.id?.toString() || 'h1',
-      hotelName: manualHotelName || business?.name || 'Freesia by Express Inn',
-      hotelPhone: business?.phone || '917769947217',
-      hotelLocation: business?.location || 'Boisar West',
-      guestName: manualHotelGuestName,
-      guestPhone: manualHotelGuestPhone,
-      idProofType: 'Aadhaar Card (Verified at Desk)',
-      stayType: manualHotelStayType,
-      hourlyDuration: manualHotelStayType === 'hourly' ? manualHotelDuration : null,
-      timeSlot: manualHotelTimeSlot,
-      checkInDate: manualHotelDate,
-      guestCount: 2,
-      roomCount: 1,
-      roomCategory: manualHotelRoomCategory,
-      assignedRoom: manualHotelRoomNo,
-      totalAmount: manualHotelAmount,
-      status: 'Confirmed & Assigned Room',
-      createdAt: 'Just now (Walk-in Entry)'
-    };
-
-    const updated = [newBooking, ...hotelBookingsList];
-    setHotelBookingsList(updated);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('majh_boisar_hotel_bookings', JSON.stringify(updated));
-    }
-    setManualHotelGuestName('');
-    setManualHotelGuestPhone('');
-    alert(`✅ Walk-in Room Booking saved successfully! Pass Ref: ${ref}`);
-  };
 
   // ── HOTEL ROOM INVENTORY & TARIFF MANAGEMENT STATE ──
   const defaultHotelRooms = [
@@ -962,114 +1052,634 @@ function DashboardContent() {
     }
   };
 
-  // ── HOTEL ROOMS OCCUPANCY BOARD (Room, Customer, Check In, Duration, Amount, Status) ──
-  const [hotelRoomBoard, setHotelRoomBoard] = useState<Array<{
+  // ── FULL HOTEL PROFILE & PHOTO GALLERY STATE FOR DASHBOARD ──
+  const [hotelProfileName, setHotelProfileName] = useState('Hotel Shivanand');
+  const [hotelProfileCategory, setHotelProfileCategory] = useState('Residency');
+  const [hotelProfileTagline, setHotelProfileTagline] = useState('Verified Couple & Day-Stay Hotel in Boisar');
+  const [hotelProfileDescription, setHotelProfileDescription] = useState('Hotel Shivanand is a highly accessible hotel located on Navapur Road near Boisar Railway Station, Boisar West. It offers clean, sanitized AC and Non-AC rooms with flexible 3-hour, 6-hour, 12-hour day-stay slots and comfortable overnight night stays. 100% couple-friendly, accepting valid local IDs, making it ideal for transit passengers, couples, and Tarapur MIDC visitors.');
+  const [hotelProfileArea, setHotelProfileArea] = useState('Navapur Road, Boisar West');
+  const [hotelProfileAddress, setHotelProfileAddress] = useState('Navapur Road, Near Boisar Railway Station, Boisar West, Palghar - 401501');
+  const [hotelProfileLandmark, setHotelProfileLandmark] = useState('Opposite Old Market, 3 Mins from Station');
+  const [hotelProfileMapsUrl, setHotelProfileMapsUrl] = useState('https://maps.google.com/?q=Boisar+West');
+  const [hotelProfilePhone, setHotelProfilePhone] = useState('9307294733');
+  const [hotelProfileWhatsapp, setHotelProfileWhatsapp] = useState('9307294733');
+  const [hotelProfileEmail, setHotelProfileEmail] = useState('');
+  const [hotelProfileCoupleFriendly, setHotelProfileCoupleFriendly] = useState(true);
+  const [hotelProfileLocalId, setHotelProfileLocalId] = useState(true);
+  const [hotelProfileNearStation, setHotelProfileNearStation] = useState(true);
+  const [hotelProfileNearMidc, setHotelProfileNearMidc] = useState(true);
+  const [hotelProfileFamilyFriendly, setHotelProfileFamilyFriendly] = useState(true);
+  const [hotelProfileRoundClock, setHotelProfileRoundClock] = useState(true);
+
+  // Dynamic Badges & Location Distances
+  const [hotelProfileStationDist, setHotelProfileStationDist] = useState('3 mins to Boisar Station');
+  const [hotelProfileMidcDist, setHotelProfileMidcDist] = useState('5 mins to MIDC');
+  const [hotelProfileCoupleBadge, setHotelProfileCoupleBadge] = useState('Couples 18+');
+  const [hotelProfileSafetyBadge, setHotelProfileSafetyBadge] = useState('100% Safe');
+  const [hotelProfileCheckinBadge, setHotelProfileCheckinBadge] = useState('24/7 Check-in');
+  const [hotelProfileRulesTag, setHotelProfileRulesTag] = useState('Easy 2-Min Check-in');
+
+  const [hotelProfileAmenities, setHotelProfileAmenities] = useState<string[]>([
+    'Wi-Fi', 'AC', 'Parking', 'TV', 'Hot Water', 'Clean Linens'
+  ]);
+  const [hotelProfileRules, setHotelProfileRules] = useState<string>(
+    '18+ Valid Govt ID Required (Aadhaar/DL)\nCouples & Local Boisar IDs Warmly Welcome\n24/7 Flexible Hourly & Night Check-in\nFresh Sanitized Linens & Free Wi-Fi'
+  );
+  const [customRuleInput, setCustomRuleInput] = useState('');
+  const [customAmenityInput, setCustomAmenityInput] = useState('');
+
+  const handleAddCustomAmenity = () => {
+    const clean = customAmenityInput.trim();
+    if (!clean) return;
+    const normalized = normalizeHotelAmenity(clean);
+    if (!hotelProfileAmenities.some(a => a.toLowerCase() === normalized.toLowerCase())) {
+      setHotelProfileAmenities(prev => [...prev, normalized]);
+    }
+    setCustomAmenityInput('');
+  };
+
+  // Sync hotel profile data when selectedId changes (e.g. dropdown hotel switch)
+  useEffect(() => {
+    if (selectedId >= 99000) {
+      const allH = getAllHotels();
+      const idx = selectedId - 99000;
+      const h = allH[idx];
+      if (h) {
+        setBusiness({
+          id: selectedId,
+          name: h.name,
+          category: 'Hotels',
+          description: h.tagline || 'Verified Hotel Partner in Boisar',
+          address: h.address || `${h.location}, Boisar`,
+          phone: h.phone,
+          whatsapp: h.whatsapp || h.phone,
+          website: null,
+          email: null,
+          workingHours: '24 Hours Open',
+          image: (h.gallery && h.gallery.length > 0 && h.gallery[0]) ? h.gallery[0] : ((h as any).image || '/majh-boisar-mb-logo.png'),
+          location: h.location || 'Boisar',
+          views: 650,
+          phoneClicks: 120,
+          whatsappClicks: 85,
+          directionClicks: 45,
+          websiteClicks: 18,
+          subscription: 'Admin Verified',
+          premium: true,
+          verified: true,
+          rating: h.rating || 4.4,
+          reviewCount: h.reviewsCount || 88,
+          products: [],
+          services: [],
+          reviews: (h.reviews || []).map((r, i) => ({ id: i + 1, userName: r.userName, rating: r.rating, comment: r.comment, createdAt: r.date })),
+          leads: []
+        });
+
+        setHotelProfileName(h.name);
+        setHotelProfileTagline(h.tagline || 'Affordable & Sanitized AC Stay in Boisar');
+        setHotelProfileDescription(h.description || 'Clean and comfortable rooms equipped with AC, high-speed Wi-Fi, 24x7 hot water, and sanitized washrooms.');
+        setHotelProfileCategory(h.category || 'Executive / 3-Star');
+        setHotelProfileArea(h.location || 'Boisar West');
+        setHotelProfileAddress(h.address || `${h.location}, Boisar`);
+        setHotelProfileLandmark(h.landmark || 'Near Railway Station');
+        setHotelProfilePhone(h.phone);
+        setHotelProfileWhatsapp(h.whatsapp || h.phone);
+        setHotelProfileCoupleFriendly(h.isCoupleFriendly ?? true);
+        setHotelProfileLocalId(h.acceptsLocalId ?? true);
+        setHotelProfileNearStation(h.nearStation ?? true);
+        setHotelProfileStationDist((h as any).stationDistance || (h.nearStation ? '3 mins to Boisar Station' : '8 mins to Station'));
+        setHotelProfileMidcDist((h as any).midcDistance || (h.nearMidc ? '5 mins to MIDC' : '15 mins to MIDC'));
+        setHotelProfileCoupleBadge((h as any).coupleBadgeText || 'Couples 18+');
+        setHotelProfileSafetyBadge((h as any).safetyBadgeText || '100% Safe');
+        setHotelProfileCheckinBadge((h as any).checkinBadgeText || '24/7 Check-in');
+        const savedHRules = localStorage.getItem(`majh_boisar_hotel_rules_${h.id}`) ||
+                            localStorage.getItem(`majh_boisar_hotel_rules_${h.slug}`);
+        if (savedHRules) {
+          try {
+            const parsed = JSON.parse(savedHRules);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setHotelProfileRules(deduplicateRules(parsed).join('\n'));
+            }
+          } catch (e) {}
+        } else if (h.rules && h.rules.length > 0) {
+          setHotelProfileRules(deduplicateRules(h.rules).join('\n'));
+        }
+        const savedHTag = localStorage.getItem(`majh_boisar_hotel_rules_tag_${h.id}`) ||
+                          localStorage.getItem(`majh_boisar_hotel_rules_tag_${h.slug}`);
+        if (savedHTag) {
+          setHotelProfileRulesTag(savedHTag);
+        } else {
+          setHotelProfileRulesTag((h as any).houseRulesTag || 'Easy 2-Min Check-in');
+        }
+        setHotelDashboardGallery(h.gallery && h.gallery.length > 0 ? h.gallery : []);
+        if (h.amenities && h.amenities.length > 0) {
+          const normList = Array.from(new Set(
+            h.amenities.map((a: any) => normalizeHotelAmenity(typeof a === 'string' ? a : a.name)).filter(Boolean)
+          ));
+          setHotelProfileAmenities(normList);
+        }
+        if (h.rooms && h.rooms.length > 0) {
+          setAcRate3h(String(h.rooms[0].hourly3h || 699));
+          setAcRate6h(String(h.rooms[0].hourly6h || 1099));
+          setAcRate12h(String(h.rooms[0].hourly12h || 1599));
+          setAcRateNight(String(h.rooms[0].nightRate || 1899));
+        }
+
+        const specificHourly = localStorage.getItem(`majh_boisar_hotel_hourly_${h.slug}`) ||
+                               localStorage.getItem(`majh_boisar_hotel_hourly_${h.id}`);
+        if (specificHourly !== null) {
+          setHourlyBookingsEnabled(specificHourly === 'true');
+        } else if (h.offersHourly !== undefined) {
+          setHourlyBookingsEnabled(Boolean(h.offersHourly));
+        }
+
+        const specDayTiming = localStorage.getItem(`majh_boisar_hotel_day_stay_timing_${h.slug}`) || (h as any).dayStayTimingWindow;
+        if (specDayTiming) setDayStayTimingWindow(specDayTiming);
+        const specNightIn = localStorage.getItem(`majh_boisar_hotel_night_checkin_${h.slug}`) || (h as any).nightStayCheckIn;
+        if (specNightIn) setNightStayCheckIn(specNightIn);
+        const specNightOut = localStorage.getItem(`majh_boisar_hotel_night_checkout_${h.slug}`) || (h as any).nightStayCheckOut;
+        if (specNightOut) setNightStayCheckOut(specNightOut);
+      }
+    }
+  }, [selectedId]);
+
+  // AC Room Rates
+  const [acRate3h, setAcRate3h] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('majh_boisar_hotel_rates_ac_3h') || '699';
+    }
+    return '699';
+  });
+  const [acRate6h, setAcRate6h] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('majh_boisar_hotel_rates_ac_6h') || '1099';
+    }
+    return '1099';
+  });
+  const [acRate12h, setAcRate12h] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('majh_boisar_hotel_rates_ac_12h') || '1599';
+    }
+    return '1599';
+  });
+  const [acRateNight, setAcRateNight] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('majh_boisar_hotel_rates_ac_night') || '1899';
+    }
+    return '1899';
+  });
+
+  // Non-AC Room Rates
+  const [nonAcRate3h, setNonAcRate3h] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('majh_boisar_hotel_rates_nonac_3h') || '499';
+    }
+    return '499';
+  });
+  const [nonAcRate6h, setNonAcRate6h] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('majh_boisar_hotel_rates_nonac_6h') || '799';
+    }
+    return '799';
+  });
+  const [nonAcRate12h, setNonAcRate12h] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('majh_boisar_hotel_rates_nonac_12h') || '1199';
+    }
+    return '1199';
+  });
+  const [nonAcRateNight, setNonAcRateNight] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('majh_boisar_hotel_rates_nonac_night') || '1399';
+    }
+    return '1399';
+  });
+  
+  const [hotelDashboardGallery, setHotelDashboardGallery] = useState<string[]>([]);
+
+  const handleHotelDashboardFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setHotelDashboardGallery(prev => [...prev, reader.result as string]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemoveDashboardGalleryPhoto = (idx: number) => {
+    setHotelDashboardGallery(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const [showQuickTariffModal, setShowQuickTariffModal] = useState(false);
+
+  const handleSaveQuickTariffs = () => {
+    const simplifiedRooms = [
+      {
+        id: 'r_ac',
+        name: 'Deluxe AC Room',
+        type: 'AC Room',
+        bedType: '1 King / Double Bed',
+        maxGuests: 2,
+        size: '220 sq.ft',
+        hourly3h: Number(acRate3h) || 699,
+        hourly6h: Number(acRate6h) || 1099,
+        hourly12h: Number(acRate12h) || 1599,
+        nightRate: Number(acRateNight) || 1899,
+        image: hotelDashboardGallery[0] || 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&auto=format&fit=crop&q=80',
+        amenities: ['AC', 'Free Wi-Fi', 'Hot Shower', 'TV', 'Clean Bedding']
+      },
+      {
+        id: 'r_non_ac',
+        name: 'Standard Non-AC Room',
+        type: 'Non-AC Room',
+        bedType: '1 Double Bed',
+        maxGuests: 2,
+        size: '200 sq.ft',
+        hourly3h: Number(nonAcRate3h) || 499,
+        hourly6h: Number(nonAcRate6h) || 799,
+        hourly12h: Number(nonAcRate12h) || 1199,
+        nightRate: Number(nonAcRateNight) || 1399,
+        image: hotelDashboardGallery[1] || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop&q=80',
+        amenities: ['Ceiling Fan', 'Free Wi-Fi', 'Hot Shower', 'Clean Towels']
+      }
+    ];
+
+    setHotelRoomsList(simplifiedRooms);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('majh_boisar_hotel_rooms_freesia-by-express-inn', JSON.stringify(simplifiedRooms));
+      localStorage.setItem('majh_boisar_hotel_rooms_h1', JSON.stringify(simplifiedRooms));
+      localStorage.setItem('majh_boisar_hotel_rates_ac_3h', String(acRate3h));
+      localStorage.setItem('majh_boisar_hotel_rates_ac_6h', String(acRate6h));
+      localStorage.setItem('majh_boisar_hotel_rates_ac_12h', String(acRate12h));
+      localStorage.setItem('majh_boisar_hotel_rates_ac_night', String(acRateNight));
+      localStorage.setItem('majh_boisar_hotel_rates_nonac_3h', String(nonAcRate3h));
+      localStorage.setItem('majh_boisar_hotel_rates_nonac_6h', String(nonAcRate6h));
+      localStorage.setItem('majh_boisar_hotel_rates_nonac_12h', String(nonAcRate12h));
+      localStorage.setItem('majh_boisar_hotel_rates_nonac_night', String(nonAcRateNight));
+      window.dispatchEvent(new Event('storage'));
+    }
+    setShowQuickTariffModal(false);
+    showToast('⚡ Quick Tariffs updated and live immediately!', 'success');
+  };
+
+
+  // 📲 WhatsApp Digital Stay Pass & Receipt Modal State
+  const [whatsAppPassModal, setWhatsAppPassModal] = useState<{
+    isOpen: boolean;
+    guestName: string;
+    phone: string;
     roomNo: string;
-    customer: string;
     checkIn: string;
     duration: string;
     amount: string;
-    status: 'Booked' | 'Available';
-  }>>(() => {
+    passId?: string;
+  } | null>(null);
+
+  // ⏱️ Quick Tariff & Hourly Bookings Control State
+  const [hourlyBookingsEnabled, setHourlyBookingsEnabled] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('majh_boisar_hotel_room_board');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        } catch (e) {}
-      }
+      const saved = localStorage.getItem('majh_boisar_hotel_hourly_enabled');
+      if (saved !== null) return saved === 'true';
     }
-    return [
-      { roomNo: '101', customer: 'Amit', checkIn: '2:00 PM', duration: '6 Hours', amount: '₹800', status: 'Booked' },
-      { roomNo: '102', customer: '–', checkIn: '–', duration: '–', amount: '–', status: 'Available' },
-      { roomNo: '103', customer: 'Vikram', checkIn: '3:00 PM', duration: '3 Hours', amount: '₹500', status: 'Booked' },
-      { roomNo: '104', customer: '–', checkIn: '–', duration: '–', amount: '–', status: 'Available' },
-      { roomNo: '105', customer: 'Rahul Sharma', checkIn: '1:30 PM', duration: 'Night Stay', amount: '₹1,800', status: 'Booked' },
-      { roomNo: '106', customer: '–', checkIn: '–', duration: '–', amount: '–', status: 'Available' },
-    ];
+    return true;
   });
 
-  const [bookingModalRoom, setBookingModalRoom] = useState<string | null>(null);
-  const [bookRoomCustomer, setBookRoomCustomer] = useState('');
-  const [bookRoomCheckIn, setBookRoomCheckIn] = useState('02:00 PM');
-  const [bookRoomDuration, setBookRoomDuration] = useState('3 Hours');
-  const [bookRoomAmount, setBookRoomAmount] = useState('600');
-  const [newRoomNoInput, setNewRoomNoInput] = useState('');
-  const [showAddRoomModal, setShowAddRoomModal] = useState(false);
-
-  const saveRoomBoard = (updated: typeof hotelRoomBoard) => {
-    setHotelRoomBoard(updated);
+  const handleToggleHourlyBookings = () => {
+    const next = !hourlyBookingsEnabled;
+    setHourlyBookingsEnabled(next);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('majh_boisar_hotel_room_board', JSON.stringify(updated));
+      localStorage.setItem('majh_boisar_hotel_hourly_enabled', String(next));
+
+      const allH = getAllHotels();
+      const activeHotelIndex = selectedId >= 99000 ? (selectedId - 99000) : 0;
+      const currentH = allH[activeHotelIndex] || allH[0] || {};
+      const hotelId = (currentH as any)?.id;
+      const hotelSlug = (currentH as any)?.slug || hotelProfileName.toLowerCase().replace(/\s+/g, '-');
+
+      if (hotelSlug) localStorage.setItem(`majh_boisar_hotel_hourly_${hotelSlug}`, String(next));
+      if (hotelId) localStorage.setItem(`majh_boisar_hotel_hourly_${hotelId}`, String(next));
+
+      try {
+        const customHotels = JSON.parse(localStorage.getItem('majh_boisar_custom_hotels_v2') || '[]');
+        const updatedList = customHotels.map((h: any) => {
+          if (h.id === hotelId || h.slug === hotelSlug || h.name === hotelProfileName) {
+            return { ...h, offersHourly: next, is3hAvailable: next, is6hAvailable: next, is12hAvailable: next };
+          }
+          return h;
+        });
+        localStorage.setItem('majh_boisar_custom_hotels_v2', JSON.stringify(updatedList));
+      } catch (e) {}
+
+      window.dispatchEvent(new Event('storage'));
+    }
+    showToast(next ? '🟢 Hourly (3h/6h/12h) Stays ENABLED' : '🔴 Hourly Stays OFF — Day & Night Stays Only', next ? 'success' : 'info');
+  };
+
+  // ⏱️ Day-Stay vs Night-Stay Slot Timings State
+  const [dayStayTimingWindow, setDayStayTimingWindow] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('majh_boisar_hotel_day_stay_timing') || '09:00 AM – 07:00 PM';
+    }
+    return '09:00 AM – 07:00 PM';
+  });
+  const [nightStayCheckIn, setNightStayCheckIn] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('majh_boisar_hotel_night_checkin') || '12:00 PM';
+    }
+    return '12:00 PM';
+  });
+  const [nightStayCheckOut, setNightStayCheckOut] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('majh_boisar_hotel_night_checkout') || '11:00 AM';
+    }
+    return '11:00 AM';
+  });
+
+  // ── BUSINESS & HOTEL LISTING DELETION REQUEST SYSTEM ──
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletionReason, setDeletionReason] = useState('Business / Hotel has permanently closed');
+  const [deletionCustomNotes, setDeletionCustomNotes] = useState('');
+  const [pendingDeletionReq, setPendingDeletionReq] = useState<any | null>(null);
+
+  const isCurrentEntityHotel = Boolean(
+    selectedId >= 99000 ||
+    (business?.category || '').toLowerCase().includes('hotel') ||
+    (business?.category || '').toLowerCase().includes('resort')
+  );
+
+  const checkPendingDeletion = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const allH = getAllHotels();
+        const activeHotelIndex = selectedId >= 99000 ? (selectedId - 99000) : 0;
+        const currentH = allH[activeHotelIndex] || allH[0] || {};
+        const hotelSlug = (currentH as any)?.slug || hotelProfileName.toLowerCase().replace(/\s+/g, '-');
+        const hotelId = (currentH as any)?.id;
+        const bizId = business?.id;
+        const bizName = business?.name;
+
+        const requests = JSON.parse(localStorage.getItem('majh_boisar_deletion_requests') || '[]');
+        const found = requests.find((r: any) =>
+          r.status === 'Pending' && (
+            (hotelSlug && r.hotelSlug === hotelSlug) ||
+            (hotelId && String(r.businessId) === String(hotelId)) ||
+            (bizId && String(r.businessId) === String(bizId)) ||
+            (hotelProfileName && (r.businessName === hotelProfileName || r.userName === hotelProfileName)) ||
+            (bizName && (r.businessName === bizName || r.userName === bizName))
+          )
+        );
+        setPendingDeletionReq(found || null);
+      } catch (e) {}
     }
   };
 
-  const handleVacateBoardRoom = (roomNo: string) => {
-    const updated = hotelRoomBoard.map(r => r.roomNo === roomNo ? {
-      ...r,
-      customer: '–',
-      checkIn: '–',
-      duration: '–',
-      amount: '–',
-      status: 'Available' as const
-    } : r);
-    saveRoomBoard(updated);
-    showToast(`🟢 Room ${roomNo} marked Available (Vacated / Checked-Out).`, 'info', 3000);
-  };
+  useEffect(() => {
+    checkPendingDeletion();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('majh_boisar_deletion_requests_updated', checkPendingDeletion);
+      window.addEventListener('storage', checkPendingDeletion);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('majh_boisar_deletion_requests_updated', checkPendingDeletion);
+        window.removeEventListener('storage', checkPendingDeletion);
+      }
+    };
+  }, [selectedId, business?.id, hotelProfileName]);
 
-  const handleConfirmRoomBooking = (e: React.FormEvent) => {
+  const handleSubmitDeletionRequest = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!bookingModalRoom) return;
-    if (!bookRoomCustomer.trim()) {
-      showToast('Please enter Customer / Guest Name', 'error');
-      return;
+    if (typeof window !== 'undefined') {
+      const allH = getAllHotels();
+      const activeHotelIndex = selectedId >= 99000 ? (selectedId - 99000) : 0;
+      const currentH = allH[activeHotelIndex] || allH[0] || {};
+      const hotelSlug = (currentH as any)?.slug || hotelProfileName.toLowerCase().replace(/\s+/g, '-');
+      const hotelId = (currentH as any)?.id || `hotel-${hotelSlug}`;
+
+      const targetName = isCurrentEntityHotel ? hotelProfileName : (business?.name || 'My Business');
+      const targetPhone = isCurrentEntityHotel ? hotelProfilePhone : (business?.phone || loggedInUser?.phone || '');
+      const fullReason = deletionCustomNotes.trim() ? `${deletionReason} - ${deletionCustomNotes.trim()}` : deletionReason;
+
+      const newReq = {
+        id: Date.now(),
+        type: isCurrentEntityHotel ? 'hotel' : 'business',
+        userName: loggedInUser?.name || targetName,
+        userPhone: targetPhone,
+        userEmail: loggedInUser?.email || '',
+        businessName: targetName,
+        businessId: isCurrentEntityHotel ? hotelId : business?.id,
+        hotelSlug: isCurrentEntityHotel ? hotelSlug : undefined,
+        reason: fullReason,
+        requestedAt: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        status: 'Pending'
+      };
+
+      const existing = JSON.parse(localStorage.getItem('majh_boisar_deletion_requests') || '[]');
+      const filtered = existing.filter((r: any) => !(
+        (r.hotelSlug && r.hotelSlug === hotelSlug) ||
+        (r.businessId && String(r.businessId) === String(newReq.businessId))
+      ));
+      const updated = [newReq, ...filtered];
+      localStorage.setItem('majh_boisar_deletion_requests', JSON.stringify(updated));
+      setPendingDeletionReq(newReq);
+      setIsDeleteDialogOpen(false);
+      setDeletionCustomNotes('');
+
+      window.dispatchEvent(new Event('majh_boisar_deletion_requests_updated'));
+      window.dispatchEvent(new Event('storage'));
+
+      showToast('⚠️ Deletion request submitted! Our admin team will review and approve it.', 'info');
+      alert(`⚠️ Deletion Request Submitted!\n\nYour request to delete "${targetName}" has been sent to Majh Boisar Admin.\nOnce the admin reviews and approves it, the listing will be permanently removed.`);
     }
-    const updated = hotelRoomBoard.map(r => r.roomNo === bookingModalRoom ? {
-      ...r,
-      customer: bookRoomCustomer.trim(),
-      checkIn: bookRoomCheckIn || 'Just Now',
-      duration: bookRoomDuration || '3 Hours',
-      amount: bookRoomAmount.startsWith('₹') ? bookRoomAmount : `₹${bookRoomAmount}`,
-      status: 'Booked' as const
-    } : r);
-    saveRoomBoard(updated);
-    setBookingModalRoom(null);
-    setBookRoomCustomer('');
-    showToast(`🎉 Room ${bookingModalRoom} Booked for ${bookRoomCustomer.trim()}!`, 'success', 3500);
   };
 
-  const handleAddNewRoomToBoard = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newRoomNoInput.trim()) return;
-    const cleanRoom = newRoomNoInput.trim();
-    if (hotelRoomBoard.some(r => r.roomNo.toLowerCase() === cleanRoom.toLowerCase())) {
-      showToast(`Room ${cleanRoom} already exists on board!`, 'error');
-      return;
+  const handleCancelDeletionRequest = () => {
+    if (!pendingDeletionReq) return;
+    if (!confirm('Are you sure you want to cancel your deletion request? Your listing will remain active on Majh Boisar.')) return;
+
+    if (typeof window !== 'undefined') {
+      const existing = JSON.parse(localStorage.getItem('majh_boisar_deletion_requests') || '[]');
+      const updated = existing.filter((r: any) => r.id !== pendingDeletionReq.id);
+      localStorage.setItem('majh_boisar_deletion_requests', JSON.stringify(updated));
+      setPendingDeletionReq(null);
+
+      window.dispatchEvent(new Event('majh_boisar_deletion_requests_updated'));
+      window.dispatchEvent(new Event('storage'));
+      showToast('✅ Deletion request cancelled. Listing is active!', 'success');
     }
-    const updated = [...hotelRoomBoard, {
-      roomNo: cleanRoom,
-      customer: '–',
-      checkIn: '–',
-      duration: '–',
-      amount: '–',
-      status: 'Available' as const
-    }];
-    saveRoomBoard(updated);
-    setNewRoomNoInput('');
-    setShowAddRoomModal(false);
-    showToast(`✅ Room ${cleanRoom} added to Room Board!`, 'success', 3000);
   };
 
-  const handleDeleteBoardRoom = (roomNo: string) => {
-    if (hotelRoomBoard.length <= 1) {
-      showToast('At least 1 room is required.', 'error');
+  const handleAdminImmediateDelete = () => {
+    const targetName = isCurrentEntityHotel ? hotelProfileName : (business?.name || 'Listing');
+    if (!confirm(`⚠️ ADMIN ACTION:\nAre you sure you want to IMMEDIATELY delete "${targetName}"?\nThis cannot be undone.`)) return;
+
+    if (typeof window !== 'undefined') {
+      const allH = getAllHotels();
+      const activeHotelIndex = selectedId >= 99000 ? (selectedId - 99000) : 0;
+      const currentH = allH[activeHotelIndex] || allH[0] || {};
+      const hotelSlug = (currentH as any)?.slug || hotelProfileName.toLowerCase().replace(/\s+/g, '-');
+      const hotelId = (currentH as any)?.id;
+
+      if (isCurrentEntityHotel) {
+        const customHotels = JSON.parse(localStorage.getItem('majh_boisar_custom_hotels_v2') || '[]');
+        const filteredHotels = customHotels.filter((h: any) => h.slug !== hotelSlug && h.id !== hotelId && h.name !== hotelProfileName);
+        localStorage.setItem('majh_boisar_custom_hotels_v2', JSON.stringify(filteredHotels));
+
+        const pinned = JSON.parse(localStorage.getItem('majh_boisar_pinned_hotels') || '[]');
+        localStorage.setItem('majh_boisar_pinned_hotels', JSON.stringify(pinned.filter((id: string) => id !== hotelId && id !== hotelSlug)));
+      } else if (business?.id) {
+        const customBiz = JSON.parse(localStorage.getItem('majh_boisar_user_businesses') || '[]');
+        const filteredBiz = customBiz.filter((b: any) => String(b.id) !== String(business.id) && b.name !== business.name);
+        localStorage.setItem('majh_boisar_user_businesses', JSON.stringify(filteredBiz));
+      }
+
+      const existing = JSON.parse(localStorage.getItem('majh_boisar_deletion_requests') || '[]');
+      const updated = existing.map((r: any) => {
+        if ((r.hotelSlug && r.hotelSlug === hotelSlug) || (r.businessId && (r.businessId === hotelId || r.businessId === business?.id))) {
+          return { ...r, status: 'Approved & Deleted' };
+        }
+        return r;
+      });
+      localStorage.setItem('majh_boisar_deletion_requests', JSON.stringify(updated));
+
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new Event('majh_boisar_deletion_requests_updated'));
+      setIsDeleteDialogOpen(false);
+      alert(`🗑️ "${targetName}" has been successfully deleted by Admin.`);
+      window.location.href = '/dashboard';
+    }
+  };
+
+  const getFormattedStayPassMessage = (item: {
+    guestName: string;
+    phone?: string;
+    roomNo: string;
+    checkIn: string;
+    duration: string;
+    amount: string;
+    passId?: string;
+  }) => {
+    const hotelName = hotelProfileName || business?.name || 'Freesia by Express Inn';
+    const hotelLoc = hotelProfileArea || business?.location || 'Boisar West';
+    const mapLink = `https://maps.google.com/?q=${encodeURIComponent(hotelName + ' ' + hotelLoc)}`;
+    const deskContact = hotelProfilePhone || business?.phone || '7769947217';
+
+    return (
+`🏨 *MAJH BOISAR — OFFICIAL HOTEL STAY PASS*
+*${hotelName.toUpperCase()}* (${hotelLoc})
+━━━━━━━━━━━━━━━━━━━━
+👤 *Guest Name:* ${item.guestName || 'Valued Guest'}
+🚪 *Allotted Room:* Room ${item.roomNo}
+⏱️ *Check-In Time:* ${item.checkIn}
+⏳ *Stay Duration:* ${item.duration}
+💰 *Total Amount:* ${item.amount} (Paid at Desk)
+🎟️ *Pass Reference:* #${item.passId || 'MB-HTL-STAY'}
+━━━━━━━━━━━━━━━━━━━━
+📍 *Hotel Map Location:* ${mapLink}
+📞 *Front Desk / Reception:* +91 ${deskContact}
+
+⚠️ *Check-In & Stay Guidelines:*
+• Original Govt Photo ID (Aadhaar / Voter ID / DL) mandatory for all adult guests.
+• Check-out time is strictly followed for room sanitization.
+• High-speed Wi-Fi password available at reception desk.
+
+🙏 *Thank you for staying in Boisar! Have a pleasant stay.*
+_Powered by Majh Boisar (majhboisar.com)_`
+    );
+  };
+
+  const handleTriggerWhatsAppPass = (data: {
+    guestName: string;
+    phone?: string;
+    roomNo: string;
+    checkIn?: string;
+    duration?: string;
+    amount?: string;
+    passId?: string;
+  }) => {
+    setWhatsAppPassModal({
+      isOpen: true,
+      guestName: (!data.guestName || data.guestName === '–') ? '' : data.guestName,
+      phone: data.phone || '',
+      roomNo: data.roomNo,
+      checkIn: data.checkIn && data.checkIn !== '–' ? data.checkIn : 'Just Now',
+      duration: data.duration && data.duration !== '–' ? data.duration : '3 Hours Stay',
+      amount: data.amount && data.amount !== '–' ? (data.amount.startsWith('₹') ? data.amount : `₹${data.amount}`) : '₹699',
+      passId: data.passId || `MB-HTL-${Math.floor(100000 + Math.random() * 900000)}`
+    });
+  };
+
+  const executeSendWhatsAppPass = (phoneInput: string) => {
+    if (!whatsAppPassModal) return;
+    const cleanDigits = phoneInput.replace(/\D/g, '');
+    if (!cleanDigits || cleanDigits.length < 10) {
+      showToast('Please enter a valid 10-digit WhatsApp number.', 'error');
       return;
     }
-    const updated = hotelRoomBoard.filter(r => r.roomNo !== roomNo);
-    saveRoomBoard(updated);
-    showToast(`Room ${roomNo} removed from board.`, 'info', 2500);
+    const clean10 = cleanDigits.slice(-10);
+    const text = getFormattedStayPassMessage({
+      ...whatsAppPassModal,
+      phone: clean10
+    });
+    window.open(`https://wa.me/91${clean10}?text=${encodeURIComponent(text)}`, '_blank');
+    showToast(`📲 Stay Pass opened for WhatsApp to +91 ${clean10}!`, 'success');
+    setWhatsAppPassModal(null);
   };
+
+  // ── FILTER BOOKINGS STRICTLY FOR THE CURRENT SELECTED HOTEL ──
+  const specificHotelBookings = useMemo(() => {
+    const allH = getAllHotels();
+    const activeHotelIndex = selectedId >= 99000 ? (selectedId - 99000) : 0;
+    const currentH = allH[activeHotelIndex] || allH[0] || {};
+    const targetHotelName = (business?.name || currentH?.name || hotelProfileName || '').toLowerCase().trim();
+    const targetHotelId = (currentH?.id || (business as any)?.hotelId || '').toLowerCase().trim();
+    const targetHotelSlug = ((currentH as any)?.slug || '').toLowerCase().trim();
+
+    return hotelBookingsList.filter(b => {
+      if (!b) return false;
+      const bHotelId = (b.hotelId || '').toLowerCase().trim();
+      const bHotelName = (b.hotelName || '').toLowerCase().trim();
+      if (targetHotelId && bHotelId && (bHotelId === targetHotelId || bHotelId.includes(targetHotelId) || targetHotelId.includes(bHotelId))) return true;
+      if (targetHotelSlug && bHotelId && (bHotelId === targetHotelSlug || bHotelId.includes(targetHotelSlug))) return true;
+      if (targetHotelName && bHotelName) {
+        const cleanB = bHotelName.replace(/[^a-z0-9]/g, '');
+        const cleanTarget = targetHotelName.replace(/[^a-z0-9]/g, '');
+        return cleanB.includes(cleanTarget) || cleanTarget.includes(cleanB);
+      }
+      return false;
+    });
+  }, [hotelBookingsList, selectedId, business?.name, hotelProfileName]);
+
+  // ── DYNAMIC HOTEL ONLINE PORTAL STATS & REVENUE (STRICTLY FOR CURRENT HOTEL) ──
+  const hotelDeskMetrics = useMemo(() => {
+    const validBookings = specificHotelBookings.filter(Boolean);
+    const confirmedCount = validBookings.filter(b => (b?.status || '').includes('Confirmed')).length;
+    const checkedInCount = validBookings.filter(b => (b?.status || '').includes('Checked-In') || (b?.status || '').includes('Assigned') || (b?.status || '').includes('Active')).length;
+    const completedCount = validBookings.filter(b => (b?.status || '').includes('Completed')).length;
+
+    // Calculate collection from online confirmed/completed passes
+    const totalOnlineRevenue = validBookings.reduce((acc, b) => {
+      if (b && !b?.status?.includes('Cancelled') && b?.totalAmount) {
+        const num = parseInt(String(b.totalAmount).replace(/\D/g, ''), 10) || 0;
+        return acc + num;
+      }
+      return acc;
+    }, 0);
+
+    return {
+      todayCollection: totalOnlineRevenue,
+      totalBookingsCount: validBookings.length,
+      confirmedCount,
+      checkedInCount,
+      completedCount,
+    };
+  }, [specificHotelBookings]);
+
 
   // ── LIVE KITCHEN ORDER & TABLE KDS STATE FOR RESTAURANTS / CAFES ──
   const [kitchenAudioEnabled, setKitchenAudioEnabled] = useState(true);
@@ -1277,55 +1887,6 @@ function DashboardContent() {
     showToast(`🔔 New Order added for Table #${newOrder.tableNumber}!`, 'success');
   };
 
-  // ── FULL HOTEL PROFILE & PHOTO GALLERY STATE FOR DASHBOARD ──
-  const [hotelProfileName, setHotelProfileName] = useState('Freesia by Express Inn');
-  const [hotelProfileCategory, setHotelProfileCategory] = useState('Luxury Resort');
-  const [hotelProfileArea, setHotelProfileArea] = useState('Ostwal Empire, Boisar West');
-  const [hotelProfileAddress, setHotelProfileAddress] = useState('Survey No. 42, Ostwal Empire Main Avenue, Near Reliance Trends, Boisar West');
-  const [hotelProfilePhone, setHotelProfilePhone] = useState('7769947217');
-  const [hotelProfileWhatsapp, setHotelProfileWhatsapp] = useState('7769947217');
-  const [hotelProfileCoupleFriendly, setHotelProfileCoupleFriendly] = useState(true);
-  const [hotelProfileLocalId, setHotelProfileLocalId] = useState(true);
-  const [hotelProfileNearStation, setHotelProfileNearStation] = useState(true);
-  const [hotelProfileNearMidc, setHotelProfileNearMidc] = useState(false);
-
-  // AC Room Rates
-  const [acRate3h, setAcRate3h] = useState('699');
-  const [acRate6h, setAcRate6h] = useState('1099');
-  const [acRate12h, setAcRate12h] = useState('1599');
-  const [acRateNight, setAcRateNight] = useState('1899');
-
-  // Non-AC Room Rates
-  const [nonAcRate3h, setNonAcRate3h] = useState('499');
-  const [nonAcRate6h, setNonAcRate6h] = useState('799');
-  const [nonAcRate12h, setNonAcRate12h] = useState('1199');
-  const [nonAcRateNight, setNonAcRateNight] = useState('1399');
-  
-  const [hotelDashboardGallery, setHotelDashboardGallery] = useState<string[]>([
-    'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&auto=format&fit=crop&q=80'
-  ]);
-
-  const handleHotelDashboardFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          setHotelDashboardGallery(prev => [...prev, reader.result as string]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleRemoveDashboardGalleryPhoto = (idx: number) => {
-    setHotelDashboardGallery(prev => prev.filter((_, i) => i !== idx));
-  };
-
   const handleSaveFullHotelListing = (e: React.FormEvent) => {
     e.preventDefault();
     if (!hotelProfileName.trim() || !hotelProfilePhone.trim()) {
@@ -1336,7 +1897,7 @@ function DashboardContent() {
     const simplifiedRooms = [
       {
         id: 'r_ac',
-        name: 'AC Room',
+        name: 'Deluxe AC Room',
         type: 'AC Room',
         bedType: '1 King / Double Bed',
         maxGuests: 2,
@@ -1344,13 +1905,14 @@ function DashboardContent() {
         hourly3h: Number(acRate3h) || 699,
         hourly6h: Number(acRate6h) || 1099,
         hourly12h: Number(acRate12h) || 1599,
+        dayRate: Number(acRate12h) || 1499,
         nightRate: Number(acRateNight) || 1899,
-        image: hotelDashboardGallery[0] || 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&auto=format&fit=crop&q=80',
+        image: hotelDashboardGallery[0] || '',
         amenities: ['AC', 'Free Wi-Fi', 'Hot Shower', 'TV', 'Clean Bedding']
       },
       {
         id: 'r_non_ac',
-        name: 'Non-AC Room',
+        name: 'Standard Non-AC Room',
         type: 'Non-AC Room',
         bedType: '1 Double Bed',
         maxGuests: 2,
@@ -1358,49 +1920,165 @@ function DashboardContent() {
         hourly3h: Number(nonAcRate3h) || 499,
         hourly6h: Number(nonAcRate6h) || 799,
         hourly12h: Number(nonAcRate12h) || 1199,
+        dayRate: Number(nonAcRate12h) || 999,
         nightRate: Number(nonAcRateNight) || 1399,
-        image: hotelDashboardGallery[1] || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop&q=80',
+        image: hotelDashboardGallery[1] || hotelDashboardGallery[0] || '',
         amenities: ['Ceiling Fan', 'Free Wi-Fi', 'Hot Shower', 'Clean Towels']
       }
     ];
 
     setHotelRoomsList(simplifiedRooms);
 
+    const allH = getAllHotels();
+    const activeHotelIndex = selectedId >= 99000 ? (selectedId - 99000) : 0;
+    const currentH = allH[activeHotelIndex] || allH[0] || {};
+    const hotelId = (currentH as any)?.id || `hotel-${hotelProfileName.toLowerCase().replace(/\s+/g, '-')}`;
+    const hotelSlug = (currentH as any)?.slug || hotelProfileName.toLowerCase().replace(/\s+/g, '-');
+
+    const amenitiesObjects = hotelProfileAmenities.map(name => {
+      const norm = normalizeHotelAmenity(name);
+      return {
+        name: norm,
+        icon: norm === 'Wi-Fi' ? 'Wifi' :
+              norm === 'AC' ? 'AirVent' :
+              norm === 'Parking' ? 'Car' :
+              norm === 'TV' ? 'Tv' :
+              norm === 'Hot Water' ? 'Droplets' :
+              norm === 'Clean Linens' ? 'Bed' :
+              norm === 'Power Backup' ? 'Zap' :
+              norm === 'Elevator / Lift' ? 'Building' :
+              norm === 'Room Service' ? 'Bell' :
+              norm === 'CCTV Security' ? 'Shield' :
+              norm === 'Sanitized Daily Housekeeping' ? 'Sparkles' :
+              norm === 'Private Bathroom' ? 'Bath' :
+              norm === 'Complimentary Toiletries' ? 'Heart' :
+              norm === 'Tea / Coffee Maker' ? 'Coffee' :
+              norm === 'Swimming Pool' ? 'Waves' :
+              norm === 'In-house Restaurant' ? 'Utensils' : 'Check'
+      };
+    });
+
+    const rawRulesArray = hotelProfileRules.split('\n').map(r => r.trim()).filter(Boolean);
+    const rulesArray = deduplicateRules(rawRulesArray);
+
     const updatedHotelObj: any = {
-      id: 'h1',
-      slug: 'freesia-by-express-inn',
+      ...currentH,
+      id: hotelId,
+      slug: hotelSlug,
       name: hotelProfileName,
-      tagline: 'Verified Couple & Day-Stay Hotel in Boisar',
+      status: 'approved',
+      verified: true,
+      tagline: hotelProfileTagline,
+      description: hotelProfileDescription,
       category: hotelProfileCategory,
       badge: `♦ ${hotelProfileCategory.toUpperCase()}`,
       location: hotelProfileArea,
       address: hotelProfileAddress,
+      landmark: hotelProfileLandmark,
       phone: hotelProfilePhone,
       whatsapp: hotelProfileWhatsapp,
+      email: hotelProfileEmail,
+      mapsUrl: hotelProfileMapsUrl,
       isCoupleFriendly: hotelProfileCoupleFriendly,
       acceptsLocalId: hotelProfileLocalId,
       nearStation: hotelProfileNearStation,
       nearMidc: hotelProfileNearMidc,
+      stationDistance: hotelProfileStationDist,
+      midcDistance: hotelProfileMidcDist,
+      coupleBadgeText: hotelProfileCoupleBadge,
+      safetyBadgeText: hotelProfileSafetyBadge,
+      checkinBadgeText: hotelProfileCheckinBadge,
+      houseRulesTag: hotelProfileRulesTag,
+      familyFriendly: hotelProfileFamilyFriendly,
       gallery: hotelDashboardGallery,
+      amenities: amenitiesObjects,
+      rules: rulesArray,
       rooms: simplifiedRooms,
       hourlyRate3h: Number(acRate3h) || 699,
       hourlyRate6h: Number(acRate6h) || 1099,
       hourlyRate12h: Number(acRate12h) || 1599,
-      nightRate: Number(acRateNight) || 1899
+      dayRate: Number(acRate12h) || 1499,
+      nightRate: Number(acRateNight) || 1899,
+      offersHourly: hourlyBookingsEnabled,
+      is3hAvailable: hourlyBookingsEnabled,
+      is6hAvailable: hourlyBookingsEnabled,
+      is12hAvailable: hourlyBookingsEnabled,
+      isDayAvailable: true,
+      isNightAvailable: true,
+      dayStayTimingWindow: dayStayTimingWindow || '09:00 AM – 07:00 PM',
+      nightStayCheckIn: nightStayCheckIn || '12:00 PM',
+      nightStayCheckOut: nightStayCheckOut || '11:00 AM'
     };
 
     if (typeof window !== 'undefined') {
-      localStorage.setItem('majh_boisar_hotel_rooms_freesia-by-express-inn', JSON.stringify(simplifiedRooms));
-      localStorage.setItem('majh_boisar_hotel_rooms_h1', JSON.stringify(simplifiedRooms));
+      localStorage.setItem(`majh_boisar_hotel_rooms_${hotelSlug}`, JSON.stringify(simplifiedRooms));
+      localStorage.setItem(`majh_boisar_hotel_rooms_${hotelId}`, JSON.stringify(simplifiedRooms));
+      localStorage.setItem('majh_boisar_hotel_rates_ac_3h', String(acRate3h));
+      localStorage.setItem('majh_boisar_hotel_rates_ac_6h', String(acRate6h));
+      localStorage.setItem('majh_boisar_hotel_rates_ac_12h', String(acRate12h));
+      localStorage.setItem('majh_boisar_hotel_rates_ac_night', String(acRateNight));
+      localStorage.setItem('majh_boisar_hotel_rates_nonac_3h', String(nonAcRate3h));
+      localStorage.setItem('majh_boisar_hotel_rates_nonac_6h', String(nonAcRate6h));
+      localStorage.setItem('majh_boisar_hotel_rates_nonac_12h', String(nonAcRate12h));
+      localStorage.setItem('majh_boisar_hotel_rates_nonac_night', String(nonAcRateNight));
+      localStorage.setItem('majh_boisar_hotel_day_stay_timing', dayStayTimingWindow);
+      localStorage.setItem('majh_boisar_hotel_night_checkin', nightStayCheckIn);
+      localStorage.setItem('majh_boisar_hotel_night_checkout', nightStayCheckOut);
+      localStorage.setItem(`majh_boisar_hotel_day_stay_timing_${hotelSlug}`, dayStayTimingWindow);
+      localStorage.setItem(`majh_boisar_hotel_night_checkin_${hotelSlug}`, nightStayCheckIn);
+      localStorage.setItem(`majh_boisar_hotel_night_checkout_${hotelSlug}`, nightStayCheckOut);
+      localStorage.setItem(`majh_boisar_hotel_hourly_${hotelSlug}`, String(hourlyBookingsEnabled));
+      localStorage.setItem(`majh_boisar_hotel_hourly_${hotelId}`, String(hourlyBookingsEnabled));
+      localStorage.setItem(`majh_boisar_hotel_rules_${hotelSlug}`, JSON.stringify(rulesArray));
+      localStorage.setItem(`majh_boisar_hotel_rules_${hotelId}`, JSON.stringify(rulesArray));
+      localStorage.setItem(`majh_boisar_hotel_rules_tag_${hotelSlug}`, hotelProfileRulesTag);
+      localStorage.setItem(`majh_boisar_hotel_rules_tag_${hotelId}`, hotelProfileRulesTag);
       
       const customHotels = JSON.parse(localStorage.getItem('majh_boisar_custom_hotels_v2') || '[]');
-      const filtered = customHotels.filter((h: any) => h.id !== 'h1' && h.slug !== 'freesia-by-express-inn');
+      const filtered = customHotels.filter((h: any) => 
+        (h.id || '').toLowerCase() !== hotelId.toLowerCase() && 
+        (h.slug || '').toLowerCase() !== hotelSlug.toLowerCase() && 
+        (h.name || '').toLowerCase().trim() !== hotelProfileName.toLowerCase().trim()
+      );
       localStorage.setItem('majh_boisar_custom_hotels_v2', JSON.stringify([updatedHotelObj, ...filtered]));
 
+      // Also save into admin hotels registry
+      try {
+        const adminHotels = JSON.parse(localStorage.getItem('majh_boisar_admin_hotels') || '[]');
+        const filteredAdmin = adminHotels.filter((h: any) => 
+          (h.id || '').toLowerCase() !== hotelId.toLowerCase() && 
+          (h.slug || '').toLowerCase() !== hotelSlug.toLowerCase() && 
+          (h.name || '').toLowerCase().trim() !== hotelProfileName.toLowerCase().trim()
+        );
+        localStorage.setItem('majh_boisar_admin_hotels', JSON.stringify([updatedHotelObj, ...filteredAdmin]));
+      } catch (err) {}
+
+      // Also save into user hotels registry for home modal compatibility
+      try {
+        const userHotels = JSON.parse(localStorage.getItem('majh_boisar_user_hotels') || '[]');
+        const filteredUser = userHotels.filter((h: any) => 
+          (h.id || '').toLowerCase() !== hotelId.toLowerCase() && 
+          (h.slug || '').toLowerCase() !== hotelSlug.toLowerCase() && 
+          (h.name || '').toLowerCase().trim() !== hotelProfileName.toLowerCase().trim()
+        );
+        localStorage.setItem('majh_boisar_user_hotels', JSON.stringify([updatedHotelObj, ...filteredUser]));
+      } catch (err) {}
+
       window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('majh_boisar_hotel_updated', { detail: updatedHotelObj }));
     }
 
-    alert('🎉 Hotel profile, gallery photos, and AC / Non-AC room rates updated successfully!\nLive changes are now published on the hotel page.');
+    setBusiness((prev: any) => prev ? ({
+      ...prev,
+      name: hotelProfileName,
+      description: hotelProfileTagline,
+      address: hotelProfileAddress,
+      location: hotelProfileArea,
+      phone: hotelProfilePhone,
+      whatsapp: hotelProfileWhatsapp
+    }) : null);
+
+    showToast(`🎉 Hotel Profile for "${hotelProfileName}" updated successfully!`, 'success');
   };
 
   // Hotel Owner Bank & UPI Payout State
@@ -2030,10 +2708,6 @@ function DashboardContent() {
 
   // Fetch list of businesses to select from
   const fetchBusinessesList = async () => {
-    if (!isLoggedIn && !isAdminAuth) {
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
       const res = await fetch('/api/businesses?showAll=true');
@@ -2043,9 +2717,20 @@ function DashboardContent() {
         return;
       }
 
+      // Strict Security: ONLY true Admin session or admin credentials get admin powers
       const isAdmin = isAdminAuth;
 
+      if (!isLoggedIn && !isAdmin) {
+        setBusinessesList([]);
+        setSelectedId(0);
+        setBusiness(null);
+        setHasRegisteredBusiness(false);
+        setLoading(false);
+        return;
+      }
+
       if (isAdmin) {
+        const nonHotelBiz = data.map((b: any) => ({ id: b.id, name: b.name, category: b.category }));
         const hotelItems = getAllHotels().map((h, i) => ({
           id: 99000 + i,
           name: `🏨 ${h.name}`,
@@ -2055,8 +2740,8 @@ function DashboardContent() {
         }));
 
         const combined = [
-          ...hotelItems,
-          ...data.map((b: any) => ({ id: b.id, name: b.name, category: b.category }))
+          ...nonHotelBiz,
+          ...hotelItems
         ];
 
         setBusinessesList(combined);
@@ -2066,6 +2751,7 @@ function DashboardContent() {
           const matchBiz = combined.find((b: any) => b.id === targetId);
           if (matchBiz) {
             setSelectedId(matchBiz.id);
+            setDashboardMode('shop');
             return;
           }
         }
@@ -2077,16 +2763,57 @@ function DashboardContent() {
           );
           if (matchHotel) {
             setSelectedId(matchHotel.id);
+            setDashboardMode('hotel');
+            setActiveSubTab('hotel_bookings');
             return;
           }
         }
 
+        if (modeParam === 'property') {
+          setDashboardMode('property');
+          return;
+        }
+
         if (combined.length > 0) {
-          const targetId = (selectedId && combined.some((b: any) => b.id === selectedId)) ? selectedId : combined[0].id;
+          // If no specific hotel requested, default to the first regular business
+          const defaultTarget = (nonHotelBiz.length > 0 && tabParam !== 'hotel_bookings') ? nonHotelBiz[0] : combined[0];
+          const targetId = (selectedId && combined.some((b: any) => b.id === selectedId)) ? selectedId : defaultTarget.id;
           setSelectedId(targetId);
+          if (targetId >= 99000) {
+            setDashboardMode('hotel');
+          } else {
+            setDashboardMode('shop');
+          }
         }
       } else {
-        const userPhoneDigits = loggedInUser?.phone ? loggedInUser.phone.replace(/\D/g, '') : '';
+        if (!isLoggedIn) {
+          setBusinessesList([]);
+          setBusiness(null);
+          setLoading(false);
+          return;
+        }
+        const userPhoneDigits = loggedInUser?.phone ? loggedInUser.phone.replace(/\D/g, '').slice(-10) : '';
+
+        // Auto-detect ALL hotels owned by this specific registered phone number
+        const allHotels = getAllHotels();
+        const myHotels = allHotels.filter(h => {
+          if (!userPhoneDigits) return false;
+          const hp = (h.phone || '').replace(/\D/g, '').slice(-10);
+          const hw = (h.whatsapp || '').replace(/\D/g, '').slice(-10);
+          return (
+            (hp && (userPhoneDigits.endsWith(hp) || hp.endsWith(userPhoneDigits))) ||
+            (hw && (userPhoneDigits.endsWith(hw) || hw.endsWith(userPhoneDigits)))
+          );
+        });
+
+        const myHotelItems = myHotels.map(h => ({
+          id: 99000 + allHotels.findIndex(item => item.id === h.id),
+          name: `🏨 ${h.name}`,
+          category: 'Hotels',
+          hotelRefId: h.id,
+          hotelSlug: h.slug
+        }));
+
         let savedIds: number[] = [];
         if (typeof window !== 'undefined' && userPhoneDigits) {
           try {
@@ -2099,43 +2826,56 @@ function DashboardContent() {
         const myBizList = data.filter((b: any) => {
           if (savedIds.includes(b.id)) return true;
           if (!userPhoneDigits) return false;
-          const bizPhoneDigits = b.phone ? b.phone.replace(/\D/g, '') : '';
-          const bizWhatsappDigits = b.whatsapp ? b.whatsapp.replace(/\D/g, '') : '';
-          const bizCreatedByDigits = b.createdBy ? b.createdBy.replace(/\D/g, '') : '';
+          const bizPhoneDigits = b.phone ? b.phone.replace(/\D/g, '').slice(-10) : '';
+          const bizWhatsappDigits = b.whatsapp ? b.whatsapp.replace(/\D/g, '').slice(-10) : '';
+          const bizCreatedByDigits = b.createdBy ? b.createdBy.replace(/\D/g, '').slice(-10) : '';
           return (
-            (bizPhoneDigits && bizPhoneDigits === userPhoneDigits) ||
-            (bizWhatsappDigits && bizWhatsappDigits === userPhoneDigits) ||
-            (bizCreatedByDigits && bizCreatedByDigits === userPhoneDigits) ||
-            (b.createdBy && b.createdBy.replace(/\D/g, '') === userPhoneDigits)
+            (bizPhoneDigits && (bizPhoneDigits === userPhoneDigits || userPhoneDigits.endsWith(bizPhoneDigits) || bizPhoneDigits.endsWith(userPhoneDigits))) ||
+            (bizWhatsappDigits && (bizWhatsappDigits === userPhoneDigits || userPhoneDigits.endsWith(bizWhatsappDigits) || bizWhatsappDigits.endsWith(userPhoneDigits))) ||
+            (bizCreatedByDigits && (bizCreatedByDigits === userPhoneDigits || userPhoneDigits.endsWith(bizCreatedByDigits) || bizCreatedByDigits.endsWith(userPhoneDigits)))
           );
         });
 
-        if (myBizList.length > 0) {
-          setBusinessesList(myBizList.map((b: any) => ({ id: b.id, name: b.name, category: b.category })));
+        const myTotalOwnedList: { id: number; name: string; category?: string; hotelRefId?: string; hotelSlug?: string }[] = [
+          ...myHotelItems,
+          ...myBizList.map((b: any) => ({ id: b.id, name: b.name, category: b.category }))
+        ];
+
+        if (myTotalOwnedList.length > 0) {
+          setBusinessesList(myTotalOwnedList);
           setHasRegisteredBusiness(true);
           if (currentRole === 'User') {
             setRole('BusinessOwner');
           }
 
-          if (bizIdParam) {
+          let chosenId = myTotalOwnedList[0].id;
+
+          if (hotelIdParam || hotelNameParam) {
+            const matchOwnedHotel = myTotalOwnedList.find(b => 
+              (b.hotelRefId && (b.hotelRefId === hotelIdParam || b.hotelSlug === hotelIdParam)) ||
+              (hotelNameParam && b.name.toLowerCase().includes(hotelNameParam.toLowerCase()))
+            );
+            if (matchOwnedHotel) {
+              chosenId = matchOwnedHotel.id;
+            } else {
+              showToast('🔒 Access Restricted: You can only view your own registered hotel property.', 'error');
+            }
+          } else if (bizIdParam) {
             const targetId = Number(bizIdParam);
-            const foundParamBiz = myBizList.find((b: any) => b.id === targetId);
+            const foundParamBiz = myTotalOwnedList.find((b: any) => b.id === targetId);
             if (foundParamBiz) {
-              setSelectedId(foundParamBiz.id);
+              chosenId = foundParamBiz.id;
             } else {
               showToast('🔒 Access Restricted: You can only view and manage your own registered business listings.', 'error');
-              setSelectedId(myBizList[0].id);
             }
           } else {
-            const latestId = savedIds.length > 0 ? savedIds[savedIds.length - 1] : myBizList[myBizList.length - 1].id;
-            const isValidCurrent = selectedId && myBizList.some((b: any) => b.id === selectedId);
-            const targetId = isValidCurrent ? selectedId : (myBizList.some((b: any) => b.id === latestId) ? latestId : myBizList[0].id);
-            setSelectedId(targetId);
+            const latestId = savedIds.length > 0 ? savedIds[savedIds.length - 1] : myTotalOwnedList[0].id;
+            const isValidCurrent = selectedId && myTotalOwnedList.some((b: any) => b.id === selectedId);
+            chosenId = isValidCurrent ? selectedId : (myTotalOwnedList.some((b: any) => b.id === latestId) ? latestId : myTotalOwnedList[0].id);
           }
+
+          setSelectedId(chosenId);
         } else {
-          if (bizIdParam) {
-            showToast('🔒 Access Restricted: Only the verified owner or Super Admin can access this business dashboard.', 'error');
-          }
           setBusinessesList([]);
           setSelectedId(0);
           setBusiness(null);
@@ -2156,26 +2896,36 @@ function DashboardContent() {
       return;
     }
 
-    // Security Gate: If not admin, ensure selectedId belongs to the user's authorized businesses
-    if (!isAdminAuth && businessesList.length > 0 && !businessesList.some(b => b.id === selectedId)) {
-      setBusiness(null);
-      setLoading(false);
-      showToast('🔒 Access Denied: You do not have permission to view or edit this business dashboard.', 'error');
-      return;
+    // Security Gate: If not admin, ensure selectedId belongs strictly to the user's authorized businesses
+    if (!isAdminAuth) {
+      if (!isLoggedIn) {
+        setBusiness(null);
+        setLoading(false);
+        return;
+      }
+      if (businessesList.length === 0 || !businessesList.some(b => b.id === selectedId)) {
+        setBusiness(null);
+        setLoading(false);
+        return;
+      }
     }
 
-    // Direct Hotel profile loader (for Admin hotel switcher or direct link from admin panel)
+    // Direct Hotel profile loader (for Admin hotel switcher or verified hotelier)
     if (selectedId >= 99000 || (hotelIdParam && String(selectedId).startsWith('99')) || businessesList.find(b => b.id === selectedId)?.category === 'Hotels') {
       const allHotels = getAllHotels();
       const currentBizItem = businessesList.find(b => b.id === selectedId);
       const match = allHotels.find((h, i) => 
         (99000 + i === selectedId) ||
-        (hotelIdParam && (h.id === hotelIdParam || h.slug === hotelIdParam)) ||
-        (hotelNameParam && h.name.toLowerCase() === hotelNameParam.toLowerCase()) ||
-        (currentBizItem && currentBizItem.name.replace('🏨 ', '').trim() === h.name.trim())
-      ) || allHotels[0];
+        (isAdminAuth && hotelIdParam && (h.id === hotelIdParam || h.slug === hotelIdParam)) ||
+        (isAdminAuth && hotelNameParam && h.name.toLowerCase() === hotelNameParam.toLowerCase()) ||
+        (currentBizItem && (currentBizItem.hotelRefId === h.id || currentBizItem.name.replace('🏨 ', '').trim() === h.name.trim()))
+      ) || (isAdminAuth ? allHotels[0] : null);
 
-      if (match) {
+      if (!match) {
+        setBusiness(null);
+        setLoading(false);
+        return;
+      }
         setBusiness({
           id: selectedId,
           name: match.name,
@@ -2226,7 +2976,6 @@ function DashboardContent() {
         setLoading(false);
         return;
       }
-    }
 
     setLoading(true);
     try {
@@ -2305,13 +3054,11 @@ function DashboardContent() {
   };
 
   useEffect(() => {
-    if (isLoggedIn || isAdminAuth) {
-      fetchBusinessesList();
-    }
+    fetchBusinessesList();
   }, [isLoggedIn, currentRole, isAdminAuth, bizIdParam]);
 
   useEffect(() => {
-    if ((isLoggedIn || isAdminAuth) && selectedId) {
+    if (selectedId) {
       fetchBusinessData();
     }
   }, [selectedId, isLoggedIn, isAdminAuth]);
@@ -2776,34 +3523,121 @@ function DashboardContent() {
     }
   };
 
-  // 1. Render unauthorized view if not logged in and not admin
+  // 1. Mandatory Owner Login Gate (Clean & Compact)
   if (!isLoggedIn && !isAdminAuth) {
     return (
-      <div className="flex-1 bg-[#f8fafc] flex flex-col items-center justify-center py-20 px-4 text-slate-800">
-        <div className="max-w-md w-full bg-white border border-slate-200 p-8 rounded-3xl text-center space-y-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 text-left">
-          <div className="h-12 w-12 rounded-full bg-teal-50 border border-teal-200 flex items-center justify-center text-xl mx-auto shadow-inner text-teal-650">
+      <div className="min-h-[70vh] bg-[#f8fafc] py-12 px-4 flex items-center justify-center text-slate-800">
+        <div className="max-w-sm w-full bg-white border border-slate-200/80 rounded-2xl p-6 shadow-lg text-center space-y-4 animate-in fade-in duration-200">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center text-2xl mx-auto font-black shadow-xs">
             🔒
           </div>
-          <div className="text-center space-y-2">
-            <h2 className="font-extrabold text-sm text-slate-805 uppercase tracking-wider">Merchant Dashboard Login</h2>
-            <p className="text-xs text-slate-550 leading-relaxed font-sans font-medium">
-              To add your business listings, verify your metrics, or manage leads, please sign in to your merchant account first.
+
+          <div className="space-y-1">
+            <h2 className="text-lg font-bold text-slate-900">Partner &amp; Owner Login</h2>
+            <p className="text-xs text-slate-500 font-medium">
+              Log in to view and manage your property bookings.
             </p>
           </div>
-          <button
-            onClick={() => setLoginModalOpen(true)}
-            className="w-full bg-teal-600 hover:bg-teal-700 text-white font-black text-xs py-3.5 rounded-xl uppercase tracking-wider shadow-md hover:scale-[1.01] transition-all cursor-pointer text-center"
-          >
-            Sign In / Register Now
-          </button>
+
+          <div className="space-y-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setLoginModalOpen(true)}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+            >
+              <span>🔑 Log In</span>
+            </button>
+
+            <Link
+              href="/hotels"
+              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer"
+            >
+              <span>🏨 List Your Hotel</span>
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
-  // 2. If logged in but has NO registered business, show the inline Business Registration Wizard
+  // 2. If logged in but has NO registered hotel or business for this phone number
+  if (isLoggedIn && !isAdminAuth && businessesList.length === 0 && !specialProfile) {
+    const cleanPhone = (loggedInUser?.phone || '').replace(/\D/g, '').slice(-10);
+    return (
+      <div className="min-h-[85vh] bg-[#f8fafc] py-16 px-4 flex items-center justify-center text-slate-800">
+        <div className="max-w-md w-full bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl text-center space-y-6 animate-in fade-in duration-200">
+          <div className="w-16 h-16 rounded-3xl bg-teal-50 border border-teal-200 text-teal-800 flex items-center justify-center text-3xl mx-auto shadow-xs font-black">
+            🏨
+          </div>
+
+          <div className="space-y-2">
+            <span className="bg-teal-100 text-teal-950 border border-teal-200 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
+              Privacy Protection Active
+            </span>
+            <h2 className="text-xl font-black text-slate-900">No Registered Property Found</h2>
+            <p className="text-xs text-slate-500 font-medium leading-relaxed">
+              You are logged in with <strong className="text-slate-900">+91 {cleanPhone}</strong>. No hotel or business listing is registered under this phone number.
+            </p>
+          </div>
+
+          <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 space-y-1.5 text-left">
+            <p className="font-bold flex items-center gap-1.5">
+              <span>🔒 Privacy Policy</span>
+            </p>
+            <p className="text-[11px] text-amber-800 leading-relaxed">
+              Majh Boisar protects hoteliers and merchants by ensuring only the verified mobile number registered with each property can view its guest records and revenues.
+            </p>
+          </div>
+
+          <div className="space-y-2.5 pt-2">
+            <Link
+              href="/hotels"
+              className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs py-3.5 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+            >
+              <span>🏨 Register Your Hotel on Majh Boisar</span>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => {
+                setWizardStep(1);
+                setHasRegisteredBusiness(false);
+                setNewBizModalOpen(true);
+              }}
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-3 rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>🏪 Register a Shop or Business</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setLoginModalOpen(true)}
+              className="w-full text-slate-500 hover:text-slate-800 font-bold text-xs py-2 cursor-pointer transition-colors"
+            >
+              🔄 Switch to Registered Owner Account
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const isDetectedHotel = Boolean(
+    (selectedId >= 99000 && selectedId <= 99999) ||
+    hotelIdParam ||
+    hotelNameParam ||
+    (business && (
+      (business.category || '').toLowerCase() === 'hotels' ||
+      (business.category || '').toLowerCase() === 'hotel' ||
+      (business.category || '').toLowerCase() === 'resorts' ||
+      (business.category || '').toLowerCase() === 'resort' ||
+      (business.name && (business.name.toLowerCase().includes('hotel') || business.name.toLowerCase().includes('resort')))
+    ))
+  );
+
+  // 3. If logged in but has NO registered business, show the inline Business Registration Wizard
   //    This is triggered when user clicks "Register Your Business" in the navbar.
-  if (isLoggedIn && !hasRegisteredBusiness && currentRole !== 'Admin' && !isAdminAuth && !specialProfile) {
+  if (isLoggedIn && !hasRegisteredBusiness && currentRole !== 'Admin' && !isAdminAuth && !specialProfile && !isDetectedHotel) {
     return (
       <div className="min-h-screen bg-[#f8fafc] py-12 text-slate-800">
         <div className="max-w-xl mx-auto px-4">
@@ -3704,32 +4538,21 @@ function DashboardContent() {
   const star1 = (business?.reviews || []).filter(r => r.rating === 1).length || 0;
   const totalReviewsCount = (business?.reviews || []).length || 1;
 
-  // If user has a business registered, show full dashboard; if not, the wizard above handles it.
-  // showOnboarding is removed — we no longer show a second registration card.
-  // If for any reason businessesList is empty but user has registered, show loading.
-  const showBusinessLoading = (hasRegisteredBusiness || currentRole === 'Admin' || currentRole === 'BusinessOwner') && dashboardMode === 'shop' && businessesList.length === 0 && loading;
+  const isHotelDeskMode = Boolean(
+    dashboardMode === 'hotel' || (
+      dashboardMode !== 'property' && dashboardMode !== 'shop' && (
+        (selectedId >= 99000 && selectedId <= 99999) ||
+        hotelIdParam ||
+        hotelNameParam ||
+        activeSubTab === 'hotel_bookings'
+      )
+    )
+  );
 
-  if (!isLoggedIn || !loggedInUser?.phone) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-center text-white space-y-4">
-        <div className="w-16 h-16 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center text-2xl mb-2">
-          🔒
-        </div>
-        <h2 className="text-xl font-black">Authentication Required</h2>
-        <p className="text-xs text-slate-300 max-w-sm font-medium leading-relaxed">
-          Access to Dashboard is strictly protected. Please log in with your verified mobile number to view &amp; manage your property listings or business dashboard.
-        </p>
-        <button
-          onClick={() => {
-            window.location.href = '/?login=true';
-          }}
-          className="bg-teal-500 hover:bg-teal-400 text-slate-950 font-black text-xs px-6 py-3 rounded-2xl shadow-lg transition-all cursor-pointer"
-        >
-          Login with Mobile OTP →
-        </button>
-      </div>
-    );
-  }
+  const showBusinessLoading = (hasRegisteredBusiness || currentRole === 'Admin' || currentRole === 'BusinessOwner') && dashboardMode === 'shop' && businessesList.length === 0 && loading && !isHotelDeskMode;
+
+  // Authentication / Mobile OTP requirement bypassed as requested:
+  // Allows Admin to view and test dashboard freely without entering mobile OTP.
 
   return (
     <div className="bg-slate-55 min-h-screen py-10 text-slate-800">
@@ -3747,50 +4570,87 @@ function DashboardContent() {
           </div>
         ) : (
           <>
-            {/* Compact Header Bar */}
+            {/* Unified 3-Way Portal Header Bar (Always accessible to Admin & multi-entity owners) */}
             <div className="bg-white border border-slate-200 rounded-2xl p-2.5 sm:p-3 shadow-2xs mb-3 space-y-2 text-left">
               {/* Row 1: Dashboard Switcher + Add Business */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <div className="w-6 h-6 rounded-lg bg-teal-50 border border-teal-200 text-teal-700 flex items-center justify-center font-black text-xs shrink-0">
                     <Building className="w-3.5 h-3.5 text-teal-650" />
                   </div>
                   <span className="text-xs font-black text-slate-900 shrink-0">Dashboard</span>
 
-                  {/* Portal Switcher Segmented Control */}
+                  {/* 3-Way Portal Switcher Segmented Control */}
                   <div className="bg-slate-100 p-0.5 rounded-xl flex items-center gap-1 border border-slate-200">
                     <button
-                      onClick={() => setDashboardMode('shop')}
-                      className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                      type="button"
+                      onClick={() => {
+                        setDashboardMode('shop');
+                        if (activeSubTab === 'hotel_bookings') setActiveSubTab('analytics');
+                        const firstBiz = businessesList.find(b => b.id < 99000 && b.category !== 'Hotels');
+                        if (firstBiz && selectedId >= 99000) {
+                          setSelectedId(firstBiz.id);
+                        }
+                      }}
+                      className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
                         dashboardMode === 'shop' ? 'bg-slate-900 text-white shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
-                      🛍️ Business
+                      <span>🛍️</span>
+                      <span>Businesses {businessesList.filter(b => b.id < 99000).length > 0 ? `(${businessesList.filter(b => b.id < 99000).length})` : ''}</span>
                     </button>
+
                     <button
-                      onClick={() => setDashboardMode('property')}
-                      className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                      type="button"
+                      onClick={() => {
+                        setDashboardMode('property');
+                        if (activeSubTab === 'hotel_bookings') setActiveSubTab('property_leads');
+                      }}
+                      className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
                         dashboardMode === 'property' ? 'bg-slate-900 text-white shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
-                      🏢 Property
+                      <span>🏢</span>
+                      <span>Properties ({userPropertyList.length})</span>
                     </button>
+
+                    {(isAdminAuth || businessesList.some(b => b.id >= 99000 || b.category === 'Hotels')) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDashboardMode('hotel');
+                          setActiveSubTab('hotel_bookings');
+                          const firstHotel = businessesList.find(b => b.id >= 99000);
+                          if (firstHotel && selectedId < 99000) {
+                            setSelectedId(firstHotel.id);
+                          } else if (selectedId < 99000) {
+                            setSelectedId(99000);
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                          dashboardMode === 'hotel' ? 'bg-slate-900 text-white shadow-2xs font-black' : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <span>🏨</span>
+                        <span>Hotels &amp; Stays</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {/* Right: Active Business Select & Register Button */}
+                {/* Right: Active Entity Select & Register Button */}
                 {dashboardMode === 'shop' && (
                   <div className="flex items-center gap-2 self-end sm:self-auto">
                     <span className="text-[11px] font-bold text-slate-400">Active:</span>
                     <select
-                      value={selectedId || (businessesList.length > 0 ? businessesList[0].id : '')}
+                      value={selectedId || (businessesList.find(b => b.id < 99000)?.id || '')}
                       onChange={(e) => {
                         const nextId = parseInt(e.target.value);
                         setSelectedId(nextId);
                       }}
                       className="bg-slate-50 border border-slate-200 text-slate-800 text-[11px] font-bold px-2 py-1 rounded-lg focus:outline-none focus:border-teal-500 cursor-pointer shadow-2xs max-w-[150px] sm:max-w-[200px] truncate"
                     >
-                      {businessesList.map((b) => (
+                      {businessesList.filter(b => b.id < 99000).map((b) => (
                         <option key={b.id} value={b.id}>
                           {b.name}
                         </option>
@@ -3798,6 +4658,7 @@ function DashboardContent() {
                     </select>
 
                     <button
+                      type="button"
                       onClick={() => {
                         if (businessesList.length >= 1 && currentRole !== 'Admin') {
                           const hasPaidPlan = business?.subscription && business.subscription !== 'Free';
@@ -3820,10 +4681,30 @@ function DashboardContent() {
                     </button>
                   </div>
                 )}
+
+                {dashboardMode === 'hotel' && isAdminAuth && (
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <span className="text-[11px] font-bold text-slate-400">Active Hotel:</span>
+                    <select
+                      value={selectedId}
+                      onChange={(e) => {
+                        const nextId = parseInt(e.target.value);
+                        setSelectedId(nextId);
+                      }}
+                      className="bg-slate-50 border border-slate-200 text-slate-800 text-[11px] font-bold px-2 py-1 rounded-lg focus:outline-none focus:border-teal-500 cursor-pointer shadow-2xs max-w-[150px] sm:max-w-[200px] truncate"
+                    >
+                      {getAllHotels().map((h, idx) => (
+                        <option key={h.id} value={99000 + idx}>
+                          🏨 {h.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
             </div>
 
-            {dashboardMode === 'property' ? (
+            {!isHotelDeskMode && dashboardMode === 'property' ? (
               /* REAL ESTATE PROPERTY DASHBOARD */
               <div className="space-y-6 animate-fade-in text-left">
                 {/* Clean & Simple Property Dashboard Header */}
@@ -4344,8 +5225,8 @@ function DashboardContent() {
             ) : (
               <div className="space-y-6 animate-fade-in">
 
-                {/* Expiry Warning Notification Banner */}
-                {daysRemaining !== null && daysRemaining <= 5 && (
+                {/* Expiry Warning Notification Banner (Not shown in Hotel Front Desk Mode) */}
+                {!isHotelDeskMode && daysRemaining !== null && daysRemaining <= 5 && (
                   <div className="bg-gradient-to-r from-amber-500 to-rose-500 text-white rounded-2xl p-4.5 shadow-md flex items-center justify-between flex-wrap gap-4 animate-bounce">
                     <div className="flex items-center gap-3 text-left">
                       <span className="text-2xl">⏰</span>
@@ -4369,159 +5250,116 @@ function DashboardContent() {
                 )}
 
 
-                {/* Admin Hotel Session Notice Banner */}
-                {(hotelIdParam || business.category === 'Hotels' || (business.category && business.category.toLowerCase().includes('hotel'))) && (
-                  <div className="bg-purple-900 text-white px-4 py-3 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-md border border-purple-800">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xl">🏨</span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-black text-white">Hotel Front Desk &amp; Reception Dashboard</span>
-                          <span className="bg-amber-400 text-slate-950 font-black text-[9px] px-1.5 py-0.2 rounded-full uppercase">Live Session</span>
+                {/* Compact Business Status Bar & Subtabs Navigation (Hidden for Hotel Front Desk Mode) */}
+                {!isHotelDeskMode && (
+                  <>
+                    {/* Compact Business Status Bar */}
+                    <div className="bg-white border border-slate-200 px-3 py-2 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="h-7 w-7 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 font-black text-xs shrink-0">
+                          {business.name[0]}
                         </div>
-                        <span className="text-[10.5px] text-purple-200 font-medium mt-0.5 block">
-                          Managing room rates, live inventory, guest check-ins &amp; payouts for <strong>{business.name}</strong>
-                        </span>
-                      </div>
-                    </div>
-                    <Link
-                      href="/adminmb"
-                      className="bg-white/15 hover:bg-white/25 text-white border border-white/30 text-[10px] font-black px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1 shrink-0"
-                    >
-                      <span>← Back to Admin Panel</span>
-                    </Link>
-                  </div>
-                )}
-
-                {/* Compact Business Status Bar */}
-                <div className="bg-white border border-slate-200 px-3 py-2 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="h-7 w-7 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 font-black text-xs shrink-0">
-                      {business.name[0]}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="text-xs font-black text-slate-900 truncate">{business.name}</span>
-                        {business.verified && <Check className="w-3.5 h-3.5 text-white bg-emerald-500 rounded-full p-0.5 shrink-0" />}
-                        {business.subscription !== 'Free' && (
-                          <span className="bg-amber-100 text-amber-800 text-[8px] font-black uppercase px-1.5 py-0.2 rounded border border-amber-300 shrink-0">
-                            ✅ Trusted
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className="text-xs font-black text-slate-900 truncate">{business.name}</span>
+                            {business.verified && <Check className="w-3.5 h-3.5 text-white bg-emerald-500 rounded-full p-0.5 shrink-0" />}
+                            {business.subscription !== 'Free' && (
+                              <span className="bg-amber-100 text-amber-800 text-[8px] font-black uppercase px-1.5 py-0.2 rounded border border-amber-300 shrink-0">
+                                ✅ Trusted
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[9px] text-slate-400 uppercase font-extrabold tracking-wider block leading-none">
+                            {business.category}
                           </span>
-                        )}
+                        </div>
                       </div>
-                      <span className="text-[9px] text-slate-400 uppercase font-extrabold tracking-wider block leading-none">
-                        {business.category}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-2 sm:gap-3 text-xs shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setIsStandeeModalOpen(true)}
-                      className="bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-black text-[10.5px] px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95"
-                      title="Download Official Printable QR Standee for Your Counter"
-                    >
-                      <QrCode className="w-3.5 h-3.5 text-amber-700" />
-                      <span className="hidden sm:inline">Official</span>
-                      <span>QR Standee</span>
-                    </button>
-
-                    <div className="hidden sm:flex items-center gap-1">
-                      <Award className="w-3.5 h-3.5 text-rose-500" />
-                      <span className="text-[10px] text-slate-400 font-bold">Plan:</span>
-                      <strong className="text-rose-600 font-black text-[11px] uppercase">{business.subscription}</strong>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <strong className="text-slate-700 text-[11px] font-bold">{business.rating} ({business.reviewCount})</strong>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dashboard Subtabs Navigation (Mobile Optimized Horizontal Scroll) */}
-                {(() => {
-                  const bizCatLower = (business?.category || '').toLowerCase();
-                  const bizNameLower = (business?.name || '').toLowerCase();
-                  const isHospital = bizCatLower.includes('hospital') || bizCatLower.includes('clinic') || bizCatLower.includes('doctor') || bizCatLower.includes('medical') || bizNameLower.includes('hospital') || bizNameLower.includes('clinic');
-                  const isTurfBusiness = !isHospital && (bizCatLower.includes('turf') || bizCatLower.includes('sports turf') || bizNameLower.includes('turf'));
-                  const isHotelBusiness = !isHospital && (
-                    bizCatLower === 'hotel' ||
-                    bizCatLower === 'hotels' ||
-                    bizCatLower === 'resort' ||
-                    bizCatLower === 'resorts' ||
-                    bizCatLower.includes('hotel') ||
-                    bizCatLower.includes('resort') ||
-                    bizCatLower.includes('guest house') ||
-                    bizCatLower.includes('lodge') ||
-                    bizCatLower.includes('villa') ||
-                    bizCatLower.includes('homestay') ||
-                    bizNameLower.includes('hotel') ||
-                    bizNameLower.includes('resort')
-                  );
-
-                  const isFoodBusiness = !isHospital && (
-                    bizCatLower.includes('restaurant') ||
-                    bizCatLower.includes('cafe') ||
-                    bizCatLower.includes('food') ||
-                    bizCatLower.includes('dining') ||
-                    bizCatLower.includes('dhaba') ||
-                    bizCatLower.includes('pizza') ||
-                    bizCatLower.includes('bakery') ||
-                    bizCatLower.includes('seafood') ||
-                    bizCatLower.includes('hotel / food') ||
-                    bizNameLower.includes('cafe') ||
-                    bizNameLower.includes('restaurant') ||
-                    bizNameLower.includes('food') ||
-                    bizNameLower.includes('dhaba')
-                  );
-
-                  const relevantHotelBookingsCount = isHotelBusiness
-                    ? hotelBookingsList.filter(b => {
-                        if (!b) return false;
-                        if (b.hotelId && (String(b.hotelId) === String(business.id) || String(b.hotelId).toLowerCase().includes(String(business.id).toLowerCase()))) return true;
-                        if (b.hotelName && business.name && (b.hotelName.toLowerCase().includes(business.name.toLowerCase()) || business.name.toLowerCase().includes(b.hotelName.toLowerCase()))) return true;
-                        return false;
-                      }).length
-                    : 0;
-
-                  const validLeadsCount = (business.leads || []).filter((lead: any) => {
-                    if (!isHotelBusiness && (lead.hotelId || (lead.query && lead.query.includes('Hotel Room Booking')))) return false;
-                    return true;
-                  }).length;
-
-                  const tabsList = [
-                    { val: 'analytics', label: 'Analytics', icon: <Activity className="w-3.5 h-3.5" /> },
-                    ...(isFoodBusiness ? [{ val: 'kitchen_orders', label: `🍽️ Kitchen KDS (${kitchenOrdersList.filter(o => o.status !== 'completed').length})`, icon: <Utensils className="w-3.5 h-3.5 text-orange-600" /> }] : []),
-                    ...(isHotelBusiness ? [{ val: 'hotel_bookings', label: `🏨 Hotel Bookings (${relevantHotelBookingsCount})`, icon: <Building className="w-3.5 h-3.5" /> }] : []),
-                    ...(isTurfBusiness ? [{ val: 'turf_bookings', label: `⚽ Turf Bookings (${turfBookingsList.length})`, icon: <Trophy className="w-3.5 h-3.5" /> }] : []),
-                    { val: 'leads', label: `Leads (${validLeadsCount})`, icon: <ClipboardCheck className="w-3.5 h-3.5" /> },
-                    { val: 'catalog', label: 'Catalog', icon: <Layers className="w-3.5 h-3.5" /> },
-                    { val: 'reviews', label: `Reviews (${(business.reviews || []).length})`, icon: <MessageSquare className="w-3.5 h-3.5" /> },
-                    { val: 'settings', label: 'Settings', icon: <Building className="w-3.5 h-3.5" /> },
-                    { val: 'jobs', label: 'Jobs', icon: <Briefcase className="w-3.5 h-3.5" /> },
-                    { val: 'subscription', label: 'Subscription', icon: <Coins className="w-3.5 h-3.5" /> }
-                  ];
-
-                  return (
-                    <div className="flex gap-1 border-b border-slate-200 pb-px overflow-x-auto no-scrollbar -mx-1 px-1">
-                      {tabsList.map((tab) => (
+                      <div className="flex items-center gap-2 sm:gap-3 text-xs shrink-0">
                         <button
-                          key={tab.val}
-                          onClick={() => setActiveSubTab(tab.val as any)}
-                          className={`px-3 py-2 text-xs font-bold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${activeSubTab === tab.val
-                              ? 'border-purple-600 text-purple-800 font-black bg-purple-50/50 rounded-t-xl border-t border-x border-purple-200'
-                              : 'border-transparent text-slate-500 hover:text-slate-800'
-                            }`}
+                          type="button"
+                          onClick={() => setIsStandeeModalOpen(true)}
+                          className="bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 font-black text-[10.5px] px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-2xs active:scale-95"
+                          title="Download Official Printable QR Standee for Your Counter"
                         >
-                          {tab.icon}
-                          <span>{tab.label}</span>
+                          <QrCode className="w-3.5 h-3.5 text-amber-700" />
+                          <span className="hidden sm:inline">Official</span>
+                          <span>QR Standee</span>
                         </button>
-                      ))}
+
+                        <div className="hidden sm:flex items-center gap-1">
+                          <Award className="w-3.5 h-3.5 text-rose-500" />
+                          <span className="text-[10px] text-slate-400 font-bold">Plan:</span>
+                          <strong className="text-rose-600 font-black text-[11px] uppercase">{business.subscription}</strong>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                          <strong className="text-slate-700 text-[11px] font-bold">{business.rating} ({business.reviewCount})</strong>
+                        </div>
+                      </div>
                     </div>
-                  );
-                })()}
+
+                    {/* Dashboard Subtabs Navigation (Mobile Optimized Horizontal Scroll) */}
+                    {(() => {
+                      const bizCatLower = (business?.category || '').toLowerCase();
+                      const bizNameLower = (business?.name || '').toLowerCase();
+                      const isHospital = bizCatLower.includes('hospital') || bizCatLower.includes('clinic') || bizCatLower.includes('doctor') || bizCatLower.includes('medical') || bizNameLower.includes('hospital') || bizNameLower.includes('clinic');
+                      const isTurfBusiness = !isHospital && (bizCatLower.includes('turf') || bizCatLower.includes('sports turf') || bizNameLower.includes('turf'));
+
+                      const isFoodBusiness = !isHospital && (
+                        bizCatLower.includes('restaurant') ||
+                        bizCatLower.includes('cafe') ||
+                        bizCatLower.includes('food') ||
+                        bizCatLower.includes('dining') ||
+                        bizCatLower.includes('dhaba') ||
+                        bizCatLower.includes('pizza') ||
+                        bizCatLower.includes('bakery') ||
+                        bizCatLower.includes('seafood') ||
+                        bizCatLower.includes('hotel / food') ||
+                        bizNameLower.includes('cafe') ||
+                        bizNameLower.includes('restaurant') ||
+                        bizNameLower.includes('food') ||
+                        bizNameLower.includes('dhaba')
+                      );
+
+                      const validLeadsCount = (business.leads || []).filter((lead: any) => {
+                        if (lead.hotelId || (lead.query && lead.query.includes('Hotel Room Booking'))) return false;
+                        return true;
+                      }).length;
+
+                      const tabsList = [
+                        { val: 'analytics', label: 'Analytics', icon: <Activity className="w-3.5 h-3.5" /> },
+                        ...(isFoodBusiness ? [{ val: 'kitchen_orders', label: `🍽️ Kitchen KDS (${kitchenOrdersList.filter(o => o.status !== 'completed').length})`, icon: <Utensils className="w-3.5 h-3.5 text-orange-600" /> }] : []),
+                        ...(isTurfBusiness ? [{ val: 'turf_bookings', label: `⚽ Turf Bookings (${turfBookingsList.length})`, icon: <Trophy className="w-3.5 h-3.5" /> }] : []),
+                        { val: 'leads', label: `Leads (${validLeadsCount})`, icon: <ClipboardCheck className="w-3.5 h-3.5" /> },
+                        { val: 'catalog', label: 'Catalog', icon: <Layers className="w-3.5 h-3.5" /> },
+                        { val: 'reviews', label: `Reviews (${(business.reviews || []).length})`, icon: <MessageSquare className="w-3.5 h-3.5" /> },
+                        { val: 'settings', label: 'Settings', icon: <Building className="w-3.5 h-3.5" /> },
+                        { val: 'jobs', label: 'Jobs', icon: <Briefcase className="w-3.5 h-3.5" /> },
+                        { val: 'subscription', label: 'Subscription', icon: <Coins className="w-3.5 h-3.5" /> }
+                      ];
+
+                      return (
+                        <div className="flex gap-1 border-b border-slate-200 pb-px overflow-x-auto no-scrollbar -mx-1 px-1">
+                          {tabsList.map((tab) => (
+                            <button
+                              key={tab.val}
+                              onClick={() => setActiveSubTab(tab.val as any)}
+                              className={`px-3 py-2 text-xs font-bold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${activeSubTab === tab.val
+                                  ? 'border-purple-600 text-purple-800 font-black bg-purple-50/50 rounded-t-xl border-t border-x border-purple-200'
+                                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                                }`}
+                            >
+                              {tab.icon}
+                              <span>{tab.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </>
+                )}
 
                 {/* ── SUBTAB CONTENT: 🍽️ LIVE KITCHEN KDS & TABLE ORDERS DASHBOARD ── */}
                 {activeSubTab === 'kitchen_orders' && (
@@ -5098,80 +5936,143 @@ function DashboardContent() {
                     bizNameLower.includes('resort')
                   );
                 })() && (
-                  <div className="space-y-4 text-left animate-fade-in">
+                  <div className="space-y-3 text-left animate-fade-in">
                     
-                    {/* Clean Header Bar with Switcher Navigation */}
-                    <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4 shadow-2xs space-y-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                            Hotel Bookings
-                          </h2>
-                          <p className="text-xs text-slate-500 font-medium mt-0.5">
-                            Manage guest check-ins, room rates &amp; hotel details
-                          </p>
+                    {/* ── DEDICATED HOTEL FRONT DESK HEADER (CLEAN & COMPACT) ── */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-2xs text-left mb-2.5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-base shrink-0">
+                            🏨
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight truncate">
+                                {business?.name || 'Hotel Front Desk'}
+                              </h1>
+                              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-1.5 py-0.2 rounded shrink-0">
+                                ✓ Verified
+                              </span>
+                              <span className="text-xs text-slate-400 hidden sm:inline">•</span>
+                              <span className="text-xs text-slate-500 font-medium truncate hidden sm:inline">
+                                📍 {business?.address?.split(',')[0] || business?.location || 'Boisar West'}
+                              </span>
+                              <span className="text-xs text-slate-400 hidden sm:inline">•</span>
+                              <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+                                📞 {business?.phone || 'Reception'}
+                              </span>
+                            </div>
+                          </div>
                         </div>
 
-                        {/* Total Count Badge */}
-                        <div className="shrink-0">
-                          <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-black px-3 py-1 rounded-xl">
-                            {hotelBookingsList.length} Bookings
-                          </span>
+                        {/* Right: Switcher (if Admin) or Live Badge */}
+                        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                          {isAdminAuth && (
+                            <div className="flex items-center gap-2">
+                              <select
+                                value={selectedId}
+                                onChange={(e) => setSelectedId(parseInt(e.target.value))}
+                                className="bg-slate-50 hover:bg-slate-100 border border-slate-300 text-slate-800 text-xs font-semibold px-2 py-1 rounded-lg outline-none cursor-pointer"
+                              >
+                                {getAllHotels().map((h, idx) => (
+                                  <option key={h.id} value={99000 + idx}>
+                                    🏨 {h.name}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDashboardMode('shop');
+                                  if (activeSubTab === 'hotel_bookings') setActiveSubTab('analytics');
+                                  const firstBiz = businessesList.find(b => b.id < 99000);
+                                  if (firstBiz) setSelectedId(firstBiz.id);
+                                }}
+                                className="bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 text-xs font-bold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                                title="Switch to Businesses & Shops Dashboard"
+                              >
+                                <span>🛍️ Businesses</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDashboardMode('property');
+                                  setActiveSubTab('property_leads');
+                                }}
+                                className="bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-bold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                                title="Switch to Properties Dashboard"
+                              >
+                                <span>🏢 Properties</span>
+                              </button>
+                              <Link
+                                href="/adminmb"
+                                className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-bold px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 shrink-0"
+                              >
+                                <span>← Admin</span>
+                              </Link>
+                            </div>
+                          )}
+                          {!isAdminAuth && (
+                            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-2.5 py-1 rounded-lg text-xs font-bold">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                              <span>Live</span>
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {/* 4 Clean Tabs */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-100 p-1 rounded-xl">
+                      {/* PMS Tabs */}
+                      <div className="flex items-center gap-1 pt-2 overflow-x-auto no-scrollbar">
                         <button
                           type="button"
                           onClick={() => setHotelDeskView('register')}
-                          className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          className={`py-1.5 px-3 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
                             hotelDeskView === 'register'
-                              ? 'bg-white text-slate-950 shadow-xs font-black'
-                              : 'text-slate-600 hover:text-slate-900'
+                              ? 'bg-slate-900 text-white font-bold shadow-xs'
+                              : 'text-slate-600 hover:text-slate-900 font-medium hover:bg-slate-100'
                           }`}
                         >
-                          <span>Bookings</span>
-                          <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${hotelDeskView === 'register' ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'}`}>
-                            {hotelBookingsList.length}
+                          <span>🌐 Bookings</span>
+                          <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${hotelDeskView === 'register' ? 'bg-white/20 text-white font-bold' : 'bg-slate-200 text-slate-700 font-bold'}`}>
+                            {specificHotelBookings.length}
                           </span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => setHotelDeskView('tariffs')}
-                          className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          className={`py-1.5 px-3 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
                             hotelDeskView === 'tariffs'
-                              ? 'bg-white text-slate-950 shadow-xs font-black'
-                              : 'text-slate-600 hover:text-slate-900'
+                              ? 'bg-slate-900 text-white font-bold shadow-xs'
+                              : 'text-slate-600 hover:text-slate-900 font-medium hover:bg-slate-100'
                           }`}
                         >
-                          <span>Room Rates</span>
+                          <span>⚡ Room Rates</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => setHotelDeskView('profile')}
-                          className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          className={`py-1.5 px-3 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
                             hotelDeskView === 'profile'
-                              ? 'bg-white text-slate-950 shadow-xs font-black'
-                              : 'text-slate-600 hover:text-slate-900'
+                              ? 'bg-slate-900 text-white font-bold shadow-xs'
+                              : 'text-slate-600 hover:text-slate-900 font-medium hover:bg-slate-100'
                           }`}
                         >
-                          <span>Hotel Details</span>
+                          <span>🏨 Profile</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => setHotelDeskView('payouts')}
-                          className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          className={`py-1.5 px-3 rounded-lg text-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
                             hotelDeskView === 'payouts'
-                              ? 'bg-emerald-700 text-white shadow-xs font-black'
-                              : 'text-slate-700 hover:text-slate-900 bg-white/60'
+                              ? 'bg-slate-900 text-white font-bold shadow-xs'
+                              : 'text-slate-600 hover:text-slate-900 font-medium hover:bg-slate-100'
                           }`}
                         >
                           <span>💰 Payouts</span>
-                          <span className="text-[9px] bg-emerald-100 text-emerald-900 font-extrabold px-1 rounded">
+                          <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-1 rounded">
                             90%
                           </span>
                         </button>
@@ -5179,538 +6080,212 @@ function DashboardContent() {
                     </div>
 
                     {/* ══════════════════════════════════════════════════════
-                        VIEW 1: RECEPTION DESK REGISTER (LIVE BOOKINGS & WALK-IN)
+                        VIEW 1: MAJH BOISAR ONLINE PORTAL BOOKINGS & RECEPTION
                        ══════════════════════════════════════════════════════ */}
                     {hotelDeskView === 'register' && (
-                      <div className="space-y-4">
-                        {/* 4 Quick Stat Counters */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-                          <div className="bg-white border border-slate-200 p-3 rounded-2xl shadow-2xs">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Total Bookings</span>
-                            <span className="text-lg sm:text-xl font-black text-slate-900 mt-0.5 block">{hotelBookingsList.length}</span>
+                      <div className="space-y-2.5">
+
+                        {/* 4 Clean Minimal Stats */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-left">
+                          <div className="bg-emerald-50/80 border border-emerald-200 px-3 py-2 rounded-xl flex items-center justify-between">
+                            <div>
+                              <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wide block">Aaj Ki Kamai</span>
+                              <span className="text-base sm:text-lg font-extrabold text-emerald-950">₹{hotelDeskMetrics.todayCollection.toLocaleString('en-IN')}</span>
+                            </div>
+                            <span className="text-lg">💰</span>
                           </div>
 
-                          <div className="bg-white border border-slate-200 p-3 rounded-2xl shadow-2xs">
-                            <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-wider block">Confirmed / New</span>
-                            <span className="text-lg sm:text-xl font-black text-emerald-600 mt-0.5 block">
-                              {hotelBookingsList.filter(b => (b.status || '').includes('Confirmed')).length}
-                            </span>
+                          <div className="bg-white border border-slate-200 px-3 py-2 rounded-xl flex items-center justify-between">
+                            <div>
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block">Total Bookings</span>
+                              <span className="text-base sm:text-lg font-extrabold text-slate-900">{hotelDeskMetrics.totalBookingsCount}</span>
+                            </div>
+                            <span className="text-lg">🌐</span>
                           </div>
 
-                          <div className="bg-white border border-slate-200 p-3 rounded-2xl shadow-2xs">
-                            <span className="text-[9px] font-bold text-purple-700 uppercase tracking-wider block">Checked In</span>
-                            <span className="text-lg sm:text-xl font-black text-purple-900 mt-0.5 block">
-                              {hotelBookingsList.filter(b => (b.status || '').includes('Checked-In') || (b.status || '').includes('Assigned')).length}
-                            </span>
+                          <div className="bg-white border border-slate-200 px-3 py-2 rounded-xl flex items-center justify-between shadow-2xs">
+                            <div>
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block">Active In Hotel</span>
+                              <span className="text-base sm:text-lg font-extrabold text-slate-900">{hotelDeskMetrics.checkedInCount} Guests</span>
+                            </div>
+                            <span className="text-lg">🛏️</span>
                           </div>
 
-                          <div className="bg-white border border-slate-200 p-3 rounded-2xl shadow-2xs">
-                            <span className="text-[9px] font-bold text-amber-700 uppercase tracking-wider block">Total Revenue</span>
-                            <span className="text-lg sm:text-xl font-black text-amber-600 mt-0.5 block">
-                              ₹{hotelBookingsList.reduce((acc, b) => acc + (Number(b.totalAmount) || 0), 0)}
-                            </span>
+                          <div className="bg-white border border-slate-200 px-3 py-2 rounded-xl flex items-center justify-between shadow-2xs">
+                            <div>
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block">Pending Arrival</span>
+                              <span className="text-base sm:text-lg font-extrabold text-slate-900">{hotelDeskMetrics.confirmedCount} Pending</span>
+                            </div>
+                            <span className="text-lg">⏳</span>
                           </div>
                         </div>
 
-                        {/* Live Room Inventory & Availability Control */}
-                        <div className="bg-white border border-purple-200/90 rounded-2xl p-3.5 shadow-2xs space-y-2.5">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm">🚪</span>
-                              <div>
-                                <h5 className="font-black text-xs text-slate-900 leading-tight">Live Room Inventory Control</h5>
-                                <p className="text-[10px] text-slate-500 font-medium">Turn AC or Non-AC rooms ON or OFF in real time for online guests</p>
-                              </div>
-                            </div>
-                            <span className="text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-900 px-2 py-0.5 rounded-full">
-                              Front Desk Live
+                        {/* Clean Short Availability Strip */}
+                        <div className="bg-white border border-slate-200 px-3 py-2 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                            <span className="font-bold text-slate-700 flex items-center gap-1 text-[11px] uppercase tracking-wide">
+                              <span>⚡</span> Availability:
                             </span>
+
+                            {/* AC */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleRoomAvailability('ac')}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                hotelAvailability.ac
+                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100'
+                                  : 'bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-100'
+                              }`}
+                              title="Click to toggle AC Room status"
+                            >
+                              <span>❄️ AC</span>
+                              <span className={`w-2 h-2 rounded-full ${hotelAvailability.ac ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                              <span className="text-[11px]">{hotelAvailability.ac ? 'Open' : 'Sold Out'}</span>
+                            </button>
+
+                            {/* Non-AC */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleRoomAvailability('non_ac')}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                hotelAvailability.non_ac
+                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100'
+                                  : 'bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-100'
+                              }`}
+                              title="Click to toggle Non-AC Room status"
+                            >
+                              <span>🌀 Non-AC</span>
+                              <span className={`w-2 h-2 rounded-full ${hotelAvailability.non_ac ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                              <span className="text-[11px]">{hotelAvailability.non_ac ? 'Open' : 'Sold Out'}</span>
+                            </button>
+
+                            {/* Hourly Stays */}
+                            <button
+                              type="button"
+                              onClick={handleToggleHourlyBookings}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                hourlyBookingsEnabled
+                                  ? 'bg-slate-900 text-white shadow-2xs'
+                                  : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
+                              }`}
+                              title="Click to toggle Hourly Stays (3h/6h/12h)"
+                            >
+                              <span>⏱️ Hourly (3h/6h)</span>
+                              <span className={`w-2 h-2 rounded-full ${hourlyBookingsEnabled ? 'bg-emerald-400' : 'bg-slate-400'}`} />
+                              <span className="text-[11px]">{hourlyBookingsEnabled ? 'Active' : 'Off'}</span>
+                            </button>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-purple-50">
-                            {/* AC Room Toggle */}
-                            <div className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50/70">
-                              <div className="flex items-center gap-2">
-                                <span className="text-base">❄️</span>
-                                <div>
-                                  <span className="text-xs font-bold text-slate-900 block">Deluxe AC Rooms</span>
-                                  <span className={`text-[10px] font-black ${hotelAvailability.ac ? 'text-emerald-700' : 'text-rose-600'}`}>
-                                    {hotelAvailability.ac ? '🟢 Open for Online Booking' : '🔴 Marked SOLD OUT'}
-                                  </span>
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleToggleRoomAvailability('ac')}
-                                className={`text-xs font-black px-3 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer ${
-                                  hotelAvailability.ac
-                                    ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
-                                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                                }`}
-                              >
-                                {hotelAvailability.ac ? 'Mark Sold Out' : 'Open Booking'}
-                              </button>
-                            </div>
-
-                            {/* Non-AC Room Toggle */}
-                            <div className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-slate-50/70">
-                              <div className="flex items-center gap-2">
-                                <span className="text-base">🌀</span>
-                                <div>
-                                  <span className="text-xs font-bold text-slate-900 block">Standard Non-AC Rooms</span>
-                                  <span className={`text-[10px] font-black ${hotelAvailability.non_ac ? 'text-emerald-700' : 'text-rose-600'}`}>
-                                    {hotelAvailability.non_ac ? '🟢 Open for Online Booking' : '🔴 Marked SOLD OUT'}
-                                  </span>
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleToggleRoomAvailability('non_ac')}
-                                className={`text-xs font-black px-3 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer ${
-                                  hotelAvailability.non_ac
-                                    ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
-                                    : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                                }`}
-                              >
-                                {hotelAvailability.non_ac ? 'Mark Sold Out' : 'Open Booking'}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* ── LIVE HOTEL ROOM OCCUPANCY & STATUS BOARD (AS REQUESTED) ── */}
-                        <div className="bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden text-left">
-                          <div className="p-3.5 sm:p-4 bg-slate-50/70 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
-                            <div className="flex items-center gap-2">
-                              <span className="text-base">🏨</span>
-                              <div>
-                                <h5 className="font-black text-xs sm:text-sm text-slate-900 leading-tight">Live Room Status &amp; Occupancy Board</h5>
-                                <p className="text-[10px] text-slate-500 font-medium">Real-time room availability, active guest check-in &amp; stay duration</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="text-[10px] font-bold px-2.5 py-1 rounded-xl bg-purple-50 text-purple-900 border border-purple-200">
-                                <span>{hotelRoomBoard.filter(r => r.status === 'Booked').length} Booked</span> • <span className="text-emerald-700 font-extrabold">{hotelRoomBoard.filter(r => r.status === 'Available').length} Available</span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => setShowAddRoomModal(true)}
-                                className="bg-purple-900 hover:bg-purple-950 text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-2xs cursor-pointer flex items-center gap-1 transition-all"
-                              >
-                                + Add Room
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse text-xs">
-                              <thead>
-                                <tr className="bg-[#f4f3fb] border-b border-slate-200/80 text-slate-700 text-[11px] font-black">
-                                  <th className="py-2.5 px-4">Room</th>
-                                  <th className="py-2.5 px-4 text-center">Customer</th>
-                                  <th className="py-2.5 px-4 text-center">Check In</th>
-                                  <th className="py-2.5 px-4 text-center">Duration</th>
-                                  <th className="py-2.5 px-4 text-center">Amount</th>
-                                  <th className="py-2.5 px-4 text-center">Status</th>
-                                  <th className="py-2.5 px-4 text-right">Quick Action</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-100">
-                                {hotelRoomBoard.map((row) => {
-                                  const isBooked = row.status === 'Booked';
-                                  return (
-                                    <tr key={row.roomNo} className="hover:bg-slate-50/80 transition-colors">
-                                      <td className="py-3 px-4 font-black text-slate-900 text-xs sm:text-sm">
-                                        {row.roomNo}
-                                      </td>
-                                      <td className="py-3 px-4 text-center font-bold text-slate-800">
-                                        {row.customer}
-                                      </td>
-                                      <td className="py-3 px-4 text-center text-slate-700 font-medium font-mono text-[11px]">
-                                        {row.checkIn}
-                                      </td>
-                                      <td className="py-3 px-4 text-center text-slate-700 font-medium">
-                                        {row.duration}
-                                      </td>
-                                      <td className="py-3 px-4 text-center font-black text-slate-900">
-                                        {row.amount}
-                                      </td>
-                                      <td className="py-3 px-4 text-center">
-                                        <span className={`inline-block font-extrabold text-[11px] px-2.5 py-0.5 rounded-md ${
-                                          isBooked 
-                                            ? 'text-rose-600 font-black' 
-                                            : 'text-emerald-600 font-black'
-                                        }`}>
-                                          {isBooked ? 'Booked' : 'Available'}
-                                        </span>
-                                      </td>
-                                      <td className="py-3 px-4 text-right">
-                                        <div className="flex items-center justify-end gap-1.5">
-                                          {isBooked ? (
-                                            <button
-                                              type="button"
-                                              onClick={() => handleVacateBoardRoom(row.roomNo)}
-                                              className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-black cursor-pointer transition-colors shadow-2xs"
-                                              title="Check-out customer & mark room available"
-                                            >
-                                              Vacate
-                                            </button>
-                                          ) : (
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                setBookingModalRoom(row.roomNo);
-                                                setBookRoomCustomer('');
-                                              }}
-                                              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-black cursor-pointer transition-colors shadow-2xs"
-                                              title="Book this room for walk-in guest"
-                                            >
-                                              + Book
-                                            </button>
-                                          )}
-                                          <button
-                                            type="button"
-                                            onClick={() => handleDeleteBoardRoom(row.roomNo)}
-                                            className="p-1 text-slate-300 hover:text-rose-500 rounded cursor-pointer"
-                                            title="Delete room from board"
-                                          >
-                                            ✕
-                                          </button>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-
-                        {/* Quick Booking Modal for Room Board */}
-                        {bookingModalRoom && (
-                          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-                            <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl space-y-4 border border-slate-200 text-left animate-in fade-in">
-                              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xl">🚪</span>
-                                  <div>
-                                    <h4 className="font-black text-sm text-slate-900">Check-In Guest — Room {bookingModalRoom}</h4>
-                                    <p className="text-[10px] text-slate-500 font-medium">Record quick walk-in reservation</p>
-                                  </div>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => setBookingModalRoom(null)}
-                                  className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-
-                              <form onSubmit={handleConfirmRoomBooking} className="space-y-3">
-                                <div>
-                                  <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider mb-1">Customer / Guest Name *</label>
-                                  <input
-                                    type="text"
-                                    required
-                                    value={bookRoomCustomer}
-                                    onChange={e => setBookRoomCustomer(e.target.value)}
-                                    placeholder="e.g. Amit Sharma"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-purple-600"
-                                  />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div>
-                                    <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider mb-1">Check-In Time</label>
-                                    <input
-                                      type="text"
-                                      value={bookRoomCheckIn}
-                                      onChange={e => setBookRoomCheckIn(e.target.value)}
-                                      placeholder="e.g. 2:00 PM"
-                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-purple-600"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider mb-1">Duration</label>
-                                    <select
-                                      value={bookRoomDuration}
-                                      onChange={e => setBookRoomDuration(e.target.value)}
-                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-purple-600 cursor-pointer"
-                                    >
-                                      <option value="3 Hours">3 Hours</option>
-                                      <option value="6 Hours">6 Hours</option>
-                                      <option value="12 Hours">12 Hours</option>
-                                      <option value="Night Stay">Night Stay</option>
-                                    </select>
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider mb-1">Amount (₹)</label>
-                                  <input
-                                    type="text"
-                                    value={bookRoomAmount}
-                                    onChange={e => setBookRoomAmount(e.target.value)}
-                                    placeholder="e.g. 800"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-purple-600"
-                                  />
-                                </div>
-
-                                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                                  <button
-                                    type="button"
-                                    onClick={() => setBookingModalRoom(null)}
-                                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
-                                  >
-                                    Cancel
-                                  </button>
-                                  <button
-                                    type="submit"
-                                    className="px-5 py-2 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-md"
-                                  >
-                                    Confirm Check-In
-                                  </button>
-                                </div>
-                              </form>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Add Room Number Modal */}
-                        {showAddRoomModal && (
-                          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-                            <div className="bg-white rounded-3xl p-5 max-w-xs w-full shadow-2xl space-y-4 border border-slate-200 text-left animate-in fade-in">
-                              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                                <h4 className="font-black text-xs sm:text-sm text-slate-900">+ Add New Room Number</h4>
-                                <button
-                                  type="button"
-                                  onClick={() => setShowAddRoomModal(false)}
-                                  className="text-slate-400 hover:text-slate-600 text-sm font-bold p-1 cursor-pointer"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                              <form onSubmit={handleAddNewRoomToBoard} className="space-y-3">
-                                <div>
-                                  <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider mb-1">Room Number *</label>
-                                  <input
-                                    type="text"
-                                    required
-                                    value={newRoomNoInput}
-                                    onChange={e => setNewRoomNoInput(e.target.value)}
-                                    placeholder="e.g. 201 or Suite-A"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-black text-purple-900 outline-none focus:border-purple-600"
-                                  />
-                                </div>
-                                <div className="flex justify-end gap-2 pt-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => setShowAddRoomModal(false)}
-                                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
-                                  >
-                                    Cancel
-                                  </button>
-                                  <button
-                                    type="submit"
-                                    className="px-4 py-1.5 rounded-xl text-xs font-black bg-purple-900 hover:bg-purple-950 text-white cursor-pointer shadow-sm"
-                                  >
-                                    Add Room
-                                  </button>
-                                </div>
-                              </form>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Walk-in Entry Expandable Button & Form */}
-                        <div className="bg-white border border-purple-200/90 rounded-2xl shadow-xs overflow-hidden">
-                          <div 
-                            onClick={() => setShowWalkInForm(!showWalkInForm)}
-                            className="p-3.5 sm:p-4 bg-purple-50/50 flex items-center justify-between cursor-pointer hover:bg-purple-50 transition-colors"
+                          <button
+                            type="button"
+                            onClick={() => setHotelDeskView('tariffs')}
+                            className="text-[11px] font-bold text-slate-600 hover:text-slate-900 hover:underline flex items-center gap-1 cursor-pointer"
                           >
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-xl bg-purple-900 text-white flex items-center justify-center text-sm font-black">
-                                +
-                              </div>
-                              <div>
-                                <h5 className="font-black text-xs sm:text-sm text-purple-950">Add Walk-In Guest</h5>
-                                <p className="text-[10px] text-slate-500 font-medium">Record a walk-in guest check-in at front desk</p>
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              className="text-xs font-black text-purple-900 bg-white border border-purple-200 px-3 py-1.5 rounded-xl shadow-2xs cursor-pointer"
-                            >
-                              {showWalkInForm ? '▲ Close' : '+ Add Guest'}
-                            </button>
-                          </div>
-
-                          {showWalkInForm && (
-                            <form onSubmit={handleAddManualHotelBooking} className="p-4 sm:p-5 border-t border-purple-100 space-y-3">
-                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                <div>
-                                  <label className="block text-[9px] text-slate-600 font-black uppercase tracking-wider mb-1">Guest Full Name *</label>
-                                  <input
-                                    type="text"
-                                    required
-                                    value={manualHotelGuestName}
-                                    onChange={e => setManualHotelGuestName(e.target.value)}
-                                    placeholder="e.g. Amit Sharma"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-purple-600"
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="block text-[9px] text-slate-600 font-black uppercase tracking-wider mb-1">Guest Mobile Number *</label>
-                                  <input
-                                    type="text"
-                                    required
-                                    value={manualHotelGuestPhone}
-                                    onChange={e => setManualHotelGuestPhone(e.target.value.replace(/\D/g, ''))}
-                                    placeholder="e.g. 9820123456"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-purple-600 font-mono"
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="block text-[9px] text-slate-600 font-black uppercase tracking-wider mb-1">Room Preference</label>
-                                  <select
-                                    value={manualHotelRoomCategory}
-                                    onChange={e => setManualHotelRoomCategory(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-purple-600 cursor-pointer"
-                                  >
-                                    <option value="❄️ AC Room">❄️ AC Room</option>
-                                    <option value="🌀 Non-AC Room">🌀 Non-AC Room</option>
-                                  </select>
-                                </div>
-
-                                <div>
-                                  <label className="block text-[9px] text-slate-600 font-black uppercase tracking-wider mb-1">Stay Duration</label>
-                                  <select
-                                    value={manualHotelTimeSlot}
-                                    onChange={e => setManualHotelTimeSlot(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-purple-600 cursor-pointer"
-                                  >
-                                    <option value="12:00 PM - 03:00 PM (3 Hours)">3 Hours Stay</option>
-                                    <option value="12:00 PM - 06:00 PM (6 Hours)">6 Hours Stay</option>
-                                    <option value="12:00 PM - 12:00 AM (12 Hours)">12 Hours Stay</option>
-                                    <option value="Night Stay (Overnight)">🌙 Full Night Stay</option>
-                                  </select>
-                                </div>
-
-                                <div>
-                                  <label className="block text-[9px] text-slate-600 font-black uppercase tracking-wider mb-1">Assign Room No. *</label>
-                                  <input
-                                    type="text"
-                                    required
-                                    value={manualHotelRoomNo}
-                                    onChange={e => setManualHotelRoomNo(e.target.value)}
-                                    placeholder="e.g. Room 101"
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-black text-purple-900 outline-none focus:border-purple-600"
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="block text-[9px] text-purple-900 font-black uppercase tracking-wider mb-1">Amount Collected (₹) *</label>
-                                  <input
-                                    type="text"
-                                    required
-                                    value={manualHotelAmount}
-                                    onChange={e => setManualHotelAmount(e.target.value)}
-                                    placeholder="e.g. 699"
-                                    className="w-full bg-purple-50 border border-purple-300 rounded-xl px-3 py-2 text-xs font-black text-purple-900 outline-none focus:border-purple-600"
-                                  />
-                                </div>
-
-                                <div className="sm:col-span-2 flex items-end">
-                                  <button
-                                    type="submit"
-                                    className="w-full bg-purple-900 hover:bg-purple-950 text-white font-black py-2.5 px-4 rounded-xl text-xs transition-all shadow-md cursor-pointer"
-                                  >
-                                    + Save &amp; Check-In Walk-In Guest
-                                  </button>
-                                </div>
-                              </div>
-                            </form>
-                          )}
+                            <span>Edit Rates →</span>
+                          </button>
                         </div>
 
-                        {/* Search & Filter Bar */}
-                        <div className="bg-white border border-slate-200 p-3 rounded-2xl space-y-2.5 sm:space-y-0 sm:flex sm:items-center sm:justify-between gap-3 shadow-2xs">
-                          {/* Filter Pills */}
-                          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
-                            {[
-                              { id: 'All', label: 'All', count: hotelBookingsList.length },
-                              { id: 'Confirmed', label: 'Confirmed', count: hotelBookingsList.filter(b => (b.status || '').includes('Confirmed')).length },
-                              { id: 'Checked-In', label: 'Checked-In', count: hotelBookingsList.filter(b => (b.status || '').includes('Checked-In') || (b.status || '').includes('Assigned')).length },
-                              { id: 'Completed', label: 'Completed', count: hotelBookingsList.filter(b => (b.status || '').includes('Completed')).length },
-                              { id: 'Cancelled', label: 'Cancelled', count: hotelBookingsList.filter(b => (b.status || '').includes('Cancelled')).length }
-                            ].map(filter => (
-                              <button
-                                key={filter.id}
-                                type="button"
-                                onClick={() => setHotelBookingFilter(filter.id as any)}
-                                className={`px-3 py-1.5 rounded-xl text-xs font-black whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
-                                  hotelBookingFilter === filter.id
-                                    ? 'bg-purple-900 text-white shadow-xs'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                }`}
-                              >
-                                <span>{filter.label}</span>
-                                <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${hotelBookingFilter === filter.id ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}`}>
-                                  {filter.count}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-
-                          <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                            {/* Search Input */}
-                            <div className="w-full sm:w-56">
-                              <input
-                                type="text"
-                                value={hotelSearchQuery}
-                                onChange={e => setHotelSearchQuery(e.target.value)}
-                                placeholder="Search by name, phone, Ref ID..."
-                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-purple-600"
-                              />
+                        {/* ══════════════════════════════════════════════════════
+                            HOTEL BOOKINGS REGISTER (CLEAN & SIMPLE)
+                           ══════════════════════════════════════════════════════ */}
+                        <div className="bg-white border border-slate-200 p-3 sm:p-3.5 rounded-2xl space-y-2.5 shadow-2xs text-left">
+                          <div className="flex flex-wrap items-center justify-between gap-2.5">
+                            {/* Filter Pills */}
+                            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                              {[
+                                { id: 'All', label: 'All', count: specificHotelBookings.filter(Boolean).length },
+                                { id: 'Confirmed', label: 'Confirmed', count: specificHotelBookings.filter(b => b && (b?.status || '').includes('Confirmed')).length },
+                                { id: 'Checked-In', label: 'Checked-In', count: specificHotelBookings.filter(b => b && ((b?.status || '').includes('Checked-In') || (b?.status || '').includes('Assigned') || (b?.status || '').includes('Active'))).length },
+                                { id: 'Completed', label: 'Completed', count: specificHotelBookings.filter(b => b && (b?.status || '').includes('Completed')).length },
+                                { id: 'Cancelled', label: 'Cancelled', count: specificHotelBookings.filter(b => b && (b?.status || '').includes('Cancelled')).length }
+                              ].map(filter => (
+                                <button
+                                  key={filter.id}
+                                  type="button"
+                                  onClick={() => setHotelBookingFilter(filter.id as any)}
+                                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+                                    hotelBookingFilter === filter.id
+                                      ? 'bg-slate-900 text-white shadow-xs'
+                                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                  }`}
+                                >
+                                  <span>{filter.label}</span>
+                                  <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${hotelBookingFilter === filter.id ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                                    {filter.count}
+                                  </span>
+                                </button>
+                              ))}
                             </div>
 
-                            {/* Export Register CSV */}
-                            <button
-                              type="button"
-                              onClick={handleExportHotelRegisterCSV}
-                              className="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-black transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
-                              title="Download Full Desk Register as Excel / CSV"
-                            >
-                              <span>📥</span>
-                              <span className="hidden sm:inline">Export Excel</span>
-                            </button>
+                            {/* Search guest / phone / pass */}
+                            <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                              <div className="relative flex-1 sm:w-56">
+                                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                                <input
+                                  type="text"
+                                  value={hotelSearchQuery}
+                                  onChange={e => setHotelSearchQuery(e.target.value)}
+                                  placeholder="Search guest or phone..."
+                                  className="w-full pl-8 pr-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:bg-white focus:border-slate-800 transition-all"
+                                />
+                              </div>
 
-                            {/* Print Desk Register */}
-                            <button
-                              type="button"
-                              onClick={() => window.print()}
-                              className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-black transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
-                              title="Print Reception Register Sheet"
-                            >
-                              <span>🖨️</span>
-                              <span className="hidden sm:inline">Print</span>
-                            </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const csvRows = [
+                                    ['Ref', 'Guest Name', 'Phone', 'Stay Type', 'Time Slot', 'Room', 'Tariff', 'Status'],
+                                    ...specificHotelBookings.map(b => [
+                                      b.id || '',
+                                      b.guestName || '',
+                                      b.guestPhone || '',
+                                      b.stayType || '',
+                                      b.timeSlot || '',
+                                      b.roomType || '',
+                                      b.totalAmount || '',
+                                      b.status || ''
+                                    ])
+                                  ];
+                                  const csvContent = 'data:text/csv;charset=utf-8,' + csvRows.map(e => e.join(',')).join('\n');
+                                  const encodedUri = encodeURI(csvContent);
+                                  const link = document.createElement('a');
+                                  link.setAttribute('href', encodedUri);
+                                  link.setAttribute('download', `hotel_bookings_${new Date().toISOString().split('T')[0]}.csv`);
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                }}
+                                className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                                title="Export Bookings to CSV"
+                              >
+                                <span>📥</span>
+                                <span className="hidden sm:inline">Export</span>
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => window.print()}
+                                className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                                title="Print Register"
+                              >
+                                <span>🖨️</span>
+                                <span className="hidden sm:inline">Print</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
 
                         {/* Booking Passes Grid */}
                         {(() => {
                           const filtered = hotelBookingsList.filter(b => {
-                            const matchesFilter = hotelBookingFilter === 'All' || (b.status || '').includes(hotelBookingFilter);
+                            if (!b) return false;
+                            const matchesFilter = hotelBookingFilter === 'All' || (b?.status || '').includes(hotelBookingFilter);
                             const q = hotelSearchQuery.toLowerCase();
                             const matchesSearch = !q || 
-                              (b.guestName || '').toLowerCase().includes(q) ||
-                              (b.guestPhone || '').includes(q) ||
-                              (b.id || '').toLowerCase().includes(q) ||
-                              (b.hotelName || '').toLowerCase().includes(q);
+                              (b?.guestName || '').toLowerCase().includes(q) ||
+                              (b?.guestPhone || '').includes(q) ||
+                              (b?.id || '').toLowerCase().includes(q) ||
+                              (b?.hotelName || '').toLowerCase().includes(q);
 
                             return matchesFilter && matchesSearch;
                           });
@@ -5719,9 +6294,9 @@ function DashboardContent() {
                             return (
                               <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200 p-6 space-y-2">
                                 <Building className="w-10 h-10 text-slate-300 mx-auto" />
-                                <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">No Bookings Found in this filter</h4>
+                                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">No Online Bookings Found</h4>
                                 <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
-                                  When guests book online or you add walk-in entries, their stay passes will appear right here.
+                                  When guests book online through the Majh Boisar portal, their stay passes will appear right here automatically.
                                 </p>
                               </div>
                             );
@@ -5731,7 +6306,7 @@ function DashboardContent() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-left">
                               {filtered.map(booking => {
                                 const cleanPhone = (booking.guestPhone || '').replace(/\D/g, '');
-                                const isCheckedIn = (booking.status || '').includes('Checked-In') || (booking.status || '').includes('Active');
+                                const isCheckedIn = (booking.status || '').includes('Checked-In') || (booking.status || '').includes('Active') || (booking.status || '').includes('Assigned');
                                 const isCancelled = (booking.status || '').includes('Cancelled');
                                 const isCompleted = (booking.status || '').includes('Completed');
 
@@ -5753,12 +6328,12 @@ function DashboardContent() {
 
                                       <span className={`text-[9.5px] font-extrabold px-2 py-0.5 rounded-full ${
                                         isCheckedIn
-                                          ? 'bg-purple-100 text-purple-900'
+                                          ? 'bg-blue-50 text-blue-800 border border-blue-200'
                                           : isCancelled
-                                          ? 'bg-rose-100 text-rose-800'
+                                          ? 'bg-rose-50 text-rose-800 border border-rose-200'
                                           : isCompleted
-                                          ? 'bg-slate-100 text-slate-700'
-                                          : 'bg-emerald-100 text-emerald-800'
+                                          ? 'bg-slate-100 text-slate-700 border border-slate-200'
+                                          : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                                       }`}>
                                         {booking.status || 'Confirmed'}
                                       </span>
@@ -5767,7 +6342,7 @@ function DashboardContent() {
                                     {/* Guest Details & Stay info */}
                                     <div className="grid grid-cols-2 gap-2 text-xs">
                                       <div>
-                                        <span className="text-[10px] text-slate-400 font-bold block">Guest</span>
+                                        <span className="text-[10px] text-slate-400 font-bold block">Online Guest</span>
                                         <span className="font-bold text-slate-900 block truncate">{booking.guestName}</span>
                                         <span className="text-[11px] text-slate-500 font-medium font-mono">+91 {booking.guestPhone}</span>
                                       </div>
@@ -5775,20 +6350,20 @@ function DashboardContent() {
                                       <div>
                                         <span className="text-[10px] text-slate-400 font-bold block">Stay &amp; Room</span>
                                         <span className="font-bold text-slate-800 block truncate">{booking.timeSlot || booking.stayType || '3 Hours Stay'}</span>
-                                        <span className="text-[10px] text-emerald-700 font-bold">{booking.roomCategory || 'AC Room'}</span>
+                                        <span className="text-[10px] text-emerald-700 font-bold">{booking.roomCategory || 'Deluxe AC Room'}</span>
                                       </div>
                                     </div>
 
                                     {/* Room Assignment & Total */}
                                     <div className="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-100">
                                       <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-bold text-slate-500">Room:</span>
+                                        <span className="text-[10px] font-bold text-slate-500">Allot Room:</span>
                                         <input
                                           type="text"
-                                          defaultValue={booking.assignedRoom || 'Room 101'}
+                                          defaultValue={booking.assignedRoom || '101'}
                                           onBlur={(e) => handleUpdateHotelBookingStatus(booking.id, booking.status || 'Confirmed', e.target.value)}
                                           placeholder="101"
-                                          className="w-20 bg-white border border-slate-300 rounded px-1.5 py-0.5 text-xs font-bold text-slate-900 text-center outline-none"
+                                          className="w-20 bg-white border border-slate-300 rounded px-1.5 py-0.5 text-xs font-bold text-slate-900 text-center outline-none focus:border-slate-800 shadow-2xs"
                                         />
                                       </div>
 
@@ -5799,7 +6374,7 @@ function DashboardContent() {
                                     </div>
 
                                     {/* Compact Action Buttons */}
-                                    <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100">
+                                    <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100">
                                       <a
                                         href={`tel:+91${cleanPhone}`}
                                         className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1 shadow-2xs"
@@ -5808,21 +6383,29 @@ function DashboardContent() {
                                         <span>Call</span>
                                       </a>
 
-                                      <a
-                                        href={`https://wa.me/91${cleanPhone}?text=Hello%20${encodeURIComponent(booking.guestName)},%20Regarding%20your%20stay%20pass%20%23${booking.id}%20at%20${encodeURIComponent(booking.hotelName || 'our hotel')},%20your%20room%20is%20ready.`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-[10px] py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1 shadow-2xs"
+                                      <button
+                                        type="button"
+                                        onClick={() => handleTriggerWhatsAppPass({
+                                          roomNo: booking.assignedRoom || '101',
+                                          guestName: booking.guestName,
+                                          phone: cleanPhone,
+                                          checkIn: booking.checkInDate || booking.date || 'Today',
+                                          duration: booking.timeSlot || booking.stayType || '3 Hours Stay',
+                                          amount: `₹${booking.totalAmount}`,
+                                          passId: booking.id
+                                        })}
+                                        className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-[10px] py-1.5 px-2.5 rounded-lg flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
+                                        title="Send Official Stay Pass & Receipt to Guest's WhatsApp"
                                       >
                                         <MessageSquare className="w-3 h-3 fill-white" />
-                                        <span>WhatsApp</span>
-                                      </a>
+                                        <span>Stay Pass</span>
+                                      </button>
 
                                       {!isCheckedIn && !isCompleted && !isCancelled && (
                                         <button
                                           type="button"
                                           onClick={() => handleUpdateHotelBookingStatus(booking.id, 'Checked-In (Active Stay)')}
-                                          className="bg-purple-50 hover:bg-purple-100 text-purple-900 font-bold text-[10px] py-1.5 px-2 rounded-lg border border-purple-200 transition-colors ml-auto cursor-pointer"
+                                          className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] py-1.5 px-2.5 rounded-lg transition-colors ml-auto cursor-pointer shadow-2xs"
                                         >
                                           Check-In
                                         </button>
@@ -5854,6 +6437,102 @@ function DashboardContent() {
                             </div>
                           );
                         })()}
+
+                        {/* WHATSAPP DIGITAL STAY PASS & RECEIPT MODAL */}
+                        {whatsAppPassModal && whatsAppPassModal.isOpen && (
+                          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+                            <div className="bg-white rounded-t-3xl sm:rounded-2xl p-4 sm:p-6 max-w-md w-full shadow-2xl space-y-3.5 border border-slate-200 text-left max-h-[92vh] overflow-y-auto">
+                              {/* Mobile Drag Pill */}
+                              <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto sm:hidden -mt-1 mb-1" />
+                              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xl">📲</span>
+                                  <div>
+                                    <h4 className="font-black text-sm sm:text-base text-slate-900">Send WhatsApp Stay Pass</h4>
+                                    <p className="text-[10px] text-slate-500 font-medium">Digital stay pass, Google Maps location &amp; payment receipt</p>
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setWhatsAppPassModal(null)}
+                                  className="text-slate-400 hover:text-slate-600 text-base font-bold p-1 cursor-pointer"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+
+                              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2 text-xs">
+                                <div className="flex items-center justify-between border-b border-slate-200/60 pb-1.5">
+                                  <span className="text-slate-500 font-medium">Guest Name</span>
+                                  <input
+                                    type="text"
+                                    value={whatsAppPassModal.guestName}
+                                    onChange={(e) => setWhatsAppPassModal({ ...whatsAppPassModal, guestName: e.target.value })}
+                                    placeholder="Guest Name"
+                                    className="font-bold text-slate-900 text-right bg-white border border-slate-200 rounded-lg px-2 py-0.5 text-xs outline-none focus:border-slate-800"
+                                  />
+                                </div>
+
+                                <div className="flex items-center justify-between border-b border-slate-200/60 pb-1.5">
+                                  <span className="text-slate-500 font-medium">Allotted Room</span>
+                                  <span className="font-bold text-slate-900 font-mono">Room {whatsAppPassModal.roomNo}</span>
+                                </div>
+
+                                <div className="flex items-center justify-between border-b border-slate-200/60 pb-1.5">
+                                  <span className="text-slate-500 font-medium">Stay Duration</span>
+                                  <span className="font-semibold text-slate-800">{whatsAppPassModal.duration}</span>
+                                </div>
+
+                                <div className="flex items-center justify-between border-b border-slate-200/60 pb-1.5">
+                                  <span className="text-slate-500 font-medium">Amount</span>
+                                  <span className="font-black text-slate-900 font-mono">{whatsAppPassModal.amount}</span>
+                                </div>
+
+                                <div>
+                                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                    Recipient WhatsApp Mobile Number *
+                                  </label>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400 font-mono">+91</span>
+                                    <input
+                                      type="tel"
+                                      maxLength={10}
+                                      value={whatsAppPassModal.phone}
+                                      onChange={(e) => setWhatsAppPassModal({ ...whatsAppPassModal, phone: e.target.value.replace(/\D/g, '') })}
+                                      placeholder="9820123456"
+                                      className="w-full bg-white border border-slate-300 rounded-xl pl-11 pr-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-slate-800 font-mono"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const msg = getFormattedStayPassMessage(whatsAppPassModal);
+                                    navigator.clipboard.writeText(msg);
+                                    showToast('📋 Stay Pass copied to clipboard!', 'info');
+                                  }}
+                                  className="px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5"
+                                >
+                                  <span>📋</span>
+                                  <span>Copy</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => executeSendWhatsAppPass(whatsAppPassModal.phone)}
+                                  className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] active:scale-98 text-white text-xs font-black py-2.5 px-4 rounded-xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-2"
+                                >
+                                  <MessageSquare className="w-4 h-4 fill-white" />
+                                  <span>Send on WhatsApp</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -5861,155 +6540,294 @@ function DashboardContent() {
                         VIEW 2: 💰 ROOM TARIFFS & PRICING (AC & NON-AC)
                        ══════════════════════════════════════════════════════ */}
                     {hotelDeskView === 'tariffs' && (
-                      <div className="bg-white border border-purple-200/90 rounded-3xl p-5 sm:p-6 shadow-sm space-y-5">
-                        <div>
-                          <h4 className="font-black text-sm sm:text-base text-purple-950 flex items-center gap-2">
-                            <span>💰</span> Configure AC &amp; Non-AC Room Tariffs
+                      <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-2xs space-y-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-slate-100 pb-3">
+                          <h4 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                            <span>⚡</span> Configure AC &amp; Non-AC Room Tariffs
                           </h4>
-                          <p className="text-xs text-slate-500 font-medium mt-0.5">
-                            Set hourly (3h, 6h, 12h) and night stay rates for your hotel. Customers pick AC or Non-AC online, and room numbers are allotted at your desk.
-                          </p>
+
+                          <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl">
+                            <span className="text-[11px] font-bold text-slate-700">Hourly (3h/6h) Stays:</span>
+                            <button
+                              type="button"
+                              onClick={handleToggleHourlyBookings}
+                              className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                hourlyBookingsEnabled
+                                  ? 'bg-emerald-600 text-white shadow-2xs'
+                                  : 'bg-rose-600 text-white shadow-2xs'
+                              }`}
+                            >
+                              {hourlyBookingsEnabled ? '🟢 ON (Hourly Enabled)' : '🔴 OFF (Day & Night Only)'}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* ⏱️ Stay Slot Timings & Check-In / Check-Out Rules */}
+                        <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-3">
+                          <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                            <h5 className="font-bold text-xs sm:text-sm text-slate-900 flex items-center gap-2">
+                              <span>⏱️</span> Stay Slot Timings &amp; Check-In / Check-Out Rules
+                            </h5>
+                            <span className="text-[9.5px] font-bold bg-slate-200/80 text-slate-700 px-2.5 py-0.5 rounded-md">
+                              Timing Rules
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {/* 1. Day Stay Window */}
+                            <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-1">
+                              <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                                <span>☀️</span> Day-Stay Operating Window
+                              </label>
+                              <input
+                                type="text"
+                                value={dayStayTimingWindow}
+                                onChange={e => setDayStayTimingWindow(e.target.value)}
+                                placeholder="09:00 AM – 07:00 PM"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-900 outline-none focus:border-slate-800 font-mono"
+                              />
+                              <p className="text-[9px] text-slate-400 font-medium">
+                                Short stays (3h, 6h, 12h) allowed within this window
+                              </p>
+                            </div>
+
+                            {/* 2. Night Stay Check In */}
+                            <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-1">
+                              <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                                <span>🌙</span> Night-Stay Check-In
+                              </label>
+                              <input
+                                type="text"
+                                value={nightStayCheckIn}
+                                onChange={e => setNightStayCheckIn(e.target.value)}
+                                placeholder="12:00 PM"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-900 outline-none focus:border-slate-800 font-mono"
+                              />
+                              <p className="text-[9px] text-slate-400 font-medium">
+                                Standard check-in time for overnight guests
+                              </p>
+                            </div>
+
+                            {/* 3. Night Stay Check Out */}
+                            <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-1">
+                              <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1">
+                                <span>🌅</span> Night-Stay Check-Out
+                              </label>
+                              <input
+                                type="text"
+                                value={nightStayCheckOut}
+                                onChange={e => setNightStayCheckOut(e.target.value)}
+                                placeholder="11:00 AM"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-900 outline-none focus:border-slate-800 font-mono"
+                              />
+                              <p className="text-[9px] text-slate-400 font-medium">
+                                Morning check-out time (next day)
+                              </p>
+                            </div>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {/* ❄️ AC Room Tariff Box */}
-                          <div className="bg-purple-50/50 border-2 border-purple-300/80 rounded-2xl p-4.5 space-y-3.5 shadow-2xs">
-                            <div className="flex items-center justify-between border-b border-purple-200 pb-2">
-                              <div className="flex items-center gap-2.5">
-                                <span className="text-2xl">❄️</span>
+                          <div className="bg-white border border-slate-200 rounded-2xl p-4.5 space-y-3.5 shadow-2xs">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xl">❄️</span>
                                 <div>
-                                  <h5 className="font-black text-sm text-purple-950">AC Room Tariff</h5>
-                                  <span className="text-[10px] text-purple-800 font-bold">Air Conditioned Rooms</span>
+                                  <h5 className="font-bold text-sm text-slate-900">AC Room Tariff</h5>
+                                  <span className="text-[10px] text-slate-500 font-medium">Air Conditioned Rooms</span>
                                 </div>
                               </div>
-                              <span className="text-[9px] bg-purple-900 text-white px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider">
-                                Popular
+                              <span className="text-[9px] bg-slate-900 text-white px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                AC Deluxe
                               </span>
                             </div>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                              <div>
-                                <label className="block text-[9px] text-purple-900 font-black uppercase text-center mb-1">3-Hour Rate</label>
-                                <div className="relative">
-                                  <span className="absolute left-2.5 top-2 text-xs font-black text-slate-400">₹</span>
-                                  <input
-                                    type="number"
-                                    value={acRate3h}
-                                    onChange={e => setAcRate3h(e.target.value)}
-                                    className="w-full bg-white border border-purple-200 rounded-xl pl-6 pr-2 py-2 text-xs font-black text-purple-950 text-center outline-none focus:border-purple-600 shadow-2xs"
-                                  />
+                            {hourlyBookingsEnabled ? (
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                <div>
+                                  <label className="block text-[9px] text-slate-600 font-bold uppercase text-center mb-1">3-Hour</label>
+                                  <div className="relative">
+                                    <span className="absolute left-2.5 top-2 text-xs font-bold text-slate-400">₹</span>
+                                    <input
+                                      type="number"
+                                      value={acRate3h}
+                                      onChange={e => setAcRate3h(e.target.value)}
+                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-6 pr-2 py-2 text-xs font-bold text-slate-900 text-center outline-none focus:border-slate-800 shadow-2xs"
+                                    />
+                                  </div>
                                 </div>
-                              </div>
 
-                              <div>
-                                <label className="block text-[9px] text-purple-900 font-black uppercase text-center mb-1">6-Hour Rate</label>
-                                <div className="relative">
-                                  <span className="absolute left-2.5 top-2 text-xs font-black text-slate-400">₹</span>
-                                  <input
-                                    type="number"
-                                    value={acRate6h}
-                                    onChange={e => setAcRate6h(e.target.value)}
-                                    className="w-full bg-white border border-purple-200 rounded-xl pl-6 pr-2 py-2 text-xs font-black text-purple-950 text-center outline-none focus:border-purple-600 shadow-2xs"
-                                  />
+                                <div>
+                                  <label className="block text-[9px] text-slate-600 font-bold uppercase text-center mb-1">6-Hour</label>
+                                  <div className="relative">
+                                    <span className="absolute left-2.5 top-2 text-xs font-bold text-slate-400">₹</span>
+                                    <input
+                                      type="number"
+                                      value={acRate6h}
+                                      onChange={e => setAcRate6h(e.target.value)}
+                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-6 pr-2 py-2 text-xs font-bold text-slate-900 text-center outline-none focus:border-slate-800 shadow-2xs"
+                                    />
+                                  </div>
                                 </div>
-                              </div>
 
-                              <div>
-                                <label className="block text-[9px] text-purple-900 font-black uppercase text-center mb-1">12-Hour Rate</label>
-                                <div className="relative">
-                                  <span className="absolute left-2.5 top-2 text-xs font-black text-slate-400">₹</span>
-                                  <input
-                                    type="number"
-                                    value={acRate12h}
-                                    onChange={e => setAcRate12h(e.target.value)}
-                                    className="w-full bg-white border border-purple-200 rounded-xl pl-6 pr-2 py-2 text-xs font-black text-purple-950 text-center outline-none focus:border-purple-600 shadow-2xs"
-                                  />
+                                <div>
+                                  <label className="block text-[9px] text-slate-600 font-bold uppercase text-center mb-1">12-Hour</label>
+                                  <div className="relative">
+                                    <span className="absolute left-2.5 top-2 text-xs font-bold text-slate-400">₹</span>
+                                    <input
+                                      type="number"
+                                      value={acRate12h}
+                                      onChange={e => setAcRate12h(e.target.value)}
+                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-6 pr-2 py-2 text-xs font-bold text-slate-900 text-center outline-none focus:border-slate-800 shadow-2xs"
+                                    />
+                                  </div>
                                 </div>
-                              </div>
 
-                              <div>
-                                <label className="block text-[9px] text-amber-800 font-black uppercase text-center mb-1">Night Stay</label>
-                                <div className="relative">
-                                  <span className="absolute left-2.5 top-2 text-xs font-black text-amber-500">₹</span>
-                                  <input
-                                    type="number"
-                                    value={acRateNight}
-                                    onChange={e => setAcRateNight(e.target.value)}
-                                    className="w-full bg-white border border-amber-300 rounded-xl pl-6 pr-2 py-2 text-xs font-black text-amber-800 text-center outline-none focus:border-purple-600 shadow-2xs"
-                                  />
+                                <div>
+                                  <label className="block text-[9px] text-amber-800 font-bold uppercase text-center mb-1">Night Stay</label>
+                                  <div className="relative">
+                                    <span className="absolute left-2.5 top-2 text-xs font-bold text-amber-500">₹</span>
+                                    <input
+                                      type="number"
+                                      value={acRateNight}
+                                      onChange={e => setAcRateNight(e.target.value)}
+                                      className="w-full bg-amber-50/50 border border-amber-200 rounded-xl pl-6 pr-2 py-2 text-xs font-bold text-amber-900 text-center outline-none focus:border-amber-600 shadow-2xs"
+                                    />
+                                  </div>
                                 </div>
                               </div>
-                            </div>
+                            ) : (
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-[10px] text-slate-600 font-bold uppercase text-center mb-1">Day Stay (☀️ 9am - 7pm)</label>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-2 text-xs font-bold text-slate-400">₹</span>
+                                    <input
+                                      type="number"
+                                      value={acRate12h}
+                                      onChange={e => setAcRate12h(e.target.value)}
+                                      placeholder="1499"
+                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-7 pr-2 py-2 text-xs font-bold text-slate-900 text-center outline-none focus:border-slate-800 shadow-2xs"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-amber-800 font-bold uppercase text-center mb-1">Night Stay (🌙 Overnight)</label>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-2 text-xs font-bold text-amber-500">₹</span>
+                                    <input
+                                      type="number"
+                                      value={acRateNight}
+                                      onChange={e => setAcRateNight(e.target.value)}
+                                      placeholder="1899"
+                                      className="w-full bg-amber-50/50 border border-amber-200 rounded-xl pl-7 pr-2 py-2 text-xs font-bold text-amber-900 text-center outline-none focus:border-amber-600 shadow-2xs"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           {/* 🌀 Non-AC Room Tariff Box */}
-                          <div className="bg-slate-50/80 border-2 border-slate-300/80 rounded-2xl p-4.5 space-y-3.5 shadow-2xs">
-                            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                              <div className="flex items-center gap-2.5">
-                                <span className="text-2xl">🌀</span>
+                          <div className="bg-white border border-slate-200 rounded-2xl p-4.5 space-y-3.5 shadow-2xs">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xl">🌀</span>
                                 <div>
-                                  <h5 className="font-black text-sm text-slate-900">Non-AC Room Tariff</h5>
-                                  <span className="text-[10px] text-slate-500 font-bold">Standard Fan Ventilated Rooms</span>
+                                  <h5 className="font-bold text-sm text-slate-900">Non-AC Room Tariff</h5>
+                                  <span className="text-[10px] text-slate-500 font-medium">Standard Fan Ventilated Rooms</span>
                                 </div>
                               </div>
-                              <span className="text-[9px] bg-slate-700 text-white px-2.5 py-0.5 rounded-full font-black uppercase tracking-wider">
-                                Budget
+                              <span className="text-[9px] bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider border border-slate-200">
+                                Budget Non-AC
                               </span>
                             </div>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                              <div>
-                                <label className="block text-[9px] text-slate-600 font-black uppercase text-center mb-1">3-Hour Rate</label>
-                                <div className="relative">
-                                  <span className="absolute left-2.5 top-2 text-xs font-black text-slate-400">₹</span>
-                                  <input
-                                    type="number"
-                                    value={nonAcRate3h}
-                                    onChange={e => setNonAcRate3h(e.target.value)}
-                                    className="w-full bg-white border border-slate-300 rounded-xl pl-6 pr-2 py-2 text-xs font-black text-slate-900 text-center outline-none focus:border-purple-600 shadow-2xs"
-                                  />
+                            {hourlyBookingsEnabled ? (
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                <div>
+                                  <label className="block text-[9px] text-slate-600 font-bold uppercase text-center mb-1">3-Hour</label>
+                                  <div className="relative">
+                                    <span className="absolute left-2.5 top-2 text-xs font-bold text-slate-400">₹</span>
+                                    <input
+                                      type="number"
+                                      value={nonAcRate3h}
+                                      onChange={e => setNonAcRate3h(e.target.value)}
+                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-6 pr-2 py-2 text-xs font-bold text-slate-900 text-center outline-none focus:border-slate-800 shadow-2xs"
+                                    />
+                                  </div>
                                 </div>
-                              </div>
 
-                              <div>
-                                <label className="block text-[9px] text-slate-600 font-black uppercase text-center mb-1">6-Hour Rate</label>
-                                <div className="relative">
-                                  <span className="absolute left-2.5 top-2 text-xs font-black text-slate-400">₹</span>
-                                  <input
-                                    type="number"
-                                    value={nonAcRate6h}
-                                    onChange={e => setNonAcRate6h(e.target.value)}
-                                    className="w-full bg-white border border-slate-300 rounded-xl pl-6 pr-2 py-2 text-xs font-black text-slate-900 text-center outline-none focus:border-purple-600 shadow-2xs"
-                                  />
+                                <div>
+                                  <label className="block text-[9px] text-slate-600 font-bold uppercase text-center mb-1">6-Hour</label>
+                                  <div className="relative">
+                                    <span className="absolute left-2.5 top-2 text-xs font-bold text-slate-400">₹</span>
+                                    <input
+                                      type="number"
+                                      value={nonAcRate6h}
+                                      onChange={e => setNonAcRate6h(e.target.value)}
+                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-6 pr-2 py-2 text-xs font-bold text-slate-900 text-center outline-none focus:border-slate-800 shadow-2xs"
+                                    />
+                                  </div>
                                 </div>
-                              </div>
 
-                              <div>
-                                <label className="block text-[9px] text-slate-600 font-black uppercase text-center mb-1">12-Hour Rate</label>
-                                <div className="relative">
-                                  <span className="absolute left-2.5 top-2 text-xs font-black text-slate-400">₹</span>
-                                  <input
-                                    type="number"
-                                    value={nonAcRate12h}
-                                    onChange={e => setNonAcRate12h(e.target.value)}
-                                    className="w-full bg-white border border-slate-300 rounded-xl pl-6 pr-2 py-2 text-xs font-black text-slate-900 text-center outline-none focus:border-purple-600 shadow-2xs"
-                                  />
+                                <div>
+                                  <label className="block text-[9px] text-slate-600 font-bold uppercase text-center mb-1">12-Hour</label>
+                                  <div className="relative">
+                                    <span className="absolute left-2.5 top-2 text-xs font-bold text-slate-400">₹</span>
+                                    <input
+                                      type="number"
+                                      value={nonAcRate12h}
+                                      onChange={e => setNonAcRate12h(e.target.value)}
+                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-6 pr-2 py-2 text-xs font-bold text-slate-900 text-center outline-none focus:border-slate-800 shadow-2xs"
+                                    />
+                                  </div>
                                 </div>
-                              </div>
 
-                              <div>
-                                <label className="block text-[9px] text-amber-800 font-black uppercase text-center mb-1">Night Stay</label>
-                                <div className="relative">
-                                  <span className="absolute left-2.5 top-2 text-xs font-black text-amber-500">₹</span>
-                                  <input
-                                    type="number"
-                                    value={nonAcRateNight}
-                                    onChange={e => setNonAcRateNight(e.target.value)}
-                                    className="w-full bg-white border border-amber-300 rounded-xl pl-6 pr-2 py-2 text-xs font-black text-amber-800 text-center outline-none focus:border-purple-600 shadow-2xs"
-                                  />
+                                <div>
+                                  <label className="block text-[9px] text-amber-800 font-bold uppercase text-center mb-1">Night Stay</label>
+                                  <div className="relative">
+                                    <span className="absolute left-2.5 top-2 text-xs font-bold text-amber-500">₹</span>
+                                    <input
+                                      type="number"
+                                      value={nonAcRateNight}
+                                      onChange={e => setNonAcRateNight(e.target.value)}
+                                      className="w-full bg-amber-50/50 border border-amber-200 rounded-xl pl-6 pr-2 py-2 text-xs font-bold text-amber-900 text-center outline-none focus:border-amber-600 shadow-2xs"
+                                    />
+                                  </div>
                                 </div>
                               </div>
-                            </div>
+                            ) : (
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <label className="block text-[10px] text-slate-600 font-bold uppercase text-center mb-1">Day Stay (☀️ 9am - 7pm)</label>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-2 text-xs font-bold text-slate-400">₹</span>
+                                    <input
+                                      type="number"
+                                      value={nonAcRate12h}
+                                      onChange={e => setNonAcRate12h(e.target.value)}
+                                      placeholder="999"
+                                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-7 pr-2 py-2 text-xs font-bold text-slate-900 text-center outline-none focus:border-slate-800 shadow-2xs"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] text-amber-800 font-bold uppercase text-center mb-1">Night Stay (🌙 Overnight)</label>
+                                  <div className="relative">
+                                    <span className="absolute left-3 top-2 text-xs font-bold text-amber-500">₹</span>
+                                    <input
+                                      type="number"
+                                      value={nonAcRateNight}
+                                      onChange={e => setNonAcRateNight(e.target.value)}
+                                      placeholder="1399"
+                                      className="w-full bg-amber-50/50 border border-amber-200 rounded-xl pl-7 pr-2 py-2 text-xs font-bold text-amber-900 text-center outline-none focus:border-amber-600 shadow-2xs"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -6018,111 +6836,717 @@ function DashboardContent() {
                           <button
                             type="button"
                             onClick={handleSaveFullHotelListing}
-                            className="w-full sm:w-auto bg-purple-900 hover:bg-purple-950 text-white font-black text-xs px-8 py-3.5 rounded-2xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+                            className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-8 py-3 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
                           >
-                            <span>✓ Save &amp; Publish Room Tariffs</span>
+                            <span>✓ Save Tariffs &amp; Timings</span>
                           </button>
                         </div>
                       </div>
                     )}
 
                     {/* ══════════════════════════════════════════════════════
-                        VIEW 3: 🏨 HOTEL PROFILE & PHOTOS
+                        VIEW 3: 🏨 COMPLETE HOTEL PROFILE, AMENITIES & POLICIES
                        ══════════════════════════════════════════════════════ */}
                     {hotelDeskView === 'profile' && (
-                      <form onSubmit={handleSaveFullHotelListing} className="bg-white border border-purple-200/90 rounded-3xl p-5 sm:p-6 shadow-sm space-y-5">
-                        <div>
-                          <h4 className="font-black text-sm sm:text-base text-purple-950 flex items-center gap-2">
-                            <span>🏨</span> Hotel Basic Info, Gallery &amp; Policies
-                          </h4>
-                          <p className="text-xs text-slate-500 font-medium mt-0.5">
-                            Update your hotel listing details, photo gallery, and couple-friendly / safety tags.
-                          </p>
+                      <div className="space-y-5">
+                        {/* ⚠️ Deletion Request Banner if Pending */}
+                        {pendingDeletionReq && (
+                          <div className="bg-rose-50 border-2 border-rose-300 rounded-2xl p-4 sm:p-5 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white px-2.5 py-0.5 rounded-full inline-block">
+                                ⚠️ Deletion Request Pending Admin Approval
+                              </span>
+                              <h5 className="text-sm font-black text-rose-950">
+                                You requested to delete {hotelProfileName}
+                              </h5>
+                              <p className="text-xs text-rose-800 font-medium">
+                                Submitted on {pendingDeletionReq.requestedAt} · Reason: &quot;{pendingDeletionReq.reason}&quot;
+                              </p>
+                              <p className="text-[11px] text-rose-700 font-medium">
+                                Our admin team is reviewing this request. Once approved, this hotel will be permanently removed.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleCancelDeletionRequest}
+                              className="bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer shrink-0 shadow-2xs"
+                            >
+                              Cancel Deletion Request
+                            </button>
+                          </div>
+                        )}
+
+                        <form onSubmit={handleSaveFullHotelListing} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-2xs space-y-5 text-left">
+                        <div className="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <h4 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2">
+                              <span>🏨</span> Complete Hotel Profile &amp; Portal Listing
+                            </h4>
+                            <p className="text-xs text-slate-500 font-medium mt-0.5">
+                              Update full hotel details, address, amenities, tags, house rules and photo gallery.
+                            </p>
+                          </div>
+                          <button
+                            type="submit"
+                            className="self-start sm:self-auto bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-5 py-2 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-98"
+                          >
+                            <span>✓ Save Changes</span>
+                          </button>
                         </div>
 
-                        {/* 1. Basic Info */}
-                        <div className="bg-slate-50/70 border border-slate-200 rounded-2xl p-4 space-y-3">
-                          <h5 className="text-xs font-black text-purple-950 uppercase tracking-wider">1. Basic Information</h5>
+                        {/* 1. Basic Info & Branding */}
+                        <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3">
+                          <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>🏷️</span> 1. Hotel Identity &amp; Overview
+                          </h5>
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             <div className="sm:col-span-2 lg:col-span-1">
-                              <label className="block text-[9px] text-slate-600 font-black uppercase tracking-wider mb-1">Hotel Name *</label>
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">Hotel Name *</label>
                               <input
                                 type="text"
                                 required
                                 value={hotelProfileName}
                                 onChange={e => setHotelProfileName(e.target.value)}
-                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-purple-600"
+                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-slate-800"
                               />
                             </div>
 
                             <div>
-                              <label className="block text-[9px] text-slate-600 font-black uppercase tracking-wider mb-1">Category</label>
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">Category</label>
                               <select
                                 value={hotelProfileCategory}
                                 onChange={e => setHotelProfileCategory(e.target.value)}
-                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-purple-600 cursor-pointer"
+                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-slate-800 cursor-pointer"
                               >
-                                <option value="Luxury Resort">Luxury Resort</option>
                                 <option value="Executive / 3-Star">Executive / 3-Star</option>
+                                <option value="Luxury Resort">Luxury Resort</option>
                                 <option value="Boutique Residency">Boutique Residency</option>
                                 <option value="Budget Lodge">Budget Lodge</option>
+                                <option value="Couple Friendly Hotel">Couple Friendly Hotel</option>
                               </select>
                             </div>
 
-                            <div>
-                              <label className="block text-[9px] text-slate-600 font-black uppercase tracking-wider mb-1">Area in Boisar *</label>
-                              <input
-                                type="text"
-                                required
-                                value={hotelProfileArea}
-                                onChange={e => setHotelProfileArea(e.target.value)}
-                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-purple-600"
-                              />
+                            <div className="sm:col-span-2 lg:col-span-1">
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">Tagline / Short Pitch</label>
+                              <select
+                                value={['Verified Couple & Day-Stay Hotel in Boisar', 'Affordable & Sanitized AC Stay Near Boisar Station', 'Couple Friendly AC Hotel with 24/7 Check-in', 'Executive AC Residency for Transit & MIDC Guests', 'Budget Friendly Clean & Safe Rooms in Boisar West', 'Luxury Resort & Staycation Experience in Boisar'].includes(hotelProfileTagline) ? hotelProfileTagline : 'custom'}
+                                onChange={e => {
+                                  if (e.target.value !== 'custom') {
+                                    setHotelProfileTagline(e.target.value);
+                                  }
+                                }}
+                                className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-slate-800 cursor-pointer"
+                              >
+                                <option value="Verified Couple & Day-Stay Hotel in Boisar">Verified Couple & Day-Stay Hotel in Boisar</option>
+                                <option value="Affordable & Sanitized AC Stay Near Boisar Station">Affordable & Sanitized AC Stay Near Boisar Station</option>
+                                <option value="Couple Friendly AC Hotel with 24/7 Check-in">Couple Friendly AC Hotel with 24/7 Check-in</option>
+                                <option value="Executive AC Residency for Transit & MIDC Guests">Executive AC Residency for Transit & MIDC Guests</option>
+                                <option value="Budget Friendly Clean & Safe Rooms in Boisar West">Budget Friendly Clean & Safe Rooms in Boisar West</option>
+                                <option value="Luxury Resort & Staycation Experience in Boisar">Luxury Resort & Staycation Experience in Boisar</option>
+                                <option value="custom">✏️ Custom Tagline...</option>
+                              </select>
+                              {(!['Verified Couple & Day-Stay Hotel in Boisar', 'Affordable & Sanitized AC Stay Near Boisar Station', 'Couple Friendly AC Hotel with 24/7 Check-in', 'Executive AC Residency for Transit & MIDC Guests', 'Budget Friendly Clean & Safe Rooms in Boisar West', 'Luxury Resort & Staycation Experience in Boisar'].includes(hotelProfileTagline)) && (
+                                <input
+                                  type="text"
+                                  value={hotelProfileTagline}
+                                  onChange={e => setHotelProfileTagline(e.target.value)}
+                                  placeholder="Type custom tagline..."
+                                  className="w-full mt-1.5 bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-900 outline-none focus:border-slate-800"
+                                />
+                              )}
                             </div>
 
                             <div className="sm:col-span-2 lg:col-span-3">
-                              <label className="block text-[9px] text-slate-600 font-black uppercase tracking-wider mb-1">Full Address &amp; Landmark</label>
-                              <input
-                                type="text"
-                                value={hotelProfileAddress}
-                                onChange={e => setHotelProfileAddress(e.target.value)}
-                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-purple-600"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-[9px] text-slate-600 font-black uppercase tracking-wider mb-1">Reception Phone Number *</label>
-                              <input
-                                type="tel"
-                                required
-                                value={hotelProfilePhone}
-                                onChange={e => setHotelProfilePhone(e.target.value)}
-                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-purple-600 font-mono"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block text-[9px] text-slate-600 font-black uppercase tracking-wider mb-1">WhatsApp Booking Number</label>
-                              <input
-                                type="tel"
-                                value={hotelProfileWhatsapp}
-                                onChange={e => setHotelProfileWhatsapp(e.target.value)}
-                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-purple-600 font-mono"
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">About Hotel / Description</label>
+                              <textarea
+                                rows={3}
+                                value={hotelProfileDescription}
+                                onChange={e => setHotelProfileDescription(e.target.value)}
+                                placeholder="Describe hotel rooms, ambiance, cleanliness, front desk service and guest comfort..."
+                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 outline-none focus:border-slate-800"
                               />
                             </div>
                           </div>
                         </div>
 
-                        {/* 2. Photo Gallery */}
-                        <div className="bg-slate-50/70 border border-slate-200 rounded-2xl p-4 space-y-3">
+                        {/* 2. Location & Contact Details */}
+                        <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3">
+                          <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>📍</span> 2. Location &amp; Contact Information
+                          </h5>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <div>
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">Area / Location *</label>
+                              <select
+                                value={['Navapur Road, Boisar (West)', 'Near Boisar Railway Station', 'Boisar West', 'Boisar East', 'Tarapur Road, Boisar', 'Tarapur MIDC Zone, Boisar', 'Betegaon, Boisar East', 'Ostwal Empire, Boisar', 'Umroli', 'Palghar', 'Kelwa'].includes(hotelProfileArea) ? hotelProfileArea : 'custom'}
+                                onChange={e => {
+                                  if (e.target.value !== 'custom') {
+                                    setHotelProfileArea(e.target.value);
+                                  }
+                                }}
+                                className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-slate-800 cursor-pointer mb-1"
+                              >
+                                <option value="Navapur Road, Boisar (West)">Navapur Road, Boisar (West)</option>
+                                <option value="Near Boisar Railway Station">Near Boisar Railway Station</option>
+                                <option value="Boisar West">Boisar West</option>
+                                <option value="Boisar East">Boisar East</option>
+                                <option value="Tarapur Road, Boisar">Tarapur Road, Boisar</option>
+                                <option value="Tarapur MIDC Zone, Boisar">Tarapur MIDC Zone, Boisar</option>
+                                <option value="Betegaon, Boisar East">Betegaon, Boisar East</option>
+                                <option value="Ostwal Empire, Boisar">Ostwal Empire, Boisar</option>
+                                <option value="Umroli">Umroli</option>
+                                <option value="Palghar">Palghar</option>
+                                <option value="Kelwa">Kelwa</option>
+                                <option value="custom">✏️ Other Custom Area...</option>
+                              </select>
+                              {(!['Navapur Road, Boisar (West)', 'Near Boisar Railway Station', 'Boisar West', 'Boisar East', 'Tarapur Road, Boisar', 'Tarapur MIDC Zone, Boisar', 'Betegaon, Boisar East', 'Ostwal Empire, Boisar', 'Umroli', 'Palghar', 'Kelwa'].includes(hotelProfileArea)) && (
+                                <input
+                                  type="text"
+                                  value={hotelProfileArea}
+                                  onChange={e => setHotelProfileArea(e.target.value)}
+                                  placeholder="Type custom area..."
+                                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-900 outline-none focus:border-slate-800"
+                                />
+                              )}
+                            </div>
+
+                            <div className="sm:col-span-2">
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">Full Street Address &amp; Pincode *</label>
+                              <input
+                                type="text"
+                                required
+                                value={hotelProfileAddress}
+                                onChange={e => setHotelProfileAddress(e.target.value)}
+                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-slate-800"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">Nearest Landmark</label>
+                              <input
+                                type="text"
+                                value={hotelProfileLandmark}
+                                onChange={e => setHotelProfileLandmark(e.target.value)}
+                                placeholder="Near Boisar Railway Station / Old Market"
+                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 outline-none focus:border-slate-800"
+                              />
+                            </div>
+
+                            <div className="sm:col-span-2">
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">Google Maps Location Link (URL)</label>
+                              <input
+                                type="url"
+                                value={hotelProfileMapsUrl}
+                                onChange={e => setHotelProfileMapsUrl(e.target.value)}
+                                placeholder="https://maps.app.goo.gl/..."
+                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 outline-none focus:border-slate-800 font-mono"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">Reception Phone Number *</label>
+                              <input
+                                type="tel"
+                                required
+                                value={hotelProfilePhone}
+                                onChange={e => setHotelProfilePhone(e.target.value)}
+                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-slate-800 font-mono"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">WhatsApp Booking Number</label>
+                              <input
+                                type="tel"
+                                value={hotelProfileWhatsapp}
+                                onChange={e => setHotelProfileWhatsapp(e.target.value)}
+                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-none focus:border-slate-800 font-mono"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">Official Email</label>
+                              <input
+                                type="email"
+                                value={hotelProfileEmail}
+                                onChange={e => setHotelProfileEmail(e.target.value)}
+                                placeholder="reception@hotel.com"
+                                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 outline-none focus:border-slate-800"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 3. Hotel Amenities & Facilities */}
+                        <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <h5 className="text-xs font-black text-purple-950 uppercase tracking-wider">
-                              2. Hotel Photo Gallery ({hotelDashboardGallery.length} Photos)
+                            <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                              <span>✨</span> 3. Hotel Amenities &amp; Facilities ({hotelProfileAmenities.length} selected)
+                            </h5>
+                            <span className="text-[10px] text-slate-500 font-semibold">Click to toggle</span>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                            {[
+                              { label: 'Wi-Fi', Icon: Wifi },
+                              { label: 'AC', Icon: Wind },
+                              { label: 'Parking', Icon: Car },
+                              { label: 'TV', Icon: Tv },
+                              { label: 'Hot Water', Icon: Bath },
+                              { label: 'Clean Linens', Icon: Sparkles },
+                              { label: 'Power Backup', Icon: Zap },
+                              { label: 'Elevator / Lift', Icon: Building2 },
+                              { label: 'Room Service', Icon: Coffee },
+                              { label: 'CCTV Security', Icon: ShieldCheck },
+                              { label: 'Daily Housekeeping', Icon: Sparkles },
+                              { label: 'Private Bathroom', Icon: Bath },
+                              { label: 'Toiletries', Icon: Sparkles },
+                              { label: 'Tea / Coffee Maker', Icon: Coffee },
+                              { label: 'Swimming Pool', Icon: Waves },
+                              { label: 'Restaurant', Icon: Utensils },
+                            ].map((amenity) => {
+                              const isChecked = hotelProfileAmenities.some(
+                                a => normalizeHotelAmenity(a).toLowerCase() === amenity.label.toLowerCase()
+                              );
+                              return (
+                                <button
+                                  key={amenity.label}
+                                  type="button"
+                                  onClick={() => {
+                                    if (isChecked) {
+                                      setHotelProfileAmenities(
+                                        hotelProfileAmenities.filter(
+                                          a => normalizeHotelAmenity(a).toLowerCase() !== amenity.label.toLowerCase()
+                                        )
+                                      );
+                                    } else {
+                                      setHotelProfileAmenities([
+                                        ...hotelProfileAmenities.filter(
+                                          a => normalizeHotelAmenity(a).toLowerCase() !== amenity.label.toLowerCase()
+                                        ),
+                                        amenity.label
+                                      ]);
+                                    }
+                                  }}
+                                  className={`p-2 rounded-xl border text-xs font-bold text-left flex items-center justify-between gap-1.5 cursor-pointer transition-all ${
+                                    isChecked
+                                      ? 'bg-emerald-50 border-emerald-300 text-emerald-950 shadow-2xs ring-1 ring-emerald-400/40'
+                                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  <span className="flex items-center gap-1.5 truncate">
+                                    <amenity.Icon className={`w-4 h-4 shrink-0 ${isChecked ? 'text-emerald-700' : 'text-slate-500'}`} />
+                                    <span className="truncate">{amenity.label}</span>
+                                  </span>
+                                  <span className={`text-xs font-black ${isChecked ? 'text-emerald-700' : 'text-slate-300'}`}>
+                                    {isChecked ? '✓' : '+'}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Extra / Custom Amenities Chips & Adder */}
+                          {(() => {
+                            const standardPillLabels = [
+                              'wi-fi', 'ac', 'parking', 'tv', 'hot water', 'clean linens',
+                              'power backup', 'elevator / lift', 'room service', 'cctv security',
+                              'daily housekeeping', 'sanitized daily housekeeping', 'private bathroom', 'toiletries', 'complimentary toiletries',
+                              'tea / coffee maker', 'swimming pool', 'restaurant', 'in-house restaurant'
+                            ];
+                            const customList = hotelProfileAmenities.filter(
+                              a => !standardPillLabels.includes(normalizeHotelAmenity(a).toLowerCase())
+                            );
+
+                            return (
+                              <div className="pt-2 border-t border-slate-200/70 space-y-2">
+                                {customList.length > 0 && (
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Other Amenities:</span>
+                                    {customList.map((customA) => (
+                                      <span
+                                        key={customA}
+                                        className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-900 border border-emerald-300 px-2.5 py-1 rounded-lg text-xs font-bold shadow-2xs"
+                                      >
+                                        <span>✨ {customA}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => setHotelProfileAmenities(hotelProfileAmenities.filter(a => a !== customA))}
+                                          className="hover:text-rose-600 text-slate-400 font-black cursor-pointer ml-1"
+                                          title="Remove custom amenity"
+                                        >
+                                          ✕
+                                        </button>
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="text"
+                                    value={customAmenityInput}
+                                    onChange={e => setCustomAmenityInput(e.target.value)}
+                                    placeholder="+ Add Custom Amenity (e.g. Conference Hall, Lawn, Banquet)"
+                                    className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-900 outline-none focus:border-slate-800"
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleAddCustomAmenity();
+                                      }
+                                    }}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={handleAddCustomAmenity}
+                                    className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl transition cursor-pointer shrink-0"
+                                  >
+                                    Add
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+
+                        {/* 4. Safety, Badges & Suitability Tags */}
+                        <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3">
+                          <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>🛡️</span> 4. Key Badges, Distances &amp; Location Tags
+                          </h5>
+
+                          {/* Distance & Badge Selectors (Synced with Hotel Details Page) */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pb-2 border-b border-slate-200/80">
+                            <div>
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">
+                                🚆 Station Distance Highlight
+                              </label>
+                              <select
+                                value={['3 mins to Boisar Station', '2 mins walk to Station', '1 min walk to Station (Opposite)', '5 mins to Boisar Station', '8 mins to Boisar Station', '10 mins from Station'].includes(hotelProfileStationDist) ? hotelProfileStationDist : 'custom'}
+                                onChange={e => {
+                                  if (e.target.value !== 'custom') {
+                                    setHotelProfileStationDist(e.target.value);
+                                  }
+                                }}
+                                className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-slate-800 cursor-pointer mb-1"
+                              >
+                                <option value="3 mins to Boisar Station">3 mins to Boisar Station (Default)</option>
+                                <option value="2 mins walk to Station">2 mins walk to Station</option>
+                                <option value="1 min walk to Station (Opposite)">1 min walk to Station (Opposite)</option>
+                                <option value="5 mins to Boisar Station">5 mins to Boisar Station</option>
+                                <option value="8 mins to Boisar Station">8 mins to Boisar Station</option>
+                                <option value="10 mins from Station">10 mins from Station</option>
+                                <option value="custom">✏️ Custom Distance...</option>
+                              </select>
+                              {(!['3 mins to Boisar Station', '2 mins walk to Station', '1 min walk to Station (Opposite)', '5 mins to Boisar Station', '8 mins to Boisar Station', '10 mins from Station'].includes(hotelProfileStationDist)) && (
+                                <input
+                                  type="text"
+                                  value={hotelProfileStationDist}
+                                  onChange={e => setHotelProfileStationDist(e.target.value)}
+                                  placeholder="Type custom station distance..."
+                                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 outline-none focus:border-slate-800"
+                                />
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">
+                                🏭 MIDC Distance Highlight
+                              </label>
+                              <select
+                                value={['5 mins to MIDC', '3 mins to Tarapur MIDC', '8 mins to MIDC', '10 mins to Tarapur MIDC', '15 mins to MIDC', '20 mins to MIDC'].includes(hotelProfileMidcDist) ? hotelProfileMidcDist : 'custom'}
+                                onChange={e => {
+                                  if (e.target.value !== 'custom') {
+                                    setHotelProfileMidcDist(e.target.value);
+                                  }
+                                }}
+                                className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-slate-800 cursor-pointer mb-1"
+                              >
+                                <option value="5 mins to MIDC">5 mins to MIDC (Default)</option>
+                                <option value="3 mins to Tarapur MIDC">3 mins to Tarapur MIDC</option>
+                                <option value="8 mins to MIDC">8 mins to MIDC</option>
+                                <option value="10 mins to Tarapur MIDC">10 mins to Tarapur MIDC</option>
+                                <option value="15 mins to MIDC">15 mins to MIDC</option>
+                                <option value="20 mins to MIDC">20 mins to MIDC</option>
+                                <option value="custom">✏️ Custom MIDC Distance...</option>
+                              </select>
+                              {(!['5 mins to MIDC', '3 mins to Tarapur MIDC', '8 mins to MIDC', '10 mins to Tarapur MIDC', '15 mins to MIDC', '20 mins to MIDC'].includes(hotelProfileMidcDist)) && (
+                                <input
+                                  type="text"
+                                  value={hotelProfileMidcDist}
+                                  onChange={e => setHotelProfileMidcDist(e.target.value)}
+                                  placeholder="Type custom MIDC distance..."
+                                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 outline-none focus:border-slate-800"
+                                />
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">
+                                👥 Couple Badge Text
+                              </label>
+                              <select
+                                value={['Couples 18+', 'Couples 21+', 'Couple Friendly', 'Unmarried Couples Welcome', 'Family & Couples Welcome', '100% Private for Couples'].includes(hotelProfileCoupleBadge) ? hotelProfileCoupleBadge : 'custom'}
+                                onChange={e => {
+                                  if (e.target.value !== 'custom') {
+                                    setHotelProfileCoupleBadge(e.target.value);
+                                  }
+                                }}
+                                className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-slate-800 cursor-pointer mb-1"
+                              >
+                                <option value="Couples 18+">Couples 18+ (Default)</option>
+                                <option value="Couples 21+">Couples 21+</option>
+                                <option value="Couple Friendly">Couple Friendly</option>
+                                <option value="Unmarried Couples Welcome">Unmarried Couples Welcome</option>
+                                <option value="Family & Couples Welcome">Family & Couples Welcome</option>
+                                <option value="100% Private for Couples">100% Private for Couples</option>
+                                <option value="custom">✏️ Custom Couple Badge...</option>
+                              </select>
+                              {(!['Couples 18+', 'Couples 21+', 'Couple Friendly', 'Unmarried Couples Welcome', 'Family & Couples Welcome', '100% Private for Couples'].includes(hotelProfileCoupleBadge)) && (
+                                <input
+                                  type="text"
+                                  value={hotelProfileCoupleBadge}
+                                  onChange={e => setHotelProfileCoupleBadge(e.target.value)}
+                                  placeholder="Type custom couple badge..."
+                                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 outline-none focus:border-slate-800"
+                                />
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">
+                                🛡️ Safety Badge Text
+                              </label>
+                              <select
+                                value={['100% Safe', '100% Safe & Sanitized', '100% Private & Discreet', 'CCTV Secured', '24/7 Security Guard'].includes(hotelProfileSafetyBadge) ? hotelProfileSafetyBadge : 'custom'}
+                                onChange={e => {
+                                  if (e.target.value !== 'custom') {
+                                    setHotelProfileSafetyBadge(e.target.value);
+                                  }
+                                }}
+                                className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-slate-800 cursor-pointer mb-1"
+                              >
+                                <option value="100% Safe">100% Safe (Default)</option>
+                                <option value="100% Safe & Sanitized">100% Safe & Sanitized</option>
+                                <option value="100% Private & Discreet">100% Private & Discreet</option>
+                                <option value="CCTV Secured">CCTV Secured</option>
+                                <option value="24/7 Security Guard">24/7 Security Guard</option>
+                                <option value="custom">✏️ Custom Safety Badge...</option>
+                              </select>
+                              {(!['100% Safe', '100% Safe & Sanitized', '100% Private & Discreet', 'CCTV Secured', '24/7 Security Guard'].includes(hotelProfileSafetyBadge)) && (
+                                <input
+                                  type="text"
+                                  value={hotelProfileSafetyBadge}
+                                  onChange={e => setHotelProfileSafetyBadge(e.target.value)}
+                                  placeholder="Type custom safety badge..."
+                                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 outline-none focus:border-slate-800"
+                                />
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1">
+                                🕒 Check-in Badge Text
+                              </label>
+                              <select
+                                value={['24/7 Check-in', 'Flexible 24/7 Check-in', 'Easy 2-Min Check-in', 'Hourly & Night Check-in', 'Day & Night Stays'].includes(hotelProfileCheckinBadge) ? hotelProfileCheckinBadge : 'custom'}
+                                onChange={e => {
+                                  if (e.target.value !== 'custom') {
+                                    setHotelProfileCheckinBadge(e.target.value);
+                                  }
+                                }}
+                                className="w-full bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-slate-800 cursor-pointer mb-1"
+                              >
+                                <option value="24/7 Check-in">24/7 Check-in (Default)</option>
+                                <option value="Flexible 24/7 Check-in">Flexible 24/7 Check-in</option>
+                                <option value="Easy 2-Min Check-in">Easy 2-Min Check-in</option>
+                                <option value="Hourly & Night Check-in">Hourly & Night Check-in</option>
+                                <option value="Day & Night Stays">Day & Night Stays</option>
+                                <option value="custom">✏️ Custom Check-in Badge...</option>
+                              </select>
+                              {(!['24/7 Check-in', 'Flexible 24/7 Check-in', 'Easy 2-Min Check-in', 'Hourly & Night Check-in', 'Day & Night Stays'].includes(hotelProfileCheckinBadge)) && (
+                                <input
+                                  type="text"
+                                  value={hotelProfileCheckinBadge}
+                                  onChange={e => setHotelProfileCheckinBadge(e.target.value)}
+                                  placeholder="Type custom check-in badge..."
+                                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-800 outline-none focus:border-slate-800"
+                                />
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Specific Identity & Family Badges */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                            <label className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl p-2.5 cursor-pointer hover:border-slate-400 transition-colors">
+                              <input
+                                type="checkbox"
+                                checked={hotelProfileLocalId}
+                                onChange={e => setHotelProfileLocalId(e.target.checked)}
+                                className="w-4 h-4 text-slate-900 rounded cursor-pointer"
+                              />
+                              <div>
+                                <span className="text-xs font-bold text-slate-800 block">🪪 Accepts Local Boisar ID</span>
+                                <span className="text-[10px] text-slate-500 font-medium">Boisar / Palghar / Dahanu IDs warmly accepted</span>
+                              </div>
+                            </label>
+
+                            <label className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl p-2.5 cursor-pointer hover:border-slate-400 transition-colors">
+                              <input
+                                type="checkbox"
+                                checked={hotelProfileFamilyFriendly}
+                                onChange={e => setHotelProfileFamilyFriendly(e.target.checked)}
+                                className="w-4 h-4 text-slate-900 rounded cursor-pointer"
+                              />
+                              <div>
+                                <span className="text-xs font-bold text-slate-800 block">👨‍👩‍👧 Family Friendly Hotel</span>
+                                <span className="text-[10px] text-slate-500 font-medium">Safe environment for families &amp; children</span>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* 5. House Rules, ID Policies & Guidelines */}
+                        <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                              <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                                <span>📋</span> 5. Simple House Rules &amp; Check-In Guidelines
+                              </h5>
+                              <p className="text-[10px] text-slate-500 font-medium">Click on rule chips to toggle them ON / OFF instantly. No typing required!</p>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-slate-500 font-bold">Rule Tag:</span>
+                              <select
+                                value={hotelProfileRulesTag}
+                                onChange={e => setHotelProfileRulesTag(e.target.value)}
+                                className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-800 outline-none focus:border-slate-800 cursor-pointer"
+                              >
+                                <option value="Easy 2-Min Check-in">Easy 2-Min Check-in</option>
+                                <option value="Express Check-in">Express Check-in</option>
+                                <option value="Couple Friendly Rules">Couple Friendly Rules</option>
+                                <option value="Safe & Verified Stay">Safe & Verified Stay</option>
+                                <option value="Standard House Rules">Standard House Rules</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* Quick-Select Rule Chips (Click to Toggle) */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                            {[
+                              '18+ Valid Govt ID Required (Aadhaar / DL / DigiLocker)',
+                              '21+ Valid Govt ID Required (Aadhaar / DL / DigiLocker)',
+                              'Couples & Local Boisar IDs Warmly Welcome',
+                              '24/7 Flexible Check-in & Standard Check-out',
+                              'No Smoking inside AC Rooms',
+                              'Visitors allowed in Reception Lobby only',
+                              'Digital Payments (UPI / GPay / Cash) accepted'
+                            ].map((ruleText) => {
+                              const rulesList = hotelProfileRules.split('\n').map(r => r.trim()).filter(Boolean);
+                              const isSelected = rulesList.some(r => {
+                                const cleanR = r.toLowerCase().replace(/[^a-z0-9]/g, '');
+                                const cleanRule = ruleText.toLowerCase().replace(/[^a-z0-9]/g, '');
+                                return cleanR === cleanRule || cleanR.includes(cleanRule.slice(0, 16)) || cleanRule.includes(cleanR.slice(0, 16));
+                              });
+
+                              return (
+                                <button
+                                  key={ruleText}
+                                  type="button"
+                                  onClick={() => {
+                                    const isIdRule = ruleText.startsWith('18+') || ruleText.startsWith('21+') || ruleText.toLowerCase().includes('govt');
+                                    const isCoupleRule = ruleText.toLowerCase().includes('couple');
+                                    const isCheckoutRule = ruleText.toLowerCase().includes('check-out') || ruleText.toLowerCase().includes('checkout');
+                                    const isVisitorRule = ruleText.toLowerCase().includes('visitor');
+
+                                    if (isSelected) {
+                                      const filtered = rulesList.filter(r => {
+                                        const cleanR = r.toLowerCase().replace(/[^a-z0-9]/g, '');
+                                        const cleanRule = ruleText.toLowerCase().replace(/[^a-z0-9]/g, '');
+                                        return cleanR !== cleanRule && !cleanR.includes(cleanRule.slice(0, 16)) && !cleanRule.includes(cleanR.slice(0, 16));
+                                      });
+                                      setHotelProfileRules(deduplicateRules(filtered).join('\n'));
+                                    } else {
+                                      let updated = [...rulesList];
+                                      if (isIdRule) {
+                                        // Remove ANY existing ID rule (18+, 21+, Govt Photo ID, Aadhaar, etc.)
+                                        updated = updated.filter(r => {
+                                          const lower = r.toLowerCase();
+                                          return !(lower.includes('govt') || lower.includes('aadhaar') || lower.includes('photo id') || lower.includes('valid id') || lower.includes('18+') || lower.includes('21+'));
+                                        });
+                                      } else if (isCoupleRule) {
+                                        updated = updated.filter(r => !r.toLowerCase().includes('couple'));
+                                      } else if (isCheckoutRule) {
+                                        updated = updated.filter(r => !r.toLowerCase().includes('check-out') && !r.toLowerCase().includes('checkout'));
+                                      } else if (isVisitorRule) {
+                                        updated = updated.filter(r => !r.toLowerCase().includes('visitor'));
+                                      }
+                                      setHotelProfileRules(deduplicateRules([...updated, ruleText]).join('\n'));
+                                    }
+                                  }}
+                                  className={`p-2.5 rounded-xl border text-xs font-bold text-left flex items-start justify-between gap-2 cursor-pointer transition-all ${
+                                    isSelected
+                                      ? 'bg-emerald-50 border-emerald-300 text-emerald-950 shadow-2xs'
+                                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  <span className="flex items-start gap-1.5">
+                                    <span className="text-emerald-700 font-black shrink-0">{isSelected ? '✓' : '+'}</span>
+                                    <span>{ruleText}</span>
+                                  </span>
+                                  <span className={`text-[9.5px] font-black shrink-0 uppercase px-1.5 py-0.5 rounded ${isSelected ? 'bg-emerald-200/80 text-emerald-900' : 'bg-slate-100 text-slate-400'}`}>
+                                    {isSelected ? 'Active' : 'Off'}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Add Custom Rule (Clean single bar, no duplicate big textarea) */}
+                          <div className="pt-2 border-t border-slate-200/70 flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={customRuleInput}
+                              onChange={e => setCustomRuleInput(e.target.value)}
+                              placeholder="+ Add another custom rule (optional)..."
+                              className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-slate-800"
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  if (customRuleInput.trim()) {
+                                    const rulesList = hotelProfileRules.split('\n').map(r => r.trim()).filter(Boolean);
+                                    setHotelProfileRules([...rulesList, customRuleInput.trim()].join('\n'));
+                                    setCustomRuleInput('');
+                                  }
+                                }
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (customRuleInput.trim()) {
+                                  const rulesList = hotelProfileRules.split('\n').map(r => r.trim()).filter(Boolean);
+                                  setHotelProfileRules([...rulesList, customRuleInput.trim()].join('\n'));
+                                  setCustomRuleInput('');
+                                }
+                              }}
+                              className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl cursor-pointer shrink-0 transition-all active:scale-98"
+                            >
+                              + Add Rule
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* 6. Photo Gallery */}
+                        <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                              <span>📸</span> 6. Hotel Photo Gallery ({hotelDashboardGallery.length} Photos)
                             </h5>
                             <span className="text-[10px] text-slate-400 font-semibold">JPG, PNG supported</span>
                           </div>
 
-                          <label className="border-2 border-dashed border-purple-300 hover:border-purple-600 bg-purple-50/40 hover:bg-purple-50/80 rounded-2xl p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all text-center">
+                          <label className="border-2 border-dashed border-slate-300 hover:border-slate-500 bg-white hover:bg-slate-50 rounded-xl p-4 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all text-center">
                             <input
                               type="file"
                               multiple
@@ -6130,11 +7554,11 @@ function DashboardContent() {
                               onChange={handleHotelDashboardFileUpload}
                               className="hidden"
                             />
-                            <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-900 flex items-center justify-center text-lg">
+                            <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center text-base">
                               📤
                             </div>
                             <div>
-                              <p className="text-xs font-black text-purple-950">+ Click to Choose &amp; Upload Hotel Photos</p>
+                              <p className="text-xs font-bold text-slate-900">+ Click to Choose &amp; Upload Hotel Photos</p>
                               <p className="text-[10px] text-slate-500 font-medium">Select photos of rooms, building, and reception</p>
                             </div>
                           </label>
@@ -6142,7 +7566,7 @@ function DashboardContent() {
                           {hotelDashboardGallery.length > 0 && (
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 pt-1">
                               {hotelDashboardGallery.map((photoUrl, idx) => (
-                                <div key={idx} className="relative group rounded-xl overflow-hidden aspect-4/3 border border-purple-200 shadow-2xs">
+                                <div key={idx} className="relative group rounded-xl overflow-hidden aspect-4/3 border border-slate-200 shadow-2xs">
                                   <img
                                     src={photoUrl}
                                     alt={`Hotel photo ${idx + 1}`}
@@ -6162,72 +7586,51 @@ function DashboardContent() {
                           )}
                         </div>
 
-                        {/* 3. Safety & Location Tags */}
-                        <div className="bg-slate-50/70 border border-slate-200 rounded-2xl p-4 space-y-3">
-                          <h5 className="text-xs font-black text-purple-950 uppercase tracking-wider">3. Safety &amp; Location Tags</h5>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            <label className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl p-3 cursor-pointer hover:border-purple-400 transition-colors">
-                              <input
-                                type="checkbox"
-                                checked={hotelProfileCoupleFriendly}
-                                onChange={e => setHotelProfileCoupleFriendly(e.target.checked)}
-                                className="w-4 h-4 text-purple-900 rounded cursor-pointer"
-                              />
-                              <span className="text-xs font-bold text-slate-800">👥 Couples Welcome (18+)</span>
-                            </label>
-
-                            <label className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl p-3 cursor-pointer hover:border-purple-400 transition-colors">
-                              <input
-                                type="checkbox"
-                                checked={hotelProfileLocalId}
-                                onChange={e => setHotelProfileLocalId(e.target.checked)}
-                                className="w-4 h-4 text-purple-900 rounded cursor-pointer"
-                              />
-                              <span className="text-xs font-bold text-slate-800">🪪 Accepts Local ID</span>
-                            </label>
-
-                            <label className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl p-3 cursor-pointer hover:border-purple-400 transition-colors">
-                              <input
-                                type="checkbox"
-                                checked={hotelProfileNearStation}
-                                onChange={e => setHotelProfileNearStation(e.target.checked)}
-                                className="w-4 h-4 text-purple-900 rounded cursor-pointer"
-                              />
-                              <span className="text-xs font-bold text-slate-800">🚆 Near Boisar Station</span>
-                            </label>
-
-                            <label className="flex items-center gap-2.5 bg-white border border-slate-200 rounded-xl p-3 cursor-pointer hover:border-purple-400 transition-colors">
-                              <input
-                                type="checkbox"
-                                checked={hotelProfileNearMidc}
-                                onChange={e => setHotelProfileNearMidc(e.target.checked)}
-                                className="w-4 h-4 text-purple-900 rounded cursor-pointer"
-                              />
-                              <span className="text-xs font-bold text-slate-800">🏭 Near Tarapur MIDC</span>
-                            </label>
-                          </div>
-                        </div>
-
                         {/* Save Profile Button */}
-                        <div className="flex justify-end pt-2">
+                        <div className="flex justify-end pt-1">
                           <button
                             type="submit"
-                            className="w-full sm:w-auto bg-purple-900 hover:bg-purple-950 text-white font-black text-xs px-8 py-3.5 rounded-2xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+                            className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-8 py-3 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
                           >
-                            <span>✓ Save &amp; Publish Hotel Profile</span>
+                            <span>✓ Save &amp; Publish Complete Hotel Profile</span>
                           </button>
                         </div>
                       </form>
-                    )}
+
+                      {/* 🚨 DANGER ZONE: Delete Hotel Listing */}
+                      {!pendingDeletionReq && (
+                        <div className="bg-rose-50/70 border border-rose-200/90 rounded-2xl p-4 sm:p-5 text-left space-y-3">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="space-y-1">
+                              <h5 className="text-xs sm:text-sm font-black text-rose-900 flex items-center gap-1.5 uppercase tracking-wider">
+                                <span>🗑️</span> Danger Zone: Delete Hotel Listing
+                              </h5>
+                              <p className="text-xs text-rose-700 font-medium">
+                                Want to permanently remove {hotelProfileName} from Majh Boisar? You can submit a deletion request. Once approved by the Majh Boisar Admin, the hotel listing will be permanently deleted.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setIsDeleteDialogOpen(true)}
+                              className="self-start sm:self-auto bg-rose-600 hover:bg-rose-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-98 shrink-0"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete Hotel</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                     {/* ══════════════════════════════════════════════════════
                         VIEW 4: SETTLEMENTS & PAYOUTS (90% TO HOTEL OWNER)
                        ══════════════════════════════════════════════════════ */}
                     {hotelDeskView === 'payouts' && (() => {
-                      const totalGross = hotelBookingsList.reduce((acc, b) => acc + (Number(b.totalAmount) || 0), 0);
+                      const totalGross = specificHotelBookings.reduce((acc, b) => acc + (Number(b.totalAmount) || 0), 0);
                       const platformCut = Math.round(totalGross * 0.10); // 10% platform fee
                       const netPayable = totalGross - platformCut; // 90% to hotel
-                      const totalSettled = hotelBookingsList
+                      const totalSettled = specificHotelBookings
                         .filter(b => (b.payoutStatus || '').toLowerCase() === 'settled')
                         .reduce((acc, b) => acc + Math.round((Number(b.totalAmount) || 0) * 0.90), 0);
                       const pendingPayout = Math.max(0, netPayable - totalSettled);
@@ -6368,19 +7771,19 @@ function DashboardContent() {
                                 <p className="text-[11px] text-slate-500 font-medium">Live breakdown of guest bookings, platform fee, and payout settlement status</p>
                               </div>
                               <span className="bg-slate-100 text-slate-700 text-xs font-black px-2.5 py-1 rounded-xl">
-                                {hotelBookingsList.length} Total Records
+                                {specificHotelBookings.length} Total Records
                               </span>
                             </div>
 
-                            {hotelBookingsList.length === 0 ? (
+                            {specificHotelBookings.length === 0 ? (
                               <div className="py-8 text-center space-y-1">
                                 <span className="text-2xl block">🏨</span>
-                                <p className="text-xs font-black text-slate-700">No hotel booking payouts recorded yet.</p>
-                                <p className="text-[11px] text-slate-400">When online guests book rooms, their payout settlements will show here.</p>
+                                <p className="text-xs font-black text-slate-700">No hotel booking payouts recorded yet for this property.</p>
+                                <p className="text-[11px] text-slate-400">When online guests book rooms at this hotel, their payout settlements will show here.</p>
                               </div>
                             ) : (
                               <div className="divide-y divide-slate-100">
-                                {hotelBookingsList.map((booking) => {
+                                {specificHotelBookings.map((booking) => {
                                   const total = Number(booking.totalAmount) || 0;
                                   const cut = Math.round(total * 0.10);
                                   const net = total - cut;
@@ -7808,6 +9211,33 @@ function DashboardContent() {
                 {/* Subtab Content: Profile Settings Editor */}
                 {activeSubTab === 'settings' && (
                   <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-sm space-y-4">
+                    {/* ⚠️ Deletion Request Banner if Pending */}
+                    {pendingDeletionReq && (
+                      <div className="bg-rose-50 border-2 border-rose-300 rounded-2xl p-4 sm:p-5 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white px-2.5 py-0.5 rounded-full inline-block">
+                            ⚠️ Deletion Request Pending Admin Approval
+                          </span>
+                          <h5 className="text-sm font-black text-rose-950">
+                            You requested to delete {business?.name || 'this listing'}
+                          </h5>
+                          <p className="text-xs text-rose-800 font-medium">
+                            Submitted on {pendingDeletionReq.requestedAt} · Reason: &quot;{pendingDeletionReq.reason}&quot;
+                          </p>
+                          <p className="text-[11px] text-rose-700 font-medium">
+                            Our admin team is reviewing this request. Once approved, this listing will be permanently removed.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleCancelDeletionRequest}
+                          className="bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer shrink-0 shadow-2xs"
+                        >
+                          Cancel Deletion Request
+                        </button>
+                      </div>
+                    )}
+
                     <div>
                       <h3 className="text-xs font-black text-slate-855 uppercase tracking-wider">Edit Business Profile Details</h3>
                       <p className="text-xs text-slate-500 mt-0.5">Update listing name, category, cover images, contact details, and locations visible to customers.</p>
@@ -8172,6 +9602,30 @@ function DashboardContent() {
                         {updatingProfile ? 'Saving Changes...' : 'Save Profile Changes'}
                       </button>
                     </form>
+
+                    {/* 🚨 DANGER ZONE: Delete Business Listing */}
+                    {!pendingDeletionReq && (
+                      <div className="bg-rose-50/70 border border-rose-200/90 rounded-2xl p-4 sm:p-5 text-left space-y-3 mt-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="space-y-1">
+                            <h5 className="text-xs sm:text-sm font-black text-rose-900 flex items-center gap-1.5 uppercase tracking-wider">
+                              <span>🗑️</span> Danger Zone: Delete Business Listing
+                            </h5>
+                            <p className="text-xs text-rose-700 font-medium">
+                              Want to permanently remove {business?.name || 'this business'} from Majh Boisar? You can submit a deletion request. Once approved by the Majh Boisar Admin, the listing will be permanently deleted.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setIsDeleteDialogOpen(true)}
+                            className="self-start sm:self-auto bg-rose-600 hover:bg-rose-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-98 shrink-0"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete Business</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -10341,6 +11795,108 @@ function DashboardContent() {
           onClose={() => setIsStandeeModalOpen(false)}
           business={business}
         />
+      )}
+
+      {/* 🚨 Confirmation Modal: Request Listing Deletion */}
+      {isDeleteDialogOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-lg w-full border border-slate-200 p-5 sm:p-6 shadow-2xl space-y-4 text-left">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-600 shrink-0">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
+                    Request Listing Deletion
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    {isCurrentEntityHotel ? hotelProfileName : (business?.name || 'My Listing')}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-sm font-black transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 space-y-1">
+              <span className="text-[10.5px] font-black uppercase tracking-wider text-amber-900 flex items-center gap-1">
+                <span>⚠️</span> Admin Approval Required
+              </span>
+              <p className="text-xs text-amber-800 font-medium leading-relaxed">
+                To prevent accidental loss of bookings, customer reviews, and verified data, deletion requests must be reviewed and approved by the Majh Boisar Admin team. Once approved, all data will be permanently wiped.
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmitDeletionRequest} className="space-y-3.5">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Reason for Deletion *
+                </label>
+                <select
+                  value={deletionReason}
+                  onChange={(e) => setDeletionReason(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-slate-900 cursor-pointer"
+                >
+                  <option value="Business / Hotel has permanently closed">Business / Hotel has permanently closed</option>
+                  <option value="Ownership transferred or rebranding">Ownership transferred or rebranding</option>
+                  <option value="Relocated outside Boisar area">Relocated outside Boisar area</option>
+                  <option value="Temporarily pausing operations">Temporarily pausing operations</option>
+                  <option value="Duplicate or test listing">Duplicate or test listing</option>
+                  <option value="Other reason">Other reason</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Additional Notes (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={deletionCustomNotes}
+                  onChange={(e) => setDeletionCustomNotes(e.target.value)}
+                  placeholder="Provide any details for the admin team (optional)..."
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 outline-none focus:border-slate-900"
+                />
+              </div>
+
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-2">
+                {isAdminAuth && (
+                  <button
+                    type="button"
+                    onClick={handleAdminImmediateDelete}
+                    className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-amber-300 border border-amber-400/40 text-xs font-black px-4 py-2.5 rounded-xl transition-all cursor-pointer shadow-xs"
+                    title="SuperAdmin immediate delete without waiting for approval"
+                  >
+                    ⚡ Instant Admin Delete
+                  </button>
+                )}
+
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end ml-auto">
+                  <button
+                    type="button"
+                    onClick={() => setIsDeleteDialogOpen(false)}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+                  >
+                    Keep Listing
+                  </button>
+                  <button
+                    type="submit"
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs transition-all cursor-pointer shadow-xs active:scale-98 flex items-center justify-center gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Submit Deletion Request</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
     </div>

@@ -36,9 +36,13 @@ import {
   Tv,
   Zap,
   Train,
-  Lock
+  Lock,
+  Bath,
+  Coffee,
+  Waves,
+  Utensils
 } from 'lucide-react';
-import { BOISAR_HOTELS, HotelItem, getAllHotels, recordHotelClick, calculateStayWindow } from '@/lib/hotelsData';
+import { BOISAR_HOTELS, HotelItem, getAllHotels, recordHotelClick, calculateStayWindow, normalizeHotelAmenity, deduplicateRules } from '@/lib/hotelsData';
 import { useApp } from '@/context/AppContext';
 import HotelTimePicker from '@/components/HotelTimePicker';
 import MyHotelPassesModal from '@/components/MyHotelPassesModal';
@@ -50,7 +54,7 @@ export default function HotelsPage() {
 
   const [hotels, setHotels] = useState<HotelItem[]>(BOISAR_HOTELS);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'All' | 'Hourly' | 'Couple' | 'Luxury' | 'Budget' | 'Station' | 'MIDC'>('All');
+  const [activeTab, setActiveTab] = useState<'All' | 'Hourly' | 'DayNight' | 'Couple' | 'Luxury' | 'Budget' | 'Station' | 'MIDC'>('All');
   const [sortBy, setSortBy] = useState<'recommended' | 'price_low' | 'price_high' | 'rating' | 'station' | 'midc'>('recommended');
   
   // User's own booking passes
@@ -118,19 +122,29 @@ export default function HotelsPage() {
     whatsapp: '',
     stationDistance: '3 mins to Boisar Station',
     midcDistance: '5 mins to Tarapur MIDC',
+    rating: '4.5',
+    reviewsCount: '48',
     isCoupleFriendly: true,
     acceptsLocalId: true,
-    nearStation: false,
+    nearStation: true,
     nearMidc: false,
+    dayStayTimingWindow: '09:00 AM – 07:00 PM',
+    nightStayCheckIn: '12:00 PM',
+    nightStayCheckOut: '11:00 AM',
+    houseRulesTag: 'Easy 2-Min Check-in',
     description: 'Verified hotel in Boisar offering clean air-conditioned rooms, swift check-ins, complete privacy, and flexible hourly stays.',
-    amenitiesList: ['AC Deluxe', 'Free Fast Wi-Fi', 'Hot Shower & Geyser', 'Free Parking', 'TV Screen', 'Clean Bedding', '24/7 Power Backup', 'Room Service'],
+    amenitiesList: ['Wi-Fi', 'AC', 'Parking', 'TV', 'Hot Water', 'Clean Linens', 'Power Backup', 'Room Service'],
     rulesList: [
-      'Original Valid Photo ID (Aadhaar/Driving License/Passport) required at check-in.',
-      'Couples 18+ Welcome with complete privacy.',
-      'Pay on arrival at Reception Desk (No advance required).',
-      'Flexible 24/7 check-in slots available.'
+      '18+ Valid Govt ID Required (Aadhaar / DL / DigiLocker)',
+      'Couples & Local Boisar IDs Warmly Welcome',
+      '24/7 Flexible Check-in & Standard Check-out',
+      'Check-out timings strictly observed for room sanitization',
+      'Visitors allowed in Reception Lobby only'
     ]
   });
+
+  const [newHotelCustomAmenity, setNewHotelCustomAmenity] = useState('');
+  const [newHotelCustomRule, setNewHotelCustomRule] = useState('');
 
   const PRESET_HOTEL_PHOTOS = [
     'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
@@ -141,9 +155,16 @@ export default function HotelsPage() {
     'https://images.unsplash.com/photo-1591088398332-8a7791972843?w=800&auto=format&fit=crop&q=80'
   ];
 
-  const [uploadedGalleryPhotos, setUploadedGalleryPhotos] = useState<string[]>([
-    'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=800&auto=format&fit=crop&q=80'
+  const [uploadedGalleryPhotos, setUploadedGalleryPhotos] = useState<string[]>([]);
+
+  const [hotelAmenitiesToAdd, setHotelAmenitiesToAdd] = useState<string[]>([
+    'Air Conditioning', 'Free Wi-Fi', 'Hot Shower', 'Clean Linen', '24/7 Front Desk'
+  ]);
+
+  const [hotelPhotosUploaded, setHotelPhotosUploaded] = useState<string[]>([
+    PRESET_HOTEL_PHOTOS[0],
+    PRESET_HOTEL_PHOTOS[1],
+    PRESET_HOTEL_PHOTOS[2]
   ]);
 
   // AC & Non-AC Room Tariffs for new hotel
@@ -162,10 +183,10 @@ export default function HotelsPage() {
 
   const [hotelRoomsToAdd, setHotelRoomsToAdd] = useState<any[]>([
     {
-      id: 'r_1',
+      id: 'r_initial_1',
       name: 'Deluxe AC Room',
       type: 'Deluxe AC',
-      bedType: '1 Queen Bed',
+      bedType: '1 King Bed',
       maxGuests: 2,
       hourly3h: '699',
       hourly6h: '1099',
@@ -222,11 +243,14 @@ export default function HotelsPage() {
   };
 
   useEffect(() => {
-    setHotels(getAllHotels());
+    const refreshHotels = () => setHotels(getAllHotels());
+    refreshHotels();
     if (loggedInUser) {
       setGuestName(loggedInUser.name || '');
       setGuestPhone(loggedInUser.phone || '');
     }
+    window.addEventListener('storage', refreshHotels);
+    return () => window.removeEventListener('storage', refreshHotels);
   }, [loggedInUser]);
 
   // Handle Photo Navigation on specific hotel card
@@ -268,10 +292,11 @@ export default function HotelsPage() {
         h.category.toLowerCase().includes(q);
 
       let matchesTab = true;
-      if (activeTab === 'Hourly') matchesTab = h.is3hAvailable || h.is6hAvailable;
+      if (activeTab === 'Hourly') matchesTab = Boolean(h.offersHourly !== false && (h.is3hAvailable || h.is6hAvailable || h.is12hAvailable));
+      else if (activeTab === 'DayNight') matchesTab = Boolean(h.isNightAvailable || h.isDayAvailable);
       else if (activeTab === 'Couple') matchesTab = h.isCoupleFriendly;
       else if (activeTab === 'Luxury') matchesTab = h.category === 'Luxury' || h.category === 'Executive';
-      else if (activeTab === 'Budget') matchesTab = h.hourlyRate3h <= 450 || h.nightRate <= 1200;
+      else if (activeTab === 'Budget') matchesTab = (h.offersHourly !== false ? h.hourlyRate3h <= 450 : h.nightRate <= 1400);
       else if (activeTab === 'Station') matchesTab = h.nearStation;
       else if (activeTab === 'MIDC') matchesTab = h.nearMidc;
 
@@ -478,7 +503,8 @@ export default function HotelsPage() {
           <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none border-t border-slate-100 pt-1">
             {[
               { id: 'All', label: 'All' },
-              { id: 'Hourly', label: 'Hourly' },
+              { id: 'Hourly', label: 'Hourly (3h/6h)' },
+              { id: 'DayNight', label: 'Day & Night Stays' },
               { id: 'Couple', label: 'Couple Friendly' },
               { id: 'Luxury', label: 'Luxury' },
               { id: 'Budget', label: 'Under ₹500' },
@@ -548,14 +574,19 @@ export default function HotelsPage() {
                       <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
                         Coming Soon
                       </h3>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-1">
+                      <p className="text-xs font-semibold text-slate-500 mt-0.5 flex items-center gap-1.5">
                         <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span>{item.area}</span>
                       </p>
                     </div>
 
-                    <div className="pt-1">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 text-slate-500 text-xs font-bold border border-slate-200 select-none">
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-slate-400">
+                        <span>Private Room</span>
+                        <span>•</span>
+                        <span>Attached Bath</span>
+                      </div>
+                      <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg flex items-center gap-1">
                         <Lock className="w-3.5 h-3.5 text-slate-400" />
                         <span>Coming Soon</span>
                       </span>
@@ -570,10 +601,10 @@ export default function HotelsPage() {
             {/* Results Header */}
             <div className="flex items-center justify-between gap-2 mb-2 px-0.5 text-left">
               <h2 className="text-xs sm:text-sm font-black text-slate-900 whitespace-nowrap">
-                {filteredAndSortedHotels.length} Hourly Hotels in Boisar
+                {filteredAndSortedHotels.length} {activeTab === 'Hourly' ? 'Hourly ' : activeTab === 'DayNight' ? 'Day & Night Stay ' : activeTab === 'Couple' ? 'Couple Friendly ' : activeTab === 'Luxury' ? 'Luxury ' : activeTab === 'Budget' ? 'Budget ' : ''}Hotels in Boisar
               </h2>
               <span className="text-[10.5px] sm:text-[11px] text-slate-500 font-medium whitespace-nowrap">
-                Flexible Short Stays · ₹0 Convenience Fee
+                {activeTab === 'Hourly' ? 'Flexible Short Stays · 3h, 6h, 12h' : 'Verified Boisar Stays · Instant Confirmation'}
               </span>
             </div>
 
@@ -756,39 +787,81 @@ export default function HotelsPage() {
 
                         {/* Bottom Row */}
                         <div className="pt-2 border-t border-slate-100 flex items-center gap-2 sm:gap-2.5">
-                          <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
-                            <span className="text-sm sm:text-base font-black text-slate-900 block">
-                              ₹{hotel.hourlyRate3h}
-                            </span>
-                            <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
-                              3 Hrs
-                            </span>
-                          </div>
+                          {hotel.offersHourly !== false ? (
+                            <>
+                              <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
+                                <span className="text-sm sm:text-base font-black text-slate-900 block">
+                                  ₹{hotel.hourlyRate3h}
+                                </span>
+                                <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                                  3 Hrs
+                                </span>
+                              </div>
 
-                          <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
-                            <span className="text-sm sm:text-base font-black text-slate-900 block">
-                              ₹{hotel.hourlyRate6h}
-                            </span>
-                            <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
-                              6 Hrs
-                            </span>
-                          </div>
+                              <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
+                                <span className="text-sm sm:text-base font-black text-slate-900 block">
+                                  ₹{hotel.hourlyRate6h}
+                                </span>
+                                <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                                  6 Hrs
+                                </span>
+                              </div>
 
-                          <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
-                            <span className="text-sm sm:text-base font-black text-slate-900 block">
-                              ₹{hotel.hourlyRate12h}
-                            </span>
-                            <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
-                              12 Hrs
-                            </span>
-                          </div>
+                              <div className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-250 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer">
+                                <span className="text-sm sm:text-base font-black text-slate-900 block">
+                                  ₹{hotel.hourlyRate12h}
+                                </span>
+                                <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                                  12 Hrs
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  router.push(`/hotels/${hotel.slug || hotel.id}?stay=day`);
+                                }}
+                                className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer active:scale-95"
+                              >
+                                <span className="text-sm sm:text-base font-black text-slate-900 block">
+                                  ₹{hotel.dayRate || hotel.hourlyRate12h || Math.max(799, Math.round(hotel.nightRate * 0.75))}
+                                </span>
+                                <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                                  ☀️ Day Stay
+                                </span>
+                              </div>
+
+                              <div 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  router.push(`/hotels/${hotel.slug || hotel.id}?stay=night`);
+                                }}
+                                className="flex-1 bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-400 rounded-2xl py-2 px-2.5 text-center transition-all cursor-pointer active:scale-95"
+                              >
+                                <span className="text-sm sm:text-base font-black text-slate-900 block">
+                                  ₹{hotel.nightRate}
+                                </span>
+                                <span className="text-[9.5px] font-bold text-slate-500 block uppercase tracking-wider">
+                                  🌙 Night Stay
+                                </span>
+                              </div>
+                            </>
+                          )}
 
                           <div className="flex items-center gap-1.5 pl-1 shrink-0">
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                triggerWhatsApp(hotel, '3 Hours Stay', hotel.hourlyRate3h);
+                                triggerWhatsApp(
+                                  hotel,
+                                  hotel.offersHourly !== false ? '3 Hours Stay' : 'Day / Night Stay',
+                                  hotel.offersHourly !== false ? hotel.hourlyRate3h : hotel.nightRate
+                                );
                               }}
                               className="p-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl transition-all cursor-pointer shadow-2xs"
                               title="WhatsApp Hotel"
@@ -1142,9 +1215,7 @@ export default function HotelsPage() {
                   return;
                 }
 
-                const gallery = uploadedGalleryPhotos.length > 0 
-                  ? uploadedGalleryPhotos 
-                  : [PRESET_HOTEL_PHOTOS[0], PRESET_HOTEL_PHOTOS[1]];
+                const gallery = uploadedGalleryPhotos;
 
                 const lowest3h = offersHourly ? Math.min(Number(newHotelNonAc3h) || 499, Number(newHotelAc3h) || 699) : 0;
                 const lowest6h = offersHourly ? Math.min(Number(newHotelNonAc6h) || 799, Number(newHotelAc6h) || 1099) : 0;
@@ -1187,17 +1258,29 @@ export default function HotelsPage() {
                   midcDistance: newHotelForm.midcDistance || '5 mins to Tarapur MIDC',
                   gallery: gallery,
                   amenities: newHotelForm.amenitiesList.map(a => {
-                    if (a.includes('AC')) return { name: a, icon: '❄️' };
-                    if (a.includes('Wi-Fi')) return { name: a, icon: '📶' };
-                    if (a.includes('Shower') || a.includes('Water')) return { name: a, icon: '🚿' };
-                    if (a.includes('Parking')) return { name: a, icon: '🅿️' };
-                    if (a.includes('TV')) return { name: a, icon: '📺' };
-                    if (a.includes('Power') || a.includes('Backup')) return { name: a, icon: '⚡' };
-                    if (a.includes('Service')) return { name: a, icon: '🛎️' };
-                    return { name: a, icon: '✨' };
+                    const norm = normalizeHotelAmenity(a);
+                    return {
+                      name: norm,
+                      icon: norm === 'Wi-Fi' ? 'Wifi' :
+                            norm === 'AC' ? 'AirVent' :
+                            norm === 'Parking' ? 'Car' :
+                            norm === 'TV' ? 'Tv' :
+                            norm === 'Hot Water' ? 'Droplets' :
+                            norm === 'Clean Linens' ? 'Bed' :
+                            norm === 'Power Backup' ? 'Zap' :
+                            norm === 'Elevator / Lift' ? 'Building' :
+                            norm === 'Room Service' ? 'Coffee' :
+                            norm === 'CCTV Security' ? 'Shield' :
+                            norm === 'Swimming Pool' ? 'Waves' :
+                            norm === 'Restaurant' ? 'Utensils' : 'Sparkles'
+                    };
                   }),
                   description: newHotelForm.description || 'Verified local hotel listed on Majh Boisar directory offering air-conditioned rooms, swift check-ins, complete privacy, and comfortable stays.',
-                  rules: newHotelForm.rulesList,
+                  dayStayTimingWindow: newHotelForm.dayStayTimingWindow || '09:00 AM – 07:00 PM',
+                  nightStayCheckIn: newHotelForm.nightStayCheckIn || '12:00 PM',
+                  nightStayCheckOut: newHotelForm.nightStayCheckOut || '11:00 AM',
+                  houseRulesTag: newHotelForm.houseRulesTag || 'Easy 2-Min Check-in',
+                  rules: deduplicateRules(newHotelForm.rulesList),
                   rooms: [
                     {
                       id: 'r_ac',
@@ -1211,7 +1294,7 @@ export default function HotelsPage() {
                       hourly12h: offersHourly ? (Number(newHotelAc12h) || 1599) : 0,
                       dayRate: Number(newHotelAcDay) || 1499,
                       nightRate: Number(newHotelAcNight) || 1899,
-                      image: gallery[0] || PRESET_HOTEL_PHOTOS[0],
+                      image: gallery[0] || '',
                       amenities: ['AC', 'King Bed', 'Free WiFi', 'Hot Shower', 'Clean Bedding']
                     },
                     {
@@ -1226,7 +1309,7 @@ export default function HotelsPage() {
                       hourly12h: offersHourly ? (Number(newHotelNonAc12h) || 1199) : 0,
                       dayRate: Number(newHotelNonAcDay) || 999,
                       nightRate: Number(newHotelNonAcNight) || 1399,
-                      image: gallery[1] || gallery[0] || PRESET_HOTEL_PHOTOS[1],
+                      image: gallery[1] || gallery[0] || '',
                       amenities: ['Fan Ventilated', 'Queen Bed', 'Free WiFi', 'Clean Bedding']
                     }
                   ],
@@ -1248,6 +1331,13 @@ export default function HotelsPage() {
                   localStorage.setItem('majh_boisar_user_hotels', JSON.stringify([newHotelItem, ...savedUser]));
 
                   if (typeof window !== 'undefined') {
+                    localStorage.setItem(`majh_boisar_hotel_day_stay_timing_${newHotelItem.slug}`, newHotelItem.dayStayTimingWindow || '09:00 AM – 07:00 PM');
+                    localStorage.setItem(`majh_boisar_hotel_night_checkin_${newHotelItem.slug}`, newHotelItem.nightStayCheckIn || '12:00 PM');
+                    localStorage.setItem(`majh_boisar_hotel_night_checkout_${newHotelItem.slug}`, newHotelItem.nightStayCheckOut || '11:00 AM');
+                    localStorage.setItem(`majh_boisar_hotel_rules_${newHotelItem.slug}`, JSON.stringify(newHotelItem.rules || []));
+                    localStorage.setItem(`majh_boisar_hotel_rules_tag_${newHotelItem.slug}`, newHotelItem.houseRulesTag || 'Easy 2-Min Check-in');
+                    localStorage.setItem(`majh_boisar_hotel_hourly_${newHotelItem.slug}`, String(offersHourly));
+
                     window.dispatchEvent(new Event('storage'));
                     window.dispatchEvent(new CustomEvent('boisar_hotel_created', { detail: newHotelItem }));
                   }
@@ -1676,62 +1766,275 @@ export default function HotelsPage() {
 
               {/* SECTION 5: ROOM AMENITIES SELECTION */}
               <div className="space-y-2.5 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200">
-                <span className="text-[10px] font-black text-purple-900 uppercase tracking-wider block">
-                  5. Select Room Amenities
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black text-purple-900 uppercase tracking-wider block">
+                    5. Select Room Amenities ({newHotelForm.amenitiesList.length} selected)
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium">Click to toggle ON/OFF</span>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
-                    { label: 'AC Deluxe', icon: '❄️' },
-                    { label: 'Free Fast Wi-Fi', icon: '📶' },
-                    { label: 'Hot Shower & Geyser', icon: '🚿' },
-                    { label: 'Free Parking', icon: '🅿️' },
-                    { label: 'TV Screen', icon: '📺' },
-                    { label: 'Clean Bedding', icon: '🛏️' },
-                    { label: '24/7 Power Backup', icon: '⚡' },
-                    { label: 'Room Service', icon: '🛎️' }
+                    { id: 'Wi-Fi', label: 'Wi-Fi', icon: Wifi },
+                    { id: 'AC', label: 'AC', icon: Wind },
+                    { id: 'Parking', label: 'Parking', icon: Car },
+                    { id: 'TV', label: 'TV', icon: Tv },
+                    { id: 'Hot Water', label: 'Hot Water', icon: Bath },
+                    { id: 'Clean Linens', label: 'Clean Linens', icon: Sparkles },
+                    { id: 'Power Backup', label: 'Power Backup', icon: Zap },
+                    { id: 'Room Service', label: 'Room Service', icon: Coffee },
+                    { id: 'Elevator / Lift', label: 'Elevator / Lift', icon: Building2 },
+                    { id: 'CCTV Security', label: 'CCTV Security', icon: ShieldCheck },
+                    { id: 'Swimming Pool', label: 'Swimming Pool', icon: Waves },
+                    { id: 'Restaurant', label: 'Restaurant', icon: Utensils }
                   ].map((amenity) => {
+                    const Icon = amenity.icon;
                     const isSelected = newHotelForm.amenitiesList.includes(amenity.label);
                     return (
-                      <label 
-                        key={amenity.label}
+                      <button
+                        type="button"
+                        key={amenity.id}
+                        onClick={() => {
+                          if (isSelected) {
+                            setNewHotelForm({
+                              ...newHotelForm,
+                              amenitiesList: newHotelForm.amenitiesList.filter(a => a !== amenity.label)
+                            });
+                          } else {
+                            setNewHotelForm({
+                              ...newHotelForm,
+                              amenitiesList: [...newHotelForm.amenitiesList, amenity.label]
+                            });
+                          }
+                        }}
                         className={`flex items-center gap-2 p-2 rounded-xl border text-xs font-bold cursor-pointer transition-all ${
                           isSelected 
                             ? 'bg-purple-900 text-white border-purple-950 shadow-2xs' 
                             : 'bg-white text-slate-700 border-slate-200 hover:border-purple-300'
                         }`}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {
-                            if (isSelected) {
-                              setNewHotelForm({
-                                ...newHotelForm,
-                                amenitiesList: newHotelForm.amenitiesList.filter(a => a !== amenity.label)
-                              });
-                            } else {
-                              setNewHotelForm({
-                                ...newHotelForm,
-                                amenitiesList: [...newHotelForm.amenitiesList, amenity.label]
-                              });
-                            }
-                          }}
-                          className="hidden"
-                        />
-                        <span>{amenity.icon}</span>
+                        <Icon className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
                         <span className="truncate">{amenity.label}</span>
-                      </label>
+                      </button>
                     );
                   })}
                 </div>
+
+                {/* Additional Custom Amenity Input */}
+                <div className="flex gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={newHotelCustomAmenity}
+                    onChange={(e) => setNewHotelCustomAmenity(e.target.value)}
+                    placeholder="+ Add custom amenity (e.g. Balcony, Mini Fridge)..."
+                    className="flex-1 bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-purple-600 font-medium"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const val = newHotelCustomAmenity.trim();
+                        if (val && !newHotelForm.amenitiesList.includes(val)) {
+                          setNewHotelForm({
+                            ...newHotelForm,
+                            amenitiesList: [...newHotelForm.amenitiesList, val]
+                          });
+                          setNewHotelCustomAmenity('');
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const val = newHotelCustomAmenity.trim();
+                      if (val && !newHotelForm.amenitiesList.includes(val)) {
+                        setNewHotelForm({
+                          ...newHotelForm,
+                          amenitiesList: [...newHotelForm.amenitiesList, val]
+                        });
+                        setNewHotelCustomAmenity('');
+                      }
+                    }}
+                    className="px-3 py-1.5 bg-purple-900 hover:bg-purple-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shrink-0"
+                  >
+                    + Add
+                  </button>
+                </div>
               </div>
 
-              {/* SECTION 6: SAFETY & POLICIES CHECKBOXES */}
-              <div className="space-y-2 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200">
+              {/* SECTION 6: OFFICIAL STAY TIMINGS */}
+              <div className="space-y-3 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200">
                 <span className="text-[10px] font-black text-purple-900 uppercase tracking-wider block">
-                  6. Safety, Rules &amp; Check-in Policies
+                  6. Official Stay Timings &amp; Check-In Windows
                 </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-600 mb-1 uppercase">☀️ Day Stay Window</label>
+                    <input
+                      type="text"
+                      value={newHotelForm.dayStayTimingWindow}
+                      onChange={(e) => setNewHotelForm({ ...newHotelForm, dayStayTimingWindow: e.target.value })}
+                      placeholder="09:00 AM – 07:00 PM"
+                      className="w-full bg-white border border-slate-250 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-purple-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-600 mb-1 uppercase">🌙 Night Check-In</label>
+                    <input
+                      type="text"
+                      value={newHotelForm.nightStayCheckIn}
+                      onChange={(e) => setNewHotelForm({ ...newHotelForm, nightStayCheckIn: e.target.value })}
+                      placeholder="12:00 PM"
+                      className="w-full bg-white border border-slate-250 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-purple-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-600 mb-1 uppercase">🌙 Night Check-Out</label>
+                    <input
+                      type="text"
+                      value={newHotelForm.nightStayCheckOut}
+                      onChange={(e) => setNewHotelForm({ ...newHotelForm, nightStayCheckOut: e.target.value })}
+                      placeholder="11:00 AM"
+                      className="w-full bg-white border border-slate-250 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-purple-600"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 7: HOUSE RULES & GUIDELINES */}
+              <div className="space-y-3 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/70 pb-2">
+                  <div>
+                    <span className="text-[10px] font-black text-purple-900 uppercase tracking-wider block">
+                      7. Simple House Rules &amp; ID Policies
+                    </span>
+                    <p className="text-[10px] text-slate-500 font-medium">Click on rule chips to toggle them ON / OFF instantly</p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-slate-500 font-bold">Rule Tag:</span>
+                    <select
+                      value={newHotelForm.houseRulesTag}
+                      onChange={(e) => setNewHotelForm({ ...newHotelForm, houseRulesTag: e.target.value })}
+                      className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-[11px] font-bold text-slate-800 outline-none focus:border-purple-600 cursor-pointer"
+                    >
+                      <option value="Easy 2-Min Check-in">Easy 2-Min Check-in</option>
+                      <option value="Express Check-in">Express Check-in</option>
+                      <option value="Couple Friendly Rules">Couple Friendly Rules</option>
+                      <option value="Safe & Verified Stay">Safe & Verified Stay</option>
+                      <option value="Standard House Rules">Standard House Rules</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Quick Select Rule Chips */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    '18+ Valid Govt ID Required (Aadhaar / DL / DigiLocker)',
+                    '21+ Valid Govt ID Required (Aadhaar / DL / DigiLocker)',
+                    'Couples & Local Boisar IDs Warmly Welcome',
+                    '24/7 Flexible Check-in & Standard Check-out',
+                    'Check-out timings strictly observed for room sanitization',
+                    'Visitors allowed in Reception Lobby only',
+                    'No Smoking inside AC Rooms',
+                    'Digital Payments (UPI / GPay / Cash) accepted'
+                  ].map((ruleText) => {
+                    const currentRules = newHotelForm.rulesList;
+                    const isSelected = currentRules.some(r => {
+                      const cleanR = r.toLowerCase().replace(/[^a-z0-9]/g, '');
+                      const cleanRule = ruleText.toLowerCase().replace(/[^a-z0-9]/g, '');
+                      return cleanR === cleanRule || cleanR.includes(cleanRule.slice(0, 16)) || cleanRule.includes(cleanR.slice(0, 16));
+                    });
+
+                    return (
+                      <button
+                        key={ruleText}
+                        type="button"
+                        onClick={() => {
+                          const isIdRule = ruleText.startsWith('18+') || ruleText.startsWith('21+') || ruleText.toLowerCase().includes('govt');
+                          const isCoupleRule = ruleText.toLowerCase().includes('couple');
+                          const isCheckoutRule = ruleText.toLowerCase().includes('check-out') || ruleText.toLowerCase().includes('checkout');
+                          const isVisitorRule = ruleText.toLowerCase().includes('visitor');
+
+                          if (isSelected) {
+                            const filtered = currentRules.filter(r => {
+                              const cleanR = r.toLowerCase().replace(/[^a-z0-9]/g, '');
+                              const cleanRule = ruleText.toLowerCase().replace(/[^a-z0-9]/g, '');
+                              return cleanR !== cleanRule && !cleanR.includes(cleanRule.slice(0, 16)) && !cleanRule.includes(cleanR.slice(0, 16));
+                            });
+                            setNewHotelForm({ ...newHotelForm, rulesList: deduplicateRules(filtered) });
+                          } else {
+                            let updated = [...currentRules];
+                            if (isIdRule) {
+                              updated = updated.filter(r => {
+                                const lower = r.toLowerCase();
+                                return !(lower.includes('govt') || lower.includes('aadhaar') || lower.includes('photo id') || lower.includes('valid id') || lower.includes('18+') || lower.includes('21+'));
+                              });
+                            } else if (isCoupleRule) {
+                              updated = updated.filter(r => !r.toLowerCase().includes('couple'));
+                            } else if (isCheckoutRule) {
+                              updated = updated.filter(r => !r.toLowerCase().includes('check-out') && !r.toLowerCase().includes('checkout'));
+                            } else if (isVisitorRule) {
+                              updated = updated.filter(r => !r.toLowerCase().includes('visitor'));
+                            }
+                            setNewHotelForm({ ...newHotelForm, rulesList: deduplicateRules([...updated, ruleText]) });
+                          }
+                        }}
+                        className={`p-2.5 rounded-xl border text-xs font-bold text-left flex items-start justify-between gap-2 cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-emerald-50 border-emerald-300 text-emerald-950 shadow-2xs'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        <span className="flex items-start gap-1.5">
+                          <span className="text-emerald-700 font-black shrink-0">{isSelected ? '✓' : '+'}</span>
+                          <span>{ruleText}</span>
+                        </span>
+                        <span className={`text-[9.5px] font-black shrink-0 uppercase px-1.5 py-0.5 rounded ${isSelected ? 'bg-emerald-200/80 text-emerald-900' : 'bg-slate-100 text-slate-400'}`}>
+                          {isSelected ? 'Active' : 'Off'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Add Custom Rule Input */}
+                <div className="pt-2 border-t border-slate-200/70 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newHotelCustomRule}
+                    onChange={(e) => setNewHotelCustomRule(e.target.value)}
+                    placeholder="+ Add custom house rule..."
+                    className="flex-1 bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-purple-600"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (newHotelCustomRule.trim()) {
+                          setNewHotelForm({
+                            ...newHotelForm,
+                            rulesList: deduplicateRules([...newHotelForm.rulesList, newHotelCustomRule.trim()])
+                          });
+                          setNewHotelCustomRule('');
+                        }
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newHotelCustomRule.trim()) {
+                        setNewHotelForm({
+                          ...newHotelForm,
+                          rulesList: deduplicateRules([...newHotelForm.rulesList, newHotelCustomRule.trim()])
+                        });
+                        setNewHotelCustomRule('');
+                      }
+                    }}
+                    className="bg-purple-900 hover:bg-purple-800 text-white text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer shrink-0 transition-all active:scale-98"
+                  >
+                    + Add
+                  </button>
+                </div>
+
+                {/* Property Highlight Badges */}
+                <div className="pt-2 border-t border-slate-200/70 grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <label className="flex items-center gap-1.5 bg-white border border-slate-200 p-2 rounded-xl cursor-pointer">
                     <input
                       type="checkbox"
@@ -1759,7 +2062,7 @@ export default function HotelsPage() {
                       onChange={(e) => setNewHotelForm({ ...newHotelForm, nearStation: e.target.checked })}
                       className="accent-purple-900"
                     />
-                    <span className="text-[10px] font-bold text-slate-800">Near Boisar Station</span>
+                    <span className="text-[10px] font-bold text-slate-800">Near Station</span>
                   </label>
 
                   <label className="flex items-center gap-1.5 bg-white border border-slate-200 p-2 rounded-xl cursor-pointer">
@@ -1769,7 +2072,7 @@ export default function HotelsPage() {
                       onChange={(e) => setNewHotelForm({ ...newHotelForm, nearMidc: e.target.checked })}
                       className="accent-purple-900"
                     />
-                    <span className="text-[10px] font-bold text-slate-800">Near Tarapur MIDC</span>
+                    <span className="text-[10px] font-bold text-slate-800">Near MIDC</span>
                   </label>
                 </div>
               </div>

@@ -236,18 +236,18 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-[150] bg-white border-b border-slate-200 overflow-visible">
-        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 h-13 sm:h-14 flex items-center justify-between gap-2 sm:gap-4 overflow-visible">
+      <header className="sticky top-0 z-[150] bg-white border-b border-slate-200 overflow-visible pt-[env(safe-area-inset-top,0px)]">
+        <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-13 sm:h-14 flex items-center justify-between gap-1.5 sm:gap-4 overflow-visible">
 
           {/* Logo Section */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
             <Link href="/" className="flex items-center group">
               <img
                 src="/majh-boisar-full-logo.png"
                 alt="Majh Boisar"
-                loading="lazy"
+                loading="eager"
                 decoding="async"
-                className="h-8 sm:h-9 md:h-10.5 w-auto object-contain transition-transform duration-200 hover:scale-[1.03]"
+                className="h-7 sm:h-9 md:h-10.5 max-w-[130px] min-[390px]:max-w-[160px] sm:max-w-none w-auto object-contain transition-transform duration-200 hover:scale-[1.03]"
               />
             </Link>
           </div>
@@ -761,33 +761,35 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Navigation controls */}
-          <div className="flex md:hidden items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex md:hidden items-center gap-1.5 sm:gap-2 shrink-0 relative z-30 ml-auto">
             {/* Mobile Business Dashboard Button (Only if business is listed / BusinessOwner / Admin) */}
             {mounted && isLoggedIn && (hasRegisteredBusiness || currentRole === 'BusinessOwner' || currentRole === 'Admin' || (loggedInUser as any)?.role === 'BusinessOwner' || (loggedInUser as any)?.role === 'Admin') && (
               <Link
                 href="/dashboard"
-                className="flex items-center gap-1 bg-slate-900 hover:bg-teal-700 active:scale-95 text-white text-[10.5px] font-black px-2.5 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer shrink-0"
+                className="flex items-center gap-1 bg-slate-900 hover:bg-teal-700 active:scale-95 text-white text-[10px] sm:text-[10.5px] font-black px-2 sm:px-2.5 py-1.5 rounded-xl shadow-xs transition-all cursor-pointer shrink-0"
                 title="Business Owner Dashboard"
               >
                 <Building className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-                <span>Dashboard</span>
+                <span className="hidden min-[360px]:inline">Dashboard</span>
               </Link>
             )}
 
             {mounted && !isLoggedIn && (
               <button
+                type="button"
                 onClick={() => setLoginModalOpen(true)}
-                className="bg-[#e62238] hover:bg-[#cc1b30] active:scale-95 text-white text-[11px] font-black px-3 py-1.5 rounded-xl shadow-xs transition-all flex items-center gap-1 shrink-0 cursor-pointer"
+                className="bg-[#e62238] hover:bg-[#cc1b30] active:scale-95 text-white text-[10.5px] sm:text-[11px] font-black px-2.5 sm:px-3 py-1.5 rounded-xl shadow-xs transition-all flex items-center gap-1 shrink-0 cursor-pointer"
               >
-                <User className="w-3.5 h-3.5 text-white" />
+                <User className="w-3.5 h-3.5 text-white shrink-0" />
                 <span>{t('nav.login')}</span>
               </button>
             )}
 
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle Navigation Menu"
-              className="p-1.5 rounded-lg text-slate-700 hover:text-teal-700 hover:bg-slate-100 cursor-pointer shrink-0 transition-colors z-20"
+              className="p-2 rounded-xl text-slate-800 hover:text-teal-700 hover:bg-slate-100 active:bg-slate-200 cursor-pointer shrink-0 transition-colors z-30 touch-manipulation min-w-[40px] min-h-[40px] flex items-center justify-center shadow-2xs border border-slate-200/60"
             >
               {mobileMenuOpen ? <X className="w-6 h-6 text-slate-900" /> : <Menu className="w-6 h-6 text-slate-900" />}
             </button>
@@ -796,7 +798,7 @@ export default function Navbar() {
 
         {/* Mobile Nav Drawer (Clean, Modern & Fully Organized) */}
         {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-x-0 top-[52px] sm:top-[56px] bottom-0 bg-slate-100/90 backdrop-blur-md z-[9999] overflow-y-auto p-3.5 shadow-2xl text-left border-t border-slate-200 animate-in slide-in-from-top-2 duration-150">
+          <div className="md:hidden fixed inset-x-0 top-[calc(52px+env(safe-area-inset-top,0px))] sm:top-[calc(56px+env(safe-area-inset-top,0px))] bottom-0 bg-slate-100/95 backdrop-blur-md z-[9999] overflow-y-auto p-3.5 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] shadow-2xl text-left border-t border-slate-200 animate-in slide-in-from-top-2 duration-150">
             <div className="max-w-md mx-auto space-y-3 pb-8">
             
               {/* 1. User Header or Guest Sign-In Card */}

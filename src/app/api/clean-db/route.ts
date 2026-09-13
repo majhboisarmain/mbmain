@@ -1,12 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { verifyJwtToken } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  // 1. Strict production block: Never allow automatic wipes in production
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DANGEROUS_CLEAN_DB !== 'true') {
+    return NextResponse.json(
+      { error: 'Forbidden: Database clean is disabled in production environments.' },
+      { status: 403 }
+    );
+  }
+
+  // 2. Strict Server-Side Key Verification (NO hardcoded fallback)
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get('secret');
-  const masterSecret = process.env.ADMIN_SECRET_KEY || 'dhuYGmi4%q#FHX9';
-  if (secret !== masterSecret) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const masterSecret = process.env.ADMIN_SECRET_KEY;
+
+  const adminToken = request.cookies.get('majh_admin_token')?.value;
+  const isTokenValid = adminToken ? verifyJwtToken<{ role?: string }>(adminToken)?.role === 'Admin' : false;
+
+  const isSecretValid = Boolean(masterSecret && secret && secret === masterSecret);
+
+  if (!isSecretValid && !isTokenValid) {
+    return NextResponse.json({ error: 'Unauthorized: Valid Admin authentication or secret key required.' }, { status: 401 });
   }
 
   const logs: string[] = [];

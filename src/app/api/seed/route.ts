@@ -29,11 +29,6 @@ const businesses = [
   { name: 'Deluxe Family Restaurant', category: 'Restaurants', rating: 4.2, phone: '7410002825', address: 'Navapur Road, Boisar' },
   { name: 'Hotel Sai Krupa', category: 'Restaurants', rating: 0, phone: '', address: 'Boisar' },
   { name: 'Hotel Sabari Restaurant', category: 'Restaurants', rating: 0, phone: '', address: 'Boisar' },
-  { name: 'Freesia by Express Inn', category: 'Hotels', rating: 3.9, phone: '8149998666', address: 'Ostwal Empire, Boisar' },
-  { name: 'Hotel Sarovar Residency', category: 'Hotels', rating: 3.9, phone: '9657187919', address: 'MIDC Road, Salwad' },
-  { name: 'Blugent Residency', category: 'Hotels', rating: 4.3, phone: '9122522591', address: 'Navapur Road, Boisar' },
-  { name: 'Hotel Sai Residency', category: 'Hotels', rating: 0, phone: '', address: 'Boisar' },
-  { name: 'Hotel Galaxy', category: 'Hotels', rating: 0, phone: '', address: 'Boisar' },
   { name: 'STYLO Unisex Salon', category: 'Salons', rating: 4.8, phone: '9028551030', address: 'CIDCO Colony, Boisar' },
   { name: "Rahul's Salon", category: 'Salons', rating: 4.4, phone: '9049785343', address: 'Khodaram Baug, Boisar' },
   { name: 'The Purple Vanity Salon and Academy', category: 'Salons', rating: 4.8, phone: '8806348263', address: 'Khodaram Baug, Boisar' },
@@ -52,10 +47,18 @@ const businesses = [
 ] as Array<{ name: string; category: string; rating: number; phone: string; address: string; website?: string; email?: string; whatsapp?: string; }>;
 
 export async function POST(request: NextRequest) {
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DANGEROUS_CLEAN_DB !== 'true') {
+    return NextResponse.json(
+      { error: 'Forbidden: Seeding is disabled in production environments.' },
+      { status: 403 }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const secret = searchParams.get('secret');
-  if (secret !== 'majhboisar-seed-2024') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const masterSecret = process.env.ADMIN_SECRET_KEY;
+  if (!masterSecret || secret !== masterSecret) {
+    return NextResponse.json({ error: 'Unauthorized: Valid admin secret required' }, { status: 401 });
   }
 
   try {

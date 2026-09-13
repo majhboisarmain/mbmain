@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { X, Mail, ShieldCheck, HelpCircle, Lock, Eye, EyeOff, KeyRound } from 'lucide-react';
 
+import { getAllHotels } from '@/lib/hotelsData';
+
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -127,6 +129,29 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setIsLoading(true);
 
     const cleanInputPhone = mobileNumber.replace(/\D/g, '');
+    const clean10 = cleanInputPhone.slice(-10);
+
+    // Auto-detect if this number belongs to a registered Hotel in Boisar
+    const allHotels = getAllHotels();
+    const matchedHotel = allHotels.find(h => {
+      const hp = (h.phone || '').replace(/\D/g, '').slice(-10);
+      const hw = (h.whatsapp || '').replace(/\D/g, '').slice(-10);
+      return clean10 === hp || clean10 === hw;
+    });
+
+    if (matchedHotel) {
+      setIsLoading(false);
+      const hotelDisplayName = `${matchedHotel.name} Front Desk`;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('majh_boisar_phone', mobileNumber);
+      }
+      login(hotelDisplayName, mobileNumber, 'reception@hotel.com');
+      showToast(`🏨 Hotel Detected: ${matchedHotel.name}! Opening Hotel Front Desk Dashboard...`, 'success', 4000);
+      resetForm();
+      onClose();
+      router.push(`/dashboard?hotelId=${matchedHotel.id}&tab=hotel_bookings`);
+      return;
+    }
 
     // Check if this is the Master Admin Phone: 9307294733
     if (cleanInputPhone.endsWith('9307294733')) {
@@ -199,26 +224,46 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     }
   };
 
-  const handleAdminPasswordSubmit = (e: React.FormEvent) => {
+  const handleAdminPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const savedPasscode = (typeof window !== 'undefined' && localStorage.getItem('majh_boisar_admin_passcode')) || 'dhuYGmi4%q#FHX9';
-
-    if (adminPasscode !== savedPasscode && adminPasscode !== 'dhuYGmi4%q#FHX9') {
-      setOtpError('Incorrect Super Admin password. Please enter the valid admin passcode.');
+    if (!adminPasscode.trim()) {
+      setOtpError('Please enter the Admin passcode.');
       return;
     }
 
+    setIsLoading(true);
     setOtpError('');
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('majh_boisar_adminmb_auth', 'unlocked');
-      localStorage.setItem('majh_boisar_role', 'Admin');
+
+    try {
+      const res = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: mobileNumber || '9307294733',
+          password: adminPasscode.trim(),
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success) {
+        setIsLoading(false);
+        setOtpError(data.error || 'Incorrect Super Admin password. Access Denied.');
+        return;
+      }
+
+      setOtpError('');
+      setRole('Admin');
+      login('Super Admin (9307294733)', '9307294733', 'majhboisar@gmail.com');
+      showToast('🛡️ Super Admin Authenticated! Opening Admin Panel...', 'success', 3500);
+      resetForm();
+      onClose();
+      router.push('/adminmb');
+    } catch (err) {
+      setOtpError('Network error verifying authentication. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    setRole('Admin');
-    login('Super Admin (9307294733)', '9307294733', 'majhboisar@gmail.com');
-    showToast('🛡️ Super Admin Authenticated! Opening Admin Panel...', 'success', 3500);
-    resetForm();
-    onClose();
-    router.push('/adminmb');
   };
 
   const handleCompleteRegistration = (e: React.FormEvent) => {
@@ -238,6 +283,23 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     login(fullName, mobileNumber, email);
     resetForm();
     onClose();
+
+    // Check if newly registered number is a hotel
+    const clean10 = mobileNumber.replace(/\D/g, '').slice(-10);
+    const allHotels = getAllHotels();
+    const matchedHotel = allHotels.find(h => {
+      const hp = (h.phone || '').replace(/\D/g, '').slice(-10);
+      const hw = (h.whatsapp || '').replace(/\D/g, '').slice(-10);
+      return clean10 === hp || clean10 === hw;
+    });
+
+    if (matchedHotel) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('majh_boisar_phone', mobileNumber);
+      }
+      showToast(`🏨 Hotel Registered: ${matchedHotel.name}! Opening Hotel Front Desk Dashboard...`, 'success', 4000);
+      router.push(`/dashboard?hotelId=${matchedHotel.id}&tab=hotel_bookings`);
+    }
   };
 
   const resetForm = () => {
