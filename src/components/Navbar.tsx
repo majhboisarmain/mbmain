@@ -245,7 +245,7 @@ export default function Navbar() {
                 alt="Majh Boisar"
                 loading="eager"
                 decoding="async"
-                className="h-7 sm:h-9 md:h-10.5 max-w-[130px] min-[390px]:max-w-[160px] sm:max-w-none w-auto object-contain transition-transform duration-200 hover:scale-[1.03]"
+                className="h-9 sm:h-11 md:h-12 max-w-[155px] min-[390px]:max-w-[185px] sm:max-w-none w-auto object-contain transition-transform duration-200 hover:scale-[1.03]"
               />
             </Link>
           </div>

@@ -2530,9 +2530,9 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 key={ad.id} 
                 className={`relative overflow-hidden rounded-2xl shadow-md flex flex-col justify-between min-h-[130px] sm:aspect-[4/3] group cursor-pointer border border-slate-200 ${!isDirectImageAd ? 'p-3 sm:p-5' : ''}`}
                 onClick={() => {
-                  if (ad.targetUrl) {
+                  if (ad.targetUrl && ad.targetUrl !== '#' && ad.targetUrl !== '/') {
                     window.open(ad.targetUrl, '_blank');
-                  } else if (ad.businessId === 0) {
+                  } else if (!ad.businessId || ad.businessId === 0) {
                     setAdModalOpen(true);
                   } else {
                     router.push(`/business/${ad.businessId}`);
@@ -5972,22 +5972,22 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
                 <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center space-y-3.5">
                   <div className="flex flex-col items-center">
-                    <div className="w-32 h-32 bg-white border border-slate-200 rounded-xl p-2 flex items-center justify-center shadow-sm">
+                    <div className="w-36 h-36 bg-white border border-slate-200 rounded-2xl p-2 flex items-center justify-center shadow-sm overflow-hidden">
                       <img loading="lazy" decoding="async" 
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=majhboisar@upi&pn=Majh%20Boisar&am=${specialistCheckoutPlan === 'Pro' ? 49 : 99}&cu=INR`)}`} 
+                        src="/payment/QrCode.jpeg"
                         alt="UPI QR Code" 
-                        className="w-full h-full object-contain"
+                        className="w-full h-full object-contain rounded-xl"
                       />
                     </div>
                     <p className="text-[9px] text-slate-600 font-bold mt-2">Scan QR code using GooglePay, PhonePe, or Paytm</p>
                     <div className="mt-1 flex items-center gap-1 bg-white border border-slate-200 px-2.5 py-1 rounded-lg">
-                      <code className="text-xs font-black text-slate-800 font-mono">majhboisar@upi</code>
+                      <code className="text-xs font-black text-slate-800 font-mono">9307294733@okaxis</code>
                       <button
                         type="button"
                         onClick={() => {
                           if (navigator.clipboard) {
-                            navigator.clipboard.writeText('majhboisar@upi');
-                            alert('UPI ID (majhboisar@upi) copied to clipboard!');
+                            navigator.clipboard.writeText('9307294733@okaxis');
+                            alert('UPI ID (9307294733@okaxis) copied to clipboard!');
                           }
                         }}
                         className="text-[9px] font-black text-teal-600 hover:underline ml-1"
@@ -6457,25 +6457,23 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
                 {/* QR Code Container */}
                 <div className="flex flex-col items-center justify-center p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
-                  <div className="w-36 h-36 bg-white p-2 rounded-xl shadow-md border border-slate-200 flex items-center justify-center">
+                  <div className="w-40 h-40 bg-white p-2 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center overflow-hidden">
                     <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                        `upi://pay?pa=7769947217@ptaxis&pn=MajhBoisar&am=${buyerPassOption === '1_call' ? 19 : buyerPassOption === '5_calls' ? 89 : 199}&cu=INR`
-                      )}`} 
-                      alt="UPI QR Code" 
-                      className="w-full h-full object-contain"
+                      src="/payment/QrCode.jpeg"
+                      alt="Majh Boisar Official UPI QR Code" 
+                      className="w-full h-full object-contain rounded-xl"
                     />
                   </div>
                   <p className="text-[10px] text-slate-500 font-bold">Scan QR code using GPay, PhonePe, or Paytm</p>
                   
                   <div className="flex items-center justify-between w-full bg-white border border-slate-200 rounded-xl p-2 text-xs">
-                    <span className="text-[11px] font-black text-slate-800">7769947217@ptaxis</span>
+                    <span className="text-[11px] font-black text-slate-800">9307294733@okaxis</span>
                     <button
                       type="button"
                       onClick={() => {
                         if (navigator.clipboard) {
-                          navigator.clipboard.writeText('7769947217@ptaxis');
-                          alert('UPI ID (7769947217@ptaxis) copied to clipboard!');
+                          navigator.clipboard.writeText('9307294733@okaxis');
+                          alert('UPI ID (9307294733@okaxis) copied to clipboard!');
                         }
                       }}
                       className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-extrabold px-2 py-1 rounded-lg transition-all cursor-pointer"
@@ -6485,7 +6483,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                   </div>
 
                   <a
-                    href={`upi://pay?pa=8208712398@ptaxis&pn=MajhBoisar&am=${buyerPassOption === '1_call' ? 19 : buyerPassOption === '5_calls' ? 89 : 199}&cu=INR`}
+                    href={`upi://pay?pa=9307294733@okaxis&pn=MajhBoisar&am=${buyerPassOption === '1_call' ? 19 : buyerPassOption === '5_calls' ? 89 : 199}&cu=INR`}
                     className="w-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-black text-[11px] py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer"
                   >
                     <span>⚡ Open UPI App (GPay / PhonePe)</span>

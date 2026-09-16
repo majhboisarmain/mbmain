@@ -604,7 +604,7 @@ export default function SearchClient() {
                                 className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
                               />
                               {pIdx === 2 && allPhotos.length > 3 && (
-                                <div className="absolute inset-0 bg-black/65 backdrop-blur-xs flex items-center justify-center text-white text-xs font-black">
+                                <div className="absolute bottom-1.5 right-1.5 bg-slate-950/85 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none">
                                   +{allPhotos.length - 3} more
                                 </div>
                               )}
@@ -828,7 +828,7 @@ export default function SearchClient() {
                   </div>
                   <div className="relative z-10 flex flex-col justify-end h-full mt-auto">
                     <a
-                      href={sidebarAds[0].targetUrl || `/business/${sidebarAds[0].businessId}`}
+                      href={sidebarAds[0].targetUrl && sidebarAds[0].targetUrl !== '#' ? sidebarAds[0].targetUrl : (sidebarAds[0].businessId ? `/business/${sidebarAds[0].businessId}` : 'https://wa.me/917769947217')}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full bg-white hover:bg-slate-100 text-indigo-800 font-black text-[9px] sm:text-[10px] py-1.5 sm:py-2 rounded-lg shadow-sm hover:scale-102 transition-all cursor-pointer text-center mt-2 sm:mt-3 uppercase tracking-wider block"
@@ -889,7 +889,7 @@ export default function SearchClient() {
                   </div>
                   <div className="relative z-10 flex flex-col justify-end h-full mt-auto">
                     <a
-                      href={sidebarAds[1].targetUrl || `/business/${sidebarAds[1].businessId}`}
+                      href={sidebarAds[1].targetUrl && sidebarAds[1].targetUrl !== '#' ? sidebarAds[1].targetUrl : (sidebarAds[1].businessId ? `/business/${sidebarAds[1].businessId}` : 'https://wa.me/917769947217')}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full bg-white hover:bg-slate-100 text-teal-800 font-black text-[9px] sm:text-[10px] py-1.5 sm:py-2 rounded-lg shadow-sm hover:scale-102 transition-all cursor-pointer text-center mt-2 sm:mt-3 uppercase tracking-wider block"

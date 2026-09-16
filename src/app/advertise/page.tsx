@@ -102,13 +102,13 @@ export default function AdvertisePage() {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
             const formatted = parsed.map((p: any) => ({
-              id: p.id || p.name,
-              name: p.name,
-              duration: p.duration,
-              price: p.price,
-              tag: p.tag,
-              desc: p.desc || `${p.name} roaming in Boisar & MIDC daily.`,
-              points: p.features || p.points || []
+              id: p?.id || p?.name || 'ad-pkg',
+              name: p?.name || 'Auto Poster',
+              duration: p?.duration || '30 Days',
+              price: p?.price || '₹1,499',
+              tag: p?.tag || 'Popular',
+              desc: p?.desc || `${p?.name || 'Poster'} roaming in Boisar & MIDC daily.`,
+              points: Array.isArray(p?.features) ? p.features : Array.isArray(p?.points) ? p.points : []
             }));
             setAutoPackages(formatted);
           }
@@ -286,7 +286,7 @@ export default function AdvertisePage() {
 
                   {/* 3 Simple Points */}
                   <div className="space-y-1.5 pt-1">
-                    {pkg.points.map((pt, pIdx) => (
+                    {(pkg.points || []).map((pt, pIdx) => (
                       <div key={pIdx} className="flex items-center gap-2 text-xs text-slate-800 font-semibold">
                         <div className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
                           <Check className="w-3 h-3 text-emerald-700 stroke-[3]" />

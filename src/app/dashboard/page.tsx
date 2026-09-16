@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { compressImage } from '@/lib/imageCompressor';
 import { CATEGORY_CATALOG } from '@/lib/categoryMapping';
+import RazorpayCheckoutButton from '@/components/RazorpayCheckoutButton';
 const toTitleCase = (str: string) => {
   return str
     .toLowerCase()
@@ -2348,10 +2349,10 @@ _Powered by Majh Boisar (majhboisar.com)_`
   };
   const planLimits: Record<string, { catalog: number; photos: number }> = {
     Free: { catalog: 5, photos: 3 },
-    Starter: { catalog: 15, photos: 10 },
-    Basic: { catalog: 15, photos: 10 },
-    Pro: { catalog: 50, photos: 25 },
-    Enterprise: { catalog: 100, photos: 50 },
+    Starter: { catalog: 25, photos: 15 },
+    Basic: { catalog: 25, photos: 15 },
+    Pro: { catalog: 9999, photos: 9999 },
+    Enterprise: { catalog: 9999, photos: 9999 },
   };
   const currentPlan = (business?.subscription ?? 'Free');
   const catalogLimit = planLimits[currentPlan]?.catalog ?? 5;
@@ -8661,7 +8662,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
                           <div>
                             <p className="text-xs font-black text-amber-800">Product limit reached ({catalogLimit} max on {currentPlan} plan)</p>
                             <p className="text-[10px] text-amber-600 mt-0.5">
-                              {currentPlan === 'Free' ? 'Upgrade to Starter (₹149) for 15 products.' :
+                              {currentPlan === 'Free' ? 'Upgrade to Starter (₹149) for 25 products.' :
                                 currentPlan === 'Starter' ? 'Upgrade to Pro (₹349) for unlimited products & delivery cart.' : ''}
                             </p>
                             {currentPlan !== 'Pro' && (
@@ -8819,7 +8820,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
                           <div>
                             <p className="text-xs font-black text-amber-800">Service limit reached ({catalogLimit} max on {currentPlan} plan)</p>
                             <p className="text-[10px] text-amber-600 mt-0.5">
-                              {currentPlan === 'Free' ? 'Upgrade to Starter (₹149) for 15 services.' :
+                              {currentPlan === 'Free' ? 'Upgrade to Starter (₹149) for 25 services.' :
                                 currentPlan === 'Starter' ? 'Upgrade to Pro (₹349) for unlimited services.' : ''}
                             </p>
                             {currentPlan !== 'Pro' && (
@@ -9769,8 +9770,8 @@ _Powered by Majh Boisar (majhboisar.com)_`
                           highlight: true,
                           badge: '⭐ Gold VIP Resort Badge',
                           perks: [
-                            { icon: '👑', text: '⭐ #1 Top Priority Featured Ranking on Hotels Page' },
-                            { icon: '🏨', text: 'Unlimited HD Gallery, Room Types & Tariffs' },
+                            { icon: '🏨', text: '⭐ Featured Partner Placement on Hotels Page' },
+                            { icon: '📸', text: 'Unlimited HD Gallery, Room Types & Tariffs' },
                             { icon: '🕐', text: 'Custom Hourly Slot & Day-Pass Booking Manager' },
                             { icon: '💬', text: 'Unlimited Direct WhatsApp & Instant Bookings' },
                             { icon: '🏠', text: 'Homepage Featured Spotlight Card (5 Lakh+ Views)' },
@@ -9790,17 +9791,19 @@ _Powered by Majh Boisar (majhboisar.com)_`
                           highlight: false,
                           badge: null,
                           perks: [
-                            { icon: '📸', text: '3 Gallery Photos' },
-                            { icon: '📊', text: 'Analytics (Views, Clicks)' },
-                            { icon: '🛒', text: '5 Catalog items (Products/Services)' },
-                            { icon: '📞', text: 'Phone & WhatsApp leads' },
-                            { icon: '🗺️', text: 'Listed in category search' },
-                            { icon: '🕐', text: 'Working hours display' },
-                            { icon: '🪪', text: 'Verified badge (via KYC)' },
+                            { icon: '📸', text: '3 Store & Product Photos' },
+                            { icon: '🛒', text: '5 Products / Services in Catalog' },
+                            { icon: '🗺️', text: 'Listed in Boisar Directory & Search' },
+                            { icon: '📞', text: 'Direct Call & WhatsApp Customer Leads' },
+                            { icon: '🕐', text: 'Store Hours & Open/Closed Display' },
+                            { icon: '📊', text: 'Basic Profile Views Tracker' },
+                            { icon: '🪪', text: 'Verified Business Badge (via Free KYC)' },
                           ],
                           locked: [
-                            'Trusted Badge',
-                            'Review responses',
+                            'Online Home Delivery Cart System',
+                            'Gold Featured Partner Badge',
+                            'Unlimited Products & Services Catalog',
+                            'Customer Review Replies'
                           ]
                         },
                         {
@@ -9810,18 +9813,19 @@ _Powered by Majh Boisar (majhboisar.com)_`
                           highlight: false,
                           badge: '✔️ Verified Partner',
                           perks: [
-                            { icon: '📸', text: '10 Gallery & Room Photos' },
-                            { icon: '📊', text: 'Live Analytics (Views, Leads, Calls)' },
-                            { icon: '🛒', text: '15 Catalog / Room Tariffs' },
-                            { icon: '📞', text: 'Direct WhatsApp & Phone Leads' },
-                            { icon: '🗺️', text: 'Priority Search & Category Placement' },
-                            { icon: '🕐', text: 'Working Hours / Slot Booking' },
-                            { icon: '🪪', text: 'Verified Partner Badge' },
-                            { icon: '📬', text: 'Lead inbox & instant alerts' },
+                            { icon: '📸', text: '15 HD Store & Gallery Photos' },
+                            { icon: '🛒', text: '25 Products & Services in Catalog' },
+                            { icon: '🔍', text: 'Priority Listing in Category Search' },
+                            { icon: '🪪', text: 'Official "Verified Partner" Trust Badge' },
+                            { icon: '📊', text: 'Live Analytics (Views, Calls & Inquiries)' },
+                            { icon: '📬', text: 'Direct Customer Enquiry Inbox & Alerts' },
+                            { icon: '📍', text: 'Google Maps Navigation & Location Pin' },
+                            { icon: '🕐', text: 'Working Hours & Holiday Schedule Display' },
                           ],
                           locked: [
-                            '#1 Top Gold Placement',
-                            'Homepage Featured Spotlight',
+                            'Online Home Delivery Cart System',
+                            'Gold Featured Partner Badge',
+                            'Unlimited Inventory Catalog'
                           ]
                         },
                         {
@@ -9829,17 +9833,17 @@ _Powered by Majh Boisar (majhboisar.com)_`
                           price: '₹349',
                           sub: 'per month',
                           highlight: true,
-                          badge: '⭐ Gold Featured + Delivery Storefront',
+                          badge: '⭐ Gold Featured Partner',
                           perks: [
-                            { icon: '🛵', text: 'WhatsApp Home Delivery Cart & Storefront' },
-                            { icon: '👑', text: '#1 Top Priority Featured Ranking' },
-                            { icon: '⭐', text: 'Gold "Featured Partner" Badge' },
-                            { icon: '📸', text: 'Unlimited Gallery Photos & Products' },
-                            { icon: '📊', text: 'Full Analytics + Weekly Export' },
-                            { icon: '📞', text: 'Unlimited Direct WhatsApp Orders & Leads' },
-                            { icon: '🗺️', text: 'Priority on Homepage & Search Engine' },
-                            { icon: '💬', text: 'Respond to customer reviews' },
-                            { icon: '⚡', text: '0% Commission & VIP Dedicated Support' },
+                            { icon: '🛵', text: 'Online Home Delivery Cart & Order System' },
+                            { icon: '⭐', text: 'Gold "Featured Partner" Trust Badge' },
+                            { icon: '🛒', text: 'Unlimited Products & Services Catalog' },
+                            { icon: '📸', text: 'Unlimited HD Store & Gallery Photos' },
+                            { icon: '🔍', text: 'Featured Placement in Category & Search' },
+                            { icon: '📊', text: 'Advanced Business Analytics & Insights' },
+                            { icon: '💬', text: 'Customer Review Management & Direct Replies' },
+                            { icon: '⚡', text: '0% Platform Commission on all Orders' },
+                            { icon: '🎯', text: 'Dedicated WhatsApp Priority Support' },
                           ],
                           locked: []
                         }
@@ -10141,7 +10145,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
                     name: 'Starter Plan',
                     price: '₹149',
                     amountNum: 149,
-                    desc: '10 Gallery Photos + 15 Catalog Items + Verified Partner Badge'
+                    desc: '15 HD Photos + 25 Products & Services + Official Verified Partner Badge + Live Analytics'
                   };
                 }
                 if (plan === 'Pro') {
@@ -10149,7 +10153,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
                     name: 'Pro Plan',
                     price: '₹349',
                     amountNum: 349,
-                    desc: '#1 Top Priority + Gold Badge + WhatsApp Home Delivery Cart + Unlimited Catalog'
+                    desc: 'Gold Featured Partner Badge + Online Home Delivery Cart + Unlimited Products & Services Catalog'
                   };
                 }
                 if (plan === 'Basic') {
@@ -10250,32 +10254,69 @@ _Powered by Majh Boisar (majhboisar.com)_`
                   {/* Payment Details (Hidden for Admin) */}
                   {(isAdminAuth || currentRole === 'Admin') ? null : (
                     <div className="space-y-2 mb-3">
-                      {/* Direct Pay QR Code */}
-                      <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-center text-center space-y-2.5 mb-2">
-                        <div className="flex items-center gap-1.5 text-xs font-black text-slate-800">
-                          <QrCode className="w-4 h-4 text-teal-600" />
-                          <span>Scan with any UPI App</span>
-                        </div>
-                        <div className="w-40 h-40 bg-white p-2 rounded-xl border border-slate-200 shadow-inner flex items-center justify-center">
-                          <img
-                            src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=9307294733@okaxis%26pn=MajhBoisar%26cu=INR"
-                            alt="Majh Boisar UPI Payment QR"
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                        <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-center w-full">
-                          <span className="text-[10px] text-slate-400 block font-bold uppercase">Official UPI ID</span>
-                          <span className="text-xs font-black text-slate-800 tracking-wider">9307294733@okaxis</span>
-                        </div>
+                      {/* Razorpay Online Payment Button */}
+                      <RazorpayCheckoutButton
+                        amountInRupees={planInfo.amountNum}
+                        name="Majh Boisar"
+                        description={`${planInfo.name} Upgrade`}
+                        prefill={{
+                          name: loggedInUser?.name || '',
+                          email: loggedInUser?.email || '',
+                          contact: loggedInUser?.phone || '',
+                        }}
+                        buttonText={`⚡ Pay ₹${planInfo.amountNum.toLocaleString('en-IN')} via Razorpay (Instant)`}
+                        onSuccess={async (res) => {
+                          setCheckoutModalOpen(false);
+                          showToast(`Payment of ₹${planInfo.amountNum} verified via Razorpay! 🎉`, 'success');
+                          if (checkoutPlan) {
+                            await handleUpgradeSubscription(checkoutPlan as any);
+                          }
+                        }}
+                      />
+
+                      <div className="relative flex items-center justify-center py-1">
+                        <div className="border-t border-slate-200 w-full" />
+                        <span className="bg-white px-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
+                          Or Pay via UPI / QR Code
+                        </span>
                       </div>
 
-                      {/* Direct UPI Link Button */}
-                      <a
-                        href="upi://pay?pa=9307294733@okaxis&pn=MajhBoisar&cu=INR"
-                        className="w-full py-2.5 rounded-xl border border-teal-500 bg-teal-50 hover:bg-teal-100 text-teal-800 font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-                      >
-                        <span>Tap to Open UPI App Directly</span>
-                      </a>
+                      {/* Direct Pay QR Code with Auto-Locked Amount */}
+                      {(() => {
+                        const upiPayLink = `upi://pay?pa=9307294733@okaxis&pn=Majh%20Boisar&am=${planInfo.amountNum}&cu=INR&tn=${encodeURIComponent(`${planInfo.name} Plan`)}`;
+                        const dynamicQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiPayLink)}`;
+
+                        return (
+                          <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-center text-center space-y-2.5 mb-2">
+                            <div className="flex items-center gap-1.5 text-xs font-black text-slate-800">
+                              <QrCode className="w-4 h-4 text-teal-600" />
+                              <span>Scan to Pay Fixed ₹{planInfo.amountNum}</span>
+                            </div>
+                            <div className="w-44 h-44 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-center overflow-hidden">
+                              <img
+                                src={dynamicQrUrl}
+                                alt={`Majh Boisar ₹${planInfo.amountNum} UPI QR`}
+                                className="w-full h-full object-contain rounded-xl"
+                              />
+                            </div>
+                            <p className="text-[10px] text-teal-700 font-bold bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full">
+                              🔒 Auto-Locked to ₹{planInfo.amountNum} in GPay, PhonePe &amp; Paytm
+                            </p>
+                            <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-center w-full">
+                              <span className="text-[10px] text-slate-400 block font-bold uppercase">Official UPI ID</span>
+                              <span className="text-xs font-black text-slate-800 tracking-wider">9307294733@okaxis</span>
+                            </div>
+
+                            {/* Direct UPI Link Button with Locked Amount */}
+                            <a
+                              href={upiPayLink}
+                              className="w-full py-2.5 rounded-xl border border-teal-500 bg-teal-50 hover:bg-teal-100 text-teal-800 font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                              <span>⚡ Open UPI App with ₹{planInfo.amountNum} Prefilled</span>
+                            </a>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </>

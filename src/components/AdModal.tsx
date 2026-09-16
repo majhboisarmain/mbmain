@@ -9,26 +9,24 @@ interface AdModalProps {
   highlightedPackageName?: string | null;
 }
 
+const websitePackages = [
+  { name: "Category Page Banner", duration: "7 Days", price: "₹199", isPopular: false, icon: "📂", desc: "Top position on specific category pages" },
+  { name: "Homepage Spotlight Card", duration: "7 Days", price: "₹349", isPopular: true, icon: "🏠", desc: "Featured front business card on home page" },
+  { name: "Full VIP City Blast", duration: "30 Days", price: "₹2,499", isPopular: false, icon: "👑", desc: "All 4 ad placements site-wide for full month" },
+];
+
+const defaultAutoPackages = [
+  { name: "5 Auto Hood Posters", duration: "30 Days", price: "₹1,499", isPopular: false, icon: "🛺", desc: "5 Autos with rear hood vinyl poster roaming daily" },
+  { name: "15 Auto Fleet (High Visibility)", duration: "30 Days", price: "₹3,999", isPopular: true, icon: "🛺", desc: "15 Autos covering Station, MIDC & Market routes" },
+  { name: "30 Auto City Dominance", duration: "30 Days", price: "₹7,499", isPopular: false, icon: "🛺", desc: "Maximum branding across all Boisar-Tarapur stands" },
+];
+
 export default function AdModal({ isOpen, onClose, highlightedPackageName }: AdModalProps) {
   const [tab, setTab] = useState<'website' | 'autorickshaw'>('website');
-
-  if (!isOpen) return null;
-
-  const websitePackages = [
-    { name: "Category Page Banner", duration: "7 Days", price: "₹199", isPopular: false, icon: "📂", desc: "Top position on specific category pages" },
-    { name: "Homepage Spotlight Card", duration: "7 Days", price: "₹349", isPopular: true, icon: "🏠", desc: "Featured front business card on home page" },
-    { name: "Full VIP City Blast", duration: "30 Days", price: "₹2,499", isPopular: false, icon: "👑", desc: "All 4 ad placements site-wide for full month" },
-  ];
-
-  const defaultAutoPackages = [
-    { name: "5 Auto Hood Posters", duration: "30 Days", price: "₹1,499", isPopular: false, icon: "🛺", desc: "5 Autos with rear hood vinyl poster roaming daily" },
-    { name: "15 Auto Fleet (High Visibility)", duration: "30 Days", price: "₹3,999", isPopular: true, icon: "🛺", desc: "15 Autos covering Station, MIDC & Market routes" },
-    { name: "30 Auto City Dominance", duration: "30 Days", price: "₹7,499", isPopular: false, icon: "🛺", desc: "Maximum branding across all Boisar-Tarapur stands" },
-  ];
-
   const [autoRickshawPackages, setAutoRickshawPackages] = useState(defaultAutoPackages);
 
   React.useEffect(() => {
+    if (!isOpen) return;
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem('majh_boisar_auto_poster_packages');
@@ -36,18 +34,20 @@ export default function AdModal({ isOpen, onClose, highlightedPackageName }: AdM
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setAutoRickshawPackages(parsed.map((p: any) => ({
-              name: p.name,
-              duration: p.duration,
-              price: p.price,
-              isPopular: p.tag?.toLowerCase().includes('popular') || false,
-              icon: p.icon || '🛺',
-              desc: p.desc || 'Auto rear hood vinyl poster roaming daily'
+              name: p?.name || 'Auto Poster',
+              duration: p?.duration || '30 Days',
+              price: p?.price || '₹1,499',
+              isPopular: Boolean(typeof p?.tag === 'string' && p.tag.toLowerCase().includes('popular')),
+              icon: p?.icon || '🛺',
+              desc: p?.desc || 'Auto rear hood vinyl poster roaming daily'
             })));
           }
         }
       } catch (e) {}
     }
   }, [isOpen]);
+
+  if (!isOpen) return null;
 
   const currentPackages = tab === 'website' ? websitePackages : autoRickshawPackages;
 

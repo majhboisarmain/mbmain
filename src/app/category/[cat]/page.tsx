@@ -433,7 +433,7 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
                           <Link key={pIdx} href={`/business/${business.id}`} className="w-full h-full rounded-xl overflow-hidden border border-slate-200 relative bg-slate-900">
                             <img src={imgUrl} alt={`${business.name} ${pIdx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                             {pIdx === 2 && allPhotos.length > 3 && (
-                              <div className="absolute inset-0 bg-black/65 backdrop-blur-xs flex items-center justify-center text-white text-xs font-black">
+                              <div className="absolute bottom-1.5 right-1.5 bg-slate-950/85 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none">
                                 +{allPhotos.length - 3} more
                               </div>
                             )}

@@ -318,13 +318,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const uploadedCover = await uploadImage(image);
+    const uploadedLogo = await uploadImage(image);
+    const uploadedCover = body.coverImage ? await uploadImage(body.coverImage) : null;
     const uploadedGallery = await uploadGallery(body.gallery);
 
-    let finalImage = uploadedCover || '/majh-boisar-mb-logo.png';
+    const assembledImages = [uploadedLogo || '/majh-boisar-mb-logo.png'];
+    if (uploadedCover) assembledImages.push(uploadedCover);
     if (uploadedGallery.length > 0) {
-      finalImage = [finalImage, ...uploadedGallery].join('||gallery_sep||');
+      assembledImages.push(...uploadedGallery.filter((g: string) => g !== uploadedLogo && g !== uploadedCover));
     }
+    const finalImage = assembledImages.join('||gallery_sep||');
 
     const cleanDesc = (description || '').replace(/\[Created by Admin\]\s*/gi, '').trim();
 

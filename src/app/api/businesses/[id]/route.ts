@@ -152,21 +152,31 @@ export async function PUT(
     if (googleMaps !== undefined) data.googleMaps = googleMaps;
     if (workingHours !== undefined) data.workingHours = workingHours;
     if (location !== undefined) data.location = location;
-    if (image !== undefined || body.gallery !== undefined) {
+    if (image !== undefined || body.coverImage !== undefined || body.gallery !== undefined) {
       const existing = await prisma.business.findUnique({ where: { id: businessId } });
-      const currentParts = existing?.image.split('||gallery_sep||') || [];
+      const currentParts = existing?.image ? existing.image.split('||gallery_sep||') : [];
       
-      let currentCover = currentParts[0] || '';
+      let currentLogo = currentParts[0] || '';
       if (image !== undefined) {
-        currentCover = await uploadImage(image) || '';
+        currentLogo = (await uploadImage(image)) || currentLogo;
+      }
+
+      let currentCover = currentParts[1] || '';
+      if (body.coverImage !== undefined) {
+        currentCover = (await uploadImage(body.coverImage)) || currentCover;
       }
       
-      let currentGallery = currentParts.slice(1);
+      let currentGallery = currentParts.slice(2);
       if (body.gallery !== undefined) {
-        currentGallery = await uploadGallery(body.gallery);
+        const uploaded = await uploadGallery(body.gallery);
+        currentGallery = uploaded.filter((img: string) => img !== currentLogo && img !== currentCover);
       }
       
-      data.image = [currentCover, ...currentGallery].join('||gallery_sep||');
+      const assembled = [currentLogo];
+      if (currentCover) assembled.push(currentCover);
+      if (currentGallery.length > 0) assembled.push(...currentGallery);
+
+      data.image = assembled.filter(Boolean).join('||gallery_sep||');
     }
     if (subscription !== undefined) {
       data.subscription = subscription;

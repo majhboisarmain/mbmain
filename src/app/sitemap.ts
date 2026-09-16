@@ -73,7 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch (err) {
     console.error('Failed to fetch businesses for sitemap:', err);
   }
-
+  
   // 3. Top High-Intent Category Landing Pages (Priority 0.9)
   const categoryRoutes: MetadataRoute.Sitemap = TOP_BOISAR_CATEGORIES.map((cat) => ({
     url: `${baseUrl}/category/${encodeURIComponent(cat)}`,
