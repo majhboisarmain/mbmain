@@ -50,11 +50,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   React.useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
     }
     return () => {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
     };
   }, [isOpen]);
 
@@ -153,8 +156,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       return;
     }
 
-    // Check if this is the Master Admin Phone: 9307294733
-    if (cleanInputPhone.endsWith('9307294733')) {
+    // Check if this is the Master Admin Phone: 7769947217
+    if (cleanInputPhone.endsWith('7769947217')) {
       setIsLoading(false);
       setStep('admin_password');
       showToast('🔒 Admin phone verified. Super Admin password is required.', 'info', 4000);
@@ -239,7 +242,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phone: mobileNumber || '9307294733',
+          phone: mobileNumber || '7769947217',
           password: adminPasscode.trim(),
         }),
       });
@@ -254,7 +257,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
       setOtpError('');
       setRole('Admin');
-      login('Super Admin (9307294733)', '9307294733', 'majhboisar@gmail.com');
+      login('Super Admin (7769947217)', '7769947217', 'majhboisar@gmail.com');
       showToast('🛡️ Super Admin Authenticated! Opening Admin Panel...', 'success', 3500);
       resetForm();
       onClose();
@@ -543,7 +546,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           </form>
         )}
 
-        {/* STEP 4: Super Admin Passcode (Compulsory for 9307294733) */}
+        {/* STEP 4: Super Admin Passcode (Compulsory for 7769947217) */}
         {step === 'admin_password' && (
           <form onSubmit={handleAdminPasswordSubmit} className="space-y-3.5 animate-in fade-in zoom-in-95 duration-200">
             <div className="text-center p-3 rounded-2xl bg-slate-900 text-white space-y-1 shadow-inner">
@@ -552,7 +555,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 <span className="text-xs font-black uppercase tracking-wider">Super Admin Detected</span>
               </div>
               <p className="text-[11px] text-slate-300 font-medium">
-                Admin Mobile <strong className="text-white">+91 9307294733</strong> verified via OTP.
+                Admin Mobile <strong className="text-white">+91 7769947217</strong> verified via OTP.
               </p>
               <p className="text-[10px] text-amber-400 font-bold">
                 ⚠️ Super Admin password is compulsory to open the Admin Panel.

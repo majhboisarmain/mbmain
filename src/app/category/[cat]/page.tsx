@@ -529,7 +529,7 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
               Be the first business owner to list your {categoryName.toLowerCase()} on Majh Boisar local directory for free.
             </p>
             <Link
-              href="/business/new"
+              href="/dashboard?register=true"
               className="inline-flex items-center gap-1.5 bg-teal-700 hover:bg-teal-800 text-white font-black text-xs px-5 py-2.5 rounded-xl shadow-md transition-all cursor-pointer"
             >
               + List Your Business Free

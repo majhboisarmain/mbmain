@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
 
-export default function NewBusinessPage() {
+export default function ListBusinessPage() {
   redirect('/dashboard?register=true');
 }

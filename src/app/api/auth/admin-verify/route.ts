@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       authenticated: true,
       user: {
         name: payload.name || 'Super Admin',
-        phone: payload.phone || process.env.ADMIN_PHONE || '9307294733',
+        phone: payload.phone || process.env.ADMIN_PHONE || '7769947217',
         role: 'Admin',
       },
     });

@@ -92,7 +92,7 @@ export const initiateRazorpayCheckout = async (options: RazorpayCheckoutOptions)
       throw new Error(createData.error || 'Failed to initialize payment order');
     }
 
-    const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_Tcfw4EMwQIwWTQ';
+    const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_Tf38GQchKmVTT2';
 
     // 2. Open Razorpay Standard Checkout Modal
     const rzpOptions = {

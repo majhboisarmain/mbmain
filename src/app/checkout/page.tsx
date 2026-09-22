@@ -76,7 +76,7 @@ export default function RazorpayCheckoutPage() {
             <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-300">
               <span>Public Key ID:</span>
               <code className="font-mono text-[11px] bg-slate-800/80 px-2 py-0.5 rounded text-teal-300 border border-slate-700">
-                {process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_Tcfw4EMwQIwWTQ'}
+                {process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_Tf38GQchKmVTT2'}
               </code>
             </div>
           </div>

@@ -158,12 +158,23 @@ export default function Navbar() {
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+      document.documentElement.style.overflow = 'hidden';
+
+      const handleTouchMove = (e: TouchEvent) => {
+        const drawer = document.getElementById('mobile-nav-drawer');
+        if (drawer && !drawer.contains(e.target as Node)) {
+          if (e.cancelable) e.preventDefault();
+        }
+      };
+
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+      return () => {
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        document.removeEventListener('touchmove', handleTouchMove);
+      };
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [mobileMenuOpen]);
 
   const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
@@ -444,32 +455,33 @@ export default function Navbar() {
 
             {/* Register Your Business / Dashboard CTA — context-aware */}
             {mounted && (
-              isLoggedIn && hasRegisteredBusiness ? (
-                // User has a business → show Dashboard button
+              isLoggedIn && (hasRegisteredBusiness || currentRole === 'BusinessOwner' || currentRole === 'Admin' || (loggedInUser as any)?.role === 'BusinessOwner' || (loggedInUser as any)?.role === 'Admin') ? (
+                // User has a business OR is BusinessOwner/Admin → show Dashboard button
                 <Link
                   href="/dashboard"
                   className="btn-teal text-xs font-black px-3 py-1.5 rounded-lg hover:shadow-md transition-shadow flex items-center gap-1.5 cursor-pointer"
                 >
                   <Building className="w-3.5 h-3.5" />
-                  Dashboard
+                  <span>Dashboard</span>
                 </Link>
               ) : isLoggedIn ? (
                 // Logged in but NO business → show Register Your Business
                 <Link
-                  href="/dashboard"
+                  href="/dashboard?register=true"
                   className="btn-teal text-xs font-black px-3 py-1.5 rounded-lg hover:shadow-md transition-shadow flex items-center gap-1.5 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Register Your Business</span>
                 </Link>
               ) : (
-                // Guest → show Free Listing button to trigger login
-                <button
-                  onClick={() => setLoginModalOpen(true)}
+                // Guest → direct to business registration
+                <Link
+                  href="/dashboard?register=true"
                   className="btn-teal text-xs font-black px-3 py-1.5 rounded-lg hover:shadow-md transition-shadow flex items-center gap-1.5 cursor-pointer"
                 >
-                  {t('nav.free_listing')}
-                </button>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{t('nav.free_listing')}</span>
+                </Link>
               )
             )}
 
@@ -650,7 +662,7 @@ export default function Navbar() {
                           </Link>
 
                           <Link
-                            href="/dashboard"
+                            href="/dashboard?register=true"
                             onClick={() => setProfileDropdownOpen(false)}
                             className="flex items-center gap-3 rounded-lg px-2.5 py-1.5 text-xs text-slate-655 hover:bg-slate-50 hover:text-slate-800 transition-colors font-bold"
                           >
@@ -683,33 +695,42 @@ export default function Navbar() {
                             <span className="bg-teal-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase">NEW</span>
                           </Link>
 
-                          {/* USER ROLE MENU ITEMS (not yet a BusinessOwner) */}
-                          {isLoggedIn && !hasRegisteredBusiness && currentRole !== 'Admin' && (
-                            <>
-                              {/* Register Your Business — primary CTA for User role */}
-                              <Link
-                                href="/dashboard"
-                                onClick={() => setProfileDropdownOpen(false)}
-                                className="flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors font-extrabold border border-teal-200"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <span className="text-teal-600">🏪</span>
-                                  <span>Register Your Business</span>
-                                </div>
-                                <span className="bg-teal-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase">FREE</span>
-                              </Link>
-                            </>
+                          {/* USER ROLE MENU ITEMS (Only for standard users without business or admin) */}
+                          {isLoggedIn && !hasRegisteredBusiness && currentRole !== 'Admin' && (loggedInUser as any)?.role !== 'Admin' && currentRole !== 'BusinessOwner' && (loggedInUser as any)?.role !== 'BusinessOwner' && (
+                            <Link
+                              href="/dashboard?register=true"
+                              onClick={() => setProfileDropdownOpen(false)}
+                              className="flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors font-extrabold border border-teal-200"
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className="text-teal-600">🏪</span>
+                                <span>Register Your Business</span>
+                              </div>
+                              <span className="bg-teal-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase">FREE</span>
+                            </Link>
                           )}
 
-                          {/* BUSINESS OWNER MENU ITEM */}
-                          {(hasRegisteredBusiness || currentRole === 'BusinessOwner') && (
+                          {/* BUSINESS OWNER / DASHBOARD MENU ITEM */}
+                          {(hasRegisteredBusiness || currentRole === 'BusinessOwner' || currentRole === 'Admin' || (loggedInUser as any)?.role === 'BusinessOwner' || (loggedInUser as any)?.role === 'Admin') && (
                             <Link
-                              href="/dashboard?mode=shop"
+                              href="/dashboard"
                               onClick={() => setProfileDropdownOpen(false)}
                               className="flex items-center gap-3 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 hover:bg-slate-50 transition-colors font-extrabold"
                             >
                               <span className="text-teal-600">💼</span>
                               <span>My Business Dashboard</span>
+                            </Link>
+                          )}
+
+                          {/* ADMIN CONTROL PANEL LINK (for Admin role) */}
+                          {(currentRole === 'Admin' || (loggedInUser as any)?.role === 'Admin') && (
+                            <Link
+                              href="/adminmb"
+                              onClick={() => setProfileDropdownOpen(false)}
+                              className="flex items-center gap-3 rounded-lg px-2.5 py-1.5 text-xs text-teal-800 bg-teal-50 hover:bg-teal-100 transition-colors font-extrabold border border-teal-200"
+                            >
+                              <span className="text-teal-700">🛡️</span>
+                              <span>Admin Control Panel</span>
                             </Link>
                           )}
 
@@ -788,7 +809,11 @@ export default function Navbar() {
 
         {/* Mobile Nav Drawer (Clean, Modern & Fully Organized) */}
         {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-x-0 top-[calc(52px+env(safe-area-inset-top,0px))] sm:top-[calc(56px+env(safe-area-inset-top,0px))] bottom-0 bg-slate-100/95 backdrop-blur-md z-[9999] overflow-y-auto p-3.5 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] shadow-2xl text-left border-t border-slate-200 animate-in slide-in-from-top-2 duration-150">
+          <div
+            id="mobile-nav-drawer"
+            style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
+            className="md:hidden fixed inset-x-0 top-[calc(52px+env(safe-area-inset-top,0px))] sm:top-[calc(56px+env(safe-area-inset-top,0px))] bottom-0 bg-slate-100 z-[140] overflow-y-auto overscroll-contain touch-pan-y p-3.5 pb-[calc(2.5rem+env(safe-area-inset-bottom,0px))] shadow-2xl text-left border-t border-slate-200 animate-in slide-in-from-top-2 duration-150"
+          >
             <div className="max-w-md mx-auto space-y-3 pb-8">
             
               {/* 1. User Header or Guest Sign-In Card */}
@@ -862,16 +887,13 @@ export default function Navbar() {
                 </span>
 
                 <Link
-                  href="/dashboard"
+                  href={hasRegisteredBusiness ? "/dashboard" : "/register-business"}
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center justify-between p-2 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-50 hover:text-teal-700 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-base">🏪</span>
-                    <div>
-                      <p className="font-extrabold leading-tight">{hasRegisteredBusiness ? 'My Business Dashboard' : 'List Your Business Free'}</p>
-                      <p className="text-[9.5px] text-slate-400 font-normal">Get listed in Boisar &amp; MIDC directory</p>
-                    </div>
+                    <span className="font-extrabold">{hasRegisteredBusiness ? 'My Business Dashboard' : 'List Your Business Free'}</span>
                   </div>
                   <span className="text-[9px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">FREE</span>
                 </Link>
@@ -883,10 +905,7 @@ export default function Navbar() {
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-base">💼</span>
-                    <div>
-                      <p className="font-extrabold leading-tight">Post a Job Vacancy</p>
-                      <p className="text-[9.5px] text-slate-400 font-normal">Hire staff with direct candidate calls</p>
-                    </div>
+                    <span className="font-extrabold">Post a Job Vacancy</span>
                   </div>
                   <span className="text-[9px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full">Hiring</span>
                 </Link>
@@ -898,10 +917,7 @@ export default function Navbar() {
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-base">📢</span>
-                    <div>
-                      <p className="font-extrabold leading-tight">Advertise With Us</p>
-                      <p className="text-[9.5px] text-slate-400 font-normal">Sponsored banners &amp; top ranks</p>
-                    </div>
+                    <span className="font-extrabold">Advertise With Us</span>
                   </div>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                 </Link>

@@ -94,13 +94,14 @@ interface Business {
 }
 
 function DashboardContent() {
-  const { currentRole, isLoggedIn, setLoginModalOpen, setRole, loggedInUser, showToast, hasRegisteredBusiness, setHasRegisteredBusiness } = useApp();
+  const { currentRole, isLoggedIn, login, setLoginModalOpen, setRole, loggedInUser, showToast, hasRegisteredBusiness, setHasRegisteredBusiness } = useApp();
   const searchParams = useSearchParams();
   const modeParam = searchParams?.get('mode');
   const tabParam = searchParams?.get('tab');
   const hotelIdParam = searchParams?.get('hotelId');
   const hotelNameParam = searchParams?.get('hotelName');
   const bizIdParam = searchParams?.get('bizId') || searchParams?.get('id') || searchParams?.get('businessId');
+  const registerParam = searchParams?.get('register') === 'true' || searchParams?.get('action') === 'register' || modeParam === 'register';
 
   // SECURE: Admin auth is ONLY verified via server-side JWT cookie
   const [isAdminAuth, setIsAdminAuth] = useState(false);
@@ -122,6 +123,13 @@ function DashboardContent() {
     verifyAdminSession();
     return () => { mounted = false; };
   }, [setRole]);
+
+  // If guest arrives to register business, open the login modal automatically so they log in first
+  useEffect(() => {
+    if (!isLoggedIn && registerParam) {
+      setLoginModalOpen(true);
+    }
+  }, [isLoggedIn, registerParam, setLoginModalOpen]);
 
 
   const [businessesList, setBusinessesList] = useState<{ id: number; name: string; category?: string; hotelRefId?: string; hotelSlug?: string }[]>([]);
@@ -2426,6 +2434,23 @@ _Powered by Majh Boisar (majhboisar.com)_`
   const [newBizWhatsapp, setNewBizWhatsapp] = useState('');
   const [newBizEmail, setNewBizEmail] = useState('');
 
+  // Auto-prefill contact details from logged-in user
+  useEffect(() => {
+    if (loggedInUser) {
+      if (loggedInUser.name && !newBizContactPerson) {
+        setNewBizContactPerson(loggedInUser.name);
+      }
+      if (loggedInUser.phone && !newBizPhone) {
+        const clean = loggedInUser.phone.replace(/\D/g, '').slice(-10);
+        setNewBizPhone(clean);
+        setNewBizWhatsapp(clean);
+      }
+      if (loggedInUser.email && !newBizEmail) {
+        setNewBizEmail(loggedInUser.email);
+      }
+    }
+  }, [loggedInUser, newBizContactPerson, newBizPhone, newBizEmail]);
+
   // Step 3: Timings, Category, cover
   const [newBizCategory, setNewBizCategory] = useState('Doctors');
   const [newBizCustomCategory, setNewBizCustomCategory] = useState('');
@@ -2762,8 +2787,28 @@ _Powered by Majh Boisar (majhboisar.com)_`
         }
 
         if (combined.length > 0) {
-          // If no specific hotel requested, default to the first regular business
-          const defaultTarget = (nonHotelBiz.length > 0 && tabParam !== 'hotel_bookings') ? nonHotelBiz[0] : combined[0];
+          // If admin also registered their own business, prioritize showing their business first!
+          const userPhoneDigits = loggedInUser?.phone ? loggedInUser.phone.replace(/\D/g, '').slice(-10) : '';
+          let savedBizIds: number[] = [];
+          if (typeof window !== 'undefined' && userPhoneDigits) {
+            try {
+              const raw = localStorage.getItem(`majh_boisar_my_biz_ids_${userPhoneDigits}`);
+              if (raw) savedBizIds = JSON.parse(raw);
+            } catch (e) { }
+          }
+
+          const myOwnBiz = combined.find((b: any) => {
+            if (savedBizIds.includes(b.id)) return true;
+            if (!userPhoneDigits) return false;
+            const bp = (b.phone || '').replace(/\D/g, '').slice(-10);
+            const bw = (b.whatsapp || '').replace(/\D/g, '').slice(-10);
+            const bc = (b.createdBy || '').replace(/\D/g, '').slice(-10);
+            return bp === userPhoneDigits || bw === userPhoneDigits || bc === userPhoneDigits;
+          });
+
+          // Default target: user's owned business > first non-hotel business > first item
+          const fallbackTarget = (nonHotelBiz.length > 0 && tabParam !== 'hotel_bookings') ? nonHotelBiz[0] : combined[0];
+          const defaultTarget = myOwnBiz || fallbackTarget;
           const targetId = (selectedId && combined.some((b: any) => b.id === selectedId)) ? selectedId : defaultTarget.id;
           setSelectedId(targetId);
           if (targetId >= 99000) {
@@ -3514,10 +3559,21 @@ _Powered by Majh Boisar (majhboisar.com)_`
 
       showToast(`🎉 Success! "${createdObj.name}" has been registered with catalog & added to Boisar Directory!`, 'success', 5000);
 
+      // If user was not logged in, log them in automatically with the phone & name provided
+      if (!isLoggedIn) {
+        login(newBizContactPerson || newBizName, newBizPhone, newBizEmail || undefined);
+      }
+
+      if (typeof window !== 'undefined') {
+        try {
+          window.history.replaceState({}, '', '/dashboard');
+        } catch (e) { }
+      }
+
       // Save ID to localStorage for instant lookup across browser reloads
       if (typeof window !== 'undefined') {
         try {
-          const userP = loggedInUser?.phone ? loggedInUser.phone.replace(/\D/g, '') : '';
+          const userP = (loggedInUser?.phone || newBizPhone || '').replace(/\D/g, '');
           const key = userP ? `majh_boisar_my_biz_ids_${userP}` : 'majh_boisar_my_biz_ids';
           const raw = localStorage.getItem(key);
           const existing = raw ? JSON.parse(raw) : [];
@@ -3578,45 +3634,82 @@ _Powered by Majh Boisar (majhboisar.com)_`
     }
   };
 
+  const isDetectedHotel = Boolean(
+    (selectedId >= 99000 && selectedId <= 99999) ||
+    hotelIdParam ||
+    hotelNameParam ||
+    (business && (
+      (business.category || '').toLowerCase() === 'hotels' ||
+      (business.category || '').toLowerCase() === 'hotel' ||
+      (business.category || '').toLowerCase() === 'resorts' ||
+      (business.category || '').toLowerCase() === 'resort' ||
+      (business.name && (business.name.toLowerCase().includes('hotel') || business.name.toLowerCase().includes('resort')))
+    ))
+  );
+
+  // Business registration wizard is strictly accessible:
+  // 1) Explicit register intent (registerParam=true) for any authenticated user (logged in or admin)
+  // 2) Normal user who has logged in but has no registered business yet
+  const isRegisterIntent = registerParam || modeParam === 'register';
+  const shouldShowRegistrationWizard = (isLoggedIn || isAdminAuth) && (
+    isRegisterIntent ||
+    (!hasRegisteredBusiness && currentRole !== 'Admin' && !isAdminAuth && !specialProfile && !isDetectedHotel && modeParam !== 'hotel' && modeParam !== 'property')
+  );
+
   // 1. Mandatory Owner Login Gate (Clean & Compact)
+  // Shows login screen if user is not logged in
   if (!isLoggedIn && !isAdminAuth) {
+
     return (
       <div className="min-h-[70vh] bg-[#f8fafc] py-12 px-4 flex items-center justify-center text-slate-800">
-        <div className="max-w-sm w-full bg-white border border-slate-200/80 rounded-2xl p-6 shadow-lg text-center space-y-4 animate-in fade-in duration-200">
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center text-2xl mx-auto font-black shadow-xs">
-            🔒
+        <div className="max-w-sm w-full bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-7 shadow-xl shadow-slate-200/50 text-center space-y-5 animate-in fade-in duration-200">
+          
+          {/* Clean Store Icon */}
+          <div className="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-100/80 text-teal-600 flex items-center justify-center text-2xl mx-auto shadow-2xs">
+            🏪
           </div>
 
+          {/* Heading & Short Single-Line Tagline */}
           <div className="space-y-1">
-            <h2 className="text-lg font-bold text-slate-900">Partner &amp; Owner Login</h2>
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              {isRegisterIntent ? 'List Your Business Free' : 'Partner & Owner Login'}
+            </h2>
             <p className="text-xs text-slate-500 font-medium">
-              Log in to view and manage your property bookings.
+              {isRegisterIntent
+                ? 'Sign in with your mobile number to get started.'
+                : 'Sign in to view and manage your listings.'}
             </p>
           </div>
 
-          <div className="space-y-2 pt-1">
+          {/* Clean Primary Button & Subtle Link */}
+          <div className="space-y-3 pt-1">
             <button
               type="button"
               onClick={() => setLoginModalOpen(true)}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+              className="w-full bg-teal-600 hover:bg-teal-700 active:scale-[0.98] text-white font-black text-xs sm:text-sm py-3.5 rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              <span>🔑 Log In</span>
+              <Phone className="w-4 h-4" />
+              <span>Continue with Mobile OTP</span>
             </button>
 
-            <Link
-              href="/hotels"
-              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer"
-            >
-              <span>🏨 List Your Hotel</span>
-            </Link>
+            <div className="pt-1">
+              <Link
+                href="/hotels"
+                className="text-[11px] text-slate-400 hover:text-teal-700 transition-colors font-semibold inline-flex items-center gap-1"
+              >
+                <span>Hotel owner? Register here</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
           </div>
+
         </div>
       </div>
     );
   }
 
-  // 2. If logged in but has NO registered hotel or business for this phone number
-  if (isLoggedIn && !isAdminAuth && businessesList.length === 0 && !specialProfile) {
+  // 2. If logged in but has NO registered hotel or business for this phone number (Hotel/Property mode only)
+  if (!shouldShowRegistrationWizard && isLoggedIn && !isAdminAuth && businessesList.length === 0 && !specialProfile && (isDetectedHotel || hotelIdParam || hotelNameParam || modeParam === 'hotel' || modeParam === 'property')) {
     const cleanPhone = (loggedInUser?.phone || '').replace(/\D/g, '').slice(-10);
     return (
       <div className="min-h-[85vh] bg-[#f8fafc] py-16 px-4 flex items-center justify-center text-slate-800">
@@ -3652,17 +3745,12 @@ _Powered by Majh Boisar (majhboisar.com)_`
               <span>🏨 Register Your Hotel on Majh Boisar</span>
             </Link>
 
-            <button
-              type="button"
-              onClick={() => {
-                setWizardStep(1);
-                setHasRegisteredBusiness(false);
-                setNewBizModalOpen(true);
-              }}
+            <Link
+              href="/dashboard?register=true"
               className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-3 rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>🏪 Register a Shop or Business</span>
-            </button>
+            </Link>
 
             <button
               type="button"
@@ -3677,22 +3765,10 @@ _Powered by Majh Boisar (majhboisar.com)_`
     );
   }
 
-  const isDetectedHotel = Boolean(
-    (selectedId >= 99000 && selectedId <= 99999) ||
-    hotelIdParam ||
-    hotelNameParam ||
-    (business && (
-      (business.category || '').toLowerCase() === 'hotels' ||
-      (business.category || '').toLowerCase() === 'hotel' ||
-      (business.category || '').toLowerCase() === 'resorts' ||
-      (business.category || '').toLowerCase() === 'resort' ||
-      (business.name && (business.name.toLowerCase().includes('hotel') || business.name.toLowerCase().includes('resort')))
-    ))
-  );
-
-  // 3. If logged in but has NO registered business, show the inline Business Registration Wizard
-  //    This is triggered when user clicks "Register Your Business" in the navbar.
-  if (isLoggedIn && !hasRegisteredBusiness && currentRole !== 'Admin' && !isAdminAuth && !specialProfile && !isDetectedHotel) {
+  // 3. Business Registration Wizard:
+  //    Triggered whenever user clicks "List Your Business" (registerParam === true)
+  //    OR when user has NO registered business yet.
+  if (shouldShowRegistrationWizard) {
     return (
       <div className="min-h-screen bg-[#f8fafc] py-12 text-slate-800">
         <div className="max-w-xl mx-auto px-4">
@@ -4634,6 +4710,12 @@ _Powered by Majh Boisar (majhboisar.com)_`
                     <Building className="w-3.5 h-3.5 text-teal-650" />
                   </div>
                   <span className="text-xs font-black text-slate-900 shrink-0">Dashboard</span>
+                  {isAdminAuth && (
+                    <span className="text-[10px] font-black uppercase tracking-wider bg-purple-50 border border-purple-200 text-purple-800 px-2 py-0.5 rounded-lg flex items-center gap-1 shadow-2xs">
+                      <span>👑</span>
+                      <span>Admin View (All {businessesList.filter(b => b.id < 99000).length})</span>
+                    </span>
+                  )}
 
                   {/* 3-Way Portal Switcher Segmented Control */}
                   <div className="bg-slate-100 p-0.5 rounded-xl flex items-center gap-1 border border-slate-200">
@@ -7643,22 +7725,22 @@ _Powered by Majh Boisar (majhboisar.com)_`
                         </div>
                       </form>
 
-                      {/* 🚨 DANGER ZONE: Delete Hotel Listing */}
+                      {/* 🚨 Delete Hotel Listing */}
                       {!pendingDeletionReq && (
-                        <div className="bg-rose-50/70 border border-rose-200/90 rounded-2xl p-4 sm:p-5 text-left space-y-3">
+                        <div className="bg-rose-50/50 border border-rose-200/70 rounded-2xl p-3.5 sm:p-4 text-left">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div className="space-y-1">
-                              <h5 className="text-xs sm:text-sm font-black text-rose-900 flex items-center gap-1.5 uppercase tracking-wider">
-                                <span>🗑️</span> Danger Zone: Delete Hotel Listing
+                            <div className="space-y-0.5">
+                              <h5 className="text-xs font-bold text-rose-900 flex items-center gap-1.5">
+                                <span>🗑️</span> Delete Hotel Listing
                               </h5>
-                              <p className="text-xs text-rose-700 font-medium">
-                                Want to permanently remove {hotelProfileName} from Majh Boisar? You can submit a deletion request. Once approved by the Majh Boisar Admin, the hotel listing will be permanently deleted.
+                              <p className="text-[11px] text-rose-600 font-medium">
+                                Permanently remove this hotel listing from Majh Boisar.
                               </p>
                             </div>
                             <button
                               type="button"
                               onClick={() => setIsDeleteDialogOpen(true)}
-                              className="self-start sm:self-auto bg-rose-600 hover:bg-rose-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-98 shrink-0"
+                              className="self-start sm:self-auto bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shrink-0"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                               <span>Delete Hotel</span>
@@ -9617,26 +9699,26 @@ _Powered by Majh Boisar (majhboisar.com)_`
                       </div>
 
                       {/* Home Delivery Switch */}
-                      <div className="bg-emerald-50/80 border border-emerald-200 p-4 rounded-2xl flex items-center justify-between gap-3 text-left">
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-1.5 font-black text-xs text-emerald-950">
+                      <div className="bg-emerald-50/70 border border-emerald-200/80 p-3.5 rounded-2xl flex items-center justify-between gap-3 text-left">
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-950">
                             <span>🛵</span>
-                            <span>Do you provide Home Delivery in Boisar?</span>
+                            <span>Home Delivery</span>
                           </div>
-                          <p className="text-[11px] text-emerald-800 font-medium">
-                            Enable WhatsApp online order cart and show &quot;Home Delivery&quot; badge to Boisar shoppers.
+                          <p className="text-[11px] text-emerald-700 font-medium">
+                            Enable WhatsApp orders &amp; delivery badge
                           </p>
                         </div>
                         <button
                           type="button"
                           onClick={() => setEditHasHomeDelivery(!editHasHomeDelivery)}
-                          className={`px-4 py-2 rounded-xl font-black text-xs transition-all cursor-pointer shadow-xs shrink-0 ${
+                          className={`px-3.5 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer shrink-0 ${
                             editHasHomeDelivery
-                              ? 'bg-emerald-600 text-white shadow-md'
-                              : 'bg-white text-slate-700 border border-slate-300'
+                              ? 'bg-emerald-600 text-white shadow-xs'
+                              : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
                           }`}
                         >
-                          {editHasHomeDelivery ? '✓ YES (Home Delivery)' : 'NO (Store Pickup)'}
+                          {editHasHomeDelivery ? '✓ Available' : 'Pickup Only'}
                         </button>
                       </div>
 
@@ -9649,22 +9731,22 @@ _Powered by Majh Boisar (majhboisar.com)_`
                       </button>
                     </form>
 
-                    {/* 🚨 DANGER ZONE: Delete Business Listing */}
+                    {/* 🚨 Delete Business Listing */}
                     {!pendingDeletionReq && (
-                      <div className="bg-rose-50/70 border border-rose-200/90 rounded-2xl p-4 sm:p-5 text-left space-y-3 mt-4">
+                      <div className="bg-rose-50/50 border border-rose-200/70 rounded-2xl p-3.5 sm:p-4 text-left mt-4">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div className="space-y-1">
-                            <h5 className="text-xs sm:text-sm font-black text-rose-900 flex items-center gap-1.5 uppercase tracking-wider">
-                              <span>🗑️</span> Danger Zone: Delete Business Listing
+                          <div className="space-y-0.5">
+                            <h5 className="text-xs font-bold text-rose-900 flex items-center gap-1.5">
+                              <span>🗑️</span> Delete Business Listing
                             </h5>
-                            <p className="text-xs text-rose-700 font-medium">
-                              Want to permanently remove {business?.name || 'this business'} from Majh Boisar? You can submit a deletion request. Once approved by the Majh Boisar Admin, the listing will be permanently deleted.
+                            <p className="text-[11px] text-rose-600 font-medium">
+                              Permanently remove this business listing from directory.
                             </p>
                           </div>
                           <button
                             type="button"
                             onClick={() => setIsDeleteDialogOpen(true)}
-                            className="self-start sm:self-auto bg-rose-600 hover:bg-rose-700 text-white font-black text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-98 shrink-0"
+                            className="self-start sm:self-auto bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shrink-0"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>Delete Business</span>
@@ -11119,26 +11201,26 @@ _Powered by Majh Boisar (majhboisar.com)_`
                   </div>
 
                   {/* 🛵 Home Delivery in Boisar Question */}
-                  <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-4 flex items-center justify-between gap-3 text-left shadow-2xs">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-1.5 font-black text-xs text-emerald-950">
+                  <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-3.5 flex items-center justify-between gap-3 text-left shadow-2xs">
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-950">
                         <span>🛵</span>
-                        <span>Do you provide Home Delivery in Boisar?</span>
+                        <span>Home Delivery</span>
                       </div>
-                      <p className="text-[11px] text-emerald-800 font-medium">
-                        If Yes, customers can add your products to cart and order directly on WhatsApp!
+                      <p className="text-[11px] text-emerald-700 font-medium">
+                        Enable WhatsApp orders &amp; delivery badge
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => setNewBizHasHomeDelivery(!newBizHasHomeDelivery)}
-                      className={`px-4 py-2 rounded-xl font-black text-xs transition-all cursor-pointer shadow-xs shrink-0 ${
+                      className={`px-3.5 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer shrink-0 ${
                         newBizHasHomeDelivery
-                          ? 'bg-emerald-600 text-white shadow-md'
-                          : 'bg-white text-slate-700 border border-slate-300'
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
                       }`}
                     >
-                      {newBizHasHomeDelivery ? '✓ YES (Home Delivery)' : 'NO (Pickup Only)'}
+                      {newBizHasHomeDelivery ? '✓ Available' : 'Pickup Only'}
                     </button>
                   </div>
 

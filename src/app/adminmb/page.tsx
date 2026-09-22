@@ -179,38 +179,33 @@ interface AdOrder {
 export default function AdminPanelPage() {
   const { currentRole, setRole, login, isLoggedIn, loggedInUser, setLoginModalOpen, showToast } = useApp();
   const [isAdminPageUnlocked, setIsAdminPageUnlocked] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [checkingAuth, setCheckingAuth] = useState(false);
   const [isVerifyingPasscode, setIsVerifyingPasscode] = useState(false);
   const [adminPasscode, setAdminPasscode] = useState('');
   const [adminPasscodeError, setAdminPasscodeError] = useState('');
 
-  // Automatically verify server session cookie on mount
+  // Compulsory Security: Password required every time admin page is accessed.
+  // When leaving the admin page, immediately revoke session so re-entry requires password.
   useEffect(() => {
-    let isMounted = true;
-    async function checkServerAdminAuth() {
+    setIsAdminPageUnlocked(false);
+    setCheckingAuth(false);
+
+    const handleExit = () => {
       try {
-        const res = await fetch('/api/auth/admin-verify');
-        const data = await res.json().catch(() => ({}));
-        if (isMounted) {
-          if (data && data.authenticated) {
-            setIsAdminPageUnlocked(true);
-            setRole('Admin');
-            if (typeof window !== 'undefined') {
-              // No client-side storage writes needed — auth is purely server-side JWT
-            }
-          } else {
-            setIsAdminPageUnlocked(false);
-          }
-        }
-      } catch {
-        if (isMounted) setIsAdminPageUnlocked(false);
-      } finally {
-        if (isMounted) setCheckingAuth(false);
-      }
-    }
-    checkServerAdminAuth();
-    return () => { isMounted = false; };
-  }, [setRole]);
+        fetch('/api/auth/admin-logout', { method: 'POST', keepalive: true }).catch(() => {});
+      } catch {}
+    };
+
+    window.addEventListener('beforeunload', handleExit);
+    window.addEventListener('pagehide', handleExit);
+
+    return () => {
+      // Whenever user leaves admin page, revoke session immediately
+      handleExit();
+      window.removeEventListener('beforeunload', handleExit);
+      window.removeEventListener('pagehide', handleExit);
+    };
+  }, []);
 
   // Security Modal States (Change Admin Passcode & Authorized Mobile)
   const [adminSecurityModalOpen, setAdminSecurityModalOpen] = useState(false);
@@ -500,83 +495,39 @@ export default function AdminPanelPage() {
           } catch (e) {}
         }
       }
-      if (all.length > 0) return all;
+      if (all.length > 0) {
+        // Filter out legacy dummy/test booking IDs
+        const cleaned = all.filter(b => 
+          b.id && 
+          !['MB-HTL-819201', 'MB-HTL-948123', 'MB-HTL-301984', 'MB-HTL-512049', 'MB-HTL-378929', 'MB-HTL-267360', 'MB-HTL-259994', 'MB-HTL-478556', 'MB-HTL-220140', 'MB-HTL-297575', 'MB-HTL-399856', 'MB-HTL-516460', 'MB-HTL-416620', 'MB-HTL-672549', 'MB-HTL-297310', 'MB-HTL-877584', 'MB-HTL-363188'].includes(b.id) &&
+          b.guestName !== 'gr' && b.guestName !== 'll' && b.guestName !== 'vbv' && b.guestName !== 'r3tr'
+        );
+        return cleaned;
+      }
     } catch (e) {}
 
-    // Initial realistic seeded bookings if clean storage
-    return [
-      {
-        id: 'MB-HTL-819201',
-        hotelId: 'h1',
-        hotelName: 'Freesia by Express Inn',
-        guestName: 'Rohit Sharma',
-        guestPhone: '9820123456',
-        roomCategory: 'Deluxe AC Room',
-        stayType: 'hourly',
-        timeSlot: '12:00 PM - 03:00 PM (3 Hours)',
-        date: 'Today',
-        checkInDate: 'Today',
-        assignedRoom: '101',
-        totalAmount: '699',
-        status: 'Confirmed',
-        payoutStatus: 'Pending',
-        createdAt: '1 hour ago'
-      },
-      {
-        id: 'MB-HTL-948123',
-        hotelId: 'h1',
-        hotelName: 'Freesia by Express Inn',
-        guestName: 'Pooja Verma',
-        guestPhone: '9123456789',
-        roomCategory: 'Standard Non-AC Room',
-        stayType: 'hourly',
-        timeSlot: '01:00 PM - 07:00 PM (6 Hours)',
-        date: 'Today',
-        checkInDate: 'Today',
-        assignedRoom: '103',
-        totalAmount: '799',
-        status: 'Checked-In (Active Stay)',
-        payoutStatus: 'Pending',
-        createdAt: '3 hours ago'
-      },
-      {
-        id: 'MB-HTL-301984',
-        hotelId: 'h1',
-        hotelName: 'Freesia by Express Inn',
-        guestName: 'Anil Deshmukh',
-        guestPhone: '9833445566',
-        roomCategory: 'Deluxe AC Room',
-        stayType: 'night',
-        timeSlot: 'Night Stay (12:00 PM - 11:00 AM)',
-        date: 'Tonight',
-        checkInDate: 'Tonight',
-        assignedRoom: '105',
-        totalAmount: '1899',
-        status: 'Confirmed',
-        payoutStatus: 'Pending',
-        createdAt: 'Yesterday'
-      },
-      {
-        id: 'MB-HTL-512049',
-        hotelId: 'h2',
-        hotelName: 'Hotel Shivanand & Residency',
-        guestName: 'Kunal Patil',
-        guestPhone: '9819234567',
-        roomCategory: 'Executive Suite',
-        stayType: 'night',
-        timeSlot: 'Night Stay (12:00 PM - 11:00 AM)',
-        date: 'Yesterday',
-        checkInDate: 'Yesterday',
-        assignedRoom: '204',
-        totalAmount: '2499',
-        status: 'Completed',
-        payoutStatus: 'Settled',
-        payoutRef: 'UPI-849201',
-        payoutSettledAt: '2026-09-12T18:30:00.000Z',
-        createdAt: '2 days ago'
-      }
-    ];
+    return [];
   });
+
+  // Auto-purge legacy dummy/test bookings from localStorage on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const purgeKey = 'majh_purged_dummy_hotel_bookings_v4';
+    if (!localStorage.getItem(purgeKey)) {
+      try {
+        localStorage.removeItem('majh_boisar_hotel_bookings');
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('majh_boisar_hotel_bookings_')) {
+            localStorage.removeItem(k);
+          }
+        }
+        localStorage.setItem(purgeKey, 'true');
+        setAdminHotelBookings([]);
+        window.dispatchEvent(new Event('majh_boisar_hotel_bookings_updated'));
+      } catch (e) {}
+    }
+  }, []);
 
   // Payout Filters & Control States
   const [payoutStatusFilter, setPayoutStatusFilter] = useState<'all' | 'pending' | 'settled'>('all');
@@ -613,13 +564,13 @@ export default function AdminPanelPage() {
   const getPartnerPayoutDetails = (hotelIdOrName?: string) => {
     if (!hotelIdOrName) {
       return {
-        upi: 'hotelresidency@okhdfcbank',
-        holder: 'Express Inn Hospitality LLP',
-        bank: 'HDFC Bank, Boisar West Branch',
-        accNo: '50200084920194',
-        ifsc: 'HDFC0001842',
-        phone: '9820123456',
-        hotelName: 'Hotel Partner'
+        upi: '',
+        holder: '',
+        bank: '',
+        accNo: '',
+        ifsc: '',
+        phone: '',
+        hotelName: ''
       };
     }
 
@@ -651,12 +602,12 @@ export default function AdminPanelPage() {
              (hslug ? localStorage.getItem(`majh_hotel_payout_ifsc_${hslug}`) : null) || '';
     }
 
-    upi = upi || hotelObj?.payoutUpi || (hotelIdOrName.toLowerCase().includes('freesia') ? 'freesiahotel@okhdfcbank' : 'hotelresidency@okhdfcbank');
-    holder = holder || hotelObj?.payoutHolder || hotelObj?.name || 'Express Inn Hospitality LLP';
-    bank = bank || hotelObj?.payoutBank || 'HDFC Bank, Boisar Branch';
-    accNo = accNo || hotelObj?.payoutAccNo || '50200084920194';
-    ifsc = ifsc || hotelObj?.payoutIfsc || 'HDFC0001842';
-    const phone = hotelObj?.phone || '9820123456';
+    upi = upi || hotelObj?.payoutUpi || '';
+    holder = holder || hotelObj?.payoutHolder || hotelObj?.name || '';
+    bank = bank || hotelObj?.payoutBank || '';
+    accNo = accNo || hotelObj?.payoutAccNo || '';
+    ifsc = ifsc || hotelObj?.payoutIfsc || '';
+    const phone = hotelObj?.phone || '';
 
     return {
       upi,
@@ -2579,7 +2530,7 @@ export default function AdminPanelPage() {
       const finalCat = newBizCategory === 'Other'
         ? (newBizCustomCat.trim() || 'General Store')
         : (newBizCategory || 'Doctors');
-      const finalPhone = newBizPhone.replace(/\D/g, '') || "9307294733";
+      const finalPhone = newBizPhone.replace(/\D/g, '') || "7769947217";
       const finalWhatsapp = newBizWhatsapp.replace(/\D/g, '') || finalPhone;
 
       // Construct address block from structured inputs
@@ -2733,7 +2684,7 @@ export default function AdminPanelPage() {
     try {
       const finalName = newSpecName.trim() ? toTitleCase(newSpecName) : 'New Specialist Profile';
       const finalCat = newSpecCategory.trim() || (newSpecCategoryKey === 'helpers' ? 'Home Services' : newSpecCategoryKey === 'caterers' ? 'Catering & Food' : newSpecCategoryKey === 'influencers' ? 'Content Creator' : 'Real Estate');
-      const cleanPhone = newSpecPhone.replace(/\D/g, '') || '9307294733';
+      const cleanPhone = newSpecPhone.replace(/\D/g, '') || '7769947217';
       const finalPrice = newSpecPrice.trim() ? (newSpecPrice.startsWith('₹') ? newSpecPrice : `₹${newSpecPrice}`) : '₹500';
       const finalServices = newSpecServices.trim()
         ? newSpecServices.split(',').map(s => s.trim()).filter(Boolean)
@@ -4694,6 +4645,32 @@ export default function AdminPanelPage() {
                         <button
                           type="button"
                           onClick={() => {
+                            if (confirm('Clear all dummy & test hotel bookings? Ledger will be reset to ₹0.')) {
+                              try {
+                                localStorage.removeItem('majh_boisar_hotel_bookings');
+                                for (let i = localStorage.length - 1; i >= 0; i--) {
+                                  const k = localStorage.key(i);
+                                  if (k && k.startsWith('majh_boisar_hotel_bookings_')) {
+                                    localStorage.removeItem(k);
+                                  }
+                                }
+                                localStorage.setItem('majh_purged_dummy_hotel_bookings_v4', 'true');
+                                setAdminHotelBookings([]);
+                                window.dispatchEvent(new Event('majh_boisar_hotel_bookings_updated'));
+                                showToast('All dummy bookings removed! Payout ledger is now ₹0.', 'success');
+                              } catch (e) {}
+                            }
+                          }}
+                          className="bg-rose-600/80 hover:bg-rose-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
+                          title="Remove all test & dummy bookings"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Clear Dummy Bookings</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
                             try {
                               const raw = localStorage.getItem('majh_boisar_hotel_bookings');
                               if (raw) setAdminHotelBookings(JSON.parse(raw));
@@ -4824,67 +4801,86 @@ export default function AdminPanelPage() {
                             </div>
 
                             {/* Saved Bank & UPI Credentials Box */}
-                            <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-3 space-y-2 text-xs">
-                              <div className="grid grid-cols-2 gap-2 text-[11px]">
-                                <div>
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase block">Beneficiary Name</span>
-                                  <strong className="text-slate-800 font-bold truncate block">{partner.pInfo.holder}</strong>
-                                </div>
-                                <div>
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase block">Bank Name</span>
-                                  <strong className="text-slate-800 font-bold truncate block">{partner.pInfo.bank}</strong>
-                                </div>
-                                <div>
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase block">Account Number</span>
-                                  <div className="flex items-center gap-1.5">
-                                    <strong className="font-mono text-slate-900 font-bold">{partner.pInfo.accNo}</strong>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(partner.pInfo.accNo);
-                                        showToast(`Copied Account No: ${partner.pInfo.accNo}`, 'success');
-                                      }}
-                                      className="text-[9px] text-teal-700 hover:text-teal-900 font-bold cursor-pointer"
-                                    >
-                                      Copy
-                                    </button>
+                            {partner.pInfo.accNo || partner.pInfo.upi ? (
+                              <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-3 space-y-2 text-xs">
+                                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                  <div>
+                                    <span className="text-[9px] text-slate-400 font-bold uppercase block">Beneficiary Name</span>
+                                    <strong className="text-slate-800 font-bold truncate block">{partner.pInfo.holder || '—'}</strong>
+                                  </div>
+                                  <div>
+                                    <span className="text-[9px] text-slate-400 font-bold uppercase block">Bank Name</span>
+                                    <strong className="text-slate-800 font-bold truncate block">{partner.pInfo.bank || '—'}</strong>
+                                  </div>
+                                  <div>
+                                    <span className="text-[9px] text-slate-400 font-bold uppercase block">Account Number</span>
+                                    <div className="flex items-center gap-1.5">
+                                      <strong className="font-mono text-slate-900 font-bold">{partner.pInfo.accNo || '—'}</strong>
+                                      {partner.pInfo.accNo && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(partner.pInfo.accNo);
+                                            showToast(`Copied Account No: ${partner.pInfo.accNo}`, 'success');
+                                          }}
+                                          className="text-[9px] text-teal-700 hover:text-teal-900 font-bold cursor-pointer"
+                                        >
+                                          Copy
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="text-[9px] text-slate-400 font-bold uppercase block">IFSC Code</span>
+                                    <div className="flex items-center gap-1.5">
+                                      <strong className="font-mono text-slate-900 font-bold">{partner.pInfo.ifsc || '—'}</strong>
+                                      {partner.pInfo.ifsc && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(partner.pInfo.ifsc);
+                                            showToast(`Copied IFSC: ${partner.pInfo.ifsc}`, 'success');
+                                          }}
+                                          className="text-[9px] text-teal-700 hover:text-teal-900 font-bold cursor-pointer"
+                                        >
+                                          Copy
+                                        </button>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                                <div>
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase block">IFSC Code</span>
-                                  <div className="flex items-center gap-1.5">
-                                    <strong className="font-mono text-slate-900 font-bold">{partner.pInfo.ifsc}</strong>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(partner.pInfo.ifsc);
-                                        showToast(`Copied IFSC: ${partner.pInfo.ifsc}`, 'success');
-                                      }}
-                                      className="text-[9px] text-teal-700 hover:text-teal-900 font-bold cursor-pointer"
-                                    >
-                                      Copy
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
 
-                              <div className="pt-1.5 border-t border-slate-200 flex items-center justify-between">
-                                <div className="flex items-center gap-1 text-[11px]">
-                                  <span className="text-slate-400 text-[10px] font-bold uppercase">⚡ UPI:</span>
-                                  <strong className="font-mono text-slate-900 font-bold">{partner.pInfo.upi}</strong>
-                                </div>
+                                {partner.pInfo.upi && (
+                                  <div className="pt-1.5 border-t border-slate-200 flex items-center justify-between">
+                                    <div className="flex items-center gap-1 text-[11px]">
+                                      <span className="text-slate-400 text-[10px] font-bold uppercase">⚡ UPI:</span>
+                                      <strong className="font-mono text-slate-900 font-bold">{partner.pInfo.upi}</strong>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        navigator.clipboard.writeText(partner.pInfo.upi);
+                                        showToast(`Copied UPI: ${partner.pInfo.upi}`, 'success');
+                                      }}
+                                      className="text-[10px] text-teal-700 font-bold hover:underline cursor-pointer"
+                                    >
+                                      📋 Copy UPI
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="bg-slate-50/60 border border-dashed border-slate-200 rounded-2xl p-3 text-center">
+                                <p className="text-[11px] text-slate-400 font-medium">Bank &amp; UPI account not linked yet</p>
                                 <button
                                   type="button"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(partner.pInfo.upi);
-                                    showToast(`Copied UPI: ${partner.pInfo.upi}`, 'success');
-                                  }}
-                                  className="text-[10px] text-teal-700 font-bold hover:underline cursor-pointer"
+                                  onClick={() => handleOpenEditPartnerBank(partner.hotelObj || { name: partner.name })}
+                                  className="text-[11px] text-teal-700 font-black hover:underline mt-1 inline-flex items-center gap-1 cursor-pointer"
                                 >
-                                  📋 Copy UPI
+                                  <span>+ Add Bank / UPI Details</span>
                                 </button>
                               </div>
-                            </div>
+                            )}
 
                             {/* Property Financial Numbers */}
                             <div className="grid grid-cols-3 gap-2 text-center bg-white p-2.5 rounded-2xl border border-slate-150">
