@@ -461,7 +461,7 @@ function ServicesPageContent() {
   const [helperFilter, setHelperFilter] = useState<string>('All Helpers');
   const [domesticHelpers, setDomesticHelpers] = useState<DomesticHelper[]>([]);
 
-  // Provider states
+  // Provider states - Only live registered providers
   const [providers, setProviders] = useState<ServiceProvider[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -500,7 +500,7 @@ function ServicesPageContent() {
   const handleOpenHelperModal = () => {
     if (!isLoggedIn) {
       setLoginModalOpen(true);
-      showToast('Please login with your mobile number to register as a Service Provider / Helper.', 'info', 4000);
+      showToast('Please login to register service', 'info');
       return;
     }
     setShowHelperModal(true);
@@ -509,7 +509,7 @@ function ServicesPageContent() {
   const handleOpenProviderModal = () => {
     if (!isLoggedIn) {
       setLoginModalOpen(true);
-      showToast('Please login with your mobile number to list your service.', 'info', 4000);
+      showToast('Please login to list service', 'info');
       return;
     }
     setShowAddForm(true);
@@ -1217,50 +1217,10 @@ function ServicesPageContent() {
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 mt-3 space-y-4">
         
-        {/* 2. Search & Location Bar (Compact Single Line) */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-2 sm:p-2.5 shadow-2xs space-y-2.5">
-          {/* Unified Compact Bar */}
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/90 rounded-xl px-2.5 py-1.5 focus-within:bg-white focus-within:border-teal-600 focus-within:ring-2 focus-within:ring-teal-500/10 transition-all">
-            <Search className="w-4 h-4 text-slate-400 shrink-0" />
-            <input
-              type="text"
-              placeholder="Search maids, drivers, electricians, plumbers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent text-xs font-bold text-slate-800 outline-none placeholder:text-slate-400 placeholder:font-medium min-w-0"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="text-slate-400 hover:text-slate-700 p-0.5 shrink-0 cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-
-            {/* Divider */}
-            <div className="h-4 w-px bg-slate-200 mx-1 shrink-0"></div>
-
-            {/* Location Selector (Comprehensive Boisar Regions) */}
-            <div className="flex items-center gap-1 shrink-0 text-slate-700">
-              <MapPin className="w-3.5 h-3.5 text-teal-700 shrink-0" />
-              <select
-                value={selectedArea}
-                onChange={(e) => setSelectedArea(e.target.value)}
-                className="bg-transparent text-xs font-extrabold text-slate-800 outline-none cursor-pointer pr-1 max-w-[125px] sm:max-w-none truncate"
-              >
-                <option value="All">📍 All Boisar Region</option>
-                {BOISAR_REGIONS.map((region) => (
-                  <option key={region} value={region}>
-                    {region}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
+        {/* 2. Service Categories Grid */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-3.5 shadow-2xs space-y-2">
           {/* CATEGORIES: Horizontal Side Scroll on Mobile, Grid on Desktop */}
-          <div className="pt-2 border-t border-slate-100">
+          <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
                 Top Service Categories {showExtendedCategories ? '(All)' : ''}
@@ -1321,363 +1281,227 @@ function ServicesPageContent() {
           </div>
         </div>
 
-        {/* ── 4. SPECIFIC RESULTS VIEW (Only shown when user selects a specific category or searches) ── */}
-        {selectedCategory !== 'All' || searchQuery.trim() !== '' ? (
-          <div className="space-y-4">
-            {/* If domestic helper or matching profile is found for selectedCategory */}
-            {filteredDomesticHelpers.length > 0 && (
-              <div className="bg-white rounded-3xl border border-pink-200/80 p-4 sm:p-5 shadow-2xs space-y-3.5">
-                <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-                  <div className="w-10 h-10 rounded-2xl bg-pink-50 border border-pink-200 text-pink-600 flex items-center justify-center shrink-0 shadow-2xs">
-                    <HeartHandshake className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
-                      Available {selectedCategory} Profiles in Boisar
-                    </h3>
-                    <p className="text-[11px] text-slate-500 font-medium">
-                      Verified profiles with background check, timings and direct contact.
-                    </p>
-                  </div>
+        {/* ── 4. DIRECT RESULTS VIEW (Always shows verified technician & helper profiles) ── */}
+        <div className="space-y-4">
+          {/* If domestic helper or matching profile is found for selectedCategory */}
+          {filteredDomesticHelpers.length > 0 && (
+            <div className="bg-white rounded-3xl border border-pink-200/80 p-4 sm:p-5 shadow-2xs space-y-3.5">
+              <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+                <div className="w-10 h-10 rounded-2xl bg-pink-50 border border-pink-200 text-pink-600 flex items-center justify-center shrink-0 shadow-2xs">
+                  <HeartHandshake className="w-5 h-5" />
                 </div>
-
-                {/* Filtered Helpers Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
-                  {filteredDomesticHelpers.map((helper) => (
-                    <div
-                      key={helper.id}
-                      className={`bg-white rounded-2xl p-3.5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group text-left ${
-                        helper.featured ? 'border-2 border-amber-400 ring-1 ring-amber-300/60 shadow-md' : 'border border-slate-200 hover:border-pink-300'
-                      }`}
-                    >
-                      <div>
-                        {helper.featured && (
-                          <div className="mb-2">
-                            <span className="bg-linear-to-r from-amber-500 to-amber-600 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-2xs inline-flex items-center gap-1 border border-amber-300">
-                              ⭐ Top Choice / Featured
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex items-start gap-3">
-                          <img
-                            src={helper.image}
-                            alt={helper.name}
-                            className="w-14 h-14 rounded-2xl object-cover border border-slate-200 shrink-0 group-hover:scale-105 transition-transform duration-300"
-                          />
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <h4 className="text-xs sm:text-sm font-black text-slate-900 truncate">{helper.name}</h4>
-                              <span className="bg-emerald-50 text-emerald-700 text-[8.5px] font-black px-1.5 py-0.2 rounded border border-emerald-200 shrink-0">
-                                ✓ Verified
-                              </span>
-                            </div>
-                            <span className="inline-block bg-pink-50 text-pink-700 text-[9.5px] font-black px-2 py-0.5 rounded-md mt-0.5">
-                              {helper.role}
-                            </span>
-                            <p className="text-[10px] text-slate-500 font-bold mt-1 truncate">
-                              🕒 {helper.timing}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="mt-2.5 pt-2 border-t border-slate-100 space-y-1">
-                          <p className="text-[10.5px] text-slate-600 font-bold flex items-center gap-1 truncate">
-                            <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
-                            <span>{helper.location} • {helper.experience}</span>
-                          </p>
-                          <p className="text-[11px] font-black text-pink-700 leading-snug">
-                            {helper.expectedSalary?.replace(/💰/g, '').trim()}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Contact Actions: Call & WA or WhatsApp Only */}
-                      <div className="pt-2.5 mt-2.5 border-t border-slate-100">
-                        {helper.allowCalls === false ? (
-                          <a
-                            href={`https://wa.me/91${helper.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${helper.name}, I found your profile on Majh Boisar. I need a ${helper.role} in Boisar.`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-black text-[11px] py-1.5 rounded-xl text-center shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
-                          >
-                            <MessageSquare className="w-3 h-3" />
-                            <span>WhatsApp for Booking</span>
-                          </a>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={`tel:${helper.phone}`}
-                              className="flex-1 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-black text-[11px] py-1.5 rounded-xl text-center shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
-                            >
-                              <Phone className="w-3 h-3" />
-                              <span>Call</span>
-                            </a>
-                            <a
-                              href={`https://wa.me/91${helper.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${helper.name}, I need a ${helper.role} in Boisar. Please share your availability & charges.`)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-black text-[11px] py-1.5 rounded-xl text-center shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
-                            >
-                              <MessageSquare className="w-3 h-3" />
-                              <span>WhatsApp</span>
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
+                    Available {selectedCategory && selectedCategory !== 'All' ? selectedCategory : 'Domestic Helper'} Profiles in Boisar ({filteredDomesticHelpers.length})
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Verified profiles with background check, timings and direct contact.
+                  </p>
                 </div>
               </div>
-            )}
 
-            {/* Matching Local Technicians / Providers (Only shown if providers exist) */}
-            {filteredProviders.length > 0 && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-3">
-                <div className="border-b border-slate-100 pb-2.5">
+              {/* Filtered Helpers Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                {filteredDomesticHelpers.map((helper) => (
+                  <div
+                    key={helper.id}
+                    className={`bg-white rounded-2xl p-3.5 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group text-left ${
+                      helper.featured ? 'border-2 border-amber-400 ring-1 ring-amber-300/60 shadow-md' : 'border border-slate-200 hover:border-pink-300'
+                    }`}
+                  >
+                    <div>
+                      {helper.featured && (
+                        <div className="mb-2">
+                          <span className="bg-linear-to-r from-amber-500 to-amber-600 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-2xs inline-flex items-center gap-1 border border-amber-300">
+                            ⭐ Top Choice / Featured
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-start gap-3">
+                        <img
+                          src={helper.image}
+                          alt={helper.name}
+                          className="w-14 h-14 rounded-2xl object-cover border border-slate-200 shrink-0 group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="text-xs sm:text-sm font-black text-slate-900 truncate">{helper.name}</h4>
+                            <span className="bg-emerald-50 text-emerald-700 text-[8.5px] font-black px-1.5 py-0.2 rounded border border-emerald-200 shrink-0">
+                              ✓ Verified
+                            </span>
+                          </div>
+                          <span className="inline-block bg-pink-50 text-pink-700 text-[9.5px] font-black px-2 py-0.5 rounded-md mt-0.5">
+                            {helper.role}
+                          </span>
+                          <p className="text-[10px] text-slate-500 font-bold mt-1 truncate">
+                            🕒 {helper.timing}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-2.5 pt-2 border-t border-slate-100 space-y-1">
+                        <p className="text-[10.5px] text-slate-600 font-bold flex items-center gap-1 truncate">
+                          <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                          <span>{helper.location} • {helper.experience}</span>
+                        </p>
+                        <p className="text-[11px] font-black text-pink-700 leading-snug">
+                          {helper.expectedSalary?.replace(/💰/g, '').trim()}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Contact Actions: Call & WA or WhatsApp Only */}
+                    <div className="pt-2.5 mt-2.5 border-t border-slate-100">
+                      {helper.allowCalls === false ? (
+                        <a
+                          href={`https://wa.me/91${helper.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${helper.name}, I found your profile on Majh Boisar. I need a ${helper.role} in Boisar.`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-black text-[11px] py-1.5 rounded-xl text-center shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <MessageSquare className="w-3 h-3" />
+                          <span>WhatsApp for Booking</span>
+                        </a>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={`tel:${helper.phone}`}
+                            className="flex-1 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-black text-[11px] py-1.5 rounded-xl text-center shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <Phone className="w-3 h-3" />
+                            <span>Call</span>
+                          </a>
+                          <a
+                            href={`https://wa.me/91${helper.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${helper.name}, I need a ${helper.role} in Boisar. Please share your availability & charges.`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-black text-[11px] py-1.5 rounded-xl text-center shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            <span>WhatsApp</span>
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Matching Local Technicians / Providers */}
+          {filteredProviders.length > 0 && (
+            <div className="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 shadow-2xs space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
-                    {selectedCategory}{" "}Technicians &amp; Experts
+                    {selectedCategory && selectedCategory !== 'All' ? `${selectedCategory} (${filteredProviders.length})` : `Verified Technicians (${filteredProviders.length})`}
                   </h3>
-                  <p className="text-[11px] text-slate-500 font-medium">1-Tap direct phone call &amp; WhatsApp with verified professionals</p>
                 </div>
+                <span className="text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-200/80 px-2 py-0.5 rounded-full">
+                  Direct Contact
+                </span>
+              </div>
 
-                {/* Directory Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {filteredProviders.map((tech) => (
-                    <div
-                      key={tech.id}
-                      className="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-2xs hover:shadow-md hover:border-teal-400 transition-all flex flex-col justify-between group text-left"
-                    >
+              {/* Directory Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {filteredProviders.map((tech) => (
+                  <div
+                    key={tech.id}
+                    className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-2xs hover:shadow-md hover:border-teal-500/50 transition-all flex flex-col justify-between group text-left"
+                  >
+                    <div>
                       <div className="flex items-start gap-3">
                         <img
                           src={tech.image || 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=500&auto=format&fit=crop&q=80'}
                           alt={tech.name}
-                          className="w-14 h-14 rounded-xl object-cover border border-slate-200 shrink-0 group-hover:scale-105 transition-transform duration-300"
+                          className="w-14 h-14 rounded-2xl object-cover border border-slate-200 shrink-0 group-hover:scale-102 transition-transform duration-200"
                         />
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <h4 className="text-xs sm:text-sm font-black text-slate-900 truncate">{tech.name}</h4>
-                            <span className="bg-emerald-50 text-emerald-700 text-[9px] font-black px-1.5 py-0.2 rounded border border-emerald-200 shrink-0">
-                              Verified
+                            <span className="bg-emerald-50 text-emerald-700 text-[8.5px] font-black px-1.5 py-0.2 rounded border border-emerald-200 shrink-0">
+                              ✓ Verified
                             </span>
                           </div>
-                          <span className="inline-block bg-slate-100 text-slate-700 text-[9.5px] font-black px-2 py-0.5 rounded mt-1">
-                            {tech.category}
-                          </span>
+
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            <span className="bg-teal-50 border border-teal-200 text-teal-800 text-[10px] font-black px-2 py-0.5 rounded-md">
+                              {tech.category}
+                            </span>
+                            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200/60 px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                              ⭐ 4.9 (34)
+                            </span>
+                          </div>
+
                           <p className="text-[10.5px] text-slate-500 font-medium flex items-center gap-1 mt-1 truncate">
                             <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
-                            <span>{tech.location} • {tech.experience}</span>
-                          </p>
-                          <p className="text-[11px] text-teal-700 font-black mt-1">
-                            {tech.visitingFee?.replace(/💰/g, '').trim()}
+                            <span>{tech.location}</span>
                           </p>
                         </div>
                       </div>
 
-                      {/* 1-Tap Actions */}
-                      <div className="flex items-center gap-2 pt-3 mt-3 border-t border-slate-100">
-                        <a
-                          href={`tel:${tech.phone}`}
-                          className="flex-1 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-extrabold text-xs py-2 rounded-xl text-center shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          <Phone className="w-3.5 h-3.5" />
-                          <span>Call Direct</span>
-                        </a>
-                        <a
-                          href={`https://wa.me/91${tech.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${tech.name}, I need ${tech.category} in Boisar. Please share your availability & rates.`)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-extrabold text-xs py-2 rounded-xl text-center shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                          <span>WhatsApp</span>
-                        </a>
+                      {/* Experience and Visiting Fee Row */}
+                      <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 mt-2.5 pt-2 border-t border-slate-100">
+                        <span className="text-slate-500">{tech.experience}</span>
+                        <span className="font-black text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-150">
+                          {tech.visitingFee?.replace(/💰/g, '').trim()}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {/* Fallback Empty State if category has no profiles yet */}
-            {filteredDomesticHelpers.length === 0 && filteredProviders.length === 0 && (
-              <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-10 text-center space-y-2.5 shadow-2xs">
-                <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 text-slate-400 flex items-center justify-center mx-auto">
-                  <Wrench className="w-6 h-6" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-sm font-black text-slate-800">
-                    No {selectedCategory} Profiles Available
-                  </h4>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Try searching other services or check back shortly for updated local provider contacts.
-                  </p>
-                </div>
-                <div className="pt-1">
-                  <button
-                    onClick={() => router.push(`/search?category=${encodeURIComponent(selectedCategory)}`)}
-                    className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-black text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
-                  >
-                    <Search className="w-3.5 h-3.5" />
-                    <span>Search in City Directory</span>
-                  </button>
-                </div>
+                    {/* 1-Tap Actions */}
+                    <div className="flex items-center gap-2 pt-2.5 mt-2.5 border-t border-slate-100">
+                      <a
+                        href={`tel:${tech.phone}`}
+                        className="flex-1 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-extrabold text-xs py-2 rounded-xl text-center shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                        <span>Call</span>
+                      </a>
+                      <a
+                        href={`https://wa.me/91${tech.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${tech.name}, I found your contact on Majh Boisar for ${tech.category}. Please share your availability & rates.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-extrabold text-xs py-2 rounded-xl text-center shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>WhatsApp</span>
+                      </a>
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
-        ) : (
-          /* ── 5. DEFAULT LANDING VIEW: POPULAR SERVICES (When no specific category clicked) ── */
-          <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-2xs space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight truncate">
-                  Popular Services
-                </h2>
-                <p className="text-[10.5px] text-slate-500 font-medium truncate">
-                  Top-rated local services &amp; upfront rates
+            </div>
+          )}
+
+          {/* Fallback Empty State if category has no profiles yet */}
+          {filteredDomesticHelpers.length === 0 && filteredProviders.length === 0 && (
+            <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-10 text-center space-y-2.5 shadow-2xs">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 text-slate-400 flex items-center justify-center mx-auto">
+                <Wrench className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-sm font-black text-slate-800">
+                  No {selectedCategory && selectedCategory !== 'All' ? selectedCategory : 'Service'} Profiles Available
+                </h4>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Try searching other services or check back shortly for updated local provider contacts.
                 </p>
               </div>
-              <span className="text-[10px] sm:text-xs font-black text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                ★ 4.6+ Rating
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {POPULAR_SERVICES.map((service) => (
-                <div
-                  key={service.id}
-                  onClick={() => {
-                    if (service.category.includes('Maid')) {
-                      setSelectedCategory('House Maid');
-                      setHelperFilter('House Maid');
-                    } else if (service.category.includes('AC')) {
-                      setSelectedCategory('AC Service');
-                    } else if (service.category.includes('Plumber')) {
-                      setSelectedCategory('Plumbers');
-                    } else {
-                      setSelectedCategory(service.category);
-                    }
-                  }}
-                  className="bg-white border border-slate-200 rounded-2xl p-3 shadow-2xs hover:shadow-md hover:border-teal-400 transition-all flex flex-col justify-between cursor-pointer group text-left"
+              <div className="pt-1">
+                <button
+                  onClick={() => router.push(`/search?category=${encodeURIComponent(selectedCategory)}`)}
+                  className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-black text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  <div className="flex items-start gap-3">
-                    <img
-                      src={service.image}
-                      alt={service.title}
-                      className="w-14 h-14 rounded-xl object-cover border border-slate-200 shrink-0 group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&auto=format&fit=crop&q=80';
-                      }}
-                    />
-                    <div className="min-w-0">
-                      <h3 className="text-xs sm:text-sm font-black text-slate-900 group-hover:text-teal-700 transition-colors leading-snug line-clamp-1">
-                        {service.title}
-                      </h3>
-                      <p className="text-[11px] font-extrabold text-teal-700 mt-0.5">
-                        {service.startingPrice}
-                      </p>
-                      <span className="text-[10px] font-black text-amber-500 flex items-center gap-0.5 mt-0.5">
-                        ★ {service.rating} ({service.reviews})
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between text-[10.5px] font-extrabold text-slate-500 group-hover:text-teal-800">
-                    <span>View Providers &amp; Rates</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Live Verified Profiles & Technicians on Landing View */}
-            {providers.length > 0 && (
-              <div className="pt-4 border-t border-slate-100 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                    </span>
-                    <h3 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
-                      Live Verified Profiles &amp; Technicians in Boisar ({providers.length})
-                    </h3>
-                  </div>
-                  <span className="text-[9.5px] sm:text-[10px] text-teal-800 font-bold bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full">
-                    Direct Contact
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {providers.map((p) => (
-                    <div
-                      key={p.id}
-                      className={`bg-white rounded-2xl p-3 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group text-left ${
-                        p.featured ? 'border-2 border-amber-400 ring-1 ring-amber-300/60 shadow-md' : 'border border-slate-200 hover:border-teal-400'
-                      }`}
-                    >
-                      <div>
-                        {p.featured && (
-                          <div className="mb-2">
-                            <span className="bg-linear-to-r from-amber-500 to-amber-600 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-2xs inline-flex items-center gap-1 border border-amber-300">
-                              ⭐ Top Choice / Featured
-                            </span>
-                          </div>
-                        )}
-                        <div className="flex items-start gap-2.5">
-                          <img
-                            src={p.image}
-                            alt={p.name}
-                            className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0 group-hover:scale-105 transition-transform duration-300"
-                          />
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1">
-                              <h4 className="text-xs font-black text-slate-900 truncate">{p.name}</h4>
-                              <span className="text-emerald-700 text-[8px] font-black bg-emerald-50 px-1 rounded border border-emerald-200 shrink-0">
-                                ✓
-                              </span>
-                            </div>
-                            <span className="inline-block text-[9.5px] font-extrabold text-teal-700 bg-teal-50 px-1.5 py-0.2 rounded mt-0.5 truncate max-w-full">
-                              {p.category}
-                            </span>
-                            <p className="text-[9.5px] text-slate-500 font-bold mt-0.5 truncate">
-                              📍 {p.location}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px]">
-                          <span className="text-slate-500 font-bold truncate">{p.experience}</span>
-                          <span className="font-black text-teal-800 shrink-0">{p.visitingFee?.replace(/💰/g, '').trim()}</span>
-                        </div>
-                      </div>
-
-                      <div className="pt-2 mt-2 border-t border-slate-100 flex items-center gap-1.5">
-                        {p.allowCalls !== false && (
-                          <a
-                            href={`tel:${p.phone}`}
-                            className="flex-1 bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-black text-[10px] py-1.5 rounded-lg text-center shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
-                          >
-                            <Phone className="w-2.5 h-2.5" />
-                            <span>Call</span>
-                          </a>
-                        )}
-                        <a
-                          href={`https://wa.me/91${p.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${p.name}, I found your profile on Majh Boisar.`)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] active:scale-95 text-white font-black text-[10px] py-1.5 rounded-lg text-center shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
-                        >
-                          <MessageSquare className="w-2.5 h-2.5" />
-                          <span>WhatsApp</span>
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                  <Search className="w-3.5 h-3.5" />
+                  <span>Search in City Directory</span>
+                </button>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         {/* ── 6. GOOGLE RICH FAQ SECTION (Beating Justdial & Sulekha SEO) ── */}
         <section className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs text-left space-y-3">

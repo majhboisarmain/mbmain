@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { X, Mail, ShieldCheck, HelpCircle, Lock, Eye, EyeOff, KeyRound } from 'lucide-react';
+import { X, Mail, ShieldCheck, HelpCircle, Lock, Eye, EyeOff, KeyRound, ChevronDown } from 'lucide-react';
 
 import { getAllHotels } from '@/lib/hotelsData';
 
@@ -319,7 +319,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         className="fixed inset-0" 
         onClick={() => {
@@ -328,54 +328,64 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         }}
       />
       
-      <div className="relative w-full max-w-[310px] sm:max-w-[320px] bg-white rounded-3xl shadow-2xl border border-slate-200 px-4.5 py-6 z-10 animate-in zoom-in-95 duration-200 text-left">
+      <div className="relative w-full max-w-[420px] bg-white sm:rounded-3xl rounded-t-3xl shadow-2xl z-10 animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-300 text-left overflow-hidden">
         {/* Close Button */}
         <button
           onClick={() => {
             resetForm();
             onClose();
           }}
-          className="absolute top-4 right-4 p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+          aria-label="Close"
+          className="absolute top-3.5 right-3.5 z-20 w-8 h-8 rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-md text-white flex items-center justify-center transition-all cursor-pointer"
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4 stroke-[2.5]" />
         </button>
 
-        {/* JustDial-Style Header: Left Logo | Vertical Divider | Right Welcome Title */}
-        <div className="flex items-center gap-2.5 mb-5 pb-1 text-left">
-          <div className="shrink-0">
+        {/* Purple Gradient Hero Banner with Logo (Matches District by Zomato Style) */}
+        <div className="relative py-7 sm:py-8 bg-gradient-to-br from-[#7B2CBF] via-[#6C47FF] to-[#8A3FFC] flex flex-col items-center justify-center px-6 text-center overflow-hidden">
+          {/* Decorative glowing circles */}
+          <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-xl pointer-events-none" />
+          <div className="absolute -bottom-8 -left-8 w-36 h-36 bg-purple-400/20 rounded-full blur-lg pointer-events-none" />
+
+          {/* OG Majh Boisar Logo in crisp white pill for maximum brand fidelity */}
+          <div className="bg-white px-5 py-2 rounded-2xl shadow-lg relative z-10 flex items-center justify-center border border-white/60">
             <img
               src="/majh-boisar-full-logo.png"
               alt="Majh Boisar"
-              className="h-7.5 w-auto object-contain"
+              className="h-11 sm:h-13 w-auto object-contain"
             />
           </div>
-          
-          <div className="h-8 w-[2px] bg-slate-200 rounded-full shrink-0" />
-          
-          <div className="min-w-0">
-            <h3 className="text-xs sm:text-sm font-black text-slate-900 leading-tight">Welcome!</h3>
-            <p className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
-              Enter your mobile number to continue
-            </p>
-          </div>
+
+          <p className="text-xs sm:text-[13px] font-semibold text-white/95 mt-3 relative z-10 max-w-xs leading-snug">
+            Boisar's #1 Local City Directory &amp; Services Portal
+          </p>
         </div>
 
-        {/* Error message block */}
-        {otpError && (
-          <div className="p-2 mb-3 bg-rose-50 border border-rose-200 rounded-xl text-[11px] text-rose-700 font-bold flex items-center gap-1.5 animate-shake">
-            <HelpCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-            <span>{otpError}</span>
-          </div>
-        )}
+        {/* Content Area */}
+        <div className="px-5 sm:px-7 py-5 sm:py-6">
+          
+          {/* Error message block */}
+          {otpError && (
+            <div className="p-2.5 mb-4 bg-rose-50 border border-rose-200 rounded-xl text-[11px] text-rose-700 font-bold flex items-center gap-1.5 animate-shake">
+              <HelpCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+              <span>{otpError}</span>
+            </div>
+          )}
 
-        {/* STEP 1: Clean Phone Input */}
-        {step === 'phone' && (
-          <form onSubmit={handleSendOtp} className="space-y-4">
-            {/* Mobile Number Input */}
-            <div>
-              <div className="relative flex items-center">
-                <div className="absolute left-3 text-xs text-slate-600 font-black border-r border-slate-200 pr-2 flex items-center gap-1">
-                  <span>+91</span>
+          {/* STEP 1: Phone Input */}
+          {step === 'phone' && (
+            <form onSubmit={handleSendOtp} className="space-y-5">
+              <div className="text-center">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Enter your mobile number</h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">If you don&apos;t have an account yet, we&apos;ll create one for you</p>
+              </div>
+
+              {/* Phone Input with Flag */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-3 py-3 bg-white border border-slate-200/90 shadow-2xs rounded-xl shrink-0">
+                  <span className="text-base">🇮🇳</span>
+                  <span className="text-sm font-bold text-slate-800">+91</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
                 </div>
                 <input
                   type="tel"
@@ -384,234 +394,245 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   maxLength={10}
                   value={mobileNumber}
                   onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Mobile Number*"
-                  className="w-full bg-white border border-slate-300 rounded-xl pl-14 pr-3 py-2.5 text-xs focus:outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 text-slate-900 font-black tracking-wider placeholder:text-slate-400 shadow-2xs transition-all"
+                  placeholder="Enter mobile number"
+                  className="flex-1 bg-white border border-slate-200/90 shadow-2xs rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 text-slate-900 font-bold placeholder:text-slate-400 placeholder:font-normal transition-all"
                 />
               </div>
-            </div>
 
-            {/* Terms and Privacy Policy Checkbox */}
-            <div className="flex flex-col items-center justify-center pt-1 text-center space-y-0.5">
-              <label className="flex items-center gap-1.5 text-[10.5px] text-slate-600 font-medium cursor-pointer">
-                <input type="checkbox" defaultChecked required className="w-3.5 h-3.5 accent-teal-600 rounded cursor-pointer" />
-                <span>I Agree to Terms and Conditions</span>
-              </label>
+              {/* Continue Button */}
               <button
-                type="button"
-                onClick={() => setShowTermsModal(true)}
-                className="text-[9.5px] text-teal-600 font-extrabold hover:underline cursor-pointer"
+                type="submit"
+                disabled={isLoading || mobileNumber.length < 10}
+                className="w-full bg-black hover:bg-neutral-900 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed active:scale-[0.98] text-white text-sm font-extrabold py-3.5 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2"
               >
-                T&amp;C's Privacy Policy
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Sending OTP...
+                  </span>
+                ) : (
+                  <span>Continue</span>
+                )}
               </button>
-            </div>
 
-            {/* Primary Login Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-slate-900 hover:bg-slate-800 active:scale-98 disabled:opacity-70 text-white text-xs font-black py-3 rounded-xl shadow-md uppercase tracking-wider transition-all cursor-pointer mt-2 flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <span>Sending OTP...</span>
-              ) : (
-                <span>Continue</span>
-              )}
-            </button>
-
-            {/* Maybe Later Link */}
-            <div className="text-center pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  resetForm();
-                  onClose();
-                }}
-                className="text-[11px] text-teal-600 font-bold hover:underline cursor-pointer"
-              >
-                Maybe Later
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* STEP 2: OTP verification */}
-        {step === 'otp' && (
-          <form onSubmit={handleVerifyOtp} className="space-y-3.5">
-            <div>
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider">Enter OTP Sent to +91 {mobileNumber}</label>
-                <button 
-                  type="button" 
-                  onClick={() => setStep('phone')} 
-                  className="text-[10px] text-teal-600 hover:underline font-extrabold cursor-pointer"
-                >
-                  Change
-                </button>
+              {/* Terms Footer */}
+              <div className="text-center pt-1">
+                <p className="text-[11px] text-slate-400 font-medium">By continuing, you agree to our</p>
+                <div className="flex items-center justify-center gap-3 mt-0.5">
+                  <a href="/terms" target="_blank" className="text-xs text-slate-600 font-semibold underline underline-offset-2 hover:text-purple-700 transition-colors">Terms of Service</a>
+                  <a href="/privacy" target="_blank" className="text-xs text-slate-600 font-semibold underline underline-offset-2 hover:text-purple-700 transition-colors">Privacy Policy</a>
+                </div>
               </div>
-              <input
-                type="text"
-                required
-                autoFocus
-                maxLength={6}
-                value={otpCode}
-                onChange={(e) => {
-                  setOtpCode(e.target.value.replace(/\D/g, ''));
-                  if (otpError) setOtpError('');
-                }}
-                placeholder="Enter 6-digit OTP"
-                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-center text-sm font-black tracking-[0.3em] focus:outline-none focus:border-teal-600 focus:ring-1 focus:ring-teal-600 text-slate-900 shadow-2xs transition-all"
-              />
-            </div>
+            </form>
+          )}
 
-            {/* Resend OTP 60s Countdown Timer */}
-            <div className="flex items-center justify-between text-[11px] px-0.5">
-              <span className="text-slate-500 font-medium">Didn't receive code?</span>
-              {resendTimer > 0 ? (
-                <span className="text-slate-500 font-bold bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200 text-[10px]">
-                  Resend in <strong className="text-teal-700 font-mono font-black">{resendTimer}s</strong>
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleResendOtp}
-                  disabled={isLoading}
-                  className="text-teal-600 hover:text-teal-700 font-extrabold text-xs underline cursor-pointer disabled:opacity-50"
-                >
-                  {isLoading ? 'Sending...' : 'Resend OTP Now'}
-                </button>
-              )}
-            </div>
+          {/* STEP 2: OTP verification */}
+          {step === 'otp' && (
+            <form onSubmit={handleVerifyOtp} className="space-y-5">
+              <div className="text-center sm:text-left">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Enter OTP</h2>
+                <p className="text-sm text-slate-400 mt-1 font-medium">
+                  We have sent a verification code to +91 {mobileNumber}{' '}
+                  <button 
+                    type="button" 
+                    onClick={() => setStep('phone')} 
+                    className="text-teal-600 font-bold hover:underline cursor-pointer"
+                  >
+                    (Change)
+                  </button>
+                </p>
+              </div>
 
-            <button
-              type="submit"
-              className="w-full bg-teal-600 hover:bg-teal-700 active:scale-98 text-white text-xs font-black py-3 rounded-xl shadow-md uppercase tracking-wider transition-all cursor-pointer"
-            >
-              Verify &amp; Login
-            </button>
+              {/* OTP Input Boxes */}
+              <div className="flex items-center justify-center gap-2 sm:gap-2.5">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <input
+                    key={i}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    autoFocus={i === 0}
+                    value={otpCode[i] || ''}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      const newOtp = otpCode.split('');
+                      newOtp[i] = val;
+                      const joined = newOtp.join('').slice(0, 6);
+                      setOtpCode(joined);
+                      if (otpError) setOtpError('');
+                      // Auto-focus next
+                      if (val && i < 5) {
+                        const next = e.target.parentElement?.children[i + 1] as HTMLInputElement;
+                        if (next) next.focus();
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      // Handle backspace to move to previous box
+                      if (e.key === 'Backspace' && !otpCode[i] && i > 0) {
+                        const prev = (e.target as HTMLElement).parentElement?.children[i - 1] as HTMLInputElement;
+                        if (prev) prev.focus();
+                      }
+                    }}
+                    onPaste={(e) => {
+                      e.preventDefault();
+                      const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+                      setOtpCode(pasted);
+                      // Focus last filled or next empty
+                      const target = (e.target as HTMLElement).parentElement?.children[Math.min(pasted.length, 5)] as HTMLInputElement;
+                      if (target) target.focus();
+                    }}
+                    className={`w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-black text-slate-900 border-2 rounded-xl focus:outline-none transition-all ${
+                      otpCode[i] 
+                        ? 'border-teal-500 bg-teal-50/50 shadow-sm' 
+                        : 'border-slate-200 bg-slate-50 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20'
+                    }`}
+                  />
+                ))}
+              </div>
 
-            <div className="text-center pt-1">
+              {/* Verify Button */}
               <button
-                type="button"
-                onClick={() => {
-                  resetForm();
-                  onClose();
-                }}
-                className="text-[11px] text-teal-600 font-bold hover:underline cursor-pointer"
+                type="submit"
+                disabled={otpCode.length < 6}
+                className="w-full bg-black hover:bg-neutral-900 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed active:scale-[0.98] text-white text-sm font-extrabold py-3.5 rounded-xl shadow-xs transition-all cursor-pointer"
               >
-                Maybe Later
+                Continue
               </button>
-            </div>
-          </form>
-        )}
 
-        {/* STEP 3: Detail Info (if Name wasn't provided earlier) */}
-        {step === 'info' && (
-          <form onSubmit={handleCompleteRegistration} className="space-y-3 animate-in fade-in zoom-in-95 duration-200">
-            <div className="text-center mb-1">
-              <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-md">Mobile Verified ✓</span>
-            </div>
+              {/* Resend OTP */}
+              <div className="text-center text-sm text-slate-400 font-medium">
+                {resendTimer > 0 ? (
+                  <span>Didn't get the OTP? (Request again in <strong className="text-slate-600 font-mono">{String(Math.floor(resendTimer / 60)).padStart(2, '0')}:{String(resendTimer % 60).padStart(2, '0')}</strong>)</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={isLoading}
+                    className="text-teal-600 font-bold hover:underline cursor-pointer disabled:opacity-50"
+                  >
+                    {isLoading ? 'Sending...' : 'Resend OTP'}
+                  </button>
+                )}
+              </div>
+            </form>
+          )}
 
-            <div>
-              <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Full Name*</label>
-              <input
-                type="text"
-                required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter your full name"
-                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-teal-600 text-slate-900 font-bold"
-              />
-            </div>
+          {/* STEP 3: Detail Info */}
+          {step === 'info' && (
+            <form onSubmit={handleCompleteRegistration} className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+              <div className="text-center sm:text-left">
+                <div className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-[11px] font-bold px-3 py-1 rounded-full border border-emerald-200 mb-2">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Mobile Verified</span>
+                </div>
+                <h2 className="text-xl font-black text-slate-900 tracking-tight">Complete your profile</h2>
+                <p className="text-sm text-slate-400 mt-0.5 font-medium">Just a few details to get started</p>
+              </div>
 
-            <div>
-              <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Email Address</label>
-              <div className="relative flex items-center">
-                <Mail className="w-3.5 h-3.5 text-slate-400 absolute left-3" />
+              <div>
+                <label className="block text-xs text-slate-500 font-bold mb-1.5">Full Name *</label>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com (Optional)"
-                  className="w-full bg-white border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 text-xs focus:outline-none focus:border-teal-600 text-slate-900 font-bold"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-teal-600 hover:bg-teal-700 active:scale-98 text-white text-xs font-black py-3 rounded-xl shadow-md uppercase tracking-wider transition-all cursor-pointer"
-            >
-              Complete &amp; Enter
-            </button>
-          </form>
-        )}
-
-        {/* STEP 4: Super Admin Passcode (Compulsory for 7769947217) */}
-        {step === 'admin_password' && (
-          <form onSubmit={handleAdminPasswordSubmit} className="space-y-3.5 animate-in fade-in zoom-in-95 duration-200">
-            <div className="text-center p-3 rounded-2xl bg-slate-900 text-white space-y-1 shadow-inner">
-              <div className="flex items-center justify-center gap-1.5 text-teal-400">
-                <ShieldCheck className="w-5 h-5 animate-pulse" />
-                <span className="text-xs font-black uppercase tracking-wider">Super Admin Detected</span>
-              </div>
-              <p className="text-[11px] text-slate-300 font-medium">
-                Admin Mobile <strong className="text-white">+91 7769947217</strong> verified via OTP.
-              </p>
-              <p className="text-[10px] text-amber-400 font-bold">
-                ⚠️ Super Admin password is compulsory to open the Admin Panel.
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider mb-1 flex items-center justify-between">
-                <span>Super Admin Passcode *</span>
-                <span className="text-[9px] text-slate-400 lowercase font-medium">required</span>
-              </label>
-              <div className="relative flex items-center">
-                <KeyRound className="w-4 h-4 text-slate-400 absolute left-3" />
-                <input
-                  type={showAdminPassword ? "text" : "password"}
+                  type="text"
                   required
                   autoFocus
-                  value={adminPasscode}
-                  onChange={(e) => {
-                    setAdminPasscode(e.target.value);
-                    if (otpError) setOtpError('');
-                  }}
-                  placeholder="Enter Super Admin Password"
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-10 py-2.5 text-xs focus:outline-none focus:border-teal-600 focus:bg-white text-slate-900 font-extrabold tracking-wider"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter your full name"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 focus:bg-white text-slate-900 font-bold placeholder:text-slate-400 placeholder:font-medium transition-all"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowAdminPassword(!showAdminPassword)}
-                  className="absolute right-3 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  title={showAdminPassword ? "Hide password" : "Show password"}
-                >
-                  {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
               </div>
-            </div>
 
-            <button
-              type="submit"
-              className="w-full bg-gradient-to-r from-slate-900 via-teal-900 to-teal-800 hover:from-black hover:to-teal-700 active:scale-98 text-white text-xs font-black py-3.5 rounded-xl shadow-lg uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              <Lock className="w-3.5 h-3.5 text-teal-300" />
-              <span>Unlock &amp; Open Admin Panel</span>
-            </button>
+              <div>
+                <label className="block text-xs text-slate-500 font-bold mb-1.5">Email Address <span className="text-slate-400 font-medium">(Optional)</span></label>
+                <div className="relative flex items-center">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 focus:bg-white text-slate-900 font-bold placeholder:text-slate-400 placeholder:font-medium transition-all"
+                  />
+                </div>
+              </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                resetForm();
-                onClose();
-              }}
-              className="w-full text-center text-[11px] font-bold text-slate-400 hover:text-slate-600 pt-1"
-            >
-              Cancel Login
-            </button>
-          </form>
-        )}
+              <button
+                type="submit"
+                className="w-full bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-sm font-black py-3.5 rounded-xl shadow-md transition-all cursor-pointer"
+              >
+                Complete &amp; Enter
+              </button>
+            </form>
+          )}
+
+          {/* STEP 4: Super Admin Passcode */}
+          {step === 'admin_password' && (
+            <form onSubmit={handleAdminPasswordSubmit} className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
+              <div className="text-center p-4 rounded-2xl bg-slate-900 text-white space-y-1.5 shadow-inner">
+                <div className="flex items-center justify-center gap-1.5 text-teal-400">
+                  <ShieldCheck className="w-5 h-5 animate-pulse" />
+                  <span className="text-xs font-black uppercase tracking-wider">Super Admin Detected</span>
+                </div>
+                <p className="text-[11px] text-slate-300 font-medium">
+                  Admin Mobile <strong className="text-white">+91 7769947217</strong> verified via OTP.
+                </p>
+                <p className="text-[10px] text-amber-400 font-bold">
+                  ⚠️ Super Admin password is compulsory to open the Admin Panel.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-500 font-bold mb-1.5 flex items-center justify-between">
+                  <span>Super Admin Passcode *</span>
+                  <span className="text-[9px] text-slate-400 lowercase font-medium">required</span>
+                </label>
+                <div className="relative flex items-center">
+                  <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5" />
+                  <input
+                    type={showAdminPassword ? "text" : "password"}
+                    required
+                    autoFocus
+                    value={adminPasscode}
+                    onChange={(e) => {
+                      setAdminPasscode(e.target.value);
+                      if (otpError) setOtpError('');
+                    }}
+                    placeholder="Enter Super Admin Password"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-11 py-3 text-sm focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 focus:bg-white text-slate-900 font-bold tracking-wider transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminPassword(!showAdminPassword)}
+                    className="absolute right-3.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                    title={showAdminPassword ? "Hide password" : "Show password"}
+                  >
+                    {showAdminPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-slate-900 via-teal-900 to-teal-800 hover:from-black hover:to-teal-700 active:scale-[0.98] disabled:opacity-70 text-white text-sm font-black py-3.5 rounded-xl shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Lock className="w-4 h-4 text-teal-300" />
+                <span>Unlock &amp; Open Admin Panel</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  resetForm();
+                  onClose();
+                }}
+                className="w-full text-center text-xs font-bold text-slate-400 hover:text-slate-600 pt-1 cursor-pointer"
+              >
+                Cancel Login
+              </button>
+            </form>
+          )}
+        </div>
       </div>
 
       {/* Terms of Service & Privacy Policy Overlay Modal */}

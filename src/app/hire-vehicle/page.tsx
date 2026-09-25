@@ -329,7 +329,7 @@ function HireVehicleContent() {
               Home
             </Link>
             <span className="text-slate-300">/</span>
-            <span className="text-slate-900 font-black truncate">Hire a Vehicle in Boisar (Car, Auto, Bike, Bus, Tempo)</span>
+            <span className="text-slate-900 font-black truncate">Hire a Vehicle in Boisar</span>
           </div>
         </div>
       </div>
@@ -385,9 +385,6 @@ function HireVehicleContent() {
               <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
                 {selectedCategory === 'All Vehicles' ? 'Available Vehicles & Drivers in Boisar' : `Available ${selectedCategory} in Boisar`}
               </h2>
-              <p className="text-[10.5px] text-slate-500 font-medium">
-                {filteredVehicles.length} verified listings with upfront rates and direct contact
-              </p>
             </div>
           </div>
 
@@ -517,9 +514,6 @@ function HireVehicleContent() {
               </div>
               <div className="space-y-1">
                 <h4 className="text-sm font-black text-slate-800">No Vehicles Listed in this Category</h4>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  Try selecting another vehicle category or check back shortly for updated local listings.
-                </p>
               </div>
             </div>
           )}
@@ -527,13 +521,10 @@ function HireVehicleContent() {
 
         {/* 5. Bottom Registration Banner (Slim & Compact) */}
         <div className="bg-gradient-to-r from-blue-900 to-indigo-950 text-white rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs text-left">
-          <div className="space-y-0.5">
+          <div>
             <h3 className="text-xs sm:text-sm font-black text-white">
               Own a Car, Auto, Bike, Bus or Tempo in Boisar?
             </h3>
-            <p className="text-[10.5px] text-blue-200">
-              List your vehicle for free and get direct customer bookings with 0% commission.
-            </p>
           </div>
 
           <button

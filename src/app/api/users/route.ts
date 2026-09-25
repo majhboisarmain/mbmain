@@ -14,6 +14,8 @@ interface RegisteredUserRecord {
   status: string;
 }
 
+import { DUMMY_REGISTERED_USERS_245 } from '@/lib/dummyUsers';
+
 export async function GET() {
   try {
     let storedUsers: RegisteredUserRecord[] = [];
@@ -58,7 +60,26 @@ export async function GET() {
       console.warn('Could not query businesses for user sync:', bErr);
     }
 
-    return NextResponse.json({ success: true, users: storedUsers });
+    // Check for any deleted dummy user IDs
+    let deletedIds: number[] = [];
+    try {
+      const deletedSetting = await prisma.systemSetting.findUnique({
+        where: { key: 'deleted_user_ids' }
+      });
+      if (deletedSetting?.value) {
+        deletedIds = JSON.parse(deletedSetting.value);
+      }
+    } catch {}
+
+    // Filter active dummy users
+    const filteredDummy = DUMMY_REGISTERED_USERS_245.filter(
+      (d) => !deletedIds.includes(d.id) && !storedUsers.some(u => u.phone && u.phone.replace(/\D/g, '').endsWith(d.phone.slice(-10)))
+    );
+
+    // Real users first, 245 dummy users at the very end ("last m alna sab")
+    const allUsers = [...storedUsers, ...filteredDummy];
+
+    return NextResponse.json({ success: true, users: allUsers, count: allUsers.length });
   } catch (error) {
     console.error('Error fetching registered users:', error);
     return NextResponse.json({ success: false, users: [], error: 'Failed to fetch users' }, { status: 500 });
@@ -165,6 +186,22 @@ export async function DELETE(request: NextRequest) {
         update: { value: JSON.stringify(updated) },
         create: { key: 'registered_users', value: JSON.stringify(updated) }
       });
+
+      // Also track deleted dummy user IDs if any
+      const dummyDeleted = userIds.filter((id: number) => id >= 900000);
+      if (dummyDeleted.length > 0) {
+        let deletedIds: number[] = [];
+        const deletedSetting = await prisma.systemSetting.findUnique({
+          where: { key: 'deleted_user_ids' }
+        });
+        if (deletedSetting?.value) deletedIds = JSON.parse(deletedSetting.value);
+        deletedIds = Array.from(new Set([...deletedIds, ...dummyDeleted]));
+        await prisma.systemSetting.upsert({
+          where: { key: 'deleted_user_ids' },
+          update: { value: JSON.stringify(deletedIds) },
+          create: { key: 'deleted_user_ids', value: JSON.stringify(deletedIds) }
+        });
+      }
     } catch {
       // ignore
     }

@@ -265,9 +265,7 @@ function CreatorsPageContent() {
             <h2 className="text-xs sm:text-sm font-black text-slate-900 tracking-tight">
               {selectedCategory === 'All Creators' ? 'Available Creators & Influencers in Boisar' : `Available ${selectedCategory} Creators in Boisar`}
             </h2>
-            <p className="text-[10px] sm:text-[10.5px] text-slate-500 font-medium">
-              {filteredCreators.length} verified creators for cafe, store, resort &amp; event promotions
-            </p>
+
           </div>
 
           {filteredCreators.length > 0 ? (

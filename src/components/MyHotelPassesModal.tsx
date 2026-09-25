@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Building, Phone, MessageSquare, X, CheckCircle2, Calendar, Clock, Ticket, LogIn } from 'lucide-react';
+import { Building, Phone, MessageSquare, X, CheckCircle2, Calendar, Clock, Ticket, LogIn, Receipt } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 
 interface HotelBookingPass {
@@ -123,32 +123,27 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[600] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in text-left">
-      <div className="bg-white rounded-3xl border border-purple-200/90 shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
+    <div className="fixed inset-0 z-[600] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fade-in text-left">
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
         
-        {/* Header */}
-        <div 
-          style={{ background: 'linear-gradient(135deg, #180630 0%, #2b0c50 50%, #120424 100%)' }}
-          className="text-white p-4 sm:p-5 flex items-center justify-between border-b border-purple-800/80 shrink-0"
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center justify-center text-xl shrink-0">
-              🎫
+        {/* Header (Cohesive Clean Theme) */}
+        <div className="bg-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-100 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-[#E0D7FE] text-[#6C47FF] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <Receipt className="w-5 h-5 stroke-[2]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[9px] font-black uppercase tracking-widest text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded">
-                  GUEST PORTAL
-                </span>
-                <span className="text-[10px] text-purple-200">{passes.length} Saved Passes</span>
+                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">My Bookings &amp; Passes</h3>
+                <span className="text-[10px] font-extrabold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">{passes.length} Saved</span>
               </div>
-              <h3 className="text-sm sm:text-base font-black text-white mt-0.5">My Hotel Room Booking Passes</h3>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">Hotel room booking passes in Boisar</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -158,11 +153,11 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
         <div className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
           {!isLoggedIn ? (
             <div className="text-center py-12 space-y-3">
-              <div className="w-14 h-14 rounded-3xl bg-purple-50 text-purple-900 border border-purple-200 flex items-center justify-center text-2xl mx-auto shadow-2xs">
+              <div className="w-14 h-14 rounded-2xl bg-[#E0D7FE] text-[#6C47FF] flex items-center justify-center text-2xl mx-auto shadow-2xs font-bold">
                 🔒
               </div>
-              <h4 className="text-sm sm:text-base font-black text-slate-800">Sign In to View Your Hotel Passes</h4>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              <h4 className="text-sm sm:text-base font-extrabold text-slate-900">Sign In to View Your Hotel Passes</h4>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
                 Please sign in with your registered mobile number to securely access your personal room passes.
               </p>
               <button
@@ -171,7 +166,7 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
                   onClose();
                   setLoginModalOpen(true);
                 }}
-                className="inline-flex items-center gap-2 bg-purple-900 text-white font-black text-xs px-6 py-2.5 rounded-xl shadow-md cursor-pointer hover:bg-purple-800 transition-all active:scale-95"
+                className="inline-flex items-center gap-2 bg-slate-900 hover:bg-black text-white font-extrabold text-xs px-6 py-2.5 rounded-xl shadow-xs cursor-pointer transition-all active:scale-95"
               >
                 <LogIn className="w-4 h-4" />
                 <span>Sign In with Mobile OTP</span>
@@ -180,14 +175,14 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
           ) : passes.length === 0 ? (
             <div className="text-center py-12 space-y-3">
               <Building className="w-12 h-12 text-slate-300 mx-auto" />
-              <h4 className="text-sm font-black text-slate-800">No Booking Passes Found</h4>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                You haven't generated any hotel room passes yet. Browse verified hotels in Boisar and book instantly with pay-at-desk.
+              <h4 className="text-sm font-extrabold text-slate-900">No Booking Passes Found</h4>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
+                You haven&apos;t generated any hotel room passes yet. Browse verified hotels in Boisar and book instantly with pay-at-desk.
               </p>
               <Link
                 href="/hotels"
                 onClick={onClose}
-                className="inline-block bg-purple-900 text-white font-black text-xs px-5 py-2.5 rounded-xl shadow-md cursor-pointer hover:bg-purple-800 transition-all"
+                className="inline-block bg-slate-900 hover:bg-black text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-xs cursor-pointer transition-all"
               >
                 Browse Hotels in Boisar →
               </Link>
@@ -201,21 +196,21 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
                 return (
                   <div
                     key={pass.id}
-                    className="border-2 border-purple-200/80 rounded-2xl p-4 shadow-sm hover:border-purple-400 transition-all bg-white space-y-3"
+                    className="border border-slate-200/90 rounded-2xl p-4 shadow-2xs hover:shadow-xs transition-all bg-white space-y-3"
                   >
                     {/* Top Row: Ref ID + Status */}
                     <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                       <div>
                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">PASS REF NUMBER</span>
-                        <strong className="text-sm font-mono font-black text-purple-950">{pass.id}</strong>
+                        <strong className="text-sm font-mono font-black text-slate-900">{pass.id}</strong>
                       </div>
 
-                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
+                      <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
                         isCancelled
                           ? 'bg-rose-100 text-rose-800 border border-rose-200'
                           : isCheckedIn
-                          ? 'bg-purple-100 text-purple-900 border border-purple-300'
-                          : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          ? 'bg-blue-100 text-blue-900 border border-blue-200'
+                          : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                       }`}>
                         {pass.status || 'Confirmed Pass'}
                       </span>
@@ -231,27 +226,27 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
                           👤 Guest: <strong className="text-slate-800 font-bold">{pass.guestName} ({pass.guestPhone})</strong>
                         </p>
                         <p className="text-slate-500 font-medium">
-                          ❄️ Room: <strong className="text-purple-950 font-bold">{pass.roomCategory || 'AC Room'}</strong>
+                          ❄️ Room: <strong className="text-slate-900 font-bold">{pass.roomCategory || 'AC Room'}</strong>
                         </p>
                       </div>
 
                       <div className="space-y-1 sm:text-right">
                         <p className="text-slate-500 font-medium">
-                          ⏰ Slot: <strong className="text-amber-800 font-black">{pass.timeSlot || pass.stayType}</strong>
+                          ⏰ Slot: <strong className="text-slate-900 font-extrabold">{pass.timeSlot || pass.stayType}</strong>
                         </p>
                         <p className="text-slate-500 font-medium">
                           📅 Date: <strong className="text-slate-800 font-bold">{pass.date}</strong>
                         </p>
                         <p className="text-slate-500 font-medium">
-                          💰 Payable at Reception: <strong className="text-base text-purple-950 font-black">₹{pass.totalAmount}</strong>
+                          💰 Payable at Desk: <strong className="text-base text-slate-900 font-black">₹{pass.totalAmount}</strong>
                         </p>
                       </div>
                     </div>
 
                     {/* Notice */}
-                    <div className="bg-purple-50/70 border border-purple-200/80 rounded-xl p-2 flex items-center justify-between text-[10.5px] text-purple-950 font-medium">
+                    <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex items-center justify-between text-[11px] text-slate-700 font-medium">
                       <span>🚪 Show this pass &amp; Govt ID at reception to collect room key</span>
-                      <span className="font-black text-emerald-700">✓ Pay on Arrival</span>
+                      <span className="font-extrabold text-emerald-700">✓ Pay on Arrival</span>
                     </div>
 
                     {/* Action Buttons */}
@@ -263,7 +258,7 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs py-1.5 px-3 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                          className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-extrabold text-xs py-1.5 px-3 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
                           <span>Share / WhatsApp</span>
@@ -308,11 +303,11 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
         </div>
 
         {/* Footer */}
-        <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs font-semibold text-slate-600 shrink-0">
+        <div className="p-3.5 bg-slate-50 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold text-slate-600 shrink-0">
           <span>Need help with your stay? Call hotel reception directly</span>
           <button
             onClick={onClose}
-            className="bg-slate-200 hover:bg-slate-300 text-slate-800 font-black px-4 py-2 rounded-xl transition-all cursor-pointer"
+            className="bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold px-4 py-2 rounded-xl transition-all cursor-pointer shadow-2xs"
           >
             Close
           </button>

@@ -28,7 +28,6 @@ import CommunityEventsModal from '@/components/LocalHub/CommunityEventsModal';
 import HotelBookingModal from '@/components/LocalHub/HotelBookingModal';
 import ResortVillaModal from '@/components/LocalHub/ResortVillaModal';
 import ReportModal from '@/components/ReportModal';
-import AppDownloadBanner from '@/components/AppDownloadBanner';
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
 
 const toTitleCase = (str: string) => {
@@ -613,6 +612,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   };
 
   const [userUnlockedPropsState, setUserUnlockedPropsState] = useState<string[]>([]);
+  const [activeHomeTab, setActiveHomeTab] = useState<'foryou' | 'loans' | 'insurance' | 'events' | 'store'>('foryou');
 
   useEffect(() => {
     setUserUnlockedPropsState(getUserUnlockedProps());
@@ -1261,14 +1261,14 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
     if (!q) return [];
     return QUICK_PORTAL_PILLS.filter(pill => {
       if (pill.title.toLowerCase().includes(q)) return true;
-      if (pill.subtitle.toLowerCase().includes(q)) return true;
-      return pill.keywords.some(k => q.includes(k) || k.includes(q));
-    }).slice(0, 4);
+      if (q.length > 1 && pill.subtitle.toLowerCase().includes(q)) return true;
+      return pill.keywords.some(k => q.length === 1 ? k.toLowerCase().startsWith(q) : (k.toLowerCase().includes(q) || q.includes(k.toLowerCase())));
+    }).slice(0, 3);
   }, [searchQuery]);
 
   const matchingCategories = useMemo(() => {
     if (!searchQuery.trim()) return [];
-    const suggestions = getCategorySearchSuggestions(searchQuery, 8);
+    const suggestions = getCategorySearchSuggestions(searchQuery, 4);
     return suggestions.map(s => s.title);
   }, [searchQuery]);
 
@@ -1877,7 +1877,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       
       {/* 1. Hero Search Panel */}
       <div 
-        className="relative border-b border-slate-150 py-7 sm:py-11 overflow-visible bg-cover bg-no-repeat bg-center z-30"
+        className="relative border-b border-slate-150 py-7 sm:py-11 overflow-visible bg-cover bg-no-repeat bg-center z-40"
         style={{ backgroundImage: "url('/hero-bg.png')" }}
       >
         {/* Large watermark MB Logo centered in the background - clear and prominent */}
@@ -1889,7 +1889,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           />
         </div>
         
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-10 overflow-visible">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-40 overflow-visible">
 
           {/* Search Inputs Bar */}
           <div className="max-w-lg mx-auto flex items-center justify-center gap-2 sm:gap-2.5 relative z-50">
@@ -1956,16 +1956,15 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
             {/* Live Instant Search Suggestions Dropdown */}
             {searchQuery.trim().length > 0 && isSearchFocused && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 z-50 overflow-hidden text-left animate-in fade-in zoom-in-95 duration-150 max-h-[400px] overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.18)] border border-slate-200/90 z-[100] overflow-hidden text-left animate-in fade-in zoom-in-95 duration-100 max-h-[380px] overflow-y-auto divide-y divide-slate-100">
                 
-                {/* 1. Direct Matching City Portals & Pills (Housemaid, Driver, Travels, AC Service, etc.) */}
+                {/* 1. Direct Matching City Portals & Services */}
                 {matchingPortals.length > 0 && (
-                  <div className="p-2 border-b border-slate-150 bg-teal-50/50">
-                    <div className="text-[9px] font-black uppercase tracking-wider text-teal-800 px-3 py-1 flex items-center justify-between">
-                      <span className="flex items-center gap-1">⚡ Quick City Portals &amp; Services</span>
-                      <span className="text-[8px] bg-teal-200/80 text-teal-900 px-1.5 py-0.2 rounded font-black">1-Tap Direct</span>
+                  <div>
+                    <div className="px-3.5 py-1.5 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Quick Services
                     </div>
-                    <div className="space-y-1 mt-0.5">
+                    <div className="py-0.5">
                       {matchingPortals.map((portal) => (
                         <div
                           key={portal.id}
@@ -1981,19 +1980,14 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                               router.push(portal.targetUrl);
                             }
                           }}
-                          className="px-3 py-2 rounded-xl bg-white hover:bg-teal-100/70 border border-teal-150/80 cursor-pointer flex items-center justify-between transition-all group shadow-2xs"
+                          className="px-3.5 py-2 hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors group"
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <span className="text-xl shrink-0 group-hover:scale-110 transition-transform">{portal.icon}</span>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <p className="text-xs font-black text-slate-900 group-hover:text-teal-900 truncate">{portal.title}</p>
-                                <span className="bg-teal-600 text-white text-[8px] font-black px-1.5 py-0.2 rounded shrink-0">{portal.badge}</span>
-                              </div>
-                              <p className="text-[10px] text-slate-500 font-medium truncate">{portal.subtitle}</p>
-                            </div>
+                            <span className="text-base shrink-0 leading-none">{portal.icon}</span>
+                            <span className="text-xs font-semibold text-slate-800 group-hover:text-teal-700 truncate">{portal.title}</span>
+                            <span className="text-[9px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded shrink-0">{portal.badge}</span>
                           </div>
-                          <span className="text-[11px] text-teal-700 font-black shrink-0 ml-2 group-hover:translate-x-0.5 transition-transform">Open →</span>
+                          <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
                         </div>
                       ))}
                     </div>
@@ -2002,11 +1996,11 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
                 {/* 2. Matching Categories Section */}
                 {matchingCategories.length > 0 && (
-                  <div className="p-2 border-b border-slate-100">
-                    <div className="text-[9px] font-black uppercase tracking-wider text-slate-400 px-3 py-1 flex items-center gap-1">
-                      <span>🏷️</span> Matching Categories
+                  <div>
+                    <div className="px-3.5 py-1.5 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Categories
                     </div>
-                    <div className="space-y-0.5">
+                    <div className="py-0.5">
                       {matchingCategories.map((cat, idx) => (
                         <div
                           key={idx}
@@ -2016,92 +2010,90 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                             setIsSearchFocused(false);
                             router.push(`/search?category=${encodeURIComponent(cat)}`);
                           }}
-                          className="px-3 py-2 rounded-xl hover:bg-teal-50/80 cursor-pointer flex items-center justify-between transition-colors group"
+                          className="px-3.5 py-2 hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors group"
                         >
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-lg bg-teal-100/60 text-teal-700 flex items-center justify-center text-xs font-black">
-                              {cat.charAt(0)}
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-5 h-5 rounded-md bg-slate-100 text-slate-400 group-hover:bg-teal-50 group-hover:text-teal-700 flex items-center justify-center shrink-0 transition-colors">
+                              <Search className="w-3 h-3" />
                             </div>
-                            <span className="text-xs font-black text-slate-800 group-hover:text-teal-700">{cat}</span>
+                            <span className="text-xs font-semibold text-slate-800 group-hover:text-teal-700 truncate">{cat}</span>
                           </div>
-                          <span className="text-[10px] text-teal-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity">Explore →</span>
+                          <span className="text-[10px] text-slate-400 font-medium group-hover:text-teal-600 transition-colors">Category</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* 2. Matching Business Listings */}
+                {/* 3. Matching Business Listings */}
                 {matchingBusinesses.length > 0 && (
-                  <div className="p-2 border-b border-slate-100">
-                    <div className="text-[9px] font-black uppercase tracking-wider text-slate-400 px-3 py-1 flex items-center gap-1">
-                      <span>🏢</span> Verified Local Listings
+                  <div>
+                    <div className="px-3.5 py-1.5 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Verified Places
                     </div>
-                    <div className="space-y-0.5">
+                    <div className="py-0.5">
                       {matchingBusinesses.map((biz) => (
                         <Link
                           key={biz.id}
                           href={`/business/${biz.id}`}
                           onClick={() => setIsSearchFocused(false)}
-                          className="px-3 py-2.5 rounded-xl hover:bg-teal-50/80 cursor-pointer flex items-center justify-between transition-colors group"
+                          className="px-3.5 py-2 hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors group"
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
                             <img 
                               src={biz.image || "/majh-boisar-mb-logo.png"} 
                               alt={biz.name}
-                              className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0" 
+                              className="w-6 h-6 rounded-md object-cover border border-slate-200 shrink-0" 
                             />
-                            <div className="min-w-0">
-                              <p className="text-xs font-black text-slate-900 group-hover:text-teal-700 truncate">{biz.name}</p>
-                              <p className="text-[10px] text-slate-500 font-medium truncate">{biz.category} • {biz.location || 'Boisar'}</p>
+                            <div className="min-w-0 flex items-center gap-1.5">
+                              <span className="text-xs font-semibold text-slate-800 group-hover:text-teal-700 truncate">{biz.name}</span>
+                              <span className="text-[10px] text-slate-400 truncate">· {biz.category}</span>
                             </div>
                           </div>
-                          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-teal-600 shrink-0" />
+                          <ChevronRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-teal-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
                         </Link>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* 3. Special Profiles (Maids, Influencers, Caterers, Properties) */}
+                {/* 4. Special Profiles (Maids, Influencers, Caterers, Properties) */}
                 {matchingSpecialists.length > 0 && (
-                  <div className="p-2 border-b border-slate-100">
-                    <div className="text-[9px] font-black uppercase tracking-wider text-slate-400 px-3 py-1 flex items-center gap-1">
-                      <span>✨</span> Specialists &amp; Helpers
+                  <div>
+                    <div className="px-3.5 py-1.5 bg-slate-50 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Specialists &amp; Profiles
                     </div>
-                    <div className="space-y-0.5">
+                    <div className="py-0.5">
                       {matchingSpecialists.map((spec) => {
                         const isSpecSold = Boolean(spec.isSold || spec.status?.toLowerCase().includes('sold') || spec.status?.toLowerCase().includes('rented'));
                         return (
-                        <div
-                          key={spec.id}
-                          onClick={() => {
-                            if (isSpecSold) {
-                              showToast('🔒 This property is sold / rented out and closed.', 'info');
-                              return;
-                            }
-                            setIsSearchFocused(false);
-                            setSelectedProfile(spec);
-                          }}
-                          className={`px-3 py-2 rounded-xl flex items-center justify-between transition-colors group ${
-                            isSpecSold ? 'opacity-60 cursor-not-allowed bg-slate-50' : 'hover:bg-emerald-50/80 cursor-pointer'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 font-black text-xs flex items-center justify-center shrink-0 border border-emerald-200">
-                              {spec.name.charAt(0)}
+                          <div
+                            key={spec.id}
+                            onClick={() => {
+                              if (isSpecSold) {
+                                showToast('🔒 This property is sold / rented out and closed.', 'info');
+                                return;
+                              }
+                              setIsSearchFocused(false);
+                              setSelectedProfile(spec);
+                            }}
+                            className={`px-3.5 py-2 flex items-center justify-between transition-colors group ${
+                              isSpecSold ? 'opacity-60 cursor-not-allowed bg-slate-50' : 'hover:bg-slate-50 cursor-pointer'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-6 h-6 rounded-full bg-violet-100 text-violet-700 font-bold text-[10px] flex items-center justify-center shrink-0 border border-violet-200/60">
+                                {spec.name.charAt(0)}
+                              </div>
+                              <div className="min-w-0 flex items-center gap-1.5">
+                                <span className="text-xs font-semibold text-slate-800 group-hover:text-violet-700 truncate">{spec.name}</span>
+                                <span className="text-[10px] text-slate-400 truncate">· {spec.category}</span>
+                              </div>
                             </div>
-                            <div className="min-w-0">
-                              <p className="text-xs font-black text-slate-900 group-hover:text-emerald-700 truncate">{spec.name}</p>
-                              <p className="text-[10px] text-emerald-700 font-bold truncate">{spec.category} • {spec.price}</p>
-                            </div>
+                            <span className="text-[10px] text-slate-400 group-hover:text-violet-600 transition-colors shrink-0 ml-2">
+                              {isSpecSold ? 'Closed' : 'View →'}
+                            </span>
                           </div>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                            isSpecSold ? 'bg-slate-300 text-slate-700' : 'bg-emerald-600 text-white'
-                          }`}>
-                            {isSpecSold ? 'Closed' : 'View Profile'}
-                          </span>
-                        </div>
                         );
                       })}
                     </div>
@@ -2109,10 +2101,10 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 )}
 
                 {/* No Results Fallback */}
-                {matchingCategories.length === 0 && matchingBusinesses.length === 0 && matchingSpecialists.length === 0 && (
-                  <div className="p-4 text-center">
-                    <p className="text-xs font-bold text-slate-700">No instant suggestions for "{searchQuery}"</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Press Enter or click Search icon to browse all Boisar results</p>
+                {matchingPortals.length === 0 && matchingCategories.length === 0 && matchingBusinesses.length === 0 && matchingSpecialists.length === 0 && (
+                  <div className="py-6 px-4 text-center">
+                    <p className="text-xs font-medium text-slate-600">No quick suggestions for "{searchQuery}"</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Press Enter or Search to browse all Boisar results</p>
                   </div>
                 )}
 
@@ -2122,10 +2114,10 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     setIsSearchFocused(false);
                     fetchBusinesses();
                   }}
-                  className="bg-slate-50 p-2.5 text-center text-xs font-black text-teal-700 hover:bg-teal-50 cursor-pointer border-t border-slate-100 transition-colors flex items-center justify-center gap-1"
+                  className="bg-slate-50/90 hover:bg-teal-50 px-3.5 py-2.5 text-center text-xs font-semibold text-teal-700 cursor-pointer transition-colors flex items-center justify-center gap-1.5"
                 >
-                  <span>Search all results for "{searchQuery}"</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <span>Search all results for <strong>"{searchQuery}"</strong></span>
+                  <ArrowRight className="w-3.5 h-3.5 text-teal-600" />
                 </div>
 
               </div>
@@ -2136,7 +2128,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       </div>
 
       {/* 2. Desktop 2-Column Layout: Ad Slider Left + Property (Top) & Jobs (Bottom) Right */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
           {/* Main Ad Banner Carousel (Left Side - 6 cols, 1:1 ratio) */}
           <div className="lg:col-span-6">
@@ -2509,119 +2501,374 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
         </div>
       </div>
 
+      {/* 4. Verified Services & Financial Rails (District/BookMyShow Portrait Poster Cards Style) */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-7 sm:mt-10">
+        <div className="space-y-7 sm:space-y-10">
+          {[
+            {
+              id: 'loans',
+              title: 'Loans in Boisar',
+              searchQuery: 'Loan',
+              items: [
+                {
+                  title: 'Home Loan',
+                  subtitle: '8.4% ROI | Zero Prepay',
+                  tag: 'From 8.4%',
+                  searchQuery: 'Home Loan',
+                  image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Personal Loan',
+                  subtitle: 'In 24h | Instant Disbursal',
+                  tag: '24h Disbursal',
+                  searchQuery: 'Personal Loan',
+                  image: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Business Loan',
+                  subtitle: '₹50L Limit | Collateral Free',
+                  tag: 'Up to ₹50L',
+                  searchQuery: 'Business Loan',
+                  image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Gold Loan',
+                  subtitle: 'Instant Cash | Low Interest',
+                  tag: 'Instant Cash',
+                  searchQuery: 'Gold Loan',
+                  image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Vehicle Loan',
+                  subtitle: '100% On-road | Fast Approval',
+                  tag: '100% Funding',
+                  searchQuery: 'Vehicle Loan',
+                  image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Education Loan',
+                  subtitle: 'Global & India | Low Margin',
+                  tag: '0% Prepay',
+                  searchQuery: 'Education Loan',
+                  image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=500&q=80'
+                },
+              ]
+            },
+            {
+              id: 'insurance',
+              title: 'Insurance Plans',
+              searchQuery: 'Insurance',
+              items: [
+                {
+                  title: 'Health Insurance',
+                  subtitle: 'Cashless | 10,000+ Hospitals',
+                  tag: 'Cashless',
+                  searchQuery: 'Health Insurance',
+                  image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Term Life',
+                  subtitle: '₹1 Cr Cover | From ₹490/mo',
+                  tag: '₹1 Cr Cover',
+                  searchQuery: 'Life Insurance',
+                  image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Vehicle Cover',
+                  subtitle: 'In 2 Mins | 0% Dep Included',
+                  tag: 'Instant Policy',
+                  searchQuery: 'Vehicle Insurance',
+                  image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Shop & Godown',
+                  subtitle: 'Tarapur MIDC | Fire & Theft',
+                  tag: 'MIDC Safe',
+                  searchQuery: 'Insurance',
+                  image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Home & Flat',
+                  subtitle: 'From ₹3/Day | Structure & Items',
+                  tag: '₹3/Day',
+                  searchQuery: 'Home Insurance',
+                  image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Travel Policy',
+                  subtitle: 'Worldwide Cover | Medical & Flight',
+                  tag: 'Global Cover',
+                  searchQuery: 'Travel Insurance',
+                  image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=500&q=80'
+                },
+              ]
+            },
+            {
+              id: 'events',
+              title: 'Events & Experiences',
+              searchQuery: 'Events',
+              items: [
+                {
+                  title: 'Live Music Nights',
+                  subtitle: 'This Weekend | Cafes & Lounges',
+                  tag: 'Live Gigs',
+                  searchQuery: 'Music',
+                  image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Turf & Cricket',
+                  subtitle: 'Box Cricket | Night Leagues',
+                  tag: 'Tournaments',
+                  searchQuery: 'Turf',
+                  image: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Festivals & Flea',
+                  subtitle: 'Family & Food | Weekend Carnival',
+                  tag: 'Family Fun',
+                  searchQuery: 'Events',
+                  image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Workshops & Art',
+                  subtitle: 'Hands-on DIY | Kids & Adults',
+                  tag: 'Hands-on',
+                  searchQuery: 'Workshops',
+                  image: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Stand-up Comedy',
+                  subtitle: 'Live Laughs | Weekend Lineup',
+                  tag: 'Comedy',
+                  searchQuery: 'Comedy',
+                  image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Business Meetups',
+                  subtitle: 'Monthly | Boisar Entrepreneurs',
+                  tag: 'Networking',
+                  searchQuery: 'Business',
+                  image: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=500&q=80'
+                },
+              ]
+            },
+            {
+              id: 'store',
+              title: 'Stores & Shopping',
+              searchQuery: 'Store',
+              items: [
+                {
+                  title: 'Electronics & Mobiles',
+                  subtitle: '0% EMI | Official Brand Warranty',
+                  tag: 'Best Deals',
+                  searchQuery: 'Electronics',
+                  image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Fashion & Boutiques',
+                  subtitle: 'Ethnic & Western | Latest Trends',
+                  tag: 'New Styles',
+                  searchQuery: 'Clothing',
+                  image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Daily Groceries',
+                  subtitle: 'Express Delivery | Fresh Daily',
+                  tag: 'Fast Delivery',
+                  searchQuery: 'Grocery',
+                  image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Furniture & Living',
+                  subtitle: 'Direct Factory Prices | Home Decor',
+                  tag: 'Direct Factory',
+                  searchQuery: 'Furniture',
+                  image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Books & Supplies',
+                  subtitle: 'School & College | Office Needs',
+                  tag: 'Supplies',
+                  searchQuery: 'Stationery',
+                  image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=500&q=80'
+                },
+                {
+                  title: 'Fitness & Sports',
+                  subtitle: 'Original Gear | Gym Supplements',
+                  tag: '100% Genuine',
+                  searchQuery: 'Gym',
+                  image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=500&q=80'
+                },
+              ]
+            },
+          ].map(section => (
+            <div key={section.id}>
+              {/* Section Header */}
+              <div className="mb-2.5 sm:mb-3 flex items-center justify-between">
+                <h3 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
+                  {section.title}
+                </h3>
+                <button
+                  onClick={() => {
+                    const query = section.searchQuery || section.title;
+                    router.push(`/search?query=${encodeURIComponent(query)}`);
+                  }}
+                  className="text-xs sm:text-sm font-bold text-teal-700 hover:text-teal-800 flex items-center gap-0.5 shrink-0 cursor-pointer"
+                >
+                  <span>See all</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
 
+              {/* Horizontal Side-by-Side Swipeable Rail on Mobile, Grid on Desktop (Portrait Movie Poster Cards) */}
+              <div className="flex sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-3 pt-0.5 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory">
+                {section.items.map((item, i) => (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      const query = item.searchQuery || item.title;
+                      router.push(`/search?query=${encodeURIComponent(query)}`);
+                    }}
+                    className="group w-[145px] min-[390px]:w-[160px] sm:w-auto shrink-0 cursor-pointer text-left snap-start transition-all duration-300"
+                  >
+                    {/* Portrait Poster Image Container */}
+                    <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/80 shadow-2xs group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1">
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      
+                      {item.tag && (
+                        <span className="absolute bottom-2 left-2 text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md bg-black/65 text-white backdrop-blur-xs tracking-tight">
+                          {item.tag}
+                        </span>
+                      )}
+                    </div>
 
-      {/* 7. Sponsored Ads + Self-Promo Banner */}
+                    {/* Movie-Style Typography (Title + Subtitle below image) */}
+                    <div className="pt-2 px-0.5">
+                      <h4 className="text-xs sm:text-[13.5px] font-black text-slate-900 group-hover:text-teal-700 transition-colors truncate">
+                        {item.title}
+                      </h4>
+                      <p className="text-[10.5px] sm:text-[11.5px] text-slate-500 font-medium truncate mt-0.5">
+                        {item.subtitle}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-10">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="h-1.5 w-6 rounded-full bg-gradient-to-r from-amber-400 to-orange-500"></span>
-          <span className="text-xs font-black text-amber-600 uppercase tracking-wider">Sponsored & Promoted</span>
+          {/* Direct WhatsApp Assistance Footer (Short & Compact) */}
+          <div className="max-w-xl mx-auto py-2 sm:py-2.5 px-3.5 sm:px-4 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3 text-left shadow-2xs">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-[13px] font-black text-slate-900 truncate">Need help or want to list your business?</p>
+              <p className="text-[10.5px] sm:text-[11.5px] text-slate-500 font-medium truncate">Chat with our Boisar coordinator</p>
+            </div>
+            <a
+              href="https://wa.me/917769947217?text=Hi%20Majh%20Boisar,%20I%20need%20help%20with%20Loans/Insurance/Events/Store"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-1.5 rounded-full bg-teal-700 hover:bg-teal-800 text-white text-[11px] sm:text-xs font-black transition-all shadow-xs shrink-0 inline-flex items-center gap-1 hover:scale-105 active:scale-95"
+            >
+              <span>WhatsApp</span>
+              <ChevronRight className="w-3 h-3" />
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* 7. Sponsored & Promoted Section (Clean & Simple) */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8 sm:mt-10">
+        <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
+          <div className="flex items-center gap-2">
+            <span className="h-4 w-1 rounded-full bg-teal-600"></span>
+            <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
+              Promote &amp; Grow Your Business
+            </h3>
+          </div>
+          <button
+            onClick={() => setAdModalOpen(true)}
+            className="text-xs sm:text-sm font-bold text-teal-700 hover:text-teal-800 flex items-center gap-0.5 cursor-pointer"
+          >
+            <span>Partner with us</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-
-          {/* Dynamic Sponsored Ads */}
-          {ads.slice(0, 2).map((ad, idx) => {
-            const isDirectImageAd = !!ad.image;
-            
-            return (
-              <div 
-                key={ad.id} 
-                className={`relative overflow-hidden rounded-2xl shadow-md flex flex-col justify-between min-h-[130px] sm:aspect-[4/3] group cursor-pointer border border-slate-200 ${!isDirectImageAd ? 'p-3 sm:p-5' : ''}`}
-                onClick={() => {
-                  if (ad.targetUrl && ad.targetUrl !== '#' && ad.targetUrl !== '/') {
-                    window.open(ad.targetUrl, '_blank');
-                  } else if (!ad.businessId || ad.businessId === 0) {
-                    setAdModalOpen(true);
-                  } else {
-                    router.push(`/business/${ad.businessId}`);
-                  }
-                }}
-              >
-                {/* Large Ad Image or Gradient Background */}
-                <div className="absolute inset-0 z-0">
-                  {ad.image ? (
-                    <>
-                      <img 
-                        loading="lazy" 
-                        decoding="async" 
-                        src={ad.image} 
-                        alt={ad.title} 
-                        className="w-full h-full object-cover transition-transform duration-700 ease-out scale-100 group-hover:scale-[1.02]" 
-                      />
-                      {!isDirectImageAd && (
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/40 to-transparent pointer-events-none" />
-                      )}
-                    </>
-                  ) : (
-                    <div className={`w-full h-full ${idx === 0 ? 'bg-gradient-to-br from-[#c80f2e] via-[#b00b26] to-[#80071a]' : 'bg-gradient-to-br from-[#0b5c47] via-[#094d3b] to-[#052b21]'} group-hover:scale-105 transition-transform duration-700 ease-out`} />
-                  )}
-                </div>
-                
-                {/* Ad Top Section (Badge) */}
-                <div className="relative z-10 flex justify-end items-start w-full p-3 sm:p-4 pointer-events-none">
-                  <div className="bg-black/60 backdrop-blur-sm text-white/90 text-[8px] font-black px-1.5 py-0.5 rounded shadow-sm">
-                    AD
-                  </div>
-                </div>
-                
-                {/* Ad Content */}
-                {!isDirectImageAd && (
-                  <div className="relative z-10 flex flex-col gap-1 w-full mt-auto">
-                    <h4 className="text-white text-sm sm:text-lg font-black tracking-tight leading-tight drop-shadow-sm">
-                      {ad.title}
-                    </h4>
-                    <p className="text-[9px] sm:text-[11px] font-medium text-white/80 mt-0.5 leading-snug drop-shadow-sm line-clamp-2">
-                      {ad.description}
-                    </p>
-                    
-                    {/* Only show Advertise Now if it's not a real ad, or it's specifically a promo ad */}
-                    {ad.businessId === 0 && (
-                      <div className="mt-2 sm:mt-4 w-full bg-white text-slate-800 text-[9px] sm:text-xs font-black py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl shadow-md text-center transition-all group-hover:bg-slate-50 uppercase tracking-wide">
-                        Advertise Now
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-
-          {/* Self-Promo HTML Banner */}
-          <div 
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
+          {/* Card 1: Featured Ad Slot */}
+          <div
             onClick={() => setAdModalOpen(true)}
-            className="col-span-2 lg:col-span-1 relative overflow-hidden rounded-xl shadow-md cursor-pointer group min-h-[160px] border border-teal-500/20 flex flex-col justify-center p-5"
-            style={{ background: 'linear-gradient(135deg, #0f172a, #0d9488)' }}
+            className="group relative rounded-2xl bg-white border border-slate-200/90 hover:border-teal-500/60 p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer col-span-1"
           >
-            {/* Decorative background elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl group-hover:bg-white/10 transition-colors"></div>
-            
-            <div className="relative z-10 flex flex-col h-full justify-between gap-3 text-center sm:text-left">
-              <div>
-                <span className="bg-[#fcba03] text-slate-900 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider inline-flex mb-1">
-                  Grow Your Business
+            <div>
+              <div className="flex items-center justify-between gap-1.5 mb-2 sm:mb-2.5">
+                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 truncate">
+                  Ad Slot
                 </span>
-                <h4 className="text-white text-lg sm:text-xl font-black leading-tight drop-shadow-sm uppercase">
-                  Get Featured<br/>Here!
-                </h4>
+                <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 shrink-0">Available</span>
               </div>
-              
-              <div>
-                <p className="text-teal-100 text-[10px] font-medium leading-snug mb-2 opacity-90">
-                  Reach 50,000+ local buyers.
-                </p>
-                <div className="inline-flex items-center gap-1 bg-white text-teal-800 text-[10px] font-black px-3 py-1.5 rounded-lg shadow-sm group-hover:bg-slate-50 transition-colors uppercase">
-                  Contact For Ads <span className="text-lg leading-none">📢</span>
-                </div>
+              <h4 className="text-xs sm:text-sm md:text-base font-black text-slate-900 group-hover:text-teal-700 transition-colors leading-snug">
+                Get 5x More Customers in Boisar
+              </h4>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs font-bold text-teal-700 group-hover:text-teal-800">
+              <span>Book spot</span>
+              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </div>
+          </div>
+
+          {/* Card 2: Direct Customer Inquiries (Links directly to /register-business) */}
+          <div
+            onClick={() => router.push('/register-business')}
+            className="group relative rounded-2xl bg-white border border-slate-200/90 hover:border-teal-500/60 p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer col-span-1"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-1.5 mb-2 sm:mb-2.5">
+                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 truncate">
+                  Direct Inquiries
+                </span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 shrink-0">0% Comm.</span>
               </div>
+              <h4 className="text-xs sm:text-sm md:text-base font-black text-slate-900 group-hover:text-teal-700 transition-colors leading-snug">
+                Receive Direct Calls &amp; Leads
+              </h4>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs font-bold text-teal-700 group-hover:text-teal-800">
+              <span>List business</span>
+              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </div>
+          </div>
+
+          {/* Card 3: Dedicated Custom Campaigns (Centered on Mobile) */}
+          <div
+            onClick={() => setAdModalOpen(true)}
+            className="group relative rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white p-3 sm:p-4 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between cursor-pointer col-span-2 lg:col-span-1 w-full max-w-sm sm:max-w-md lg:max-w-none mx-auto"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-1.5 mb-2 sm:mb-2.5">
+                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-teal-300 border border-white/10 truncate">
+                  Featured Partner
+                </span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 shrink-0">Reach 50,000+</span>
+              </div>
+              <h4 className="text-xs sm:text-sm md:text-base font-black text-white group-hover:text-teal-300 transition-colors leading-snug">
+                Custom Advertising Campaigns
+              </h4>
+            </div>
+            <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] sm:text-xs font-bold text-teal-300 group-hover:text-teal-200">
+              <span>Contact Ad Desk</span>
+              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* 8. Official App Download & QR Scanner Banner (Homepage Only) */}
-      <AppDownloadBanner />
 
       {/* ==================== SPONSOR AD SLOT BUILDER MODAL ==================== */}
       <AdModal isOpen={adModalOpen} onClose={() => setAdModalOpen(false)} />
@@ -5980,21 +6227,6 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                       />
                     </div>
                     <p className="text-[9px] text-slate-600 font-bold mt-2">Scan QR code using GooglePay, PhonePe, or Paytm</p>
-                    <div className="mt-1 flex items-center gap-1 bg-white border border-slate-200 px-2.5 py-1 rounded-lg">
-                      <code className="text-xs font-black text-slate-800 font-mono">9307294733@okaxis</code>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (navigator.clipboard) {
-                            navigator.clipboard.writeText('9307294733@okaxis');
-                            alert('UPI ID (9307294733@okaxis) copied to clipboard!');
-                          }
-                        }}
-                        className="text-[9px] font-black text-teal-600 hover:underline ml-1"
-                      >
-                        Copy
-                      </button>
-                    </div>
                   </div>
                   <div className="space-y-1 text-left">
                     <label className="block text-[9px] text-slate-500 font-black uppercase tracking-wider">UPI Transaction Ref (UTR) Number *</label>
@@ -6466,21 +6698,6 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                   </div>
                   <p className="text-[10px] text-slate-500 font-bold">Scan QR code using GPay, PhonePe, or Paytm</p>
                   
-                  <div className="flex items-center justify-between w-full bg-white border border-slate-200 rounded-xl p-2 text-xs">
-                    <span className="text-[11px] font-black text-slate-800">9307294733@okaxis</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (navigator.clipboard) {
-                          navigator.clipboard.writeText('9307294733@okaxis');
-                          alert('UPI ID (9307294733@okaxis) copied to clipboard!');
-                        }
-                      }}
-                      className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-extrabold px-2 py-1 rounded-lg transition-all cursor-pointer"
-                    >
-                      📋 Copy
-                    </button>
-                  </div>
 
                   <a
                     href={`upi://pay?pa=9307294733@okaxis&pn=MajhBoisar&am=${buyerPassOption === '1_call' ? 19 : buyerPassOption === '5_calls' ? 89 : 199}&cu=INR`}

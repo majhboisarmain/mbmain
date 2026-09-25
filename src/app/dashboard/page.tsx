@@ -3656,51 +3656,80 @@ _Powered by Majh Boisar (majhboisar.com)_`
     (!hasRegisteredBusiness && currentRole !== 'Admin' && !isAdminAuth && !specialProfile && !isDetectedHotel && modeParam !== 'hotel' && modeParam !== 'property')
   );
 
-  // 1. Mandatory Owner Login Gate (Clean & Compact)
+  // 1. Mandatory Owner Login Gate (Styled like Login Modal)
   // Shows login screen if user is not logged in
   if (!isLoggedIn && !isAdminAuth) {
 
     return (
-      <div className="min-h-[70vh] bg-[#f8fafc] py-12 px-4 flex items-center justify-center text-slate-800">
-        <div className="max-w-sm w-full bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-7 shadow-xl shadow-slate-200/50 text-center space-y-5 animate-in fade-in duration-200">
+      <div className="min-h-[75vh] bg-[#f8fafc] py-10 sm:py-14 px-4 flex items-center justify-center text-slate-800">
+        <div className="max-w-[420px] w-full bg-white border border-slate-200/80 rounded-3xl shadow-2xl overflow-hidden text-center animate-in fade-in duration-200">
           
-          {/* Clean Store Icon */}
-          <div className="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-100/80 text-teal-600 flex items-center justify-center text-2xl mx-auto shadow-2xs">
-            🏪
-          </div>
+          {/* Purple Gradient Hero Banner (Matches Login Modal & District Theme) */}
+          <div className="relative py-7 sm:py-8 bg-gradient-to-br from-[#7B2CBF] via-[#6C47FF] to-[#8A3FFC] flex flex-col items-center justify-center px-6 text-center overflow-hidden">
+            {/* Decorative glowing circles */}
+            <div className="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-xl pointer-events-none" />
+            <div className="absolute -bottom-8 -left-8 w-36 h-36 bg-purple-400/20 rounded-full blur-lg pointer-events-none" />
 
-          {/* Heading & Short Single-Line Tagline */}
-          <div className="space-y-1">
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
-              {isRegisterIntent ? 'List Your Business Free' : 'Partner & Owner Login'}
-            </h2>
-            <p className="text-xs text-slate-500 font-medium">
+            {/* OG Majh Boisar Logo in crisp white pill */}
+            <div className="bg-white px-5 py-2 rounded-2xl shadow-lg relative z-10 flex items-center justify-center border border-white/60">
+              <img
+                src="/majh-boisar-full-logo.png"
+                alt="Majh Boisar"
+                className="h-10 sm:h-12 w-auto object-contain"
+              />
+            </div>
+
+            <p className="text-xs sm:text-[13px] font-semibold text-white/95 mt-3 relative z-10 max-w-xs leading-snug">
               {isRegisterIntent
-                ? 'Sign in with your mobile number to get started.'
-                : 'Sign in to view and manage your listings.'}
+                ? "Grow Your Business & Reach 50,000+ Boisar Customers"
+                : "Boisar's #1 Local City Directory & Partner Portal"}
             </p>
           </div>
 
-          {/* Clean Primary Button & Subtle Link */}
-          <div className="space-y-3 pt-1">
-            <button
-              type="button"
-              onClick={() => setLoginModalOpen(true)}
-              className="w-full bg-teal-600 hover:bg-teal-700 active:scale-[0.98] text-white font-black text-xs sm:text-sm py-3.5 rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              <Phone className="w-4 h-4" />
-              <span>Continue with Mobile OTP</span>
-            </button>
-
-            <div className="pt-1">
-              <Link
-                href="/hotels"
-                className="text-[11px] text-slate-400 hover:text-teal-700 transition-colors font-semibold inline-flex items-center gap-1"
-              >
-                <span>Hotel owner? Register here</span>
-                <ArrowRight className="w-3 h-3" />
-              </Link>
+          {/* White Card Body */}
+          <div className="p-6 sm:p-7 space-y-4">
+            <div className="space-y-1">
+              <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+                {isRegisterIntent ? 'List Your Business Free' : 'Partner & Owner Login'}
+              </h2>
+              <p className="text-xs text-slate-500 font-medium">
+                {isRegisterIntent
+                  ? 'Sign in with your mobile number to get started instantly.'
+                  : 'Sign in to view and manage your verified listings.'}
+              </p>
             </div>
+
+            {/* District Purple Gradient Primary Button */}
+            <div className="space-y-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setLoginModalOpen(true)}
+                className="w-full bg-gradient-to-r from-[#6C47FF] via-[#7B2CBF] to-[#8A3FFC] hover:opacity-95 active:scale-[0.98] text-white font-black text-xs sm:text-sm py-3.5 rounded-2xl shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Phone className="w-4 h-4" />
+                <span>Continue with Mobile OTP</span>
+              </button>
+
+              <div className="flex items-center justify-center gap-3 pt-0.5 text-[11px] text-slate-400 font-semibold">
+                <span className="flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                  100% Free Listing
+                </span>
+                <span>•</span>
+                <span>Instant Verified Leads</span>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100">
+                <Link
+                  href="/hotels"
+                  className="text-xs text-purple-600 hover:text-purple-800 transition-colors font-bold inline-flex items-center gap-1"
+                >
+                  <span>Hotel owner? Register here</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+
           </div>
 
         </div>
@@ -10363,39 +10392,70 @@ _Powered by Majh Boisar (majhboisar.com)_`
                         </span>
                       </div>
 
-                      {/* Direct Pay QR Code with Auto-Locked Amount */}
+                      {/* Direct Pay QR Code & 1-Tap UPI Apps */}
                       {(() => {
-                        const upiPayLink = `upi://pay?pa=9307294733@okaxis&pn=Majh%20Boisar&am=${planInfo.amountNum}&cu=INR&tn=${encodeURIComponent(`${planInfo.name} Plan`)}`;
-                        const dynamicQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiPayLink)}`;
+                        const upiPayLink = `upi://pay?pa=9307294733@okaxis&pn=MajhBoisar&am=${planInfo.amountNum}&cu=INR`;
+                        const dynamicQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(upiPayLink)}`;
 
                         return (
-                          <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-center text-center space-y-2.5 mb-2">
-                            <div className="flex items-center gap-1.5 text-xs font-black text-slate-800">
-                              <QrCode className="w-4 h-4 text-teal-600" />
-                              <span>Scan to Pay Fixed ₹{planInfo.amountNum}</span>
-                            </div>
-                            <div className="w-44 h-44 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-center overflow-hidden">
-                              <img
-                                src={dynamicQrUrl}
-                                alt={`Majh Boisar ₹${planInfo.amountNum} UPI QR`}
-                                className="w-full h-full object-contain rounded-xl"
-                              />
-                            </div>
-                            <p className="text-[10px] text-teal-700 font-bold bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full">
-                              🔒 Auto-Locked to ₹{planInfo.amountNum} in GPay, PhonePe &amp; Paytm
-                            </p>
-                            <div className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-center w-full">
-                              <span className="text-[10px] text-slate-400 block font-bold uppercase">Official UPI ID</span>
-                              <span className="text-xs font-black text-slate-800 tracking-wider">9307294733@okaxis</span>
-                            </div>
-
-                            {/* Direct UPI Link Button with Locked Amount */}
+                          <div className="bg-white border border-slate-200 rounded-2xl p-3.5 sm:p-4 flex flex-col items-center text-center space-y-2.5 mb-2">
+                            {/* Mobile 1-Tap Pay Button */}
                             <a
                               href={upiPayLink}
-                              className="w-full py-2.5 rounded-xl border border-teal-500 bg-teal-50 hover:bg-teal-100 text-teal-800 font-extrabold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                              className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                             >
-                              <span>⚡ Open UPI App with ₹{planInfo.amountNum} Prefilled</span>
+                              <span>⚡ Pay ₹{planInfo.amountNum} with Any UPI App</span>
                             </a>
+
+                            {/* Quick UPI App Icons */}
+                            <div className="flex items-center justify-center gap-1.5 w-full">
+                              <a
+                                href={`phonepe://pay?pa=9307294733@okaxis&pn=MajhBoisar&am=${planInfo.amountNum}&cu=INR`}
+                                className="flex-1 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-[10.5px] font-bold text-slate-700 text-center"
+                              >
+                                PhonePe
+                              </a>
+                              <a
+                                href={`tez://upi/pay?pa=9307294733@okaxis&pn=MajhBoisar&am=${planInfo.amountNum}&cu=INR`}
+                                className="flex-1 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-[10.5px] font-bold text-slate-700 text-center"
+                              >
+                                Google Pay
+                              </a>
+                              <a
+                                href={`paytmmp://pay?pa=9307294733@okaxis&pn=MajhBoisar&am=${planInfo.amountNum}&cu=INR`}
+                                className="flex-1 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-[10.5px] font-bold text-slate-700 text-center"
+                              >
+                                Paytm
+                              </a>
+                            </div>
+
+                            {/* QR Section */}
+                            <div className="flex flex-col items-center pt-1">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">Or Scan QR with Any App</span>
+                              <div className="w-36 h-36 bg-white p-2 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center overflow-hidden">
+                                <img
+                                  src={dynamicQrUrl}
+                                  alt={`Majh Boisar ₹${planInfo.amountNum} UPI QR`}
+                                  className="w-full h-full object-contain rounded-lg"
+                                />
+                              </div>
+                            </div>
+
+
+                            {/* Instant Plan Activation Button */}
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setCheckoutModalOpen(false);
+                                if (checkoutPlan) {
+                                  await handleUpgradeSubscription(checkoutPlan as any);
+                                  showToast(`Plan activated successfully! 🎉 Welcome to ${planInfo.name}.`, 'success');
+                                }
+                              }}
+                              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 mt-1"
+                            >
+                              <span>✓ I Have Paid — Activate Plan Now</span>
+                            </button>
                           </div>
                         );
                       })()}
