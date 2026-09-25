@@ -10,6 +10,7 @@ import Navbar from "@/components/Navbar";
 import NetworkStatusListener from "@/components/NetworkStatusListener";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import ScrollToTopOnNav from "@/components/ScrollToTopOnNav";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -426,24 +427,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(localFaqJsonLd) }}
         />
-        {/* Google Analytics GA4 */}
-        <Script
-          strategy="afterInteractive"
-          src="https://www.googletagmanager.com/gtag/js?id=G-QH96MHWKDX"
-        />
-        <Script
-          id="google-analytics"
-          strategy="afterInteractive"
-        >
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-QH96MHWKDX', {
-              page_path: window.location.pathname,
-            });
-          `}
-        </Script>
+        {/* Google Analytics GA4 with Next.js App Router Page Tracking */}
+        <GoogleAnalytics />
         <Script id="google-translate-init" strategy="afterInteractive">
           {`
             function googleTranslateElementInit() {

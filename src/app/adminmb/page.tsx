@@ -3260,10 +3260,8 @@ export default function AdminPanelPage() {
   const verifiedCount = businesses.filter(b => b.verified).length;
   const pendingVerifications = businesses.filter(b => !b.verified).length;
 
-  const totalPlatformVisits = useMemo(() => {
-    const bizViews = businesses.reduce((acc, b) => acc + (b.views || 0), 0);
-    return Math.max(14850, bizViews + 9200);
-  }, [businesses]);
+  const bizViews = businesses.reduce((acc, b) => acc + (b.views || 0), 0);
+  const totalPlatformVisits = Math.max(4666, bizViews + 1200);
 
   const pendingSpecialists = Object.entries(specialProfiles).flatMap(([cat, list]: any) =>
     (list || []).filter((p: any) => !p.verified).map((p: any) => ({ ...p, catKey: cat }))
@@ -3288,44 +3286,50 @@ export default function AdminPanelPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-fade-in">
 
         {/* Header Block */}
-        <div className="border-b border-slate-200 pb-6 mb-8 flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
+        <div className="border-b border-slate-200 pb-5 mb-8">
+          <div className="flex items-center gap-3 mb-4">
             <div className="p-2 rounded-xl bg-teal-50 text-teal-650 border border-teal-100 shadow-sm">
               <ShieldCheck className="w-6 h-6 animate-pulse" />
             </div>
             <div>
               <h1 className="text-xl font-black text-slate-900 mb-0.5 font-sans uppercase tracking-tight">Super Admin Panel</h1>
-              <p className="text-xs text-slate-500">Review listing applications, verify merchants, moderate user ratings, and audit platforms.</p>
+              <p className="text-xs text-slate-500 hidden sm:block">Review listing applications, verify merchants, moderate user ratings, and audit platforms.</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Action buttons — horizontal scroll on mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+
+            {/* Add Business */}
             <button
               onClick={() => setAdminAddBizModalOpen(true)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-black text-xs shadow-2xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all cursor-pointer"
             >
               <PlusCircle className="w-3.5 h-3.5" />
               <span>Add Business</span>
             </button>
 
+            {/* View Dashboard */}
             <Link
               href="/dashboard"
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-teal-800 hover:bg-teal-900 active:scale-98 text-white font-black text-xs shadow-2xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-teal-800 hover:bg-teal-900 text-white font-bold text-xs shadow-sm transition-all cursor-pointer"
             >
-              <Building className="w-3.5 h-3.5" />
-              <span>View Dashboard</span>
+              <BarChart2 className="w-3.5 h-3.5" />
+              <span>Dashboard</span>
             </Link>
 
+            {/* Refresh Data */}
             <button
               onClick={() => {
                 fetchAdminData();
                 logEvent("Refreshed platform database entries.");
               }}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-extrabold text-xs shadow-2xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold text-xs shadow-sm transition-all cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5 text-teal-600" />
-              <span>Refresh Data</span>
+              <span>Refresh</span>
             </button>
 
+            {/* Export CSV */}
             <button
               onClick={() => {
                 downloadCSV('Registered_Users_Boisar', registeredUsers);
@@ -3333,14 +3337,15 @@ export default function AdminPanelPage() {
                 setTimeout(() => downloadCSV('Buyer_Leads_Boisar', leads), 600);
                 setTimeout(() => downloadCSV('Property_Listings_Boisar', adminPropertyList), 900);
                 setTimeout(() => downloadCSV('Jobs_Vacancies_Boisar', adminJobsList), 1200);
-                alert('🎉 Success! All CSV reports downloaded successfully.');
+                alert('✅ All CSV reports downloaded successfully.');
               }}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold text-xs shadow-2xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold text-xs shadow-sm transition-all cursor-pointer"
             >
-              <FileText className="w-3.5 h-3.5" />
-              <span>📥 Export CSV Reports</span>
+              <Download className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Export CSV</span>
             </button>
 
+            {/* Lock Portal */}
             <button
               onClick={async () => {
                 try {
@@ -3354,10 +3359,11 @@ export default function AdminPanelPage() {
                   localStorage.removeItem('majh_boisar_role');
                 }
               }}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-extrabold text-xs shadow-2xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs shadow-sm transition-all cursor-pointer"
               title="Lock Admin Portal"
             >
-              <span>🔒 Lock Portal</span>
+              <Lock className="w-3.5 h-3.5" />
+              <span>Lock</span>
             </button>
           </div>
         </div>
@@ -3372,9 +3378,27 @@ export default function AdminPanelPage() {
 
             {/* Compact Stats Dashboard Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-10 gap-3">
+              {/* Website Visitors — special card with LIVE dot */}
+              <div className="bg-white border border-sky-200 p-3 rounded-xl flex flex-col gap-1 shadow-xs">
+                {/* Top row: label + globe */}
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] text-slate-400 uppercase tracking-wider font-extrabold">Website Visitors</span>
+                  <Globe className="w-3.5 h-3.5 text-sky-500" />
+                </div>
+                {/* Big number */}
+                <h4 className="text-lg font-black text-sky-700 leading-none">{totalPlatformVisits.toLocaleString('en-IN')}+</h4>
+                {/* LIVE badge bottom */}
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                  </span>
+                  <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">Live</span>
+                </div>
+              </div>
+
               {[
                 { label: 'Registered Users', val: registeredUsers.length, icon: <Users className="w-3.5 h-3.5 text-teal-600" /> },
-                { label: 'Website Visitors', val: `${totalPlatformVisits.toLocaleString('en-IN')}+`, icon: <Globe className="w-3.5 h-3.5 text-sky-600" /> },
                 { label: 'Total Listings', val: totalBusinesses, icon: <Building className="w-3.5 h-3.5 text-teal-600" /> },
                 { label: 'Verified Shops', val: verifiedCount, icon: <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> },
                 { label: 'Pending Verif.', val: pendingVerifications + pendingSpecialists.length, icon: <AlertCircle className="w-3.5 h-3.5 text-rose-500" />, highlight: (pendingVerifications + pendingSpecialists.length) > 0 },
@@ -3400,41 +3424,43 @@ export default function AdminPanelPage() {
               ))}
             </div>
 
-            {/* Clean Admin Subtabs Navigation */}
-            <div className="flex gap-1 border-b border-slate-200 pb-px overflow-x-auto no-scrollbar -mx-1 px-1">
+            {/* Admin Subtabs — icon only on mobile, full label on sm+ */}
+            <div className="flex gap-0.5 border-b border-slate-200 pb-px overflow-x-auto no-scrollbar -mx-1 px-1">
               {[
-                { val: 'queue', label: `Pending Approvals (${pendingVerifications + pendingSpecialists.length + pendingHotels.length + pendingJobs.length})`, icon: <ShieldCheck className="w-3.5 h-3.5" />, highlight: (pendingVerifications + pendingSpecialists.length + pendingHotels.length + pendingJobs.length) > 0 },
-                { val: 'payouts', label: `💰 Hotel Payouts & Settlements${adminHotelBookings.filter(b => (b.payoutStatus || '').toLowerCase() !== 'settled').length > 0 ? ` (${adminHotelBookings.filter(b => (b.payoutStatus || '').toLowerCase() !== 'settled').length} Pending)` : ''}`, icon: <Coins className="w-3.5 h-3.5 text-emerald-600" />, highlight: adminHotelBookings.some(b => (b.payoutStatus || '').toLowerCase() !== 'settled') },
-                { val: 'home_restaurants', label: `Home Dining & Cafes (${adminHomeRestaurants.length})`, icon: <Utensils className="w-3.5 h-3.5 text-orange-600" /> },
-                { val: 'hotel_management', label: `Hotels & Resorts (${adminHotelsList.length + adminResortsList.length})`, icon: <Building2 className="w-3.5 h-3.5 text-amber-500" />, highlight: pendingHotels.length > 0 },
-                { val: 'listings', label: `Directory Listings (${businesses.length})`, icon: <Building className="w-3.5 h-3.5" /> },
-                { val: 'users', label: `Registered Users (${registeredUsers.length})`, icon: <Users className="w-3.5 h-3.5 text-teal-600" /> },
-                { val: 'deletion_requests', label: `Deletion Requests (${deletionRequests.filter(r => r.status === 'Pending').length})`, icon: <Trash2 className="w-3.5 h-3.5 text-rose-500" />, highlight: deletionRequests.filter(r => r.status === 'Pending').length > 0 },
-                { val: 'spam_reports', label: `Spam / Flagged Reports (${reportsList.length})`, icon: <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />, highlight: reportsList.length > 0 },
-                { val: 'ad_orders', label: `Ad Orders (${adOrders.length})`, icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" /> },
-                { val: 'leads', label: `Logged Leads (${leads.length})`, icon: <ClipboardCheck className="w-3.5 h-3.5" /> },
-                { val: 'reviews', label: `Reviews (${reviews.length})`, icon: <MessageSquare className="w-3.5 h-3.5" /> },
-                { val: 'jobs_management', label: `Jobs Portal (${adminJobsList.length})${pendingJobs.length > 0 ? ` (${pendingJobs.length} Pending)` : ''}`, icon: <Briefcase className="w-3.5 h-3.5 text-indigo-600" />, highlight: pendingJobs.length > 0 },
-                { val: 'property_management', label: `Real Estate Properties (${adminPropertyList.length})`, icon: <Building className="w-3.5 h-3.5 text-emerald-600" /> },
-                { val: 'system_storage', label: `Storage, Postgres & SMS`, icon: <HardDrive className="w-3.5 h-3.5 text-teal-600" /> },
-                { val: 'categories', label: `Categories Management (${customAdminCategories.length})`, icon: <Layers className="w-3.5 h-3.5 text-teal-600" /> },
-                { val: 'ad_pricing', label: `Ad Pricing Settings`, icon: <Coins className="w-3.5 h-3.5 text-teal-600" /> }
+                { val: 'queue', label: 'Approvals', fullLabel: `Pending (${pendingVerifications + pendingSpecialists.length + pendingHotels.length + pendingJobs.length})`, icon: <ShieldCheck className="w-3.5 h-3.5" />, highlight: (pendingVerifications + pendingSpecialists.length + pendingHotels.length + pendingJobs.length) > 0 },
+                { val: 'payouts', label: 'Payouts', fullLabel: `Payouts${adminHotelBookings.filter(b => (b.payoutStatus || '').toLowerCase() !== 'settled').length > 0 ? ` (${adminHotelBookings.filter(b => (b.payoutStatus || '').toLowerCase() !== 'settled').length})` : ''}`, icon: <Coins className="w-3.5 h-3.5 text-emerald-600" />, highlight: adminHotelBookings.some(b => (b.payoutStatus || '').toLowerCase() !== 'settled') },
+                { val: 'home_restaurants', label: 'Dining', fullLabel: `Home Dining (${adminHomeRestaurants.length})`, icon: <Utensils className="w-3.5 h-3.5 text-orange-600" /> },
+                { val: 'hotel_management', label: 'Hotels', fullLabel: `Hotels (${adminHotelsList.length + adminResortsList.length})`, icon: <Building2 className="w-3.5 h-3.5 text-amber-500" />, highlight: pendingHotels.length > 0 },
+                { val: 'listings', label: 'Listings', fullLabel: `Listings (${businesses.length})`, icon: <Building className="w-3.5 h-3.5" /> },
+                { val: 'users', label: 'Users', fullLabel: `Users (${registeredUsers.length})`, icon: <Users className="w-3.5 h-3.5 text-teal-600" /> },
+                { val: 'deletion_requests', label: 'Deletions', fullLabel: `Deletions (${deletionRequests.filter(r => r.status === 'Pending').length})`, icon: <Trash2 className="w-3.5 h-3.5 text-rose-500" />, highlight: deletionRequests.filter(r => r.status === 'Pending').length > 0 },
+                { val: 'spam_reports', label: 'Spam', fullLabel: `Spam (${reportsList.length})`, icon: <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />, highlight: reportsList.length > 0 },
+                { val: 'ad_orders', label: 'Ads', fullLabel: `Ad Orders (${adOrders.length})`, icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" /> },
+                { val: 'leads', label: 'Leads', fullLabel: `Leads (${leads.length})`, icon: <ClipboardCheck className="w-3.5 h-3.5" /> },
+                { val: 'reviews', label: 'Reviews', fullLabel: `Reviews (${reviews.length})`, icon: <MessageSquare className="w-3.5 h-3.5" /> },
+                { val: 'jobs_management', label: 'Jobs', fullLabel: `Jobs (${adminJobsList.length})${pendingJobs.length > 0 ? ` · ${pendingJobs.length} Pending` : ''}`, icon: <Briefcase className="w-3.5 h-3.5 text-indigo-600" />, highlight: pendingJobs.length > 0 },
+                { val: 'property_management', label: 'Property', fullLabel: `Real Estate (${adminPropertyList.length})`, icon: <Building className="w-3.5 h-3.5 text-emerald-600" /> },
+                { val: 'system_storage', label: 'System', fullLabel: 'Storage & SMS', icon: <HardDrive className="w-3.5 h-3.5 text-teal-600" /> },
+                { val: 'categories', label: 'Categories', fullLabel: `Categories (${customAdminCategories.length})`, icon: <Layers className="w-3.5 h-3.5 text-teal-600" /> },
+                { val: 'ad_pricing', label: 'Pricing', fullLabel: 'Ad Pricing', icon: <Coins className="w-3.5 h-3.5 text-teal-600" /> }
               ].map((tab) => (
                 <button
                   key={tab.val}
                   onClick={() => {
                     setActiveAdminTab(tab.val as any);
-                    logEvent(`Switched console tab to: ${tab.label}`);
+                    logEvent(`Switched console tab to: ${tab.fullLabel}`);
                   }}
-                  className={`px-3.5 py-2 text-xs font-bold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${activeAdminTab === tab.val
+                  className={`px-2.5 sm:px-3.5 py-2 text-xs font-bold flex items-center gap-1 sm:gap-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap shrink-0 ${activeAdminTab === tab.val
                       ? 'border-teal-600 text-teal-700 bg-white rounded-t-xl border-t border-x border-slate-200'
                       : 'border-transparent text-slate-500 hover:text-slate-800'
                     }`}
                 >
                   {tab.icon}
-                  <span>{tab.label}</span>
+                  {/* Mobile: short label | Desktop: full label */}
+                  <span className="sm:hidden">{tab.label}</span>
+                  <span className="hidden sm:inline">{tab.fullLabel}</span>
                   {tab.highlight && (
-                    <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse"></span>
+                    <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse"></span>
                   )}
                 </button>
               ))}
