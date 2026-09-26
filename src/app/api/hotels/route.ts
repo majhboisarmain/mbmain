@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 import { verifyJwtToken } from '@/lib/auth';
+import { BOISAR_HOTELS } from '@/lib/hotelsData';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,7 @@ async function ensureHotelTableExists() {
         "hourlyRate3h" DOUBLE PRECISION DEFAULT 499,
         "hourlyRate6h" DOUBLE PRECISION DEFAULT 799,
         "hourlyRate12h" DOUBLE PRECISION DEFAULT 1199,
+        "dayRate" DOUBLE PRECISION DEFAULT 999,
         "nightRate" DOUBLE PRECISION DEFAULT 1499,
         "is3hAvailable" BOOLEAN DEFAULT true,
         "is6hAvailable" BOOLEAN DEFAULT true,
@@ -47,6 +49,57 @@ async function ensureHotelTableExists() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Auto-seed BOISAR_HOTELS into PostgreSQL if database table is empty
+    const countRes = await pool.query('SELECT COUNT(*) FROM "Hotel"');
+    if (parseInt(countRes.rows[0].count, 10) === 0 && Array.isArray(BOISAR_HOTELS)) {
+      for (const h of BOISAR_HOTELS) {
+        await pool.query(`
+          INSERT INTO "Hotel" (
+            "slug", "name", "tagline", "category", "location", "address", "landmark",
+            "phone", "whatsapp", "hourlyRate3h", "hourlyRate6h", "hourlyRate12h", "nightRate",
+            "is3hAvailable", "is6hAvailable", "is12hAvailable", "isNightAvailable", "isCoupleFriendly",
+            "acceptsLocalId", "nearStation", "nearMidc", "gallery", "amenities", "description",
+            "rules", "rooms", "status", "createdBy"
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7,
+            $8, $9, $10, $11, $12, $13,
+            $14, $15, $16, $17, $18,
+            $19, $20, $21, $22, $23, $24,
+            $25, $26, $27, $28
+          ) ON CONFLICT ("slug") DO NOTHING
+        `, [
+          h.slug || h.id,
+          h.name,
+          h.tagline || '',
+          h.category || 'Budget',
+          h.location || 'Boisar',
+          h.address || 'Boisar West',
+          h.landmark || '',
+          h.phone || '917769947217',
+          h.whatsapp || h.phone || '917769947217',
+          h.hourlyRate3h || 499,
+          h.hourlyRate6h || 799,
+          h.hourlyRate12h || 1199,
+          h.nightRate || 1499,
+          Boolean(h.is3hAvailable),
+          Boolean(h.is6hAvailable),
+          Boolean(h.is12hAvailable),
+          Boolean(h.isNightAvailable),
+          Boolean(h.isCoupleFriendly),
+          Boolean(h.acceptsLocalId),
+          Boolean(h.nearStation),
+          Boolean(h.nearMidc),
+          JSON.stringify(h.gallery || []),
+          JSON.stringify(h.amenities || []),
+          h.description || '',
+          JSON.stringify(h.rules || []),
+          JSON.stringify((h as any).rooms || []),
+          'Active',
+          'system_seed'
+        ]);
+      }
+    }
   } catch (e) {
     console.error('[Hotels DB ensureTable Error]:', e);
   }
@@ -97,7 +150,14 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ success: true, hotels });
+    return NextResponse.json(
+      { success: true, hotels },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=20, stale-while-revalidate=60',
+        },
+      }
+    );
   } catch (error: any) {
     console.error('[API GET /api/hotels Error]:', error);
     return NextResponse.json({ success: false, hotels: [], error: error.message }, { status: 500 });
@@ -120,6 +180,7 @@ export async function POST(request: NextRequest) {
       hourlyRate3h = 499,
       hourlyRate6h = 799,
       hourlyRate12h = 1199,
+      dayRate = 999,
       nightRate = 1499,
       is3hAvailable = true,
       is6hAvailable = true,
@@ -146,24 +207,22 @@ export async function POST(request: NextRequest) {
     const randomSuffix = Math.floor(1000 + Math.random() * 9000);
     const slug = `${baseSlug}-${randomSuffix}`;
 
-    // Admin check for instant approval
-    const adminToken = request.cookies.get('majh_admin_token')?.value;
-    const isAdmin = adminToken ? verifyJwtToken<{ role?: string }>(adminToken)?.role === 'Admin' : false;
-    const status = isAdmin ? 'Active' : 'Pending';
+    // Instant Live Status for all newly listed hotels on central database
+    const status = 'Active';
 
     const insertQuery = `
       INSERT INTO "Hotel" (
         "slug", "name", "tagline", "category", "location", "address", "landmark",
-        "phone", "whatsapp", "hourlyRate3h", "hourlyRate6h", "hourlyRate12h", "nightRate",
+        "phone", "whatsapp", "hourlyRate3h", "hourlyRate6h", "hourlyRate12h", "dayRate", "nightRate",
         "is3hAvailable", "is6hAvailable", "is12hAvailable", "isNightAvailable", "isCoupleFriendly",
         "acceptsLocalId", "nearStation", "nearMidc", "gallery", "amenities", "description",
         "rules", "rooms", "status", "createdBy"
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7,
-        $8, $9, $10, $11, $12, $13,
-        $14, $15, $16, $17, $18,
-        $19, $20, $21, $22, $23, $24,
-        $25, $26, $27, $28
+        $8, $9, $10, $11, $12, $13, $14,
+        $15, $16, $17, $18, $19,
+        $20, $21, $22, $23, $24, $25,
+        $26, $27, $28, $29
       ) RETURNING *;
     `;
 
@@ -180,6 +239,7 @@ export async function POST(request: NextRequest) {
       Number(hourlyRate3h) || 499,
       Number(hourlyRate6h) || 799,
       Number(hourlyRate12h) || 1199,
+      Number(dayRate) || 999,
       Number(nightRate) || 1499,
       Boolean(is3hAvailable),
       Boolean(is6hAvailable),
@@ -199,11 +259,19 @@ export async function POST(request: NextRequest) {
     ];
 
     const result = await pool.query(insertQuery, values);
-    const createdHotel = result.rows[0];
+    const row = result.rows[0];
+    const createdHotel = {
+      ...row,
+      id: String(row.id),
+      gallery: Array.isArray(gallery) ? gallery : [],
+      amenities: Array.isArray(amenities) ? amenities : [],
+      rooms: Array.isArray(rooms) ? rooms : [],
+      rules: Array.isArray(rules) ? rules : []
+    };
 
     return NextResponse.json({
       success: true,
-      message: isAdmin ? 'Hotel listed and approved!' : 'Hotel submitted successfully! Awaiting Admin verification.',
+      message: 'Hotel listed and LIVE on Majh Boisar!',
       hotel: createdHotel
     });
   } catch (error: any) {

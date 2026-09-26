@@ -1250,9 +1250,16 @@ _Please confirm order acceptance & delivery time._`;
                       <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
                         <ShoppingBag className="w-4 h-4" />
                       </div>
-                      <h3 className="font-black text-sm text-slate-900">
-                        Products ({business.products.length})
-                      </h3>
+                      <div>
+                        <h3 className="font-black text-sm text-slate-900">
+                          Products ({business.products.length})
+                        </h3>
+                        {Boolean((business as any).totalProductsCount > business.products.length) && (
+                          <span className="text-[10px] text-amber-700 font-bold">
+                            Showing top 5 (Free Plan)
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {isOwnerOrAdmin && (
@@ -1389,9 +1396,16 @@ _Please confirm order acceptance & delivery time._`;
                       <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700">
                         <Wrench className="w-4 h-4" />
                       </div>
-                      <h3 className="font-black text-sm text-slate-900">
-                        Services ({business.services.length})
-                      </h3>
+                      <div>
+                        <h3 className="font-black text-sm text-slate-900">
+                          Services ({business.services.length})
+                        </h3>
+                        {Boolean((business as any).totalServicesCount > business.services.length) && (
+                          <span className="text-[10px] text-amber-700 font-bold">
+                            Showing top 5 (Free Plan)
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {isOwnerOrAdmin && (

@@ -7,12 +7,12 @@ export const metadata: Metadata = {
     absolute: "Majh Boisar — Boisar's #1 City Directory, Hotels & Local Search",
   },
   description:
-    'Official Majh Boisar (माझं बोईसर) local search engine. Find verified hotels from ₹349, flats for sale/rent, resorts, doctors, Tarapur MIDC jobs & tempo services in Boisar, Palghar.',
+    "Boisar's #1 All-in-One City Portal — Yahan sab milega! 1000+ verified shops, hotels, flats on rent/sale, home services, doctors, Tarapur MIDC jobs & cabs in Boisar.",
   keywords: 'jobs in boisar, job boisar, gym in boisar, doctor in boisar, hospital boisar, ashirwad clinic boisar, plumber boisar, electrician boisar, grocery shop boisar, coaching classes boisar, salon boisar, hotel boisar, real estate boisar, tarapur midc services, local business boisar, boisar directory, majh boisar, palghar local search, part time jobs in boisar, hiring in boisar, local vacancies boisar',
   authors: [{ name: 'MajhBoisar Team' }],
   openGraph: {
-    title: "Majh Boisar — Boisar's #1 City Directory & Local Search Engine",
-    description: 'Find verified local shops, doctors, hospitals, service providers, and direct-hiring jobs in Boisar, Tarapur MIDC & Palghar.',
+    title: "Majh Boisar — Boisar's #1 All-in-One City Portal & Local Search",
+    description: "Boisar's #1 All-in-One City Portal — Yahan sab milega! Find 1000+ verified shops, hotels, flats on rent/sale, doctors, Tarapur MIDC jobs & home services in Boisar.",
     url: 'https://majhboisar.in',
     siteName: 'MajhBoisar',
     locale: 'en_IN',
@@ -20,8 +20,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Majh Boisar - Local Business Directory & Jobs Portal',
-    description: 'Find verified doctors, plumbers, jobs & more in Boisar & Tarapur MIDC.',
+    title: 'Majh Boisar — Boisar ka All-in-One City Portal',
+    description: 'Boisar me sab kuch milega — 1000+ verified shops, hotels, flats, doctors, MIDC jobs & home services.',
   },
   alternates: {
     canonical: 'https://majhboisar.in',

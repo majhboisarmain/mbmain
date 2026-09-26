@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { initiateRazorpayCheckout, RazorpayCheckoutOptions } from '@/lib/razorpay';
+import { initiateRazorpayCheckout } from '@/lib/razorpay';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 
 interface RazorpayCheckoutButtonProps {
@@ -38,12 +38,10 @@ export default function RazorpayCheckoutButton({
   disabled = false,
 }: RazorpayCheckoutButtonProps) {
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handlePayment = async () => {
     try {
       setLoading(true);
-      setErrorMessage(null);
 
       await initiateRazorpayCheckout({
         amountInRupees,
@@ -58,8 +56,6 @@ export default function RazorpayCheckoutButton({
         },
         onFailure: (err) => {
           setLoading(false);
-          const msg = err?.description || err?.message || 'Payment processing failed';
-          setErrorMessage(msg);
           onError?.(err);
         },
         onDismiss: () => {
@@ -69,8 +65,6 @@ export default function RazorpayCheckoutButton({
       });
     } catch (err: any) {
       setLoading(false);
-      const msg = err?.message || 'Failed to initiate payment';
-      setErrorMessage(msg);
       onError?.(err);
     }
   };
@@ -89,23 +83,17 @@ export default function RazorpayCheckoutButton({
         {loading ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-            <span>Connecting to Razorpay...</span>
+            <span>Opening Payment...</span>
           </>
         ) : (
           <>
             <ShieldCheck className="w-4 h-4 shrink-0 text-teal-200" />
             <span>
-              {buttonText || `Pay ₹${amountInRupees.toLocaleString('en-IN')} via Razorpay`}
+              {buttonText || `⚡ Pay ₹${amountInRupees.toLocaleString('en-IN')} & Activate`}
             </span>
           </>
         )}
       </button>
-
-      {errorMessage && (
-        <p className="text-[11px] font-bold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg p-2 mt-2 text-center">
-          ⚠️ {errorMessage}
-        </p>
-      )}
     </div>
   );
 }

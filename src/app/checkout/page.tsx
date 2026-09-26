@@ -22,6 +22,7 @@ export default function RazorpayCheckoutPage() {
     { label: 'Starter (₹149)', value: 149 },
     { label: 'Pro (₹349)', value: 349 },
     { label: 'Property Pass (₹1,499)', value: 1499 },
+    { label: 'Enterprise VIP (₹2,399)', value: 2399 },
   ];
 
   const handleSelectPreset = (val: number) => {
@@ -62,22 +63,15 @@ export default function RazorpayCheckoutPage() {
         {/* Main Card */}
         <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden text-left">
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 p-6 text-white border-b border-teal-500/20">
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="w-9 h-9 rounded-xl bg-teal-500/20 border border-teal-400/30 flex items-center justify-center text-teal-300">
+          <div className="bg-slate-50/80 p-6 text-slate-800 border-b border-slate-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 shadow-xs">
                 <CreditCard className="w-5 h-5" />
               </div>
               <div>
-                <h1 className="text-lg sm:text-xl font-black tracking-tight">Razorpay Standard Checkout</h1>
-                <p className="text-xs text-teal-200 font-medium">Official Payment Gateway Integration for Majh Boisar</p>
+                <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Secure Payment Checkout</h1>
+                <p className="text-xs text-slate-500 font-medium">Safe & Encrypted Payment for Majh Boisar</p>
               </div>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-300">
-              <span>Public Key ID:</span>
-              <code className="font-mono text-[11px] bg-slate-800/80 px-2 py-0.5 rounded text-teal-300 border border-slate-700">
-                {process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_Tf38GQchKmVTT2'}
-              </code>
             </div>
           </div>
 

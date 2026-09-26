@@ -179,6 +179,51 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
 
       const currentList = refreshModalHotels();
 
+      // Fetch live hotels from database
+      fetch('/api/hotels')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && Array.isArray(data.hotels) && data.hotels.length > 0) {
+            const mapped = data.hotels.map((h: any) => ({
+              id: String(h.id),
+              name: h.name,
+              category: h.category,
+              hourlyRate3h: h.hourlyRate3h || 499,
+              hourlyRate6h: h.hourlyRate6h || 799,
+              hourlyRate12h: h.hourlyRate12h || 1199,
+              nightRate: h.nightRate || 1499,
+              rating: h.rating || 4.5,
+              reviewsCount: h.reviewsCount || 50,
+              location: h.location || 'Boisar',
+              address: h.address || `${h.location}, Boisar`,
+              phone: h.phone,
+              whatsapp: h.whatsapp || h.phone,
+              image: (h.gallery && h.gallery.length > 0) ? h.gallery[0] : (h as any).image || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop&q=80',
+              amenities: (h.amenities || []).map((a: any) => typeof a === 'string' ? a : a.name),
+              isCoupleFriendly: h.isCoupleFriendly ?? true,
+              isHourlyFriendly: h.offersHourly !== false,
+              nearStation: Boolean(h.nearStation),
+              nearMidc: Boolean(h.nearMidc),
+              description: h.description || h.tagline || ''
+            }));
+            setHotelList(mapped);
+
+            if (initialHotelId) {
+              const cleanTargetId = initialHotelId.toLowerCase().trim();
+              const target = mapped.find((h: any) => 
+                h.id.toLowerCase().trim() === cleanTargetId || 
+                h.name.toLowerCase().trim() === cleanTargetId ||
+                h.name.toLowerCase().replace(/\s+/g, '-') === cleanTargetId
+              );
+              if (target) {
+                setSelectedHotel(target);
+                setView('book');
+              }
+            }
+          }
+        })
+        .catch(() => {});
+
       if (initialHotelId) {
         const cleanTargetId = initialHotelId.toLowerCase().trim();
         const target = currentList.find(h => 
@@ -1090,9 +1135,11 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
                     >
                       <option value="Executive">Executive / 3-Star</option>
                       <option value="Luxury">Luxury Resort &amp; Hotel</option>
+                      <option value="Luxury Suite">Luxury Suite &amp; Villa</option>
                       <option value="Boutique">Boutique Residency</option>
                       <option value="Budget">Budget Lodge / Guest House</option>
                       <option value="Residency">Station Residency</option>
+                      <option value="Dormitory">Dormitory / Hostel (Per Bed / Person)</option>
                     </select>
                   </div>
                 </div>

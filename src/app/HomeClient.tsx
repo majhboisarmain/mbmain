@@ -853,7 +853,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   useEffect(() => {
     const fetchBusinesses = async () => {
       try {
-        const res = await fetch('/api/businesses?showAll=true', { cache: 'no-store' });
+        const res = await fetch('/api/businesses?showAll=true', { next: { revalidate: 30 } });
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) {
@@ -2848,20 +2848,20 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           {/* Card 3: Dedicated Custom Campaigns (Centered on Mobile) */}
           <div
             onClick={() => setAdModalOpen(true)}
-            className="group relative rounded-2xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white p-3 sm:p-4 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between cursor-pointer col-span-2 lg:col-span-1 w-full max-w-sm sm:max-w-md lg:max-w-none mx-auto"
+            className="group relative rounded-2xl bg-white border border-slate-200/90 hover:border-teal-500/60 p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer col-span-2 lg:col-span-1 w-full max-w-sm sm:max-w-md lg:max-w-none mx-auto"
           >
             <div>
               <div className="flex items-center justify-between gap-1.5 mb-2 sm:mb-2.5">
-                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-teal-300 border border-white/10 truncate">
+                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-100 truncate">
                   Featured Partner
                 </span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 shrink-0">Reach 50,000+</span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 shrink-0">Reach 50,000+</span>
               </div>
-              <h4 className="text-xs sm:text-sm md:text-base font-black text-white group-hover:text-teal-300 transition-colors leading-snug">
+              <h4 className="text-xs sm:text-sm md:text-base font-black text-slate-900 group-hover:text-teal-700 transition-colors leading-snug">
                 Custom Advertising Campaigns
               </h4>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-[11px] sm:text-xs font-bold text-teal-300 group-hover:text-teal-200">
+            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs font-bold text-teal-700 group-hover:text-teal-800">
               <span>Contact Ad Desk</span>
               <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
             </div>

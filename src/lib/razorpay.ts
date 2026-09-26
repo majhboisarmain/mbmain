@@ -18,21 +18,49 @@ export const loadRazorpayScript = (): Promise<boolean> => {
       return;
     }
 
-    // Check if script element already exists
-    const existingScript = document.getElementById('razorpay-checkout-js');
-    if (existingScript) {
-      existingScript.addEventListener('load', () => resolve(true));
-      existingScript.addEventListener('error', () => resolve(false));
+    const existing = document.querySelector('script[src*="checkout.razorpay.com"]') as HTMLScriptElement | null;
+    if (existing) {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      existing.addEventListener('load', () => resolve(Boolean(window.Razorpay)));
+      existing.addEventListener('error', () => resolve(false));
+      let checks = 0;
+      const interval = setInterval(() => {
+        checks++;
+        if (window.Razorpay) {
+          clearInterval(interval);
+          resolve(true);
+        } else if (checks > 25) {
+          clearInterval(interval);
+          resolve(Boolean(window.Razorpay));
+        }
+      }, 50);
       return;
     }
 
     const script = document.createElement('script');
-    script.id = 'razorpay-checkout-js';
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
+    script.onload = () => {
+      let retries = 0;
+      const t = setInterval(() => {
+        retries++;
+        if (window.Razorpay) {
+          clearInterval(t);
+          resolve(true);
+        } else if (retries > 20) {
+          clearInterval(t);
+          resolve(Boolean(window.Razorpay));
+        }
+      }, 50);
+    };
+    script.onerror = () => {
+      console.warn('Razorpay checkout.js script failed to load.');
+      resolve(false);
+    };
+    document.head.appendChild(script);
   });
 };
 
@@ -59,7 +87,9 @@ export const initiateRazorpayCheckout = async (options: RazorpayCheckoutOptions)
   try {
     const isLoaded = await loadRazorpayScript();
     if (!isLoaded) {
-      throw new Error('Could not load Razorpay SDK. Please check your internet connection.');
+      const err = new Error('Could not open Razorpay gateway. Please check internet connection or disable ad-blocker.');
+      options.onFailure?.(err);
+      return null;
     }
 
     const amountInPaise = options.amountInPaise
@@ -69,7 +99,9 @@ export const initiateRazorpayCheckout = async (options: RazorpayCheckoutOptions)
       : 100;
 
     if (amountInPaise < 100) {
-      throw new Error('Minimum payment amount is ₹1.00 (100 paise).');
+      const err = new Error('Minimum payment amount is ₹1.00 (100 paise).');
+      options.onFailure?.(err);
+      return null;
     }
 
     // 1. Create Order via Backend
@@ -89,7 +121,9 @@ export const initiateRazorpayCheckout = async (options: RazorpayCheckoutOptions)
     const createData = await createRes.json();
 
     if (!createRes.ok || !createData.order_id) {
-      throw new Error(createData.error || 'Failed to initialize payment order');
+      const err = new Error(createData.error || 'Failed to initialize payment order');
+      options.onFailure?.(err);
+      return null;
     }
 
     const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_Tf38GQchKmVTT2';
@@ -159,9 +193,9 @@ export const initiateRazorpayCheckout = async (options: RazorpayCheckoutOptions)
 
     rzpInstance.open();
     return rzpInstance;
-  } catch (err) {
+  } catch (err: any) {
     console.error('Checkout error:', err);
     options.onFailure?.(err);
-    throw err;
+    return null;
   }
 };

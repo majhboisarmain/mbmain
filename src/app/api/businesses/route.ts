@@ -96,29 +96,60 @@ export async function GET(request: NextRequest) {
     if (query) {
       const cleanQuery = query.toLowerCase().trim();
       const rawTokens = cleanQuery.split(/\s+/).filter(t => t.length > 0);
-      const filteredTokens = rawTokens.filter(t => !['in', 'near', 'me', 'boisar', 'tarapur', 'palghar', 'best', 'top', 'service', 'services', 'majh', 'majha', 'maza', 'majhe', 'maze', 'mazaa', 'majhaa', 'माझं', 'माझा', 'माझे', 'बोईसर'].includes(t));
+      const stopWords = ['in', 'near', 'me', 'boisar', 'tarapur', 'palghar', 'best', 'top', 'service', 'services', 'majh', 'majha', 'maza', 'majhe', 'maze', 'mazaa', 'majhaa', 'माझं', 'माझा', 'माझे', 'बोईसर'];
+      const filteredTokens = rawTokens.filter(t => !stopWords.includes(t));
       const expandedTerms = expandCategorySearchTerms(query);
       const orConditions: any[] = [];
 
       if (filteredTokens.length > 0) {
-        filteredTokens.forEach(st => {
-          orConditions.push({ name: { contains: st } });
-          orConditions.push({ description: { contains: st } });
-          orConditions.push({ category: { contains: st } });
-          orConditions.push({ address: { contains: st } });
-          orConditions.push({
-            services: {
-              some: {
-                name: { contains: st }
-              }
-            }
-          });
-        });
+        const isMultiWord = filteredTokens.length > 1;
 
-        expandedTerms.forEach(term => {
-          orConditions.push({ category: { contains: term.toLowerCase() } });
-          orConditions.push({ name: { contains: term.toLowerCase() } });
-        });
+        if (isMultiWord) {
+          // For multi-word queries (e.g. "Personal Loan", "Home Loan", "Gold Loan"):
+          // 1. EXACT PHRASE match in name/category/description (highest priority)
+          orConditions.push({ name: { contains: cleanQuery } });
+          orConditions.push({ category: { contains: cleanQuery } });
+          orConditions.push({ description: { contains: cleanQuery } });
+          orConditions.push({ services: { some: { name: { contains: cleanQuery } } } });
+
+          // 2. KEY TOKEN: use only the LAST meaningful non-generic token as the key classifier
+          //    e.g. "Personal Loan" -> key = "loan", "Home Loan" -> key = "loan"
+          //    This prevents "personal" alone matching gyms with "personal trainer"
+          const genericModifiers = ['personal', 'home', 'gold', 'vehicle', 'business', 'education', 'health', 'term', 'travel', 'shop', 'godown', 'life'];
+          const keyTokens = filteredTokens.filter(t => !genericModifiers.includes(t));
+          const primaryTokens = keyTokens.length > 0 ? keyTokens : filteredTokens;
+
+          primaryTokens.forEach(st => {
+            orConditions.push({ name: { contains: st } });
+            orConditions.push({ category: { contains: st } });
+          });
+
+          // 3. Expanded terms from category mapping
+          expandedTerms.forEach(term => {
+            orConditions.push({ category: { contains: term.toLowerCase() } });
+            orConditions.push({ name: { contains: term.toLowerCase() } });
+          });
+        } else {
+          // Single token: search broadly across all fields
+          filteredTokens.forEach(st => {
+            orConditions.push({ name: { contains: st } });
+            orConditions.push({ description: { contains: st } });
+            orConditions.push({ category: { contains: st } });
+            orConditions.push({ address: { contains: st } });
+            orConditions.push({
+              services: {
+                some: {
+                  name: { contains: st }
+                }
+              }
+            });
+          });
+
+          expandedTerms.forEach(term => {
+            orConditions.push({ category: { contains: term.toLowerCase() } });
+            orConditions.push({ name: { contains: term.toLowerCase() } });
+          });
+        }
 
         if (orConditions.length > 0) {
           where.OR = orConditions;
@@ -157,11 +188,27 @@ export async function GET(request: NextRequest) {
         distanceKm = Math.round(getHaversineDistanceKm(userLat, userLng, b.latitude, b.longitude) * 10) / 10;
       }
 
+      const bSub = b.subscription || 'Free';
+      const bIsPaidActive = Boolean(b.premium && bSub !== 'Free');
+      const bAllowedLimit = bIsPaidActive 
+        ? (bSub === 'Starter' || bSub === 'Basic' ? 25 : 9999) 
+        : 5;
+
+      const isManageQuery = showAll;
+      const slicedProducts = (b.products || []).slice(0, isManageQuery ? undefined : bAllowedLimit);
+      const slicedServices = (b.services || []).slice(0, isManageQuery ? undefined : bAllowedLimit);
+
       return {
         ...b,
         description: cleanDescription,
         image: cover,
         gallery: parts.slice(1),
+        products: slicedProducts,
+        services: slicedServices,
+        totalProductsCount: (b.products || []).length,
+        totalServicesCount: (b.services || []).length,
+        catalogLimit: bAllowedLimit,
+        isPaidActive: bIsPaidActive,
         distanceKm,
         rating: b.reviews && b.reviews.length > 0
           ? Math.round((b.reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / b.reviews.length) * 10) / 10
@@ -271,7 +318,11 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+      },
+    });
   } catch (error: any) {
     return internalServerErrorResponse('/api/businesses GET', error);
   }

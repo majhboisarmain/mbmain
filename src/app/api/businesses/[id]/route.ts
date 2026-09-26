@@ -39,10 +39,29 @@ export async function GET(
         }
 
         const parts = (business.image || '').split('||gallery_sep||');
+        
+        const isManage = request.nextUrl.searchParams.get('manage') === 'true';
+        const sub = business.subscription || 'Free';
+        const isPaidActive = Boolean(business.premium && sub !== 'Free');
+        const allowedCatalogLimit = isPaidActive 
+          ? (sub === 'Starter' || sub === 'Basic' ? 25 : 9999) 
+          : 5;
+
+        const publicProducts = (business.products || []).slice(0, isManage ? undefined : allowedCatalogLimit);
+        const publicServices = (business.services || []).slice(0, isManage ? undefined : allowedCatalogLimit);
+
         return NextResponse.json({
           ...business,
           image: parts[0] || "",
-          gallery: parts.slice(1)
+          gallery: parts.slice(1),
+          products: publicProducts,
+          services: publicServices,
+          allProducts: business.products || [],
+          allServices: business.services || [],
+          totalProductsCount: (business.products || []).length,
+          totalServicesCount: (business.services || []).length,
+          catalogLimit: allowedCatalogLimit,
+          isPaidActive
         });
       }
     } catch (dbErr) {
@@ -193,6 +212,10 @@ export async function PUT(
     if (whatsappClicks !== undefined) data.whatsappClicks = whatsappClicks;
     if (directionClicks !== undefined) data.directionClicks = directionClicks;
     if (websiteClicks !== undefined) data.websiteClicks = websiteClicks;
+
+    // Admin: assign/update business owner phone (used for dashboard login)
+    if (body.createdBy !== undefined) data.createdBy = body.createdBy ? body.createdBy.toString().replace(/\D/g, '').slice(-10) : null;
+
 
     const updated = await prisma.business.update({
       where: { id: businessId },

@@ -1583,6 +1583,7 @@ export default function AdminPanelPage() {
   const [editBizPremium, setEditBizPremium] = useState(false);
   const [editBizGallery, setEditBizGallery] = useState<string[]>([]);
   const [editBizGoogleMaps, setEditBizGoogleMaps] = useState('');
+  const [editBizOwnerPhone, setEditBizOwnerPhone] = useState('');
   const [adPackagesState, setAdPackagesState] = useState([
     {
       icon: '📂',
@@ -2016,6 +2017,7 @@ export default function AdminPanelPage() {
           gallery: editBizGallery,
           verified: editBizVerified,
           premium: editBizPremium,
+          createdBy: editBizOwnerPhone ? editBizOwnerPhone.replace(/\D/g, '').slice(-10) : null,
         })
       });
 
@@ -3193,7 +3195,7 @@ export default function AdminPanelPage() {
         setRole('Admin');
         setIsAdminPageUnlocked(true);
         setAdminPasscodeError('');
-        showToast('🛡️ Super Admin Authenticated! Welcome to Admin Panel', 'success');
+        showToast('🛡️ Admin Authenticated! Welcome to Admin Panel', 'success');
       } catch {
         setAdminPasscodeError('Error connecting to authentication server. Please try again.');
       } finally {
@@ -3202,21 +3204,17 @@ export default function AdminPanelPage() {
     };
 
     return (
-      <div className="flex-1 bg-slate-900 flex flex-col items-center justify-center min-h-[70vh] py-20 px-4 text-white">
-        <div className="max-w-md w-full bg-slate-850 border border-slate-800 p-8 rounded-3xl text-left space-y-6 shadow-2xl relative overflow-hidden">
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
-          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-rose-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-          <div className="text-center space-y-2 relative z-10">
-            <ShieldCheck className="w-12 h-12 text-teal-400 mx-auto animate-pulse" />
-            <h2 className="font-extrabold text-base text-white uppercase tracking-wider">Super Admin Passcode Portal</h2>
-            <p className="text-xs text-slate-400 leading-relaxed font-sans font-bold">
-              Enter Super Admin Password key to access Majh Boisar console
-            </p>
+      <div className="flex-1 bg-slate-50/70 flex flex-col items-center justify-center min-h-[70vh] py-20 px-4">
+        <div className="max-w-md w-full bg-white border border-slate-200/90 p-8 rounded-3xl text-left space-y-6 shadow-xl shadow-slate-200/50 relative overflow-hidden">
+          <div className="text-center space-y-3 relative z-10">
+            <div className="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center mx-auto text-teal-600 shadow-inner">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <h2 className="font-extrabold text-lg text-slate-900 uppercase tracking-wider">Admin</h2>
           </div>
 
           {adminPasscodeError && (
-            <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 font-bold flex items-center gap-2">
+            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-600 font-bold flex items-center gap-2">
               ⚠️ <span>{adminPasscodeError}</span>
             </div>
           )}
@@ -3231,14 +3229,14 @@ export default function AdminPanelPage() {
                 value={adminPasscode}
                 onChange={(e) => setAdminPasscode(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-3 text-xs focus:outline-none focus:border-teal-500 text-white font-extrabold tracking-widest placeholder-slate-600 disabled:opacity-50"
+                className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-3 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-900 font-extrabold tracking-widest placeholder-slate-400 disabled:opacity-50 transition-colors"
               />
             </div>
 
             <button
               type="submit"
               disabled={isVerifyingPasscode}
-              className="w-full bg-teal-600 hover:bg-teal-500 text-white font-black text-xs py-3.5 rounded-xl uppercase tracking-wider shadow-lg transition-all hover:scale-[1.01] cursor-pointer text-center disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-black text-xs py-3.5 rounded-xl uppercase tracking-wider shadow-md hover:shadow-lg transition-all hover:scale-[1.01] cursor-pointer text-center disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isVerifyingPasscode ? (
                 <>
@@ -3292,7 +3290,7 @@ export default function AdminPanelPage() {
               <ShieldCheck className="w-6 h-6 animate-pulse" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-slate-900 mb-0.5 font-sans uppercase tracking-tight">Super Admin Panel</h1>
+              <h1 className="text-xl font-black text-slate-900 mb-0.5 font-sans uppercase tracking-tight">Admin Panel</h1>
               <p className="text-xs text-slate-500 hidden sm:block">Review listing applications, verify merchants, moderate user ratings, and audit platforms.</p>
             </div>
           </div>
@@ -5408,6 +5406,7 @@ export default function AdminPanelPage() {
                                         setEditBizGoogleMaps(b.googleMaps || '');
                                         setEditBizVerified(b.verified || false);
                                         setEditBizPremium(b.premium || false);
+                                        setEditBizOwnerPhone(((b as any).createdBy || b.phone || '').replace(/\D/g, '').slice(-10));
                                         setAdminEditModalOpen(true);
                                       }}
                                       className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-800 transition-colors"
@@ -9117,6 +9116,20 @@ export default function AdminPanelPage() {
                     className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 font-bold text-slate-800"
                   />
                 </div>
+                <div>
+                  <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Owner Mobile (Dashboard Login)</label>
+                  <input
+                    type="tel"
+                    maxLength={10}
+                    placeholder="Enter 10-digit mobile..."
+                    value={editBizOwnerPhone}
+                    onChange={e => setEditBizOwnerPhone(e.target.value.replace(/\D/g, ''))}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 font-bold text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Email</label>
                   <input

@@ -947,6 +947,22 @@ function DashboardContent() {
       nightRate: 2499,
       image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80',
       amenities: ['AC', 'Free Wi-Fi', 'Hot Shower', 'TV', 'Sofa', 'Mini Fridge']
+    },
+    {
+      id: 'r3',
+      name: 'AC Dormitory Bed (Per Bed / Person)',
+      type: 'Dormitory',
+      bedType: '1 Single Bunk Bed (Per Person)',
+      maxGuests: 1,
+      isDormitory: true,
+      priceUnit: 'per bed / person',
+      size: 'Shared Dormitory',
+      hourly3h: 149,
+      hourly6h: 249,
+      hourly12h: 349,
+      nightRate: 399,
+      image: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80',
+      amenities: ['AC', 'Free Wi-Fi', 'Personal Charging Point', 'Bed Light', 'Locker Storage', 'Shared Clean Bathroom']
     }
   ];
 
@@ -2416,6 +2432,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
     return () => { document.body.style.overflow = ''; };
   }, [specialistCheckoutOpen, checkoutModalOpen, newBizModalOpen]);
   const [wizardStep, setWizardStep] = useState(1);
+  const [newBizSubscription, setNewBizSubscription] = useState<"Free" | "Starter" | "Pro" | "Enterprise">("Free");
 
   // Step 1: Business Details
   const [newBizName, setNewBizName] = useState('');
@@ -2548,45 +2565,18 @@ _Powered by Majh Boisar (majhboisar.com)_`
     }
     setIsDetectingLocation(true);
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+      (pos) => {
         const { latitude, longitude } = pos.coords;
         setNewBizLat(latitude);
         setNewBizLng(longitude);
         const gmapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`;
         setNewBizGoogleMaps(gmapsUrl);
-
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
-          if (res.ok) {
-            const data = await res.json();
-            const addr = data.address || {};
-            const streetName = addr.road || addr.suburb || addr.neighbourhood || addr.village || addr.residential || "";
-            const postcode = addr.postcode || "401501";
-
-            if (streetName) setNewBizStreet(streetName);
-            if (postcode && postcode.length === 6) setNewBizPincode(postcode);
-
-            const fullStr = JSON.stringify(data).toLowerCase();
-            if (fullStr.includes("tarapur")) setNewBizLocation("Tarapur MIDC");
-            else if (fullStr.includes("ostwal")) setNewBizLocation("Ostwal Empire");
-            else if (fullStr.includes("west") || fullStr.includes("paschim")) setNewBizLocation("Boisar West");
-            else if (fullStr.includes("east") || fullStr.includes("purva")) setNewBizLocation("Boisar East");
-            else if (fullStr.includes("salwad")) setNewBizLocation("Salwad");
-            else if (fullStr.includes("navapur")) setNewBizLocation("Navapur Beach");
-
-            alert(`🎉 Location auto-detected!\nAddress: ${streetName ? streetName + ', ' : ''}Boisar\nGoogle Maps link generated!`);
-          } else {
-            alert(`🎉 GPS Coordinates fetched! Google Maps link added.`);
-          }
-        } catch (e) {
-          alert(`🎉 GPS Coordinates fetched & Google Maps link auto-generated!`);
-        } finally {
-          setIsDetectingLocation(false);
-        }
+        setIsDetectingLocation(false);
+        showToast('📍 Google Maps direction link captured successfully!', 'success');
       },
       (err) => {
         setIsDetectingLocation(false);
-        alert("GPS Location request denied or unavailable. Please fill address manually.");
+        alert("GPS Location request denied or unavailable. Please paste your Google Maps link manually.");
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -2647,6 +2637,8 @@ _Powered by Majh Boisar (majhboisar.com)_`
   const [isCatDropdownOpen, setIsCatDropdownOpen] = useState(false);
   const [modalCatSearch, setModalCatSearch] = useState('');
   const [isModalCatDropdownOpen, setIsModalCatDropdownOpen] = useState(false);
+  const [settingsCatSearch, setSettingsCatSearch] = useState('');
+  const [isSettingsCatDropdownOpen, setIsSettingsCatDropdownOpen] = useState(false);
 
   const filteredWizardCategories = React.useMemo(() => {
     const q = wizardCatSearch.toLowerCase().trim();
@@ -3011,7 +3003,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/businesses/${selectedId}`);
+      const res = await fetch(`/api/businesses/${selectedId}?manage=true`);
       if (!res.ok) {
         if (isAdminAuth) {
           const allH = getAllHotels();
@@ -3058,7 +3050,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
             });
 
             // Re-fetch clean Free profile data
-            const freshRes = await fetch(`/api/businesses/${selectedId}`);
+            const freshRes = await fetch(`/api/businesses/${selectedId}?manage=true`);
             const freshData = await freshRes.json();
             setBusiness(freshData);
             return;
@@ -3302,7 +3294,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
             Starter: '₹149',
             Pro: '₹349',
             Basic: '₹99',
-            Enterprise: '₹999'
+            Enterprise: '₹2,399'
           };
           const newInvoice = {
             id: `INV-${Date.now().toString().slice(-6)}`,
@@ -3444,14 +3436,11 @@ _Powered by Majh Boisar (majhboisar.com)_`
   };
 
   // Final submit handler for business creation
-  const handleCreateBusinessFinal = async () => {
+  const handleCreateBusinessFinal = async (chosenTier?: 'Free' | 'Starter' | 'Pro' | 'Enterprise') => {
+    const tierToSet = chosenTier || newBizSubscription || 'Free';
+    const isPaidPlan = tierToSet !== 'Free';
     if (newBizCategory === 'Other' && !newBizCustomCategory.trim()) {
       setCreateBizError('Please specify your custom category name.');
-      return;
-    }
-
-    if (!newBizDescription.trim()) {
-      setCreateBizError('Please enter a description about your listing.');
       return;
     }
 
@@ -3473,7 +3462,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
         body: JSON.stringify({
           name: toTitleCase(newBizName),
           category: newBizCategory === 'Other' ? toTitleCase(newBizCustomCategory.trim()) : newBizCategory,
-          description: newBizDescription,
+          description: newBizDescription.trim() || `${toTitleCase(newBizName)} - Local Business in Boisar`,
           address: addressBlock,
           location: newBizLocation,
           phone: newBizPhone,
@@ -3488,6 +3477,8 @@ _Powered by Majh Boisar (majhboisar.com)_`
           latitude: newBizLat || undefined,
           longitude: newBizLng || undefined,
           hasHomeDelivery: newBizHasHomeDelivery,
+          subscription: tierToSet,
+          premium: isPaidPlan,
           // Save the login phone of the user so we can reliably find their businesses later
           ownerPhone: loggedInUser?.phone || undefined
         })
@@ -3799,80 +3790,106 @@ _Powered by Majh Boisar (majhboisar.com)_`
   //    OR when user has NO registered business yet.
   if (shouldShowRegistrationWizard) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] py-12 text-slate-800">
-        <div className="max-w-xl mx-auto px-4">
+      <div className="min-h-screen bg-slate-50/70 py-5 sm:py-8 text-slate-800 font-sans">
+        <div className="max-w-2xl mx-auto px-4">
 
-          {/* Header */}
-          <div className="text-center mb-8 space-y-2">
-            <h1 className="text-xl font-black text-slate-900 uppercase tracking-wider flex items-center justify-center gap-2">
-              <Building className="w-5 h-5 text-teal-600 animate-pulse" />
-              <span>Register Boisar Business</span>
+          {/* Compact Header */}
+          <div className="text-center mb-3 sm:mb-4 space-y-1">
+            <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 text-teal-600 shadow-2xs">
+              <Building className="w-5 h-5" />
+            </div>
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+              Register Boisar Business
             </h1>
-            <p className="text-xs text-slate-500 font-bold font-sans">Register your business listing free today to access your dashboard metrics</p>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xl space-y-6">
+          {/* Main Card */}
+          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-8 shadow-xl shadow-slate-200/50 space-y-6">
 
-            {/* Step Progress Meter */}
-            <div className="bg-slate-55 border border-slate-200 p-3.5 rounded-xl select-none">
-              <div className="flex items-center justify-between text-[10px] font-black text-slate-405 uppercase tracking-wide mb-2">
-                <span>
-                  {wizardStep === 1 && "Step 1 of 4: Business Details"}
-                  {wizardStep === 2 && "Step 2 of 4: Contact Info"}
-                  {wizardStep === 3 && "Step 3 of 4: Photos & Timings"}
-                  {wizardStep === 4 && "Step 4 of 4: Products & Services"}
-                </span>
-                <span className="text-teal-650">{Math.round((wizardStep / 4) * 100)}% Complete</span>
+            {/* Stepper Progress Meter (5 Steps) */}
+            <div className="bg-slate-50 border border-slate-200/80 p-3.5 sm:p-4 rounded-2xl select-none space-y-2.5">
+              {/* Step Pills */}
+              <div className="grid grid-cols-5 gap-1 text-center">
+                {[
+                  { step: 1, label: 'Details' },
+                  { step: 2, label: 'Contact' },
+                  { step: 3, label: 'Photos' },
+                  { step: 4, label: 'Catalog' },
+                  { step: 5, label: 'Plan' }
+                ].map(({ step, label }) => {
+                  const isCurrent = wizardStep === step;
+                  const isPast = wizardStep > step;
+                  return (
+                    <div
+                      key={step}
+                      className={`py-1.5 px-1.5 rounded-xl text-[10px] font-extrabold transition-all flex items-center justify-center gap-1 ${
+                        isCurrent
+                          ? 'bg-teal-600 text-white shadow-xs'
+                          : isPast
+                          ? 'bg-teal-50 text-teal-800 border border-teal-200'
+                          : 'bg-white border border-slate-200 text-slate-400'
+                      }`}
+                    >
+                      <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black ${
+                        isCurrent ? 'bg-white/20 text-white' : isPast ? 'bg-teal-200 text-teal-900' : 'bg-slate-100 text-slate-400'
+                      }`}>
+                        {isPast ? '✓' : step}
+                      </span>
+                      <span className="hidden sm:inline">{label}</span>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+
+              {/* Progress Line */}
+              <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 px-0.5">
+                <span>
+                  {wizardStep === 1 && 'Step 1 of 5: Business Details'}
+                  {wizardStep === 2 && 'Step 2 of 5: Contact & Phone'}
+                  {wizardStep === 3 && 'Step 3 of 5: Category, Hours & Photos'}
+                  {wizardStep === 4 && 'Step 4 of 5: Products & Services (Optional)'}
+                  {wizardStep === 5 && 'Step 5 of 5: Choose Listing Package'}
+                </span>
+                <span className="text-teal-700 font-extrabold">{Math.round((wizardStep / 5) * 100)}%</span>
+              </div>
+              <div className="w-full bg-slate-200/80 rounded-full h-1.5 overflow-hidden">
                 <div
-                  className="h-full bg-teal-605 rounded-full transition-all duration-300"
-                  style={{ width: `${(wizardStep / 4) * 100}%` }}
+                  className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-300"
+                  style={{ width: `${(wizardStep / 5) * 100}%` }}
                 />
               </div>
             </div>
 
-            {/* Error Message */}
+            {/* Error Banner */}
             {createBizError && (
-              <div className="p-3 bg-red-50 border border-red-150 rounded-xl text-xs text-red-650 flex items-center gap-2 animate-shake">
-                <ShieldAlert className="w-4.5 h-4.5 text-red-500 shrink-0" />
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 font-bold flex items-center gap-2.5">
+                <ShieldAlert className="w-4 h-4 text-rose-500 shrink-0" />
                 <span>{createBizError}</span>
               </div>
             )}
 
-            {/* Form Steps */}
             {/* STEP 1: Business Details */}
             {wizardStep === 1 && (
               <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
-                  <h4 className="font-extrabold text-[10px] text-slate-400 uppercase tracking-widest">Enter Business Details</h4>
-                  <button
-                    type="button"
-                    onClick={handleAutoDetectLocation}
-                    disabled={isDetectingLocation}
-                    className="bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all cursor-pointer"
-                  >
-                    <MapPin className="w-3 h-3 text-emerald-700" />
-                    <span>{isDetectingLocation ? 'Locating Shop...' : newBizLat ? '📍 Shop Location Pinned ✓' : '📍 Detect Exact Shop GPS'}</span>
-                  </button>
+                <div className="border-b border-slate-100 pb-2 mb-2">
+                  <h4 className="font-extrabold text-[11px] text-slate-400 uppercase tracking-wider">Business Location & Address</h4>
                 </div>
 
-
                 <div>
-                  <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Business Name *</label>
+                  <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Business Name *</label>
                   <input
                     type="text"
                     required
                     value={newBizName}
                     onChange={(e) => setNewBizName(e.target.value)}
                     placeholder="e.g. Nevada Family Restaurant"
-                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold shadow-2xs transition-all"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Pincode *</label>
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Pincode *</label>
                     <input
                       type="text"
                       required
@@ -3880,16 +3897,16 @@ _Powered by Majh Boisar (majhboisar.com)_`
                       value={newBizPincode}
                       onChange={(e) => setNewBizPincode(e.target.value.replace(/\D/g, ''))}
                       placeholder="401501"
-                      className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold shadow-2xs transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Area Location *</label>
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Area Location *</label>
                     <select
                       value={newBizLocation}
                       onChange={(e) => setNewBizLocation(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 cursor-pointer font-bold"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 cursor-pointer font-bold shadow-2xs transition-all"
                     >
                       {locationsList.map((loc) => (
                         <option key={loc} value={loc}>
@@ -3900,67 +3917,66 @@ _Powered by Majh Boisar (majhboisar.com)_`
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Shop / Plot No / Wing *</label>
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Shop / Plot No / Wing *</label>
                     <input
                       type="text"
                       required
                       value={newBizPlotNo}
                       onChange={(e) => setNewBizPlotNo(e.target.value)}
                       placeholder="e.g. Shop No. 12"
-                      className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold shadow-2xs transition-all"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Building / Colony Name</label>
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Building / Colony Name</label>
                     <input
                       type="text"
                       value={newBizBldgName}
                       onChange={(e) => setNewBizBldgName(e.target.value)}
                       placeholder="e.g. Ostwal Empire Mall"
-                      className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold shadow-2xs transition-all"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Street / Road Name *</label>
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Street / Road Name *</label>
                     <input
                       type="text"
                       required
                       value={newBizStreet}
                       onChange={(e) => setNewBizStreet(e.target.value)}
                       placeholder="e.g. TAPS Road"
-                      className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold shadow-2xs transition-all"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Landmark</label>
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Landmark</label>
                     <input
                       type="text"
                       value={newBizLandmark}
                       onChange={(e) => setNewBizLandmark(e.target.value)}
                       placeholder="e.g. Opposite D-Mart"
-                      className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold shadow-2xs transition-all"
                     />
                   </div>
                 </div>
 
-                {/* GST Number */}
                 <div>
-                  <label className="flex items-center gap-1.5 text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">
-                    GST Number
-                    <span className="text-[9px] font-semibold text-slate-400 normal-case tracking-normal">(Optional)</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider">GST Number</label>
+                    <span className="text-[10px] font-semibold text-slate-400">(Optional)</span>
+                  </div>
                   <input
                     type="text"
                     value={newBizGst}
                     onChange={(e) => setNewBizGst(e.target.value.toUpperCase())}
                     placeholder="e.g. 27AABCU9603R1ZM"
                     maxLength={15}
-                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold tracking-wide"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold tracking-wider shadow-2xs transition-all font-mono"
                   />
                 </div>
               </div>
@@ -3968,26 +3984,28 @@ _Powered by Majh Boisar (majhboisar.com)_`
 
             {/* STEP 2: Contact Details */}
             {wizardStep === 2 && (
-              <div className="space-y-4 animate-in fade-in duration-200">
-                <h4 className="font-extrabold text-[10px] text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-1 mb-2">Enter Contact Details</h4>
+              <div className="space-y-4">
+                <div className="border-b border-slate-100 pb-2 mb-2">
+                  <h4 className="font-extrabold text-[11px] text-slate-400 uppercase tracking-wider">Contact Person & Phone Numbers</h4>
+                </div>
 
                 <div>
-                  <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Contact Person Name *</label>
+                  <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Contact Person Name *</label>
                   <input
                     type="text"
                     required
                     value={newBizContactPerson}
                     onChange={(e) => setNewBizContactPerson(e.target.value)}
                     placeholder="e.g. Ramesh Patel"
-                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold shadow-2xs transition-all"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Mobile Number *</label>
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Calling Phone Number *</label>
                     <div className="relative flex items-center">
-                      <div className="absolute left-3 text-xs text-slate-405 font-semibold pr-2 border-r border-slate-200">+91</div>
+                      <span className="absolute left-3 text-xs text-slate-500 font-bold pr-2 border-r border-slate-200">+91</span>
                       <input
                         type="tel"
                         required
@@ -3995,43 +4013,50 @@ _Powered by Majh Boisar (majhboisar.com)_`
                         value={newBizPhone}
                         onChange={(e) => setNewBizPhone(e.target.value.replace(/\D/g, ''))}
                         placeholder="10-digit number"
-                        className="w-full bg-slate-50 border border-slate-250 rounded-xl pl-14 pr-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-14 pr-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold shadow-2xs transition-all font-mono"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">WhatsApp Number *</label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider">WhatsApp Number *</label>
+                      {newBizPhone && newBizWhatsapp !== newBizPhone && (
+                        <button
+                          type="button"
+                          onClick={() => setNewBizWhatsapp(newBizPhone)}
+                          className="text-[10px] font-bold text-teal-600 hover:text-teal-700 cursor-pointer"
+                        >
+                          Same as Calling
+                        </button>
+                      )}
+                    </div>
                     <div className="relative flex items-center">
-                      <div className="absolute left-3 text-xs text-slate-450 font-semibold pr-2 border-r border-slate-205">+91</div>
+                      <span className="absolute left-3 text-xs text-slate-500 font-bold pr-2 border-r border-slate-200">+91</span>
                       <input
                         type="tel"
                         required
                         maxLength={10}
                         value={newBizWhatsapp}
                         onChange={(e) => setNewBizWhatsapp(e.target.value.replace(/\D/g, ''))}
-                        placeholder="Same or other number"
-                        className="w-full bg-slate-50 border border-slate-250 rounded-xl pl-14 pr-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
+                        placeholder="WhatsApp number"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-14 pr-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold shadow-2xs transition-all font-mono"
                       />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setNewBizWhatsapp(newBizPhone)}
-                      className="text-[10px] font-black text-teal-600 mt-1.5 hover:underline block"
-                    >
-                      Copy Phone Number
-                    </button>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Email Address</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider">Email Address</label>
+                    <span className="text-[10px] font-semibold text-slate-400">(Optional)</span>
+                  </div>
                   <input
                     type="email"
                     value={newBizEmail}
                     onChange={(e) => setNewBizEmail(e.target.value)}
-                    placeholder="e.g. business@gmail.com"
-                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-medium"
+                    placeholder="e.g. mybusiness@gmail.com"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-medium shadow-2xs transition-all"
                   />
                 </div>
               </div>
@@ -4039,23 +4064,24 @@ _Powered by Majh Boisar (majhboisar.com)_`
 
             {/* STEP 3: Timing, Category, Photos */}
             {wizardStep === 3 && (
-              <div className="space-y-5 animate-in fade-in duration-200">
-                <h4 className="font-extrabold text-[10px] text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-1 mb-2">Category, Timings &amp; Photos</h4>
+              <div className="space-y-6">
+                <div className="border-b border-slate-100 pb-2 mb-2">
+                  <h4 className="font-extrabold text-[11px] text-slate-400 uppercase tracking-wider">Category, Working Hours & Photos</h4>
+                </div>
 
-                {/* Searchable Listing Category Selector */}
+                {/* Category Searchable Selector */}
                 <div className="relative">
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider">
-                      Listing Category *
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                      Business Category *
                     </label>
                     {newBizCategory && (
-                      <span className="text-[9px] font-black text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                      <span className="text-[9px] font-black text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">
                         Selected: {newBizCategory}
                       </span>
                     )}
                   </div>
 
-                  {/* Search Input & Selection Trigger */}
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                       <Search className="w-3.5 h-3.5" />
@@ -4071,7 +4097,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
                         setWizardCatSearch(e.target.value);
                         setIsCatDropdownOpen(true);
                       }}
-                      placeholder="🔍 Type to search 800+ categories (e.g. Doctor, Salon, Plumber, Gym, CA, Bakery)..."
+                      placeholder="Type to search category (e.g. Gym, Salon, Doctor, Restaurant, Contractor)..."
                       className="w-full bg-slate-50 border border-slate-200 focus:border-teal-500 rounded-xl pl-9 pr-9 py-2.5 text-xs text-slate-900 font-bold focus:outline-none focus:bg-white shadow-2xs transition-all cursor-pointer"
                     />
                     {isCatDropdownOpen ? (
@@ -4096,20 +4122,19 @@ _Powered by Majh Boisar (majhboisar.com)_`
                     )}
                   </div>
 
-                  {/* Dropdown Options List */}
                   {isCatDropdownOpen && (
                     <>
-                      <div 
-                        className="fixed inset-0 z-40" 
+                      <div
+                        className="fixed inset-0 z-40"
                         onClick={() => {
                           setIsCatDropdownOpen(false);
                           setWizardCatSearch('');
-                        }} 
+                        }}
                       />
                       <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto p-1.5 space-y-0.5 text-left animate-in fade-in zoom-in-95 duration-150">
                         <div className="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-slate-400 flex items-center justify-between border-b border-slate-100 mb-1">
-                          <span>All Categories ({filteredWizardCategories.length})</span>
-                          {wizardCatSearch && <span className="text-teal-600">Matching "{wizardCatSearch}"</span>}
+                          <span>Categories ({filteredWizardCategories.length})</span>
+                          {wizardCatSearch && <span className="text-teal-600 font-bold">Matching "{wizardCatSearch}"</span>}
                         </div>
 
                         {filteredWizardCategories.map((cat) => {
@@ -4124,8 +4149,8 @@ _Powered by Majh Boisar (majhboisar.com)_`
                                 setWizardCatSearch('');
                               }}
                               className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
-                                isSelected 
-                                  ? 'bg-teal-600 text-white shadow-xs' 
+                                isSelected
+                                  ? 'bg-teal-600 text-white shadow-xs'
                                   : 'text-slate-700 hover:bg-teal-50 hover:text-teal-900'
                               }`}
                             >
@@ -4158,126 +4183,143 @@ _Powered by Majh Boisar (majhboisar.com)_`
                 </div>
 
                 {newBizCategory === 'Other' && (
-                  <div className="animate-in fade-in duration-200">
-                    <label className="block text-[10px] text-slate-600 font-bold uppercase tracking-wider mb-1.5">Specify Custom Category Name *</label>
+                  <div>
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Specify Custom Category *</label>
                     <input
                       type="text"
                       required
                       value={newBizCustomCategory}
                       onChange={(e) => setNewBizCustomCategory(e.target.value)}
-                      placeholder="e.g. Laundry, Cafe, Welding, etc."
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
+                      placeholder="e.g. Radium Art, Wedding Photographer, Welding..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold shadow-2xs"
                     />
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">About Description *</label>
+                  <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">About Business (Optional)</label>
                   <textarea
-                    required
                     rows={2}
                     value={newBizDescription}
                     onChange={(e) => setNewBizDescription(e.target.value)}
-                    placeholder="e.g. Best local beauty parlour offering cuts, bridal makeup, and organic spa treatments..."
-                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
+                    placeholder="Brief description about your business, products, services and specialities (optional)..."
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold shadow-2xs transition-all"
                   />
                 </div>
 
-                {/* Website, Google Maps & Waze */}
-                <div className="space-y-3">
+                {/* Web & Map Links */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Website URL (Optional)</label>
+                    <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Website URL (Optional)</label>
                     <input
                       type="text"
                       value={newBizWebsite}
                       onChange={(e) => setNewBizWebsite(e.target.value)}
-                      placeholder="e.g. https://mybusiness.in"
-                      className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
+                      placeholder="https://mybusiness.in"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-medium shadow-2xs"
                     />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider">Google Maps Link</label>
-                        <button
-                          type="button"
-                          onClick={handleAutoDetectLocation}
-                          className="text-[9px] font-black text-teal-600 hover:underline flex items-center gap-0.5 cursor-pointer"
-                        >
-                          📍 Auto-Fetch
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        value={newBizGoogleMaps}
-                        onChange={(e) => setNewBizGoogleMaps(e.target.value)}
-                        placeholder="https://maps.google.com/..."
-                        className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
-                      />
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider">Google Maps Link</label>
+                      <button
+                        type="button"
+                        onClick={handleAutoDetectLocation}
+                        className="text-[9px] font-bold text-teal-600 hover:underline cursor-pointer"
+                      >
+                        📍 Auto-Fetch
+                      </button>
                     </div>
-                    <div>
-                      <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Waze Link (Optional)</label>
-                      <input
-                        type="text"
-                        value={newBizWazeLink}
-                        onChange={(e) => setNewBizWazeLink(e.target.value)}
-                        placeholder="https://waze.com/ul/..."
-                        className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500/50 text-slate-800 font-bold"
-                      />
-                    </div>
+                    <input
+                      type="text"
+                      value={newBizGoogleMaps}
+                      onChange={(e) => setNewBizGoogleMaps(e.target.value)}
+                      placeholder="https://maps.google.com/..."
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-medium shadow-2xs"
+                    />
                   </div>
                 </div>
 
-                {/* ── WORKING HOURS BUILDER ── */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4 space-y-2">
-                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-2">🕐 Working Hours (per day)</label>
-                  {Object.entries(newBizSchedule).map(([day, slot]) => (
-                    <div key={day} className="flex items-center gap-1.5 w-full min-w-0">
-                      <span className="text-[10px] font-black text-slate-600 w-7 shrink-0">{day}</span>
-                      {slot.closed ? (
-                        <span className="flex-1 text-[10px] font-bold text-rose-500 bg-rose-50 border border-rose-200 rounded-lg px-2 py-1.5">Closed</span>
-                      ) : (
-                        <div className="flex items-center gap-1 flex-1 min-w-0">
-                          <input
-                            type="time"
-                            value={slot.open}
-                            onChange={(e) => setNewBizSchedule(prev => ({ ...prev, [day]: { ...prev[day], open: e.target.value } }))}
-                            className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-1 sm:px-2 py-1 text-[11px] font-bold text-slate-800 focus:outline-none focus:border-teal-500"
-                          />
-                          <span className="text-[9px] text-slate-400 font-bold shrink-0">to</span>
-                          <input
-                            type="time"
-                            value={slot.close}
-                            onChange={(e) => setNewBizSchedule(prev => ({ ...prev, [day]: { ...prev[day], close: e.target.value } }))}
-                            className="w-full min-w-0 bg-white border border-slate-200 rounded-lg px-1 sm:px-2 py-1 text-[11px] font-bold text-slate-800 focus:outline-none focus:border-teal-500"
-                          />
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setNewBizSchedule(prev => ({ ...prev, [day]: { ...prev[day], closed: !prev[day].closed } }))}
-                        className={`text-[9px] font-black px-2 py-1.5 rounded-lg border transition-colors cursor-pointer shrink-0 ml-auto ${slot.closed
-                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
-                            : 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100'
-                          }`}
+                {/* WORKING HOURS */}
+                <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-2.5">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[10px] text-slate-700 font-extrabold uppercase tracking-wider">
+                      🕐 Working Hours (Daily)
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-bold">Set open & close timings</span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {Object.entries(newBizSchedule).map(([day, slot]) => (
+                      <div
+                        key={day}
+                        className="bg-white border border-slate-200/80 rounded-xl p-2 sm:p-2.5 shadow-2xs space-y-1.5 sm:space-y-0 sm:flex sm:items-center sm:gap-2"
                       >
-                        {slot.closed ? 'Open' : 'Close'}
-                      </button>
-                    </div>
-                  ))}
-                  <p className="text-[9px] text-slate-400 font-semibold pt-1">Preview: {formatScheduleToString(newBizSchedule).slice(0, 80)}{formatScheduleToString(newBizSchedule).length > 80 ? '...' : ''}</p>
+                        <div className="flex items-center justify-between sm:justify-start gap-2">
+                          <span className="text-[11px] font-black text-slate-800 w-8 shrink-0">{day}</span>
+                          {/* Mobile toggle button */}
+                          <button
+                            type="button"
+                            onClick={() => setNewBizSchedule(prev => ({ ...prev, [day]: { ...prev[day], closed: !prev[day].closed } }))}
+                            className={`sm:hidden text-[9px] font-black px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ${
+                              slot.closed
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                : 'bg-slate-100 border-slate-200 text-slate-600'
+                            }`}
+                          >
+                            {slot.closed ? '✓ Open Day' : '✕ Mark Closed'}
+                          </button>
+                        </div>
+
+                        {slot.closed ? (
+                          <div className="w-full text-center py-1 text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-100 rounded-lg sm:flex-1">
+                            Closed All Day
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-1.5 sm:flex sm:items-center sm:gap-1.5 flex-1 min-w-0">
+                            <input
+                              type="time"
+                              value={slot.open}
+                              onChange={(e) => setNewBizSchedule(prev => ({ ...prev, [day]: { ...prev[day], open: e.target.value } }))}
+                              className="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 focus:bg-white text-center"
+                            />
+                            <input
+                              type="time"
+                              value={slot.close}
+                              onChange={(e) => setNewBizSchedule(prev => ({ ...prev, [day]: { ...prev[day], close: e.target.value } }))}
+                              className="w-full min-w-0 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 focus:bg-white text-center"
+                            />
+                          </div>
+                        )}
+
+                        {/* Desktop toggle button */}
+                        <button
+                          type="button"
+                          onClick={() => setNewBizSchedule(prev => ({ ...prev, [day]: { ...prev[day], closed: !prev[day].closed } }))}
+                          className={`hidden sm:inline-flex text-[9px] font-black px-2.5 py-1 rounded-lg border transition-colors cursor-pointer shrink-0 ml-auto ${
+                            slot.closed
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                              : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {slot.closed ? 'Mark Open' : 'Mark Closed'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                {/* ── 1. MAIN COVER PHOTO ── */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-                  <div className="flex justify-between items-center">
+                {/* 1. COVER PHOTO */}
+                <div className="bg-slate-50/90 border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">🖼️ Cover Image / Shop Photo (Optional)</label>
-                      <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Primary shop/cover photo for listing. If you don't upload a photo, no default image will be added.</p>
+                      <label className="block text-[11px] text-slate-800 font-black uppercase tracking-wider">
+                        🖼️ Shop Front / Cover Photo
+                      </label>
                     </div>
                     {newBizImage && (
-                      <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">
-                        ✓ Cover Set
+                      <span className="bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        ✓ Photo Ready
                       </span>
                     )}
                   </div>
@@ -4312,49 +4354,62 @@ _Powered by Majh Boisar (majhboisar.com)_`
                   />
 
                   {newBizImage ? (
-                    <div className="relative rounded-xl overflow-hidden border-2 border-teal-500 bg-slate-100 aspect-video group">
-                      <img loading="lazy" decoding="async" src={newBizImage} alt="Main Cover" className="w-full h-full object-cover" />
-                      <div className="absolute top-2 left-2 bg-teal-700 text-white text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-wider shadow-sm">
-                        MAIN COVER
+                    <div className="relative rounded-2xl overflow-hidden border-2 border-teal-500 bg-slate-900 shadow-md group aspect-[16/9] sm:aspect-[21/9]">
+                      <img loading="lazy" decoding="async" src={newBizImage} alt="Cover Preview" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 pointer-events-none" />
+                      <div className="absolute top-3 left-3 bg-teal-600 text-white text-[9px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-sm flex items-center gap-1">
+                        <span>⭐</span> Cover Photo
                       </div>
-                      <div className="absolute top-2 right-2 flex items-center gap-1.5">
+                      <div className="absolute bottom-3 right-3 flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => openCropperFor(newBizImage, 'newBiz')}
-                          className="bg-slate-900 hover:bg-black text-white text-[10px] font-black px-2.5 py-1 rounded-lg cursor-pointer shadow-md flex items-center gap-1"
+                          className="bg-white/90 hover:bg-white text-slate-800 text-[10px] font-black px-3 py-1.5 rounded-xl cursor-pointer shadow-md transition-all active:scale-95 flex items-center gap-1"
                         >
-                          <span>✂️ Crop / Adjust</span>
+                          <Edit className="w-3 h-3 text-slate-700" />
+                          <span>Crop / Adjust</span>
                         </button>
+                        <label
+                          htmlFor="wizard-cover-upload"
+                          className="bg-white/90 hover:bg-white text-slate-800 text-[10px] font-black px-3 py-1.5 rounded-xl cursor-pointer shadow-md transition-all active:scale-95 flex items-center gap-1"
+                        >
+                          <span>🔄 Change</span>
+                        </label>
                         <button
                           type="button"
                           onClick={() => setNewBizImage('')}
-                          className="bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-black px-2 py-1 rounded-lg cursor-pointer shadow-md"
+                          className="bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-black px-2.5 py-1.5 rounded-xl cursor-pointer shadow-md transition-all active:scale-95"
+                          title="Remove photo"
                         >
-                          Remove Cover
+                          <Trash2 className="w-3 h-3" />
                         </button>
                       </div>
                     </div>
                   ) : (
                     <label
                       htmlFor="wizard-cover-upload"
-                      className="flex border-2 border-dashed border-teal-300 hover:border-teal-600 rounded-xl p-4 flex-col items-center justify-center cursor-pointer bg-teal-50/30 hover:bg-teal-50/80 transition-all text-center"
+                      className="border-2 border-dashed border-teal-200 hover:border-teal-500 rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center cursor-pointer bg-white hover:bg-teal-50/30 transition-all text-center group shadow-2xs"
                     >
-                      <span className="text-xl mb-1">🖼️</span>
-                      <span className="text-[10px] font-black text-teal-800 uppercase">Upload Main Cover Photo</span>
-                      <span className="text-[9px] text-teal-600 font-semibold mt-0.5">Click to choose image file from device</span>
+                      <div className="w-10 h-10 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 group-hover:scale-110 transition-transform mb-1.5">
+                        <span className="text-lg">📸</span>
+                      </div>
+                      <span className="text-xs font-black text-slate-800 group-hover:text-teal-700 uppercase tracking-wider">
+                        Upload Shop Cover Photo
+                      </span>
                     </label>
                   )}
                 </div>
 
-                {/* ── 2. GALLERY PHOTOS ── */}
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-                  <div className="flex justify-between items-center">
+                {/* 2. GALLERY PHOTOS */}
+                <div className="bg-slate-50/90 border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">📸 Additional Gallery Photos</label>
-                      <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Add store interior, products or menu photos.</p>
+                      <label className="block text-[11px] text-slate-800 font-black uppercase tracking-wider">
+                        📸 Additional Gallery Photos
+                      </label>
                     </div>
-                    <span className="bg-teal-50 border border-teal-200 text-teal-705 text-[9px] font-black px-2 py-0.5 rounded-full">
-                      {newBizGalleryPhotos.length} Uploaded
+                    <span className="bg-teal-50 border border-teal-200 text-teal-800 text-[10px] font-black px-2.5 py-0.5 rounded-full">
+                      {newBizGalleryPhotos.length} Added
                     </span>
                   </div>
 
@@ -4383,282 +4438,422 @@ _Powered by Majh Boisar (majhboisar.com)_`
                           });
                           return combined;
                         });
-                        showToast(`Added ${compressedList.length} gallery photos! 📸`, "success");
+                        showToast(`Added ${compressedList.length} photos! 📸`, "success");
                       }
                       e.target.value = '';
                     }}
                     className="hidden"
                   />
 
-                  <label
-                    htmlFor="wizard-gallery-upload"
-                    className="flex border-2 border-dashed border-teal-300 hover:border-teal-600 rounded-xl p-3.5 flex-col items-center justify-center cursor-pointer bg-teal-50/20 hover:bg-teal-50/60 transition-colors text-center shadow-2xs"
-                  >
-                    <span className="text-xl mb-1">📸</span>
-                    <span className="text-xs font-black text-teal-800 uppercase">📁 Choose Photos from Phone / Device Gallery (Select Multiple)</span>
-                    <span className="text-[10px] text-teal-600 font-medium mt-0.5">Click to pick multiple store, menu, or clinic photos</span>
-                  </label>
-
-                  {/* Photo thumbnails */}
-                  {newBizGalleryPhotos.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-2">
-                      {newBizGalleryPhotos.map((url, idx) => (
-                        <div key={idx} className="relative group rounded-xl overflow-hidden border border-slate-200 bg-slate-100 aspect-video">
-                          <img loading="lazy" decoding="async" src={url} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                  {/* Photos Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    {newBizGalleryPhotos.map((url, idx) => (
+                      <div
+                        key={idx}
+                        className="relative group rounded-xl overflow-hidden border border-slate-200 bg-slate-100 aspect-square shadow-2xs"
+                      >
+                        <img loading="lazy" decoding="async" src={url} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <button
                             type="button"
                             onClick={() => {
                               const updated = newBizGalleryPhotos.filter((_, i) => i !== idx);
                               setNewBizGalleryPhotos(updated);
                             }}
-                            className="absolute top-1 right-1 h-5 w-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center cursor-pointer text-xs font-bold shadow-md"
+                            className="w-7 h-7 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-transform active:scale-90"
+                            title="Delete photo"
                           >
-                            ×
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <span className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[8px] font-black px-1.5 py-0.5 rounded">
+                          #{idx + 1}
+                        </span>
+                      </div>
+                    ))}
+
+                    <label
+                      htmlFor="wizard-gallery-upload"
+                      className={`rounded-xl border-2 border-dashed border-teal-200 hover:border-teal-500 bg-white hover:bg-teal-50/30 flex flex-col items-center justify-center cursor-pointer transition-all text-center p-3 group shadow-2xs ${
+                        newBizGalleryPhotos.length === 0 ? 'col-span-2 sm:col-span-4 py-4 sm:py-5 min-h-[90px]' : 'aspect-square'
+                      }`}
+                    >
+                      <div className="w-7 h-7 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 group-hover:scale-110 transition-transform mb-1">
+                        <Plus className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-[10px] font-extrabold text-slate-700 group-hover:text-teal-700">
+                        {newBizGalleryPhotos.length === 0 ? 'Select Multiple Photos' : 'Add More'}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 4: Products & Services (Catalog) */}
+            {wizardStep === 4 && (
+              <div className="space-y-6">
+                <div className="border-b border-slate-100 pb-2 mb-2">
+                  <h4 className="font-extrabold text-[11px] text-slate-400 uppercase tracking-wider">Products & Services Catalog (Optional)</h4>
+                </div>
+
+                {/* Products Section */}
+                <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h5 className="text-xs font-black text-slate-800 uppercase tracking-wider">📦 Products Catalog ({newBizProducts.length})</h5>
+                      <p className="text-[10px] text-slate-400 font-medium mt-0.5">Items sold in your shop with price and picture.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Product name *"
+                      value={newBizProdInput.name}
+                      onChange={e => setNewBizProdInput(p => ({...p, name: e.target.value}))}
+                      className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Price (e.g. ₹199)"
+                      value={newBizProdInput.price}
+                      onChange={e => setNewBizProdInput(p => ({...p, price: e.target.value}))}
+                      className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Short description"
+                      value={newBizProdInput.desc}
+                      onChange={e => setNewBizProdInput(p => ({...p, desc: e.target.value}))}
+                      className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
+                    <div className="w-12 h-12 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                      {newBizProdInput.image ? (
+                        <img src={newBizProdInput.image} alt="Product" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-lg">📸</span>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="wizard-prod-img-upload"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            const compressed = await compressImage(file, 800, 800, 0.75);
+                            if (compressed) setNewBizProdInput(p => ({ ...p, image: compressed }));
+                          } catch {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              if (reader.result) setNewBizProdInput(p => ({ ...p, image: reader.result as string }));
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                          e.target.value = '';
+                        }}
+                        className="hidden"
+                      />
+                      <div className="flex items-center gap-2">
+                        <label
+                          htmlFor="wizard-prod-img-upload"
+                          className="text-[10px] font-black text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-3 py-1 rounded-lg cursor-pointer transition-colors inline-block"
+                        >
+                          {newBizProdInput.image ? '✓ Change Image' : '📁 Upload Photo'}
+                        </label>
+                        {newBizProdInput.image && (
+                          <button
+                            type="button"
+                            onClick={() => setNewBizProdInput(p => ({ ...p, image: '' }))}
+                            className="text-[10px] font-bold text-rose-600 hover:underline cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newBizProdInput.name.trim()) return;
+                      if (newBizProducts.length >= 5) {
+                        alert("⚠️ Free mode allows up to 5 products. Select Starter (up to 25) or Pro (Unlimited) on the next step to add more!");
+                        return;
+                      }
+                      setNewBizProducts(prev => [...prev, {...newBizProdInput}]);
+                      setNewBizProdInput({name: '', price: '', desc: '', image: ''});
+                    }}
+                    className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-black px-4 py-2 rounded-xl cursor-pointer transition-colors shadow-xs"
+                  >
+                    ➕ Add Product to List
+                  </button>
+
+                  {newBizProducts.length > 0 && (
+                    <div className="space-y-1.5 mt-2">
+                      {newBizProducts.map((p, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs shadow-2xs">
+                          <div className="flex items-center gap-2.5">
+                            {p.image && (
+                              <img src={p.image} alt={p.name} className="w-8 h-8 rounded-lg object-cover border border-slate-200" />
+                            )}
+                            <div>
+                              <span className="font-extrabold text-slate-800">{p.name}</span>
+                              {p.price && <span className="ml-2 text-teal-700 font-bold">{p.price.startsWith('₹') ? p.price : `₹${p.price}`}</span>}
+                              {p.desc && <span className="ml-2 text-slate-400">{p.desc}</span>}
+                            </div>
+                          </div>
+                          <button type="button" onClick={() => setNewBizProducts(prev => prev.filter((_, i) => i !== idx))} className="text-rose-500 hover:text-rose-700 font-black text-sm cursor-pointer p-1">
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <div className="border border-dashed border-slate-200 rounded-xl p-3 text-center bg-white">
-                      <p className="text-[10px] text-slate-400 font-bold">No gallery photos added yet</p>
+                  )}
+                </div>
+
+                {/* Services Section */}
+                <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h5 className="text-xs font-black text-slate-800 uppercase tracking-wider">⚙️ Services Offered ({newBizServices.length})</h5>
+                      <p className="text-[10px] text-slate-400 font-medium mt-0.5">Services, rates, or treatments you provide.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Service name *"
+                      value={newBizSvcInput.name}
+                      onChange={e => setNewBizSvcInput(s => ({...s, name: e.target.value}))}
+                      className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Price / Rate (e.g. ₹500)"
+                      value={newBizSvcInput.price}
+                      onChange={e => setNewBizSvcInput(s => ({...s, price: e.target.value}))}
+                      className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Short description"
+                      value={newBizSvcInput.desc}
+                      onChange={e => setNewBizSvcInput(s => ({...s, desc: e.target.value}))}
+                      className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!newBizSvcInput.name.trim()) return;
+                      if (newBizServices.length >= 5) {
+                        alert("⚠️ Free mode allows up to 5 services. Select Starter (up to 25) or Pro (Unlimited) on the next step to add more!");
+                        return;
+                      }
+                      setNewBizServices(prev => [...prev, {...newBizSvcInput}]);
+                      setNewBizSvcInput({name: '', price: '', duration: '', desc: ''});
+                    }}
+                    className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-black px-4 py-2 rounded-xl cursor-pointer transition-colors shadow-xs"
+                  >
+                    ➕ Add Service to List
+                  </button>
+
+                  {newBizServices.length > 0 && (
+                    <div className="space-y-1.5 mt-2">
+                      {newBizServices.map((s, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs shadow-2xs">
+                          <div>
+                            <span className="font-extrabold text-slate-800">{s.name}</span>
+                            {s.price && <span className="ml-2 text-teal-700 font-bold">{s.price.startsWith('₹') ? s.price : `₹${s.price}`}</span>}
+                            {s.desc && <span className="ml-2 text-slate-400">{s.desc}</span>}
+                          </div>
+                          <button type="button" onClick={() => setNewBizServices(prev => prev.filter((_, i) => i !== idx))} className="text-rose-500 hover:text-rose-700 font-black text-sm cursor-pointer p-1">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
               </div>
             )}
 
+            {/* STEP 5: Choose Listing Package (SUBSCRIPTION) */}
+            {wizardStep === 5 && (
+              <div className="space-y-6">
+                <div className="border-b border-slate-100 pb-2 mb-2">
+                  <h4 className="font-extrabold text-[11px] text-slate-400 uppercase tracking-wider">Choose Business Listing Package</h4>
+                </div>
 
-                {/* STEP 4: Products & Services */}
-                {wizardStep === 4 && (
-                  <div className="space-y-5 py-2">
-                    <div className="text-center space-y-1">
-                      <span className="text-2xl">🛍️</span>
-                      <h4 className="text-sm font-black text-slate-800">Add Products & Services <span className="text-slate-400 font-bold text-xs">(Optional)</span></h4>
-                      <p className="text-[11px] text-slate-500">Add items you sell or services you offer. These will show up on your listing page.</p>
-                    </div>
+                <div className="text-center space-y-1">
+                  <h3 className="text-base sm:text-lg font-black text-slate-900">
+                    Select a Growth Plan for Your Listing
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Upgrade for verified tick & top ranking, or continue completely free!
+                  </p>
+                </div>
 
-                    {/* Products */}
-                    <div className="space-y-3 bg-amber-50/60 border border-amber-200 rounded-2xl p-4">
-                      <div className="flex items-center justify-between">
-                        <h5 className="text-xs font-black text-amber-900 uppercase tracking-wider">📦 Products ({newBizProducts.length})</h5>
-                      </div>
+                {/* Subscription Plans Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {[
+                    {
+                      id: 'Free',
+                      title: 'Free Listing',
+                      price: '₹0',
+                      period: 'Lifetime Free',
+                      badge: 'Zero Cost',
+                      features: ['Up to 5 Products & Services (Default)', 'Public directory listing in Boisar', 'Full address & Google Map direction', 'Direct customer call & WhatsApp'],
+                    },
+                    {
+                      id: 'Starter',
+                      title: 'Starter Boost',
+                      price: '₹149',
+                      period: '/ month',
+                      badge: 'Verified',
+                      features: ['✓ Up to 25 Products & Services', '✓ Verified Blue Tick Badge', 'Priority rank in category search', 'Realtime leads & phone clicks'],
+                    },
+                    {
+                      id: 'Pro',
+                      title: 'Pro Premium',
+                      price: '₹349',
+                      period: '/ month',
+                      badge: '⭐ Most Popular',
+                      highlight: true,
+                      features: ['✓ Unlimited Products & Services', 'Top Priority Search Ranking', 'Verified Business Trust Badge', '1-Click WhatsApp Instant Inquiries'],
+                    },
+                    {
+                      id: 'Enterprise',
+                      title: 'Enterprise VIP',
+                      price: '₹2,399',
+                      period: '/ year',
+                      badge: 'Full Year VIP',
+                      features: ['✓ Unlimited Products & Services', 'Prominent Hero Banner placement', 'Priority WhatsApp & direct support', 'All Pro features for 1 full year'],
+                    }
+                  ].map((plan) => {
+                    return (
+                      <div
+                        key={plan.id}
+                        className={`rounded-2xl p-4 sm:p-5 border-2 text-left transition-all flex flex-col justify-between relative bg-white hover:border-slate-300 ${
+                          plan.highlight ? 'border-teal-500/80 shadow-md ring-1 ring-teal-500/20' : 'border-slate-200'
+                        }`}
+                      >
+                        {plan.badge && (
+                          <span className={`absolute top-3 right-3 text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
+                            plan.highlight
+                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}>
+                            {plan.badge}
+                          </span>
+                        )}
 
-                      {/* Add product row */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <input
-                          type="text"
-                          placeholder="Product name *"
-                          value={newBizProdInput.name}
-                          onChange={e => setNewBizProdInput(p => ({...p, name: e.target.value}))}
-                          className="bg-white border border-amber-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Price (e.g. ₹199)"
-                          value={newBizProdInput.price}
-                          onChange={e => setNewBizProdInput(p => ({...p, price: e.target.value}))}
-                          className="bg-white border border-amber-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Short description (optional)"
-                          value={newBizProdInput.desc}
-                          onChange={e => setNewBizProdInput(p => ({...p, desc: e.target.value}))}
-                          className="bg-white border border-amber-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500"
-                        />
-                      </div>
+                        <div className="space-y-1.5">
+                          <h4 className="text-sm font-black text-slate-900">{plan.title}</h4>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xl sm:text-2xl font-black text-slate-900">{plan.price}</span>
+                            <span className="text-[10px] text-slate-400 font-bold">{plan.period}</span>
+                          </div>
 
-                      {/* Product Image Uploader */}
-                      <div className="flex items-center gap-3 bg-white p-2.5 rounded-xl border border-amber-200">
-                        <div className="w-12 h-12 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center overflow-hidden shrink-0">
-                          {newBizProdInput.image ? (
-                            <img src={newBizProdInput.image} alt="Product" className="w-full h-full object-cover" />
+                          <ul className="space-y-1.5 pt-2 border-t border-slate-100 text-[11px] text-slate-600">
+                            {plan.features.map((f, i) => (
+                              <li key={i} className="flex items-center gap-1.5">
+                                <span className="text-teal-600 font-black text-xs shrink-0">✓</span>
+                                <span>{f}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        {/* Action Button directly under each plan */}
+                        <div className="mt-4 pt-3 border-t border-slate-100">
+                          {plan.id === 'Free' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleCreateBusinessFinal('Free')}
+                              disabled={creatingBiz}
+                              className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-black transition-all cursor-pointer shadow-xs active:scale-95 flex items-center justify-center gap-1.5"
+                            >
+                              {creatingBiz ? 'Publishing...' : '🏷️ Publish 100% Free'}
+                            </button>
                           ) : (
-                            <span className="text-xl">📸</span>
+                            <RazorpayCheckoutButton
+                              amountInRupees={plan.id === 'Starter' ? 149 : plan.id === 'Pro' ? 349 : 2399}
+                              name="Majh Boisar"
+                              description={`${plan.title} for ${newBizName}`}
+                              prefill={{
+                                name: newBizContactPerson || newBizName,
+                                email: newBizEmail || '',
+                                contact: newBizPhone || '',
+                              }}
+                              buttonText={`⚡ Pay ${plan.price} & Activate`}
+                              onSuccess={async () => {
+                                await handleCreateBusinessFinal(plan.id as any);
+                              }}
+                            />
                           )}
                         </div>
-                        <div className="flex-1">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            id="wizard-prod-img-upload"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              try {
-                                const compressed = await compressImage(file, 800, 800, 0.75);
-                                if (compressed) setNewBizProdInput(p => ({ ...p, image: compressed }));
-                              } catch {
-                                const reader = new FileReader();
-                                reader.onloadend = () => {
-                                  if (reader.result) setNewBizProdInput(p => ({ ...p, image: reader.result as string }));
-                                };
-                                reader.readAsDataURL(file);
-                              }
-                              e.target.value = '';
-                            }}
-                            className="hidden"
-                          />
-                          <div className="flex items-center gap-2">
-                            <label
-                              htmlFor="wizard-prod-img-upload"
-                              className="text-[11px] font-black text-amber-800 bg-amber-100/70 hover:bg-amber-200 px-3 py-1 rounded-lg cursor-pointer transition-colors inline-block"
-                            >
-                              {newBizProdInput.image ? '✓ Change Photo' : '📁 Upload Product Photo'}
-                            </label>
-                            {newBizProdInput.image && (
-                              <button
-                                type="button"
-                                onClick={() => setNewBizProdInput(p => ({ ...p, image: '' }))}
-                                className="text-[10px] font-bold text-rose-600 hover:underline cursor-pointer"
-                              >
-                                Remove Photo
-                              </button>
-                            )}
-                          </div>
-                          <p className="text-[9px] text-slate-400 mt-0.5">Attach a photo of this product for your shop catalog.</p>
-                        </div>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!newBizProdInput.name.trim()) return;
-                          setNewBizProducts(prev => [...prev, {...newBizProdInput}]);
-                          setNewBizProdInput({name: '', price: '', desc: '', image: ''});
-                        }}
-                        className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-black px-4 py-2 rounded-xl cursor-pointer transition-colors"
-                      >
-                        ➕ Add Product
-                      </button>
-
-                      {newBizProducts.length > 0 && (
-                        <div className="space-y-1.5 mt-2">
-                          {newBizProducts.map((p, idx) => (
-                            <div key={idx} className="flex items-center justify-between bg-white border border-amber-100 rounded-xl px-3 py-2 text-xs">
-                              <div className="flex items-center gap-2.5">
-                                {p.image && (
-                                  <img src={p.image} alt={p.name} className="w-8 h-8 rounded-lg object-cover border border-amber-200" />
-                                )}
-                                <div>
-                                  <span className="font-extrabold text-slate-800">{p.name}</span>
-                                  {p.price && <span className="ml-2 text-amber-700 font-bold">{p.price.startsWith('₹') ? p.price : `₹${p.price}`}</span>}
-                                  {p.desc && <span className="ml-2 text-slate-400">{p.desc}</span>}
-                                </div>
-                              </div>
-                              <button type="button" onClick={() => setNewBizProducts(prev => prev.filter((_, i) => i !== idx))} className="text-rose-500 hover:text-rose-700 font-black text-sm cursor-pointer">×</button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Services */}
-                    <div className="space-y-3 bg-teal-50/60 border border-teal-200 rounded-2xl p-4">
-                      <div className="flex items-center justify-between">
-                        <h5 className="text-xs font-black text-teal-900 uppercase tracking-wider">⚙️ Services ({newBizServices.length})</h5>
-                      </div>
-
-                      {/* Add service row */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <input
-                          type="text"
-                          placeholder="Service name *"
-                          value={newBizSvcInput.name}
-                          onChange={e => setNewBizSvcInput(s => ({...s, name: e.target.value}))}
-                          className="bg-white border border-teal-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Price / Rate (e.g. ₹500)"
-                          value={newBizSvcInput.price}
-                          onChange={e => setNewBizSvcInput(s => ({...s, price: e.target.value}))}
-                          className="bg-white border border-teal-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Short description (optional)"
-                          value={newBizSvcInput.desc}
-                          onChange={e => setNewBizSvcInput(s => ({...s, desc: e.target.value}))}
-                          className="bg-white border border-teal-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!newBizSvcInput.name.trim()) return;
-                          setNewBizServices(prev => [...prev, {...newBizSvcInput}]);
-                          setNewBizSvcInput({name: '', price: '', duration: '', desc: ''});
-                        }}
-                        className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-black px-4 py-2 rounded-xl cursor-pointer transition-colors"
-                      >
-                        ➕ Add Service
-                      </button>
-
-                      {newBizServices.length > 0 && (
-                        <div className="space-y-1.5 mt-2">
-                          {newBizServices.map((s, idx) => (
-                            <div key={idx} className="flex items-center justify-between bg-white border border-teal-100 rounded-xl px-3 py-2 text-xs">
-                              <div>
-                                <span className="font-extrabold text-slate-800">{s.name}</span>
-                                {s.price && <span className="ml-2 text-teal-700 font-bold">{s.price.startsWith('₹') ? s.price : `₹${s.price}`}</span>}
-                                {s.desc && <span className="ml-2 text-slate-400">{s.desc}</span>}
-                              </div>
-                              <button type="button" onClick={() => setNewBizServices(prev => prev.filter((_, i) => i !== idx))} className="text-rose-500 hover:text-rose-700 font-black text-sm cursor-pointer">×</button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <p className="text-center text-[10px] text-slate-400 font-bold">You can also add/edit products & services anytime from your Business Dashboard after publishing.</p>
-                  </div>
-                )}
-
-                {/* Stepper Navigation Footer */}
-                <div className="border-t border-slate-105 pt-4 mt-6 flex items-center justify-between">
-                  <div>
-                    {wizardStep > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCreateBizError('');
-                          setWizardStep(prev => prev - 1);
-                        }}
-                        className="px-4 py-2.5 border border-slate-200 bg-slate-50 hover:bg-slate-100 rounded-xl font-bold cursor-pointer transition-colors flex items-center gap-1 text-xs"
-                      >
-                        <ArrowLeft className="w-3.5 h-3.5" />
-                        <span>Back</span>
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {wizardStep < 4 ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (wizardStep === 1 && validateStep1()) setWizardStep(2);
-                          else if (wizardStep === 2 && validateStep2()) setWizardStep(3);
-                          else if (wizardStep === 3) setWizardStep(4);
-                        }}
-                        className="bg-teal-600 hover:bg-teal-700 text-white font-extrabold px-6 py-2.5 rounded-xl shadow-md cursor-pointer transition-all flex items-center gap-1 hover:scale-[1.01] text-xs font-sans"
-                      >
-                        <span>Continue</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleCreateBusinessFinal}
-                        disabled={creatingBiz}
-                        className="bg-teal-600 hover:bg-teal-700 text-white font-black px-6 py-2.5 rounded-xl shadow-lg cursor-pointer transition-all disabled:opacity-50 flex items-center gap-1 text-xs"
-                      >
-                        {creatingBiz ? 'Publishing...' : '🚀 Publish Business Profile'}
-                      </button>
-                    )}
-                  </div>
+                    );
+                  })}
                 </div>
+              </div>
+            )}
+
+            {/* Stepper Navigation Footer */}
+            <div className="border-t border-slate-100 pt-4 mt-6 flex items-center justify-between">
+              <div>
+                {wizardStep > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreateBizError('');
+                      setWizardStep(prev => prev - 1);
+                    }}
+                    className="px-4 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl font-bold cursor-pointer transition-colors flex items-center gap-1.5 text-xs shadow-2xs"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Back</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                {wizardStep < 4 ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (wizardStep === 1 && validateStep1()) setWizardStep(2);
+                      else if (wizardStep === 2 && validateStep2()) setWizardStep(3);
+                      else if (wizardStep === 3) setWizardStep(4);
+                    }}
+                    className="bg-teal-600 hover:bg-teal-700 text-white font-extrabold px-6 py-2.5 rounded-xl shadow-md cursor-pointer transition-all flex items-center gap-1.5 hover:scale-[1.01] active:scale-95 text-xs"
+                  >
+                    <span>Continue</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                ) : wizardStep === 4 ? (
+                  <button
+                    type="button"
+                    onClick={() => setWizardStep(5)}
+                    className="bg-teal-600 hover:bg-teal-700 text-white font-extrabold px-6 py-2.5 rounded-xl shadow-md cursor-pointer transition-all flex items-center gap-1.5 hover:scale-[1.01] active:scale-95 text-xs"
+                  >
+                    <span>Continue to Plans</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                ) : null}
+              </div>
+            </div>
 
           </div>
 
@@ -4666,7 +4861,6 @@ _Powered by Majh Boisar (majhboisar.com)_`
       </div>
     );
   }
-
   // Pre-configured mock data for analytics graphs
   const viewsChartData = [
     { name: 'Mon', views: Math.floor((business?.views || 100) * 0.1), clicks: Math.floor(((business?.phoneClicks || 10) + (business?.whatsappClicks || 10)) * 0.1) },
@@ -5205,7 +5399,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
                                     '2 Properties Featured in 2 Categories',
                                     'Google Map Location Enabled',
                                     'Direct Call to Owner (Zero buyer quota used)',
-                                    '#1 Top / Pinned Listing in Boisar',
+                                    'Top Priority Featured Ranking in Boisar',
                                     'VIP Developer / Builder Badge',
                                     '1st Month: 50 Days (30d + 20d Free Bonus)'
                                   ],
@@ -7077,9 +7271,11 @@ _Powered by Majh Boisar (majhboisar.com)_`
                               >
                                 <option value="Executive / 3-Star">Executive / 3-Star</option>
                                 <option value="Luxury Resort">Luxury Resort</option>
+                                <option value="Luxury Suite & Villa">Luxury Suite &amp; Villa</option>
                                 <option value="Boutique Residency">Boutique Residency</option>
                                 <option value="Budget Lodge">Budget Lodge</option>
                                 <option value="Couple Friendly Hotel">Couple Friendly Hotel</option>
+                                <option value="Dormitory & Hostel">Dormitory &amp; Hostel (Per Bed / Person)</option>
                               </select>
                             </div>
 
@@ -9427,19 +9623,44 @@ _Powered by Majh Boisar (majhboisar.com)_`
                           />
                         </div>
 
-                        <div>
+                        <div className="relative">
                           <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Category *</label>
-                          <select
-                            value={editCategory}
-                            onChange={(e) => setEditCategory(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-teal-500 cursor-pointer"
-                          >
-                            {categoriesList.map((cat) => (
-                              <option key={cat} value={cat}>
-                                {cat}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder="🔍 Search category (e.g. Gym, Salon, Doctor)..."
+                              value={isSettingsCatDropdownOpen ? settingsCatSearch : editCategory}
+                              onFocus={() => { setIsSettingsCatDropdownOpen(true); setSettingsCatSearch(''); }}
+                              onChange={(e) => { setSettingsCatSearch(e.target.value); setIsSettingsCatDropdownOpen(true); }}
+                              onBlur={() => setTimeout(() => setIsSettingsCatDropdownOpen(false), 180)}
+                              className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 pr-8"
+                              readOnly={false}
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-xs">▾</span>
+                          </div>
+                          {isSettingsCatDropdownOpen && (
+                            <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-56 overflow-y-auto">
+                              {(() => {
+                                const q = settingsCatSearch.toLowerCase().trim();
+                                // Custom DB category: show at top if not in predefined list
+                                const baseList = editCategory && !allAvailableCategories.includes(editCategory)
+                                  ? [editCategory, ...allAvailableCategories]
+                                  : allAvailableCategories;
+                                const filtered = baseList.filter(c => !q || c.toLowerCase().includes(q));
+                                return filtered.length > 0 ? filtered.map(cat => (
+                                  <div
+                                    key={cat}
+                                    onMouseDown={() => { setEditCategory(cat); setSettingsCatSearch(''); setIsSettingsCatDropdownOpen(false); }}
+                                    className={`px-3.5 py-2 text-xs cursor-pointer hover:bg-teal-50 hover:text-teal-700 transition-colors ${editCategory === cat ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-700'}`}
+                                  >
+                                    {cat}
+                                  </div>
+                                )) : (
+                                  <div className="px-3.5 py-3 text-xs text-slate-400 text-center">No category found</div>
+                                );
+                              })()}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -9759,6 +9980,59 @@ _Powered by Majh Boisar (majhboisar.com)_`
                         {updatingProfile ? 'Saving Changes...' : 'Save Profile Changes'}
                       </button>
                     </form>
+
+                    {/* 🔑 Admin Only: Assign Owner Phone */}
+                    {isAdminAuth && (
+                      <div className="bg-amber-50/60 border border-amber-200/80 rounded-2xl p-3.5 sm:p-4 text-left mt-4">
+                        <h5 className="text-xs font-black text-amber-900 flex items-center gap-1.5 mb-2">
+                          <span>🔑</span> Assign Business Owner (Admin Only)
+                        </h5>
+                        <p className="text-[11px] text-amber-700 font-medium mb-3">
+                          Set the phone number that can login and manage this business dashboard.
+                        </p>
+                        <div className="flex gap-2">
+                          <input
+                            id="admin-owner-phone-input"
+                            type="tel"
+                            maxLength={10}
+                            placeholder="Enter 10-digit owner phone..."
+                            defaultValue={(business as any)?.createdBy || ''}
+                            className="flex-1 bg-white border border-amber-300 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-amber-500 font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const input = document.getElementById('admin-owner-phone-input') as HTMLInputElement;
+                              const phone = (input?.value || '').replace(/\D/g, '').slice(-10);
+                              if (!phone || phone.length !== 10) {
+                                alert('Please enter a valid 10-digit phone number.');
+                                return;
+                              }
+                              try {
+                                const res = await fetch(`/api/businesses/${selectedId}`, {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ createdBy: phone })
+                                });
+                                if (!res.ok) throw new Error('Failed');
+                                alert(`✅ Owner phone set to ${phone}. They can now login with OTP to manage this business.`);
+                                await fetchBusinessData();
+                              } catch {
+                                alert('❌ Failed to assign owner phone. Try again.');
+                              }
+                            }}
+                            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-xs transition-all cursor-pointer shrink-0 active:scale-95"
+                          >
+                            Assign
+                          </button>
+                        </div>
+                        {(business as any)?.createdBy && (
+                          <p className="text-[10px] text-amber-600 font-semibold mt-2">
+                            Current owner: <span className="font-mono font-black">{(business as any).createdBy}</span>
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     {/* 🚨 Delete Business Listing */}
                     {!pendingDeletionReq && (
@@ -10375,7 +10649,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
                           email: loggedInUser?.email || '',
                           contact: loggedInUser?.phone || '',
                         }}
-                        buttonText={`⚡ Pay ₹${planInfo.amountNum.toLocaleString('en-IN')} via Razorpay (Instant)`}
+                        buttonText={`⚡ Pay ₹${planInfo.amountNum.toLocaleString('en-IN')} Online (Cards, UPI, NetBanking)`}
                         onSuccess={async (res) => {
                           setCheckoutModalOpen(false);
                           showToast(`Payment of ₹${planInfo.amountNum} verified via Razorpay! 🎉`, 'success');
@@ -10442,20 +10716,18 @@ _Powered by Majh Boisar (majhboisar.com)_`
                             </div>
 
 
-                            {/* Instant Plan Activation Button */}
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                setCheckoutModalOpen(false);
-                                if (checkoutPlan) {
-                                  await handleUpgradeSubscription(checkoutPlan as any);
-                                  showToast(`Plan activated successfully! 🎉 Welcome to ${planInfo.name}.`, 'success');
-                                }
-                              }}
-                              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 mt-1"
+                            {/* WhatsApp Manual Verification for UPI */}
+                            <a
+                              href={`https://wa.me/919699729167?text=${encodeURIComponent(`Hi Admin, I have paid ₹${planInfo.amountNum} for ${planInfo.name} on Majh Boisar (Business: ${business?.name || ''}). Here is my payment confirmation. Please verify and activate my subscription.`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-full py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-1 text-center"
                             >
-                              <span>✓ I Have Paid — Activate Plan Now</span>
-                            </button>
+                              <span>📲 Send Payment Screenshot on WhatsApp</span>
+                            </a>
+                            <p className="text-[10px] text-slate-400 font-medium text-center">
+                              Admin verifies UPI payments within 15 minutes. For instant automatic activation, use the online payment button above.
+                            </p>
                           </div>
                         );
                       })()}
@@ -11508,7 +11780,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
                 ) : (
                   <button
                     type="button"
-                    onClick={handleCreateBusinessFinal}
+                    onClick={() => handleCreateBusinessFinal()}
                     disabled={creatingBiz}
                     className="btn-teal text-white font-black px-6 py-2.5 rounded-xl shadow-lg cursor-pointer transition-all disabled:opacity-50 flex items-center gap-1"
                   >

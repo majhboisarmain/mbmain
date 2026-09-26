@@ -114,26 +114,26 @@ export default function HotelsPage() {
   const [partnerPlan, setPartnerPlan] = useState<'starter_149' | 'pro_499'>('pro_499');
   const [newHotelForm, setNewHotelForm] = useState({
     name: '',
-    tagline: 'Luxury Comfort Stay & Flexible Hourly Day-Rest in Boisar',
+    tagline: '',
     category: 'Executive',
     location: '',
     address: '',
     phone: '',
     whatsapp: '',
-    stationDistance: '3 mins to Boisar Station',
-    midcDistance: '5 mins to Tarapur MIDC',
-    rating: '4.5',
-    reviewsCount: '48',
+    stationDistance: '',
+    midcDistance: '',
+    rating: '4.8',
+    reviewsCount: '1',
     isCoupleFriendly: true,
     acceptsLocalId: true,
-    nearStation: true,
+    nearStation: false,
     nearMidc: false,
     dayStayTimingWindow: '09:00 AM – 07:00 PM',
     nightStayCheckIn: '12:00 PM',
     nightStayCheckOut: '11:00 AM',
     houseRulesTag: 'Easy 2-Min Check-in',
-    description: 'Verified hotel in Boisar offering clean air-conditioned rooms, swift check-ins, complete privacy, and flexible hourly stays.',
-    amenitiesList: ['Wi-Fi', 'AC', 'Parking', 'TV', 'Hot Water', 'Clean Linens', 'Power Backup', 'Room Service'],
+    description: '',
+    amenitiesList: ['Wi-Fi', 'AC', 'Parking', 'TV', 'Hot Water', 'Clean Linens'],
     rulesList: [
       '18+ Valid Govt ID Required (Aadhaar / DL / DigiLocker)',
       'Couples & Local Boisar IDs Warmly Welcome',
@@ -167,19 +167,34 @@ export default function HotelsPage() {
     PRESET_HOTEL_PHOTOS[2]
   ]);
 
-  // AC & Non-AC Room Tariffs for new hotel
-  const [offersHourly, setOffersHourly] = useState(true);
-  const [newHotelAc3h, setNewHotelAc3h] = useState('699');
-  const [newHotelAc6h, setNewHotelAc6h] = useState('1099');
-  const [newHotelAc12h, setNewHotelAc12h] = useState('1599');
-  const [newHotelAcDay, setNewHotelAcDay] = useState('1499');
-  const [newHotelAcNight, setNewHotelAcNight] = useState('1899');
+  // AC & Non-AC Room Tariffs for new hotel (Clean empty initial states, no dummy values)
+  const [offersHourly, setOffersHourly] = useState(false);
+  const [newHotelAc3h, setNewHotelAc3h] = useState('');
+  const [newHotelAc6h, setNewHotelAc6h] = useState('');
+  const [newHotelAc12h, setNewHotelAc12h] = useState('');
+  const [newHotelAcDay, setNewHotelAcDay] = useState('');
+  const [newHotelAcNight, setNewHotelAcNight] = useState('');
 
-  const [newHotelNonAc3h, setNewHotelNonAc3h] = useState('499');
-  const [newHotelNonAc6h, setNewHotelNonAc6h] = useState('799');
-  const [newHotelNonAc12h, setNewHotelNonAc12h] = useState('1199');
-  const [newHotelNonAcDay, setNewHotelNonAcDay] = useState('999');
-  const [newHotelNonAcNight, setNewHotelNonAcNight] = useState('1399');
+  const [newHotelNonAc3h, setNewHotelNonAc3h] = useState('');
+  const [newHotelNonAc6h, setNewHotelNonAc6h] = useState('');
+  const [newHotelNonAc12h, setNewHotelNonAc12h] = useState('');
+  const [newHotelNonAcDay, setNewHotelNonAcDay] = useState('');
+  const [newHotelNonAcNight, setNewHotelNonAcNight] = useState('');
+
+  // Dormitory Room Tariff (Per Bed / Per Person)
+  const [hasDormitory, setHasDormitory] = useState(false);
+  const [newHotelDorm3h, setNewHotelDorm3h] = useState('');
+  const [newHotelDorm6h, setNewHotelDorm6h] = useState('');
+  const [newHotelDorm12h, setNewHotelDorm12h] = useState('');
+  const [newHotelDormDay, setNewHotelDormDay] = useState('');
+  const [newHotelDormNight, setNewHotelDormNight] = useState('');
+  const [newHotelDormBeds, setNewHotelDormBeds] = useState('');
+  const [newHotelDormIsAc, setNewHotelDormIsAc] = useState(true);
+
+  // Luxury Suite / Villa Tariff
+  const [hasLuxurySuite, setHasLuxurySuite] = useState(false);
+  const [newHotelLuxDay, setNewHotelLuxDay] = useState('');
+  const [newHotelLuxNight, setNewHotelLuxNight] = useState('');
 
   const [hotelRoomsToAdd, setHotelRoomsToAdd] = useState<any[]>([
     {
@@ -242,15 +257,35 @@ export default function HotelsPage() {
     setHotelRoomsToAdd(prev => prev.filter(r => r.id !== id));
   };
 
+  const fetchLiveHotels = async () => {
+    try {
+      const res = await fetch('/api/hotels');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.hotels) && data.hotels.length > 0) {
+          setHotels(data.hotels);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch live hotels:', e);
+    }
+    // Fallback to static if offline
+    setHotels(getAllHotels());
+  };
+
   useEffect(() => {
-    const refreshHotels = () => setHotels(getAllHotels());
-    refreshHotels();
+    fetchLiveHotels();
     if (loggedInUser) {
       setGuestName(loggedInUser.name || '');
       setGuestPhone(loggedInUser.phone || '');
     }
-    window.addEventListener('storage', refreshHotels);
-    return () => window.removeEventListener('storage', refreshHotels);
+    window.addEventListener('storage', fetchLiveHotels);
+    window.addEventListener('boisar_hotel_created', fetchLiveHotels);
+    return () => {
+      window.removeEventListener('storage', fetchLiveHotels);
+      window.removeEventListener('boisar_hotel_created', fetchLiveHotels);
+    };
   }, [loggedInUser]);
 
   // Handle Photo Navigation on specific hotel card
@@ -632,7 +667,7 @@ export default function HotelsPage() {
 
             {/* Hotel Cards List */}
             <div className="space-y-4">
-              {filteredAndSortedHotels.map(hotel => {
+              {filteredAndSortedHotels.map((hotel, hotelIdx) => {
                 const currentImgIdx = cardPhotoIndex[hotel.id] || 0;
                 const activePhoto = hotel.gallery[currentImgIdx] || hotel.gallery[0];
                 const thumbnails = hotel.gallery.slice(0, 4);
@@ -660,6 +695,8 @@ export default function HotelsPage() {
                           <img 
                             src={activePhoto} 
                             alt={hotel.name} 
+                            loading={hotelIdx < 2 ? "eager" : "lazy"}
+                            decoding="async"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                           />
 
@@ -712,7 +749,7 @@ export default function HotelsPage() {
                                 currentImgIdx === tIdx ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200 opacity-75 hover:opacity-100'
                               }`}
                             >
-                              <img src={thumb} alt="thumb" className="w-full h-full object-cover" />
+                              <img src={thumb} alt="thumb" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                             </div>
                           ))}
                         </div>
@@ -721,7 +758,13 @@ export default function HotelsPage() {
                       {/* Mobile Photo Banner */}
                       <div className="sm:hidden space-y-1.5 w-full">
                         <div className="relative w-full h-[190px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-200 shrink-0">
-                          <img src={activePhoto} alt={hotel.name} className="w-full h-full object-cover" />
+                          <img 
+                            src={activePhoto} 
+                            alt={hotel.name} 
+                            loading={hotelIdx < 2 ? "eager" : "lazy"}
+                            decoding="async"
+                            className="w-full h-full object-cover" 
+                          />
 
                           <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 flex-wrap pointer-events-none">
                             {(hotel as any).isPinnedTop && (
@@ -772,7 +815,7 @@ export default function HotelsPage() {
                                 currentImgIdx === tIdx ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200 opacity-75 hover:opacity-100'
                               }`}
                             >
-                              <img src={thumb} alt="thumb" className="w-full h-full object-cover" />
+                              <img src={thumb} alt="thumb" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                             </div>
                           ))}
                         </div>
@@ -1230,7 +1273,7 @@ export default function HotelsPage() {
             </div>
 
             <form 
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
                 if (!newHotelForm.name || !newHotelForm.phone) {
                   alert('Please enter Hotel Name and Reception Phone Number.');
@@ -1303,57 +1346,94 @@ export default function HotelsPage() {
                   nightStayCheckOut: newHotelForm.nightStayCheckOut || '11:00 AM',
                   houseRulesTag: newHotelForm.houseRulesTag || 'Easy 2-Min Check-in',
                   rules: deduplicateRules(newHotelForm.rulesList),
-                  rooms: [
-                    {
-                      id: 'r_ac',
-                      name: 'Deluxe AC Room',
-                      type: 'Deluxe AC',
-                      bedType: '1 King Bed',
-                      maxGuests: 2,
-                      size: '240 sq.ft',
-                      hourly3h: offersHourly ? (Number(newHotelAc3h) || 699) : 0,
-                      hourly6h: offersHourly ? (Number(newHotelAc6h) || 1099) : 0,
-                      hourly12h: offersHourly ? (Number(newHotelAc12h) || 1599) : 0,
-                      dayRate: Number(newHotelAcDay) || 1499,
-                      nightRate: Number(newHotelAcNight) || 1899,
-                      image: gallery[0] || '',
-                      amenities: ['AC', 'King Bed', 'Free WiFi', 'Hot Shower', 'Clean Bedding']
-                    },
-                    {
-                      id: 'r_non_ac',
-                      name: 'Standard Non-AC Room',
-                      type: 'Standard Non-AC',
-                      bedType: '1 Queen Bed',
-                      maxGuests: 2,
-                      size: '220 sq.ft',
-                      hourly3h: offersHourly ? (Number(newHotelNonAc3h) || 499) : 0,
-                      hourly6h: offersHourly ? (Number(newHotelNonAc6h) || 799) : 0,
-                      hourly12h: offersHourly ? (Number(newHotelNonAc12h) || 1199) : 0,
-                      dayRate: Number(newHotelNonAcDay) || 999,
-                      nightRate: Number(newHotelNonAcNight) || 1399,
-                      image: gallery[1] || gallery[0] || '',
-                      amenities: ['Fan Ventilated', 'Queen Bed', 'Free WiFi', 'Clean Bedding']
+                  rooms: (() => {
+                    const rList: any[] = [
+                      {
+                        id: 'r_ac',
+                        name: 'Deluxe AC Room',
+                        type: 'Deluxe AC',
+                        bedType: '1 King Bed',
+                        maxGuests: 2,
+                        size: '240 sq.ft',
+                        hourly3h: offersHourly ? (Number(newHotelAc3h) || 699) : 0,
+                        hourly6h: offersHourly ? (Number(newHotelAc6h) || 1099) : 0,
+                        hourly12h: offersHourly ? (Number(newHotelAc12h) || 1599) : 0,
+                        dayRate: Number(newHotelAcDay) || 1499,
+                        nightRate: Number(newHotelAcNight) || 1899,
+                        image: gallery[0] || '',
+                        amenities: ['AC', 'King Bed', 'Free WiFi', 'Hot Shower', 'Clean Bedding']
+                      },
+                      {
+                        id: 'r_non_ac',
+                        name: 'Standard Non-AC Room',
+                        type: 'Standard Non-AC',
+                        bedType: '1 Queen Bed',
+                        maxGuests: 2,
+                        size: '220 sq.ft',
+                        hourly3h: offersHourly ? (Number(newHotelNonAc3h) || 499) : 0,
+                        hourly6h: offersHourly ? (Number(newHotelNonAc6h) || 799) : 0,
+                        hourly12h: offersHourly ? (Number(newHotelNonAc12h) || 1199) : 0,
+                        dayRate: Number(newHotelNonAcDay) || 999,
+                        nightRate: Number(newHotelNonAcNight) || 1399,
+                        image: gallery[1] || gallery[0] || '',
+                        amenities: ['Fan Ventilated', 'Queen Bed', 'Free WiFi', 'Clean Bedding']
+                      }
+                    ];
+
+                    if (hasDormitory || newHotelForm.category === 'Dormitory') {
+                      rList.push({
+                        id: 'r_dorm',
+                        name: `${newHotelDormIsAc ? 'AC' : 'Non-AC'} Dormitory Bed (Per Bed / Person)`,
+                        type: 'Dormitory Bed',
+                        bedType: '1 Single Bed / Bunk Bed (Per Person)',
+                        maxGuests: 1,
+                        isDormitory: true,
+                        priceUnit: 'per bed / person',
+                        size: 'Shared Dormitory',
+                        totalBeds: Number(newHotelDormBeds) || 8,
+                        hourly3h: offersHourly ? (Number(newHotelDorm3h) || 149) : 0,
+                        hourly6h: offersHourly ? (Number(newHotelDorm6h) || 249) : 0,
+                        hourly12h: offersHourly ? (Number(newHotelDorm12h) || 349) : 0,
+                        dayRate: Number(newHotelDormDay) || 299,
+                        nightRate: Number(newHotelDormNight) || 399,
+                        image: gallery[2] || gallery[0] || 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80',
+                        amenities: [newHotelDormIsAc ? 'AC Dormitory' : 'Air Cooled', 'Personal Bed Light', 'Charging Point', 'Locker Storage', 'Shared Clean Washroom', 'Free Wi-Fi']
+                      });
                     }
-                  ],
+
+                    if (hasLuxurySuite || newHotelForm.category === 'Luxury' || newHotelForm.category === 'Luxury Suite') {
+                      rList.push({
+                        id: 'r_luxury_suite',
+                        name: 'Luxury Executive Suite / Villa',
+                        type: 'Luxury Suite',
+                        bedType: '1 King Bed + Lounge Sofa',
+                        maxGuests: 4,
+                        size: '420 sq.ft',
+                        hourly3h: offersHourly ? 1199 : 0,
+                        hourly6h: offersHourly ? 1799 : 0,
+                        hourly12h: offersHourly ? 2299 : 0,
+                        dayRate: Number(newHotelLuxDay) || 2199,
+                        nightRate: Number(newHotelLuxNight) || 2999,
+                        image: gallery[3] || gallery[0] || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80',
+                        amenities: ['AC', 'King Size Bed', 'Smart TV', 'Balcony View', 'Bathtub / Jacuzzi', 'Free High-speed Wi-Fi']
+                      });
+                    }
+
+                    return rList;
+                  })(),
                   reviews: [],
                   viewsCount: 1,
                   clicksCount: 0,
                   bookingsCount: 0,
-                  status: 'Pending',
-                  verified: false,
+                  status: 'Active',
+                  verified: true,
                   partnerPlan: partnerPlan === 'pro_499' ? 'Pro Featured (₹499/mo)' : 'Starter Partner (₹149/mo)',
                   submittedAt: new Date().toISOString()
                 } as any;
 
                 try {
-                  const saved = JSON.parse(localStorage.getItem('majh_boisar_custom_hotels_v2') || '[]');
-                  localStorage.setItem('majh_boisar_custom_hotels_v2', JSON.stringify([newHotelItem, ...saved]));
-
-                  const savedUser = JSON.parse(localStorage.getItem('majh_boisar_user_hotels') || '[]');
-                  localStorage.setItem('majh_boisar_user_hotels', JSON.stringify([newHotelItem, ...savedUser]));
-
-                  // Save to central PostgreSQL DB
-                  fetch('/api/hotels', {
+                  // 1. Save to central PostgreSQL DB live
+                  const dbRes = await fetch('/api/hotels', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1384,7 +1464,21 @@ export default function HotelsPage() {
                       rooms: newHotelItem.rooms,
                       createdBy: loggedInUser?.phone || newHotelItem.phone
                     })
-                  }).catch(e => console.error('[Hotel Add DB Error]:', e));
+                  });
+
+                  if (dbRes.ok) {
+                    const dbData = await dbRes.json();
+                    if (dbData.hotel?.id) {
+                      newHotelItem.id = String(dbData.hotel.id);
+                    }
+                  }
+
+                  // 2. Also keep cache in local storage for instant offline resilience
+                  const saved = JSON.parse(localStorage.getItem('majh_boisar_custom_hotels_v2') || '[]');
+                  localStorage.setItem('majh_boisar_custom_hotels_v2', JSON.stringify([newHotelItem, ...saved]));
+
+                  const savedUser = JSON.parse(localStorage.getItem('majh_boisar_user_hotels') || '[]');
+                  localStorage.setItem('majh_boisar_user_hotels', JSON.stringify([newHotelItem, ...savedUser]));
 
                   if (typeof window !== 'undefined') {
                     localStorage.setItem(`majh_boisar_hotel_day_stay_timing_${newHotelItem.slug}`, newHotelItem.dayStayTimingWindow || '09:00 AM – 07:00 PM');
@@ -1397,11 +1491,13 @@ export default function HotelsPage() {
                     window.dispatchEvent(new Event('storage'));
                     window.dispatchEvent(new CustomEvent('boisar_hotel_created', { detail: newHotelItem }));
                   }
+
+                  await fetchLiveHotels();
                 } catch (e) {
-                  console.error('[Hotel Add Local Error]:', e);
+                  console.error('[Hotel Add Live DB Error]:', e);
                 }
 
-                alert(`🎉 Hotel Application Submitted!\n\n"${newHotelItem.name}" has been submitted for Admin Verification.\n\nOur team will verify reception phone (+91 ${newHotelItem.phone}) and activate your hotel listing on the Majh Boisar Directory with 0% commission.`);
+                alert(`🎉 Congratulations!\n\n"${newHotelItem.name}" is now LIVE on Majh Boisar Directory!\n\nAll room tariffs, dormitory beds, and contact details are publicly visible.`);
                 setIsAddHotelOpen(false);
               }}
               className="space-y-4 text-xs"
@@ -1434,9 +1530,11 @@ export default function HotelsPage() {
                     >
                       <option value="Executive">Executive / 3-Star</option>
                       <option value="Luxury">Luxury Resort</option>
+                      <option value="Luxury Suite">Luxury Suite &amp; Villa</option>
                       <option value="Boutique">Boutique Residency</option>
                       <option value="Budget">Budget Lodge</option>
                       <option value="Residency">Station Residency</option>
+                      <option value="Dormitory">Dormitory / Hostel (Per Bed / Person)</option>
                     </select>
                   </div>
 
@@ -1491,17 +1589,17 @@ export default function HotelsPage() {
                 </div>
               </div>
 
-              {/* SECTION 2: TAGLINE & TRAVEL DISTANCES */}
+              {/* SECTION 2: TAGLINE & NEARBY DISTANCES (NO BLOATED DESCRIPTION) */}
               <div className="space-y-3 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200">
                 <span className="text-[10px] font-black text-purple-900 uppercase tracking-wider block">
-                  2. Tagline, Distance &amp; About
+                  2. Tagline &amp; Nearby Distances
                 </span>
 
                 <div>
                   <label className="block text-[9px] font-bold text-slate-600 mb-1 uppercase">Catchy Tagline / Headline</label>
                   <input
                     type="text"
-                    placeholder="e.g. Luxury 3-Star Comfort Stay & Flexible Hourly Day-Rest"
+                    placeholder="e.g. Luxury Comfort Stay & Flexible Hourly Day-Rest in Boisar"
                     value={newHotelForm.tagline}
                     onChange={(e) => setNewHotelForm({ ...newHotelForm, tagline: e.target.value })}
                     className="w-full bg-white border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-purple-600"
@@ -1513,7 +1611,7 @@ export default function HotelsPage() {
                     <label className="block text-[9px] font-bold text-slate-600 mb-1 uppercase">Distance to Boisar Railway Station</label>
                     <input
                       type="text"
-                      placeholder="e.g. 3 mins to Boisar Station / 8 mins"
+                      placeholder="e.g. 3 mins to Boisar Station"
                       value={newHotelForm.stationDistance}
                       onChange={(e) => setNewHotelForm({ ...newHotelForm, stationDistance: e.target.value })}
                       className="w-full bg-white border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-purple-600"
@@ -1524,23 +1622,12 @@ export default function HotelsPage() {
                     <label className="block text-[9px] font-bold text-slate-600 mb-1 uppercase">Distance to Tarapur MIDC</label>
                     <input
                       type="text"
-                      placeholder="e.g. 5 mins to Tarapur MIDC / 10 mins"
+                      placeholder="e.g. 5 mins to Tarapur MIDC"
                       value={newHotelForm.midcDistance}
                       onChange={(e) => setNewHotelForm({ ...newHotelForm, midcDistance: e.target.value })}
                       className="w-full bg-white border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-purple-600"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-[9px] font-bold text-slate-600 mb-1 uppercase">Hotel Description / About</label>
-                  <textarea
-                    rows={2}
-                    placeholder="Describe your hotel rooms, cleanliness, hospitality, and comfort..."
-                    value={newHotelForm.description}
-                    onChange={(e) => setNewHotelForm({ ...newHotelForm, description: e.target.value })}
-                    className="w-full bg-white border border-slate-250 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:border-purple-600"
-                  />
                 </div>
               </div>
 
@@ -1706,7 +1793,6 @@ export default function HotelsPage() {
                           <label className="block text-[8px] font-black text-emerald-800 text-center uppercase">☀️ Day Stay Rate (₹)</label>
                           <input
                             type="number"
-                            required
                             value={newHotelAcDay}
                             onChange={(e) => setNewHotelAcDay(e.target.value)}
                             placeholder="e.g. 1499"
@@ -1717,7 +1803,6 @@ export default function HotelsPage() {
                           <label className="block text-[8px] font-black text-amber-800 text-center uppercase">🌙 Night Stay Rate (₹)</label>
                           <input
                             type="number"
-                            required
                             value={newHotelAcNight}
                             onChange={(e) => setNewHotelAcNight(e.target.value)}
                             placeholder="e.g. 1899"
@@ -1745,9 +1830,9 @@ export default function HotelsPage() {
                           <label className="block text-[8px] font-black text-slate-600 text-center uppercase">3h (₹)</label>
                           <input
                             type="number"
-                            required
                             value={newHotelNonAc3h}
                             onChange={(e) => setNewHotelNonAc3h(e.target.value)}
+                            placeholder="499"
                             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1 py-1 text-xs font-black text-slate-900 text-center outline-none focus:border-purple-600 shadow-2xs"
                           />
                         </div>
@@ -1755,9 +1840,9 @@ export default function HotelsPage() {
                           <label className="block text-[8px] font-black text-slate-600 text-center uppercase">6h (₹)</label>
                           <input
                             type="number"
-                            required
                             value={newHotelNonAc6h}
                             onChange={(e) => setNewHotelNonAc6h(e.target.value)}
+                            placeholder="799"
                             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1 py-1 text-xs font-black text-slate-900 text-center outline-none focus:border-purple-600 shadow-2xs"
                           />
                         </div>
@@ -1765,9 +1850,9 @@ export default function HotelsPage() {
                           <label className="block text-[8px] font-black text-slate-600 text-center uppercase">12h (₹)</label>
                           <input
                             type="number"
-                            required
                             value={newHotelNonAc12h}
                             onChange={(e) => setNewHotelNonAc12h(e.target.value)}
+                            placeholder="1199"
                             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1 py-1 text-xs font-black text-slate-900 text-center outline-none focus:border-purple-600 shadow-2xs"
                           />
                         </div>
@@ -1775,9 +1860,9 @@ export default function HotelsPage() {
                           <label className="block text-[8px] font-black text-emerald-800 text-center uppercase">Day (₹)</label>
                           <input
                             type="number"
-                            required
                             value={newHotelNonAcDay}
                             onChange={(e) => setNewHotelNonAcDay(e.target.value)}
+                            placeholder="999"
                             className="w-full bg-emerald-50/80 border border-emerald-300 rounded-lg px-1 py-1 text-xs font-black text-emerald-900 text-center outline-none focus:border-purple-600 shadow-2xs"
                           />
                         </div>
@@ -1785,9 +1870,9 @@ export default function HotelsPage() {
                           <label className="block text-[8px] font-black text-amber-800 text-center uppercase">Night (₹)</label>
                           <input
                             type="number"
-                            required
                             value={newHotelNonAcNight}
                             onChange={(e) => setNewHotelNonAcNight(e.target.value)}
+                            placeholder="1399"
                             className="w-full bg-amber-50/80 border border-amber-300 rounded-lg px-1 py-1 text-xs font-black text-amber-900 text-center outline-none focus:border-purple-600 shadow-2xs"
                           />
                         </div>
@@ -1798,7 +1883,6 @@ export default function HotelsPage() {
                           <label className="block text-[8px] font-black text-emerald-800 text-center uppercase">☀️ Day Stay Rate (₹)</label>
                           <input
                             type="number"
-                            required
                             value={newHotelNonAcDay}
                             onChange={(e) => setNewHotelNonAcDay(e.target.value)}
                             placeholder="e.g. 999"
@@ -1809,11 +1893,186 @@ export default function HotelsPage() {
                           <label className="block text-[8px] font-black text-amber-800 text-center uppercase">🌙 Night Stay Rate (₹)</label>
                           <input
                             type="number"
-                            required
                             value={newHotelNonAcNight}
                             onChange={(e) => setNewHotelNonAcNight(e.target.value)}
                             placeholder="e.g. 1399"
                             className="w-full bg-amber-50/80 border border-amber-300 rounded-lg px-2 py-1.5 text-xs font-black text-amber-900 text-center outline-none focus:border-purple-600 shadow-2xs"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 🛏️ DORMITORY ROOM TARIFF BOX (PER BED / PER PERSON) */}
+                  <div className={`border-2 rounded-2xl p-3.5 space-y-2.5 transition-all shadow-2xs ${hasDormitory || newHotelForm.category === 'Dormitory' ? 'bg-amber-50/50 border-amber-300 ring-2 ring-amber-400/20' : 'bg-slate-50/60 border-slate-200'}`}>
+                    <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
+                      <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                        <span>🛏️</span> Dormitory Tariff (Per Bed)
+                      </span>
+                      <label className="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs hover:bg-amber-50">
+                        <input
+                          type="checkbox"
+                          checked={hasDormitory || newHotelForm.category === 'Dormitory'}
+                          onChange={(e) => setHasDormitory(e.target.checked)}
+                          className="w-3.5 h-3.5 accent-amber-600 rounded cursor-pointer"
+                        />
+                        <span className="text-[10px] font-black text-slate-700">Has Dormitory</span>
+                      </label>
+                    </div>
+
+                    {(hasDormitory || newHotelForm.category === 'Dormitory') && (
+                      <div className="space-y-2.5 animate-in fade-in duration-200">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[8px] font-black text-slate-600 uppercase mb-1">Dormitory Type</label>
+                            <div className="grid grid-cols-2 gap-1 bg-white p-0.5 rounded-lg border border-slate-300">
+                              <button
+                                type="button"
+                                onClick={() => setNewHotelDormIsAc(true)}
+                                className={`py-1 text-xs font-black rounded-md transition-all ${newHotelDormIsAc ? 'bg-purple-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                              >
+                                ❄️ AC
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setNewHotelDormIsAc(false)}
+                                className={`py-1 text-xs font-black rounded-md transition-all ${!newHotelDormIsAc ? 'bg-slate-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                              >
+                                🌀 Non-AC
+                              </button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-[8px] font-black text-slate-600 uppercase mb-1">Total Beds</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={newHotelDormBeds}
+                              onChange={(e) => setNewHotelDormBeds(e.target.value)}
+                              placeholder="e.g. 8"
+                              className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 outline-none focus:border-amber-600 h-[29px]"
+                            />
+                          </div>
+                        </div>
+
+                        {offersHourly ? (
+                          <div className="grid grid-cols-5 gap-1">
+                            <div>
+                              <label className="block text-[8px] font-black text-slate-600 text-center uppercase">3h / Bed</label>
+                              <input
+                                type="number"
+                                value={newHotelDorm3h}
+                                onChange={(e) => setNewHotelDorm3h(e.target.value)}
+                                placeholder="149"
+                                className="w-full bg-white border border-amber-300 rounded-lg px-1 py-1 text-xs font-black text-slate-900 text-center outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[8px] font-black text-slate-600 text-center uppercase">6h / Bed</label>
+                              <input
+                                type="number"
+                                value={newHotelDorm6h}
+                                onChange={(e) => setNewHotelDorm6h(e.target.value)}
+                                placeholder="249"
+                                className="w-full bg-white border border-amber-300 rounded-lg px-1 py-1 text-xs font-black text-slate-900 text-center outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[8px] font-black text-slate-600 text-center uppercase">12h / Bed</label>
+                              <input
+                                type="number"
+                                value={newHotelDorm12h}
+                                onChange={(e) => setNewHotelDorm12h(e.target.value)}
+                                placeholder="349"
+                                className="w-full bg-white border border-amber-300 rounded-lg px-1 py-1 text-xs font-black text-slate-900 text-center outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[8px] font-black text-emerald-800 text-center uppercase">Day / Bed</label>
+                              <input
+                                type="number"
+                                value={newHotelDormDay}
+                                onChange={(e) => setNewHotelDormDay(e.target.value)}
+                                placeholder="299"
+                                className="w-full bg-emerald-50 border border-emerald-300 rounded-lg px-1 py-1 text-xs font-black text-emerald-900 text-center outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[8px] font-black text-amber-800 text-center uppercase">Night / Bed</label>
+                              <input
+                                type="number"
+                                value={newHotelDormNight}
+                                onChange={(e) => setNewHotelDormNight(e.target.value)}
+                                placeholder="399"
+                                className="w-full bg-amber-50 border border-amber-300 rounded-lg px-1 py-1 text-xs font-black text-amber-900 text-center outline-none"
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block text-[8px] font-black text-emerald-800 text-center uppercase">☀️ Day Stay / Bed (₹)</label>
+                              <input
+                                type="number"
+                                value={newHotelDormDay}
+                                onChange={(e) => setNewHotelDormDay(e.target.value)}
+                                placeholder="e.g. 299"
+                                className="w-full bg-emerald-50 border border-emerald-300 rounded-lg px-2 py-1.5 text-xs font-black text-emerald-900 text-center outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[8px] font-black text-amber-800 text-center uppercase">🌙 Night Stay / Bed (₹)</label>
+                              <input
+                                type="number"
+                                value={newHotelDormNight}
+                                onChange={(e) => setNewHotelDormNight(e.target.value)}
+                                placeholder="e.g. 399"
+                                className="w-full bg-amber-50 border border-amber-300 rounded-lg px-2 py-1.5 text-xs font-black text-amber-900 text-center outline-none"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 👑 LUXURY SUITE / VILLA TARIFF BOX */}
+                  <div className={`border-2 rounded-2xl p-3.5 space-y-2.5 transition-all shadow-2xs ${hasLuxurySuite || newHotelForm.category === 'Luxury' || newHotelForm.category === 'Luxury Suite' ? 'bg-purple-50/50 border-purple-300 ring-2 ring-purple-400/20' : 'bg-slate-50/60 border-slate-200'}`}>
+                    <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
+                      <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                        <span>👑</span> Luxury Suite / Villa Tariff
+                      </span>
+                      <label className="flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1 rounded-xl border border-slate-200 shadow-2xs hover:bg-purple-50">
+                        <input
+                          type="checkbox"
+                          checked={hasLuxurySuite || newHotelForm.category === 'Luxury' || newHotelForm.category === 'Luxury Suite'}
+                          onChange={(e) => setHasLuxurySuite(e.target.checked)}
+                          className="w-3.5 h-3.5 accent-purple-600 rounded cursor-pointer"
+                        />
+                        <span className="text-[10px] font-black text-slate-700">Has Luxury Suite</span>
+                      </label>
+                    </div>
+
+                    {(hasLuxurySuite || newHotelForm.category === 'Luxury' || newHotelForm.category === 'Luxury Suite') && (
+                      <div className="grid grid-cols-2 gap-2 animate-in fade-in duration-200">
+                        <div>
+                          <label className="block text-[8px] font-black text-emerald-800 text-center uppercase">☀️ Day Stay Suite (₹)</label>
+                          <input
+                            type="number"
+                            value={newHotelLuxDay}
+                            onChange={(e) => setNewHotelLuxDay(e.target.value)}
+                            placeholder="e.g. 2199"
+                            className="w-full bg-emerald-50 border border-emerald-300 rounded-lg px-2 py-1.5 text-xs font-black text-emerald-900 text-center outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[8px] font-black text-purple-800 text-center uppercase">🌙 Night Stay Suite (₹)</label>
+                          <input
+                            type="number"
+                            value={newHotelLuxNight}
+                            onChange={(e) => setNewHotelLuxNight(e.target.value)}
+                            placeholder="e.g. 2999"
+                            className="w-full bg-purple-50 border border-purple-300 rounded-lg px-2 py-1.5 text-xs font-black text-purple-900 text-center outline-none"
                           />
                         </div>
                       </div>

@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     default: "Majh Boisar — Boisar's #1 City Directory, Hotels & Local Search",
     template: "%s | Majh Boisar",
   },
-  description: "Official Majh Boisar (माझं बोईसर) local search engine. Find verified hotels from ₹349, flats for sale/rent, resorts, doctors, Tarapur MIDC jobs & tempo services in Boisar, Palghar.",
+  description: "Boisar's #1 All-in-One City Portal — Yahan sab milega! 1000+ verified shops, hotels, flats on rent/sale, home services, doctors, Tarapur MIDC jobs & cabs in Boisar.",
   keywords: [
     "majh boisar", "majha boisar", "maza boisar", "majhe boisar", "maze boisar", "majhboisar", "majhaboisar", "mazaboisar", "boisar majh", "boisar maza", "boisar majha", "boisar city",
     "माझं बोईसर", "माझा बोईसर", "माझे बोईसर", "बोईसर माझं", "बोईसर", "boisar portal", "boisar city directory", "boisar info", "boisar local search",
@@ -75,7 +75,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   openGraph: {
     title: "Majh Boisar (माझं बोईसर / Majha Boisar) — #1 City Directory & Search Engine",
-    description: "Official Majh Boisar (Majha Boisar / Maza Boisar) local search engine. Find 800+ verified shops, gyms, resorts, hotels, doctors, Tarapur MIDC jobs, properties & blood donors in Boisar, Palghar.",
+    description: "Boisar's #1 All-in-One City Portal (माझं बोईसर) — Yahan sab milega! 1000+ verified local shops, budget & hourly hotels, flats on rent/sale, home services, doctors, Tarapur MIDC jobs, resorts & transport in Boisar.",
     url: "https://majhboisar.in",
     siteName: "Majh Boisar (माझं बोईसर / Majha Boisar)",
     locale: "en_IN",
@@ -92,7 +92,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Majh Boisar (माझं बोईसर / Majha Boisar) — Boisar's #1 City Portal",
-    description: "Search 800+ verified local shops, gyms, resorts, hotels, doctors, tempo helplines, flats & MIDC jobs in Boisar.",
+    description: "Boisar me sab kuch milega — 1000+ verified shops, hotels, flats, doctors, MIDC jobs & home services on Majh Boisar.",
     images: ["/hero-bg.png"],
   },
   robots: {
@@ -145,7 +145,7 @@ const websiteJsonLd = {
     "target": "https://majhboisar.in/search?query={search_term_string}",
     "query-input": "required name=search_term_string"
   },
-  "description": "Official Majh Boisar (Majha Boisar / Maza Boisar / माझं बोईसर) city directory and local search engine. Find gyms, resorts, hotels, tempo services, Tarapur MIDC jobs, properties, blood donors, and 800+ businesses in Boisar & Palghar."
+  "description": "Boisar's #1 All-in-One City Portal & Local Search Engine (माझं बोईसर). Boisar me sab kuch milega — 1000+ verified shops, hotels, flats on rent/sale, home services, doctors, Tarapur MIDC jobs, cabs & blood donors in Boisar, Palghar."
 };
 
 const ganeshBhadanePersonJsonLd = {
@@ -211,14 +211,14 @@ const siteNavigationJsonLd = {
     {
       "@type": "SiteNavigationElement",
       "position": 2,
-      "name": "Home Services & Repairs in Boisar",
-      "url": "https://majhboisar.in/services"
+      "name": "Hotels & Hourly Day-Stay in Boisar",
+      "url": "https://majhboisar.in/hotels"
     },
     {
       "@type": "SiteNavigationElement",
       "position": 3,
-      "name": "Hotels & Hourly Day-Stay in Boisar",
-      "url": "https://majhboisar.in/hotels"
+      "name": "Register Your Business — Free Listing on Majh Boisar",
+      "url": "https://majhboisar.in/register-business"
     },
     {
       "@type": "SiteNavigationElement",
@@ -229,24 +229,30 @@ const siteNavigationJsonLd = {
     {
       "@type": "SiteNavigationElement",
       "position": 5,
+      "name": "Home Services & Repairs in Boisar",
+      "url": "https://majhboisar.in/services"
+    },
+    {
+      "@type": "SiteNavigationElement",
+      "position": 6,
       "name": "Find Jobs in Boisar & Tarapur MIDC",
       "url": "https://majhboisar.in/jobs"
     },
     {
       "@type": "SiteNavigationElement",
-      "position": 6,
+      "position": 7,
       "name": "Resorts & Pool Villas in Boisar & Kelwa Beach",
       "url": "https://majhboisar.in/resorts"
     },
     {
       "@type": "SiteNavigationElement",
-      "position": 7,
+      "position": 8,
       "name": "Emergency Blood Donors in Boisar",
       "url": "https://majhboisar.in/blood-donation"
     },
     {
       "@type": "SiteNavigationElement",
-      "position": 8,
+      "position": 9,
       "name": "Advertise & Promote Business in Boisar",
       "url": "https://majhboisar.in/advertise"
     }
@@ -322,7 +328,7 @@ const localFaqJsonLd = {
       "name": "What is Majh Boisar (माझं बोईसर)?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Majh Boisar (majhboisar.in) is Boisar's #1 official local search engine and verified business directory created by Ganesh Bhadane (B.Tech Computer Engineer). It connects Boisar residents with 800+ verified doctors, hospitals, hotels, resorts, housemaids, electricians, plumbers, real estate flats, and daily Tarapur MIDC jobs."
+        "text": "Majh Boisar (majhboisar.in) is Boisar's #1 All-in-One local city portal and search engine. Yahan Boisar me sab kuch milega — 1000+ verified shops, budget & hourly hotels, flats for sale/rent, home services, doctors, Tarapur MIDC jobs, cabs, tempo & emergency blood donors."
       }
     },
     {
@@ -429,7 +435,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         />
         {/* Google Analytics GA4 with Next.js App Router Page Tracking */}
         <GoogleAnalytics />
-        <Script id="google-translate-init" strategy="afterInteractive">
+        <Script id="google-translate-init" strategy="lazyOnload">
           {`
             function googleTranslateElementInit() {
               if (window.google && window.google.translate) {
@@ -445,7 +451,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <Script
           id="google-translate-script"
           src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
         <LanguageProvider>
           <AppProvider>
@@ -491,29 +497,29 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                   {/* Links + Download — compact row */}
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 sm:gap-6 py-5 border-b border-white/10 text-[11px] sm:text-xs">
                     <div>
-                      <h4 className="text-[10px] sm:text-[11px] font-bold text-slate-300 mb-2 uppercase tracking-wider">Help</h4>
+                      <h4 className="text-[10px] sm:text-[11px] font-bold text-slate-300 mb-2 uppercase tracking-wider">Business</h4>
                       <ul className="space-y-1.5">
-                        <li><a href="mailto:majhboisar@gmail.com" className="text-slate-500 hover:text-white transition-colors">Contact Us</a></li>
-                        <li><a href="/advertise" className="text-slate-500 hover:text-white transition-colors">Advertise</a></li>
-                        <li><a href="/blood-donation" className="text-slate-500 hover:text-white transition-colors">Blood Donors</a></li>
+                        <li><a href="/register-business" className="text-teal-400 font-bold hover:text-white transition-colors">Register Your Business</a></li>
+                        <li><a href="/hotels" className="text-slate-500 hover:text-white transition-colors">List Hotel</a></li>
+                        <li><a href="/advertise" className="text-slate-500 hover:text-white transition-colors">Advertise with Us</a></li>
                       </ul>
                     </div>
                     <div>
                       <h4 className="text-[10px] sm:text-[11px] font-bold text-slate-300 mb-2 uppercase tracking-wider">Quick Links</h4>
                       <ul className="space-y-1.5">
-                        <li><a href="/hotels" className="text-slate-500 hover:text-white transition-colors">Hotels</a></li>
                         <li><a href="/properties" className="text-slate-500 hover:text-white transition-colors">Properties</a></li>
-                        <li><a href="/jobs" className="text-slate-500 hover:text-white transition-colors">Jobs</a></li>
+                        <li><a href="/hotels" className="text-slate-500 hover:text-white transition-colors">Hotels</a></li>
+                        <li><a href="/hire-vehicle" className="text-slate-500 hover:text-white transition-colors">Travels</a></li>
                         <li><a href="/services" className="text-slate-500 hover:text-white transition-colors">Services</a></li>
                       </ul>
                     </div>
                     <div>
                       <h4 className="text-[10px] sm:text-[11px] font-bold text-slate-300 mb-2 uppercase tracking-wider">More</h4>
                       <ul className="space-y-1.5">
-                        <li><a href="/hire-vehicle" className="text-slate-500 hover:text-white transition-colors">Travels</a></li>
+                        <li><a href="/jobs" className="text-slate-500 hover:text-white transition-colors">Jobs</a></li>
                         <li><a href="/resorts" className="text-slate-500 hover:text-white transition-colors">Resorts</a></li>
-                        <li><a href="/food" className="text-slate-500 hover:text-white transition-colors">Food</a></li>
-                        <li><a href="/creators" className="text-slate-500 hover:text-white transition-colors">Creators</a></li>
+                        <li><a href="/blood-donation" className="text-slate-500 hover:text-white transition-colors">Blood Donors</a></li>
+                        <li><a href="mailto:majhboisar@gmail.com" className="text-slate-500 hover:text-white transition-colors">Contact Us</a></li>
                       </ul>
                     </div>
                     {/* Download App — inline column */}
@@ -536,8 +542,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                   <div className="pt-3.5 pb-1 flex flex-col sm:flex-row items-center justify-between gap-1.5 text-[10px] text-slate-600">
                     <p>© 2026 Majh Boisar. All rights reserved.</p>
                     <div className="flex items-center gap-3">
-                      <a href="/terms" className="hover:text-slate-400 transition-colors">Terms</a>
-                      <a href="/privacy" className="hover:text-slate-400 transition-colors">Privacy</a>
+                      <a href="/terms" rel="nofollow" className="hover:text-slate-400 transition-colors">Terms</a>
+                      <a href="/privacy" rel="nofollow" className="hover:text-slate-400 transition-colors">Privacy</a>
                       <span>·</span>
                       <a href="https://buildlabs.in" target="_blank" rel="noopener noreferrer" className="hover:text-slate-400 transition-colors">buildlabs.in</a>
                     </div>
@@ -547,6 +553,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             </div>
           </AppProvider>
         </LanguageProvider>
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" id="razorpay-checkout-global" />
       </body>
     </html>
   );

@@ -38,22 +38,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://majhboisar.in';
   const now = new Date();
 
-  // 1. Core High-Value Pages (Priority 1.0 - 0.9)
+  // 1. Core High-Value Pages (Priority 1.0 - 0.7)
   const coreRoutes: MetadataRoute.Sitemap = [
     { url: `${baseUrl}`,                   lastModified: now, changeFrequency: 'daily',   priority: 1.0 },
-    { url: `${baseUrl}/services`,          lastModified: now, changeFrequency: 'daily',   priority: 0.95 },
-    { url: `${baseUrl}/food`,              lastModified: now, changeFrequency: 'daily',   priority: 0.95 },
-    { url: `${baseUrl}/hotels`,            lastModified: now, changeFrequency: 'daily',   priority: 0.95 },
-    { url: `${baseUrl}/resorts`,           lastModified: now, changeFrequency: 'daily',   priority: 0.95 },
     { url: `${baseUrl}/properties`,        lastModified: now, changeFrequency: 'daily',   priority: 0.95 },
+    { url: `${baseUrl}/hotels`,            lastModified: now, changeFrequency: 'daily',   priority: 0.95 },
+    { url: `${baseUrl}/register-business`, lastModified: now, changeFrequency: 'daily',   priority: 0.95 },
     { url: `${baseUrl}/hire-vehicle`,      lastModified: now, changeFrequency: 'daily',   priority: 0.95 },
-    { url: `${baseUrl}/jobs`,              lastModified: now, changeFrequency: 'daily',   priority: 0.95 },
+    { url: `${baseUrl}/services`,          lastModified: now, changeFrequency: 'daily',   priority: 0.92 },
+    { url: `${baseUrl}/jobs`,              lastModified: now, changeFrequency: 'daily',   priority: 0.92 },
+    { url: `${baseUrl}/food`,              lastModified: now, changeFrequency: 'daily',   priority: 0.92 },
+    { url: `${baseUrl}/resorts`,           lastModified: now, changeFrequency: 'daily',   priority: 0.92 },
     { url: `${baseUrl}/blood-donation`,    lastModified: now, changeFrequency: 'weekly',  priority: 0.9 },
     { url: `${baseUrl}/home-services`,     lastModified: now, changeFrequency: 'weekly',  priority: 0.88 },
     { url: `${baseUrl}/creators`,          lastModified: now, changeFrequency: 'weekly',  priority: 0.8 },
-    { url: `${baseUrl}/advertise`,         lastModified: now, changeFrequency: 'monthly', priority: 0.75 },
-    { url: `${baseUrl}/privacy`,           lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${baseUrl}/terms`,             lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${baseUrl}/advertise`,         lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
   ];
 
   // 2. Real Verified Businesses (Priority 0.95 - each verified business is an authentic entity)

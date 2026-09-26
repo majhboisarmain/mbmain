@@ -27,11 +27,37 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const bId = parseInt(businessId);
+    if (isNaN(bId)) {
+      return NextResponse.json({ error: 'Invalid business ID' }, { status: 400 });
+    }
+
+    // Enforce subscription plan quota
+    const biz = await prisma.business.findUnique({
+      where: { id: bId },
+      select: {
+        subscription: true,
+        premium: true,
+        _count: { select: { products: true } }
+      }
+    });
+
+    if (biz) {
+      const sub = biz.subscription || 'Free';
+      const isPaidActive = Boolean(biz.premium && sub !== 'Free');
+      const maxLimit = isPaidActive ? (sub === 'Starter' || sub === 'Basic' ? 25 : 9999) : 5;
+      if (biz._count.products >= maxLimit) {
+        return NextResponse.json({
+          error: `Product catalog limit reached! Your current ${sub} plan allows up to ${maxLimit} products. Upgrade or renew your subscription to add more items.`
+        }, { status: 400 });
+      }
+    }
+
     const uploadedImage = image ? await uploadImage(image) : null;
 
     const product = await prisma.product.create({
       data: {
-        businessId: parseInt(businessId),
+        businessId: bId,
         name,
         price: parseFloat(price),
         description: description || null,
