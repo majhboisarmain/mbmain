@@ -978,20 +978,41 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   const [portraitBookOpen, setPortraitBookOpen] = useState(false);
   const [portraitEventsOpen, setPortraitEventsOpen] = useState(false);
 
+  // Listen for custom post property event from navbar/menu
+  useEffect(() => {
+    const handleOpenPostProperty = () => {
+      setActiveSpecialCategory('properties');
+      setPostPropertyModalOpen(true);
+    };
+    window.addEventListener('majh_boisar_open_post_property', handleOpenPostProperty);
+    return () => {
+      window.removeEventListener('majh_boisar_open_post_property', handleOpenPostProperty);
+    };
+  }, []);
+
   // Auto-open specific portal modal if URL contains search parameters or query keywords or on /properties route
   useEffect(() => {
     if (initialSpecialCategory) {
       setActiveSpecialCategory(initialSpecialCategory);
+      if (searchParams?.get('postProperty') === 'true') {
+        setPostPropertyModalOpen(true);
+      }
       return;
     }
     if (pathname === '/properties' || pathname?.startsWith('/properties')) {
       setActiveSpecialCategory('properties');
+      if (searchParams?.get('postProperty') === 'true') {
+        setPostPropertyModalOpen(true);
+      }
       return;
     }
 
     if (!searchParams) return;
     if (searchParams.get('postProperty') === 'true' || searchParams.get('portal') === 'properties') {
       setActiveSpecialCategory('properties');
+      if (searchParams.get('postProperty') === 'true') {
+        setPostPropertyModalOpen(true);
+      }
     }
 
     const q = (searchParams.get('query') || searchParams.get('q') || '').toLowerCase();

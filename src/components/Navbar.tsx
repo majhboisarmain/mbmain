@@ -948,108 +948,6 @@ export default function Navbar() {
                 </Link>
               )}
 
-              {/* 4. Explore Boisar (Core City Hubs) */}
-              <div>
-                <h3 className="text-xs font-black text-slate-900 mb-2 px-1">Explore Boisar</h3>
-                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-                  <Link
-                    href="/properties"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Home className="w-4.5 h-4.5 text-teal-600 stroke-[1.8]" />
-                      <span className="text-xs sm:text-sm font-bold text-slate-900">Properties (Flats, Rent &amp; Sale)</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-
-                  <div className="h-px bg-slate-100 mx-4" />
-
-                  <Link
-                    href="/hotels"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Hotel className="w-4.5 h-4.5 text-purple-600 stroke-[1.8]" />
-                      <span className="text-xs sm:text-sm font-bold text-slate-900">Hotels &amp; Hourly Day-Stay</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-
-                  <div className="h-px bg-slate-100 mx-4" />
-
-                  <Link
-                    href="/hire-vehicle"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Car className="w-4.5 h-4.5 text-amber-600 stroke-[1.8]" />
-                      <span className="text-xs sm:text-sm font-bold text-slate-900">Travels, Cabs &amp; Tempo Hire</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-
-                  <div className="h-px bg-slate-100 mx-4" />
-
-                  <Link
-                    href="/services"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Wrench className="w-4.5 h-4.5 text-blue-600 stroke-[1.8]" />
-                      <span className="text-xs sm:text-sm font-bold text-slate-900">Home Services &amp; Technicians</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-
-                  <div className="h-px bg-slate-100 mx-4" />
-
-                  <Link
-                    href="/jobs"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Briefcase className="w-4.5 h-4.5 text-indigo-600 stroke-[1.8]" />
-                      <span className="text-xs sm:text-sm font-bold text-slate-900">Find Jobs in Tarapur MIDC</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-
-                  <div className="h-px bg-slate-100 mx-4" />
-
-                  <Link
-                    href="/resorts"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Sparkles className="w-4.5 h-4.5 text-emerald-600 stroke-[1.8]" />
-                      <span className="text-xs sm:text-sm font-bold text-slate-900">Resorts &amp; Pool Villas (Kelwa)</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-
-                  <div className="h-px bg-slate-100 mx-4" />
-
-                  <Link
-                    href="/blood-donation"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Droplet className="w-4.5 h-4.5 text-rose-600 stroke-[1.8]" />
-                      <span className="text-xs sm:text-sm font-bold text-slate-900">Emergency Blood Donors</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-                </div>
-              </div>
-
               {/* 5. For Business & Shop Owners */}
               <div>
                 <h3 className="text-xs font-black text-slate-900 mb-2 px-1">For Business &amp; Shop Owners</h3>
@@ -1084,6 +982,28 @@ export default function Navbar() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[9px] bg-indigo-100 text-indigo-700 font-extrabold px-2 py-0.5 rounded-full">Hiring</span>
+                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </Link>
+
+                  <div className="h-px bg-slate-100 mx-4" />
+
+                  <Link
+                    href="/properties?postProperty=true"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('majh_boisar_open_post_property'));
+                      }
+                    }}
+                    className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Home className="w-4.5 h-4.5 text-slate-700 stroke-[1.8]" />
+                      <span className="text-xs sm:text-sm font-bold text-slate-900">Post a Property</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] bg-amber-100 text-amber-700 font-extrabold px-2 py-0.5 rounded-full">Sell / Rent</span>
                       <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                     </div>
                   </Link>
