@@ -84,7 +84,101 @@ const toTitleCase = (str: string) => {
     .join(' ');
 };
 
+export const normalizeServiceName = (raw: string): string => {
+  if (!raw) return '';
+  const clean = raw.trim();
+  const lower = clean.toLowerCase();
+  
+  if (lower === 'personal loan' || lower === 'personal loans') return 'Personal Loan';
+  if (lower === 'home loan' || lower === 'home loans') return 'Home Loan';
+  if (lower === 'business loan' || lower === 'business loans') return 'Business Loan';
+  if (lower === 'gold loan' || lower === 'gold loans') return 'Gold Loan';
+  if (lower === 'vehicle loan' || lower === 'vehicle loans' || lower === 'car loan' || lower === 'car loans') return 'Vehicle Loan';
+  if (lower === 'education loan' || lower === 'education loans') return 'Education Loan';
+  if (lower === 'morgage loan' || lower === 'mortgage loan' || lower === 'mortgage loans') return 'Mortgage Loan';
+  
+  if (lower === 'health insurance') return 'Health Insurance';
+  if (lower === 'life insurance' || lower === 'term insurance' || lower === 'term life') return 'Life Insurance';
+  if (lower === 'vehicle insurance' || lower === 'motor insurance') return 'Vehicle Insurance';
+  if (lower === 'home insurance') return 'Home Insurance';
+  if (lower === 'travel insurance') return 'Travel Insurance';
+  if (lower === 'shop & commercial insurance' || lower === 'shop insurance') return 'Shop & Commercial Insurance';
+  if (lower === 'insurance agents' || lower === 'insurance agent') return 'Insurance Agents';
+  
+  return toTitleCase(clean);
+};
+
+export const HOMEPAGE_LOAN_SERVICES = [
+  'Home Loan',
+  'Personal Loan',
+  'Business Loan',
+  'Gold Loan',
+  'Vehicle Loan',
+  'Education Loan'
+];
+
+export const HOMEPAGE_INSURANCE_SERVICES = [
+  'Health Insurance',
+  'Life Insurance',
+  'Vehicle Insurance',
+  'Home Insurance',
+  'Travel Insurance',
+  'Shop & Commercial Insurance'
+];
+
+export const LOAN_CATEGORIES = [
+  'Loans',
+  'Loan Consultants',
+  'Loans & Finance',
+  'Home Loan',
+  'Personal Loan',
+  'Business Loan',
+  'Gold Loan',
+  'Vehicle Loan',
+  'Education Loan'
+];
+
+export const INSURANCE_CATEGORIES = [
+  'Insurance Agents',
+  'Health Insurance',
+  'Life Insurance',
+  'Vehicle Insurance',
+  'Home Insurance',
+  'Travel Insurance',
+  'Shop & Commercial Insurance'
+];
+
+export const parseCategories = (catStr: string): string[] => {
+  if (!catStr) return [];
+  return catStr.split(',').map(c => c.trim()).filter(Boolean);
+};
+
+export const toggleMultiCategory = (currentCatStr: string, targetCat: string): string => {
+  const currentList = parseCategories(currentCatStr);
+  const exists = currentList.some(c => c.toLowerCase() === targetCat.toLowerCase());
+
+  if (exists) {
+    const updated = currentList.filter(c => c.toLowerCase() !== targetCat.toLowerCase());
+    return updated.length > 0 ? updated.join(', ') : targetCat;
+  } else {
+    const loanOrInsCategories = [...LOAN_CATEGORIES, ...INSURANCE_CATEGORIES];
+    const filteredCurrent = currentList.filter(c => 
+      loanOrInsCategories.some(lic => lic.toLowerCase() === c.toLowerCase())
+    );
+    const updated = [...filteredCurrent, targetCat];
+    return updated.join(', ');
+  }
+};
+
+export const removeCategoryFromStr = (currentCatStr: string, catToRemove: string): string => {
+  const currentList = parseCategories(currentCatStr);
+  const updated = currentList.filter(c => c.toLowerCase() !== catToRemove.toLowerCase());
+  return updated.length > 0 ? updated.join(', ') : 'Loans & Finance';
+};
+
 const categoriesList = [
+  ...LOAN_CATEGORIES,
+  ...INSURANCE_CATEGORIES,
   'Wholesalers & Bulk Distributors', 'Retailers & Local Shops', 'Snacks & Farsan Shops', 'Doctors', 'CA, GST & Business Consultancy', 'Plumbers', 'Electricians', 'Coaching Classes', 'Grocery Shops',
   'Mobile Repair', 'Hardware & Paints', 'PG/Hostels', 'Hospitals', 'Dentists',
   'Contractors', 'Real Estate', 'Packers & Movers', 'Courier Service', 'Beauty Spa',
@@ -117,6 +211,7 @@ interface Business {
   image?: string;
   gallery?: string[];
   googleMaps?: string | null;
+  services?: any[];
 }
 
 const defaultUsersList: any[] = [];
@@ -1225,6 +1320,9 @@ export default function AdminPanelPage() {
   const [adminAdNewBizPhone, setAdminAdNewBizPhone] = useState('');
   const [adminAdNewBizCategory, setAdminAdNewBizCategory] = useState('');
 
+  // Live Platform Visitors count
+  const [liveVisitorsCount, setLiveVisitorsCount] = useState<number>(4666);
+
   // Admin Direct Business Add Modal state (Complete Registration Fields)
   const [adminAddBizModalOpen, setAdminAddBizModalOpen] = useState(false);
   const [newBizName, setNewBizName] = useState('');
@@ -1572,6 +1670,8 @@ export default function AdminPanelPage() {
   const [editingBizId, setEditingBizId] = useState<number | null>(null);
   const [editBizName, setEditBizName] = useState('');
   const [editBizCategory, setEditBizCategory] = useState('');
+  const [editBizServices, setEditBizServices] = useState<string[]>([]);
+  const [editBizNewService, setEditBizNewService] = useState('');
   const [editBizDescription, setEditBizDescription] = useState('');
   const [editBizAddress, setEditBizAddress] = useState('');
   const [editBizPhone, setEditBizPhone] = useState('');
@@ -1770,6 +1870,18 @@ export default function AdminPanelPage() {
             console.error("Failed to parse ad packages from DB", err);
           }
         }
+      }
+
+      try {
+        const resVisitors = await fetch('/api/visitors', { cache: 'no-store' });
+        if (resVisitors.ok) {
+          const vData = await resVisitors.json();
+          if (vData && typeof vData.totalVisitors === 'number') {
+            setLiveVisitorsCount(vData.totalVisitors);
+          }
+        }
+      } catch (err) {
+        console.log("Error fetching visitors:", err);
       }
 
       try {
@@ -2006,6 +2118,7 @@ export default function AdminPanelPage() {
         body: JSON.stringify({
           name: toTitleCase(editBizName),
           category: editBizCategory,
+          services: editBizServices,
           description: editBizDescription,
           address: editBizAddress,
           phone: editBizPhone,
@@ -2018,6 +2131,7 @@ export default function AdminPanelPage() {
           verified: editBizVerified,
           premium: editBizPremium,
           createdBy: editBizOwnerPhone ? editBizOwnerPhone.replace(/\D/g, '').slice(-10) : null,
+          isAdmin: true,
         })
       });
 
@@ -2762,7 +2876,32 @@ export default function AdminPanelPage() {
   };
 
   // Business Filtering & Bulk Actions
+  const [adminBizCategoryFilter, setAdminBizCategoryFilter] = useState<'all' | 'loans' | 'insurance' | string>('all');
+
+  const loansBizCount = businesses.filter(b => {
+    const bCat = (b.category || '').toLowerCase();
+    return LOAN_CATEGORIES.some(c => c.toLowerCase() === bCat) || bCat.includes('loan');
+  }).length;
+
+  const insuranceBizCount = businesses.filter(b => {
+    const bCat = (b.category || '').toLowerCase();
+    return INSURANCE_CATEGORIES.some(c => c.toLowerCase() === bCat) || bCat.includes('insurance');
+  }).length;
+
   const filteredAdminBusinesses = businesses.filter((b) => {
+    // Category filter check
+    if (adminBizCategoryFilter === 'loans') {
+      const bCat = (b.category || '').toLowerCase();
+      const isLoan = LOAN_CATEGORIES.some(c => c.toLowerCase() === bCat) || bCat.includes('loan');
+      if (!isLoan) return false;
+    } else if (adminBizCategoryFilter === 'insurance') {
+      const bCat = (b.category || '').toLowerCase();
+      const isIns = INSURANCE_CATEGORIES.some(c => c.toLowerCase() === bCat) || bCat.includes('insurance');
+      if (!isIns) return false;
+    } else if (adminBizCategoryFilter !== 'all') {
+      if ((b.category || '').toLowerCase() !== adminBizCategoryFilter.toLowerCase()) return false;
+    }
+
     if (!adminBizSearchQuery.trim()) return true;
     const q = adminBizSearchQuery.toLowerCase();
     return (
@@ -3259,7 +3398,7 @@ export default function AdminPanelPage() {
   const pendingVerifications = businesses.filter(b => !b.verified).length;
 
   const bizViews = businesses.reduce((acc, b) => acc + (b.views || 0), 0);
-  const totalPlatformVisits = Math.max(4666, bizViews + 1200);
+  const totalPlatformVisits = Math.max(liveVisitorsCount, 4666 + bizViews);
 
   const pendingSpecialists = Object.entries(specialProfiles).flatMap(([cat, list]: any) =>
     (list || []).filter((p: any) => !p.verified).map((p: any) => ({ ...p, catKey: cat }))
@@ -5284,13 +5423,35 @@ export default function AdminPanelPage() {
                         <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">Local Business Directories</h3>
                         <p className="text-[11px] text-slate-500 font-medium mt-0.5">Review listing stats, toggle verified checkmarks, multi-select bulk operations, and search listings.</p>
                       </div>
-                      <button
-                        onClick={() => setAdminAddBizModalOpen(true)}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-                      >
-                        <PlusCircle className="w-4 h-4" />
-                        <span>➕ Add Direct Business</span>
-                      </button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setNewBizCategory('Home Loan');
+                            setAdminAddBizModalOpen(true);
+                          }}
+                          className="bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                          title="Directly add a Business under Loans Categories"
+                        >
+                          <span>🏦 + Add Loan Biz</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setNewBizCategory('Health Insurance');
+                            setAdminAddBizModalOpen(true);
+                          }}
+                          className="bg-sky-700 hover:bg-sky-800 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                          title="Directly add a Business under Insurance Categories"
+                        >
+                          <span>🛡️ + Add Insurance Biz</span>
+                        </button>
+                        <button
+                          onClick={() => setAdminAddBizModalOpen(true)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                        >
+                          <PlusCircle className="w-4 h-4" />
+                          <span>➕ Add Direct Business</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* Admin Search Bar & Multi-Select Controls */}
@@ -5349,6 +5510,78 @@ export default function AdminPanelPage() {
                       )}
                     </div>
 
+                    {/* Category Filter Pills: All, Loans, Insurance, Specific Category */}
+                    <div className="flex flex-wrap items-center gap-2 bg-white border border-slate-200/90 rounded-xl p-2.5 shadow-2xs">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">Filter by Category:</span>
+                      <button
+                        type="button"
+                        onClick={() => setAdminBizCategoryFilter('all')}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          adminBizCategoryFilter === 'all'
+                            ? 'bg-slate-900 text-white shadow-2xs font-black'
+                            : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        All ({businesses.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdminBizCategoryFilter('loans')}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          adminBizCategoryFilter === 'loans'
+                            ? 'bg-teal-700 text-white shadow-xs font-black ring-2 ring-teal-400'
+                            : 'bg-teal-50 border border-teal-200 text-teal-800 hover:bg-teal-100/70'
+                        }`}
+                      >
+                        <span>🏦 Loans & Finance ({loansBizCount})</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdminBizCategoryFilter('insurance')}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          adminBizCategoryFilter === 'insurance'
+                            ? 'bg-sky-700 text-white shadow-xs font-black ring-2 ring-sky-400'
+                            : 'bg-sky-50 border border-sky-200 text-sky-800 hover:bg-sky-100/70'
+                        }`}
+                      >
+                        <span>🛡️ Insurance ({insuranceBizCount})</span>
+                      </button>
+
+                      {/* Dropdown for specific category */}
+                      <select
+                        value={['all', 'loans', 'insurance'].includes(adminBizCategoryFilter) ? '' : adminBizCategoryFilter}
+                        onChange={(e) => setAdminBizCategoryFilter(e.target.value || 'all')}
+                        className="bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg px-2.5 py-1 focus:outline-none focus:border-teal-500 cursor-pointer ml-auto"
+                      >
+                        <option value="">Filter by Sub-Category...</option>
+                        <optgroup label="🏦 Loans Categories">
+                          {LOAN_CATEGORIES.map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="🛡️ Insurance Categories">
+                          {INSURANCE_CATEGORIES.map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="🏢 All Other Categories">
+                          {categoriesList.filter(c => !LOAN_CATEGORIES.includes(c) && !INSURANCE_CATEGORIES.includes(c)).map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </optgroup>
+                      </select>
+
+                      {adminBizCategoryFilter !== 'all' && (
+                        <button
+                          type="button"
+                          onClick={() => setAdminBizCategoryFilter('all')}
+                          className="text-[11px] font-black text-rose-600 hover:underline cursor-pointer"
+                        >
+                          ✕ Clear
+                        </button>
+                      )}
+                    </div>
+
                     <div className="overflow-x-auto no-scrollbar">
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
@@ -5394,7 +5627,21 @@ export default function AdminPanelPage() {
                                       onClick={() => {
                                         setEditingBizId(b.id);
                                         setEditBizName(b.name);
-                                        setEditBizCategory(b.category);
+                                        let cleanPrimaryCat = parseCategories(b.category)[0] || b.category || 'Loan Consultants';
+                                        if (HOMEPAGE_LOAN_SERVICES.some(h => h.toLowerCase() === cleanPrimaryCat.toLowerCase())) {
+                                          cleanPrimaryCat = 'Loan Consultants';
+                                        } else if (HOMEPAGE_INSURANCE_SERVICES.some(h => h.toLowerCase() === cleanPrimaryCat.toLowerCase())) {
+                                          cleanPrimaryCat = 'Insurance Agents';
+                                        }
+                                        setEditBizCategory(cleanPrimaryCat);
+                                        setEditBizNewService('');
+                                        const srvList = (b.services || []).map((s: any) => typeof s === 'string' ? s.trim() : (s?.name || '').trim()).filter(Boolean);
+                                        const catLoans = parseCategories(b.category).filter(c => 
+                                          HOMEPAGE_LOAN_SERVICES.some(h => h.toLowerCase() === c.toLowerCase()) || 
+                                          HOMEPAGE_INSURANCE_SERVICES.some(h => h.toLowerCase() === c.toLowerCase())
+                                        );
+                                        const normalizedServices = Array.from(new Set([...srvList, ...catLoans].map(normalizeServiceName).filter(Boolean)));
+                                        setEditBizServices(normalizedServices);
                                         setEditBizDescription(b.description || '');
                                         setEditBizAddress(b.address || '');
                                         setEditBizPhone(b.phone || '');
@@ -5416,7 +5663,28 @@ export default function AdminPanelPage() {
                                     </button>
                                   </div>
                                 </td>
-                                <td className="py-2.5 px-3 text-slate-500">{b.category}</td>
+                                <td className="py-2.5 px-3 text-slate-500">
+                                  <div className="flex flex-wrap gap-1 max-w-[240px]">
+                                    {parseCategories(b.category).map((cat, i) => {
+                                      const isLoan = LOAN_CATEGORIES.some(c => c.toLowerCase() === cat.toLowerCase());
+                                      const isIns = INSURANCE_CATEGORIES.some(c => c.toLowerCase() === cat.toLowerCase());
+                                      return (
+                                        <span
+                                          key={i}
+                                          className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded border ${
+                                            isLoan
+                                              ? 'bg-teal-50 border-teal-200 text-teal-800'
+                                              : isIns
+                                              ? 'bg-sky-50 border-sky-200 text-sky-800'
+                                              : 'bg-slate-100 border-slate-200 text-slate-700'
+                                          }`}
+                                        >
+                                          {cat}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                </td>
                                 <td className="py-2.5 px-3">
                                   <span className="bg-slate-100 border border-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded text-[10px]">
                                     {b.subscription}
@@ -6853,13 +7121,28 @@ export default function AdminPanelPage() {
                               </div>
                               <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Category</label>
-                                <input
-                                  type="text"
+                                <select
                                   value={adminAdNewBizCategory}
                                   onChange={e => setAdminAdNewBizCategory(e.target.value)}
-                                  placeholder="e.g. Plumbers"
-                                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800"
-                                />
+                                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 cursor-pointer"
+                                >
+                                  <option value="">-- Select Category --</option>
+                                  <optgroup label="🏦 Loans & Finance">
+                                    {LOAN_CATEGORIES.map(c => (
+                                      <option key={c} value={c}>{c}</option>
+                                    ))}
+                                  </optgroup>
+                                  <optgroup label="🛡️ Insurance">
+                                    {INSURANCE_CATEGORIES.map(c => (
+                                      <option key={c} value={c}>{c}</option>
+                                    ))}
+                                  </optgroup>
+                                  <optgroup label="🏢 General Categories">
+                                    {categoriesList.filter(c => !LOAN_CATEGORIES.includes(c) && !INSURANCE_CATEGORIES.includes(c)).map(c => (
+                                      <option key={c} value={c}>{c}</option>
+                                    ))}
+                                  </optgroup>
+                                </select>
                               </div>
                             </div>
                           </div>
@@ -9071,29 +9354,233 @@ export default function AdminPanelPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Category & Homepage Services Selection */}
+              <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-4">
+                {/* 1. Primary Business Category */}
                 <div>
-                  <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Category *</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[11px] text-slate-800 font-black uppercase tracking-wider flex items-center gap-1.5">
+                      <span>🏷️</span>
+                      <span>Primary Business Category *</span>
+                    </label>
+                    <span className="text-[10px] text-teal-800 font-extrabold bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">
+                      Main Profile Category &amp; Badge
+                    </span>
+                  </div>
                   <select
-                    value={editBizCategory}
+                    value={editBizCategory || 'Loan Consultants'}
                     onChange={e => setEditBizCategory(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 font-bold text-slate-800 cursor-pointer"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 font-bold text-slate-800 cursor-pointer shadow-xs"
                   >
-                    <option value="Hospital">Hospital</option>
-                    <option value="Doctors">Doctors</option>
-                    <option value="Restaurants">Restaurants</option>
-                    <option value="Hotels">Hotels</option>
-                    <option value="Salons">Salons</option>
-                    <option value="Gyms">Gyms</option>
-                    <option value="Schools">Schools</option>
-                    {editBizCategory && !['Hospital', 'Doctors', 'Restaurants', 'Hotels', 'Salons', 'Gyms', 'Schools', ...categoriesList].includes(editBizCategory) && (
+                    {!categoriesList.includes(editBizCategory) && !['Loan Consultants', 'Loans', 'Loans & Finance', 'Insurance Agents', 'Insurance & Financial Services'].includes(editBizCategory) && (
                       <option value={editBizCategory}>{editBizCategory}</option>
                     )}
-                    {categoriesList.filter(c => !['Hospital', 'Doctors', 'Restaurants', 'Hotels', 'Salons', 'Gyms', 'Schools'].includes(c)).map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
+                    <optgroup label="🏦 Loans & Finance Categories">
+                      <option value="Loan Consultants">Loan Consultants</option>
+                      <option value="Loans & Finance">Loans & Finance</option>
+                      <option value="Loans">Loans</option>
+                    </optgroup>
+                    <optgroup label="🛡️ Insurance Categories">
+                      <option value="Insurance Agents">Insurance Agents</option>
+                      <option value="Insurance & Financial Services">Insurance & Financial Services</option>
+                    </optgroup>
+                    <optgroup label="🏢 All Other Categories">
+                      {categoriesList
+                        .filter(c => !LOAN_CATEGORIES.includes(c) && !INSURANCE_CATEGORIES.includes(c) && c !== 'Insurance & Financial Services')
+                        .map(c => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                    </optgroup>
+                    {customAdminCategories.length > 0 && (
+                      <optgroup label="✨ Custom Added Categories">
+                        {customAdminCategories.map((c, idx) => (
+                          <option key={idx} value={c}>{c}</option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
+                  <p className="text-[10px] text-slate-500 font-medium mt-1">
+                    The main category displayed on search cards and business badge.
+                  </p>
                 </div>
+
+                {/* 2. Homepage Loans Quick Toggles */}
+                <div className="bg-white border-2 border-teal-500/20 rounded-2xl p-4 space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">🏦</span>
+                        <span className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                          Homepage "Loans in Boisar" Cards
+                        </span>
+                        <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black px-1.5 py-0.2 rounded-md">
+                          Admin Only
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                        Click cards to assign this business to appear on the Boisar Homepage loan sections
+                      </p>
+                    </div>
+                    <span className="text-[10.5px] font-black text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200 shrink-0">
+                      {HOMEPAGE_LOAN_SERVICES.filter(l => editBizServices.some(s => s.toLowerCase() === l.toLowerCase())).length} of 6 Active
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {HOMEPAGE_LOAN_SERVICES.map(loan => {
+                      const isSel = editBizServices.some(s => s.toLowerCase() === loan.toLowerCase());
+                      return (
+                        <button
+                          key={loan}
+                          type="button"
+                          onClick={() => {
+                            setEditBizServices(prev =>
+                              isSel
+                                ? prev.filter(s => s.toLowerCase() !== loan.toLowerCase())
+                                : [...prev, loan]
+                            );
+                          }}
+                          className={`text-[11px] px-3 py-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-between border ${
+                            isSel
+                              ? 'bg-teal-600 text-white border-teal-600 shadow-sm font-black ring-2 ring-teal-300'
+                              : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-teal-300 hover:bg-teal-50/40'
+                          }`}
+                        >
+                          <span className="truncate">{loan}</span>
+                          <span className={`text-xs ml-1 font-black ${isSel ? 'text-white' : 'text-slate-400'}`}>
+                            {isSel ? '✓' : '+'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Homepage Insurance Quick Toggles */}
+                <div className="bg-white border-2 border-sky-500/20 rounded-2xl p-4 space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">🛡️</span>
+                        <span className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                          Homepage "Insurance Plans" Cards
+                        </span>
+                        <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black px-1.5 py-0.2 rounded-md">
+                          Admin Only
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                        Click cards to assign this business to appear on the Boisar Homepage insurance sections
+                      </p>
+                    </div>
+                    <span className="text-[10.5px] font-black text-sky-800 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-200 shrink-0">
+                      {HOMEPAGE_INSURANCE_SERVICES.filter(i => editBizServices.some(s => s.toLowerCase() === i.toLowerCase())).length} of 6 Active
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {HOMEPAGE_INSURANCE_SERVICES.map(ins => {
+                      const isSel = editBizServices.some(s => s.toLowerCase() === ins.toLowerCase());
+                      return (
+                        <button
+                          key={ins}
+                          type="button"
+                          onClick={() => {
+                            setEditBizServices(prev =>
+                              isSel
+                                ? prev.filter(s => s.toLowerCase() !== ins.toLowerCase())
+                                : [...prev, ins]
+                            );
+                          }}
+                          className={`text-[11px] px-3 py-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-between border ${
+                            isSel
+                              ? 'bg-sky-600 text-white border-sky-600 shadow-sm font-black ring-2 ring-sky-300'
+                              : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-sky-300 hover:bg-sky-50/40'
+                          }`}
+                        >
+                          <span className="truncate">{ins}</span>
+                          <span className={`text-xs ml-1 font-black ${isSel ? 'text-white' : 'text-slate-400'}`}>
+                            {isSel ? '✓' : '+'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Other Specialized Custom Services (if any exist) */}
+                {(() => {
+                  const customOther = editBizServices.filter(s => 
+                    !HOMEPAGE_LOAN_SERVICES.some(l => l.toLowerCase() === s.toLowerCase()) &&
+                    !HOMEPAGE_INSURANCE_SERVICES.some(i => i.toLowerCase() === s.toLowerCase())
+                  );
+                  return (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-3.5 space-y-2.5 shadow-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                          <span>➕</span>
+                          <span>Additional Custom Services &amp; Tags ({customOther.length})</span>
+                        </span>
+                        <span className="text-[9.5px] text-slate-400 font-semibold">Optional</span>
+                      </div>
+                      
+                      {customOther.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {customOther.map(srv => (
+                            <span
+                              key={srv}
+                              className="inline-flex items-center gap-1.5 text-[10.5px] font-extrabold px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-250 text-slate-800 shadow-2xs"
+                            >
+                              <span>{srv}</span>
+                              <button
+                                type="button"
+                                onClick={() => setEditBizServices(prev => prev.filter(s => s.toLowerCase() !== srv.toLowerCase()))}
+                                className="text-slate-400 hover:text-rose-600 font-black cursor-pointer text-xs ml-0.5"
+                                title={`Remove ${srv}`}
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex gap-2 pt-1">
+                        <input
+                          type="text"
+                          placeholder="Add custom service tag (e.g. Mortgage Loan, CIBIL Score...)"
+                          value={editBizNewService}
+                          onChange={e => setEditBizNewService(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const trimmed = editBizNewService.trim();
+                              if (trimmed && !editBizServices.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+                                setEditBizServices(prev => [...prev, toTitleCase(trimmed)]);
+                                setEditBizNewService('');
+                              }
+                            }
+                          }}
+                          className="flex-1 bg-slate-50 border border-slate-250 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-teal-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const trimmed = editBizNewService.trim();
+                            if (trimmed && !editBizServices.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+                              setEditBizServices(prev => [...prev, toTitleCase(trimmed)]);
+                              setEditBizNewService('');
+                            }
+                          }}
+                          className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer"
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Phone Number *</label>
                   <input
@@ -9104,9 +9591,6 @@ export default function AdminPanelPage() {
                     className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 font-bold text-slate-800"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">WhatsApp Number</label>
                   <input
@@ -9116,6 +9600,9 @@ export default function AdminPanelPage() {
                     className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 font-bold text-slate-800"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Owner Mobile (Dashboard Login)</label>
                   <input
@@ -9127,9 +9614,6 @@ export default function AdminPanelPage() {
                     className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 font-bold text-slate-800"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Email</label>
                   <input
@@ -9389,35 +9873,199 @@ export default function AdminPanelPage() {
                     />
                   </div>
 
-                  {/* Category Selection */}
-                  <div>
-                    <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Business Category *</label>
-                    <select
-                      value={newBizCategory}
-                      onChange={(e) => setNewBizCategory(e.target.value)}
-                      className="w-full bg-white border border-slate-250 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 cursor-pointer shadow-2xs"
-                    >
-                      {[...categoriesList, ...customAdminCategories].map((cat, idx) => (
-                        <option key={idx} value={cat}>{cat}</option>
-                      ))}
-                      <option value="Other">Other Custom Category...</option>
-                    </select>
-                  </div>
-
-                  {/* Custom Category Input if 'Other' selected */}
-                  {newBizCategory === 'Other' && (
-                    <div>
-                      <label className="block text-[10px] text-teal-800 font-black uppercase tracking-wider mb-1">Custom Category Name *</label>
-                      <input
-                        type="text"
-                        required
-                        value={newBizCustomCat}
-                        onChange={(e) => setNewBizCustomCat(e.target.value)}
-                        placeholder="e.g. Cake Designer or Solar Agency"
-                        className="w-full bg-white border border-teal-300 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
-                      />
+                  {/* Category Selection with Loans & Insurance Multi-Select Quick Chips */}
+                  <div className="sm:col-span-2 bg-gradient-to-r from-emerald-50/80 via-teal-50/60 to-sky-50/80 border border-teal-200/90 rounded-2xl p-3.5 space-y-3 shadow-2xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-teal-200/60 pb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">🏦</span>
+                        <div>
+                          <h5 className="text-[11px] font-black text-teal-950 uppercase tracking-wide">
+                            Loans &amp; Insurance Categories Select
+                          </h5>
+                          <p className="text-[10px] text-teal-700 font-medium">
+                            Click multiple categories below to assign all offered loan or insurance services
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-teal-700 font-bold bg-white/80 px-2.5 py-0.5 rounded-full border border-teal-200 shadow-2xs">
+                        💡 Multi-Select Enabled
+                      </span>
                     </div>
-                  )}
+
+                    {/* Selected Categories Box (Displays all currently selected categories with ✕ removal) */}
+                    {parseCategories(newBizCategory).length > 0 && (
+                      <div className="bg-white border border-teal-300 rounded-xl p-2.5 shadow-2xs space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1">
+                            <span>🏷️ Added Categories:</span>
+                            <span className="bg-teal-700 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold">
+                              {parseCategories(newBizCategory).length}
+                            </span>
+                          </span>
+                          {parseCategories(newBizCategory).length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setNewBizCategory(parseCategories(newBizCategory)[0])}
+                              className="text-[9px] text-slate-400 hover:text-rose-600 font-bold cursor-pointer"
+                            >
+                              Clear extra
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {parseCategories(newBizCategory).map(cat => {
+                            const isLoan = LOAN_CATEGORIES.some(c => c.toLowerCase() === cat.toLowerCase());
+                            const isIns = INSURANCE_CATEGORIES.some(c => c.toLowerCase() === cat.toLowerCase());
+                            return (
+                              <span
+                                key={cat}
+                                className={`inline-flex items-center gap-1.5 text-[11px] font-extrabold px-2.5 py-1 rounded-lg border shadow-2xs transition-all ${
+                                  isLoan
+                                    ? 'bg-teal-50 border-teal-300 text-teal-900'
+                                    : isIns
+                                    ? 'bg-sky-50 border-sky-300 text-sky-900'
+                                    : 'bg-slate-100 border-slate-300 text-slate-800'
+                                }`}
+                              >
+                                <span>{isLoan ? '🏦' : isIns ? '🛡️' : '🏢'}</span>
+                                <span>{cat}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setNewBizCategory(removeCategoryFromStr(newBizCategory, cat))}
+                                  className="text-slate-400 hover:text-rose-600 ml-0.5 font-bold cursor-pointer transition-colors"
+                                  title={`Remove ${cat}`}
+                                >
+                                  ✕
+                                </button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Loans Chips */}
+                    <div className="space-y-1.5">
+                      <div className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>💳 Loans in Boisar (Select Multiple):</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {LOAN_CATEGORIES.map((cat) => {
+                          const isSel = parseCategories(newBizCategory).some(c => c.toLowerCase() === cat.toLowerCase());
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => {
+                                const nextCat = toggleMultiCategory(newBizCategory, cat);
+                                setNewBizCategory(nextCat);
+                                if (!newBizDescription) {
+                                  setNewBizDescription(`Verified ${nextCat} services in Boisar. Best interest rates, quick approvals & hassle-free documentation.`);
+                                }
+                              }}
+                              className={`text-[11px] px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                isSel
+                                  ? 'bg-teal-700 text-white shadow-xs ring-2 ring-teal-400 scale-102 font-black'
+                                  : 'bg-white/95 text-slate-700 hover:bg-teal-100 hover:text-teal-900 border border-slate-200'
+                              }`}
+                            >
+                              <span>{isSel ? '✓' : '+'}</span>
+                              <span>{cat}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Insurance Chips */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>🛡️ Insurance Plans (Select Multiple):</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {INSURANCE_CATEGORIES.map((cat) => {
+                          const isSel = parseCategories(newBizCategory).some(c => c.toLowerCase() === cat.toLowerCase());
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => {
+                                const nextCat = toggleMultiCategory(newBizCategory, cat);
+                                setNewBizCategory(nextCat);
+                                if (!newBizDescription) {
+                                  setNewBizDescription(`Verified ${nextCat} provider in Boisar. Instant policy issuance, cashless claim assistance & expert advice.`);
+                                }
+                              }}
+                              className={`text-[11px] px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                isSel
+                                  ? 'bg-sky-700 text-white shadow-xs ring-2 ring-sky-400 scale-102 font-black'
+                                  : 'bg-white/95 text-slate-700 hover:bg-sky-100 hover:text-sky-900 border border-slate-200'
+                              }`}
+                            >
+                              <span>{isSel ? '✓' : '+'}</span>
+                              <span>{cat}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Standard Dropdown below chips */}
+                    <div className="pt-2 border-t border-teal-200/50">
+                      <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">
+                        Selected Business Category *
+                      </label>
+                      <select
+                        value={newBizCategory}
+                        onChange={(e) => setNewBizCategory(e.target.value)}
+                        className="w-full bg-white border border-slate-250 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 cursor-pointer shadow-2xs"
+                      >
+                        {parseCategories(newBizCategory).length > 1 && (
+                          <option value={newBizCategory}>
+                            ✓ Multiple Selected: {newBizCategory}
+                          </option>
+                        )}
+                        <optgroup label="🏦 Loans & Finance Categories">
+                          {LOAN_CATEGORIES.map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="🛡️ Insurance Categories">
+                          {INSURANCE_CATEGORIES.map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="🏢 All Other General Categories">
+                          {categoriesList.filter(c => !LOAN_CATEGORIES.includes(c) && !INSURANCE_CATEGORIES.includes(c)).map((cat, idx) => (
+                            <option key={idx} value={cat}>{cat}</option>
+                          ))}
+                        </optgroup>
+                        {customAdminCategories.length > 0 && (
+                          <optgroup label="✨ Custom Added Categories">
+                            {customAdminCategories.map((cat, idx) => (
+                              <option key={idx} value={cat}>{cat}</option>
+                            ))}
+                          </optgroup>
+                        )}
+                        <option value="Other">Other Custom Category...</option>
+                      </select>
+                    </div>
+
+                    {/* Custom Category Input if 'Other' selected */}
+                    {newBizCategory === 'Other' && (
+                      <div className="pt-1">
+                        <label className="block text-[10px] text-teal-800 font-black uppercase tracking-wider mb-1">Custom Category Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={newBizCustomCat}
+                          onChange={(e) => setNewBizCustomCat(e.target.value)}
+                          placeholder="e.g. Cake Designer or Solar Agency"
+                          className="w-full bg-white border border-teal-300 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
+                        />
+                      </div>
+                    )}
+                  </div>
 
                   {/* Locality / Area */}
                   <div>

@@ -95,8 +95,18 @@ export default function JobDetailsPage() {
         // Check if poster or admin
         const adminToken = typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null;
         const userPhone = typeof window !== 'undefined' ? (localStorage.getItem('userPhone') || localStorage.getItem('userWhatsapp')) : null;
-        if (adminToken || (userPhone && data.business?.phone && (userPhone.includes(data.business.phone) || data.business.phone.includes(userPhone)))) {
+        const cleanUserPhone = (userPhone || '').replace(/\D/g, '').slice(-10);
+        const cleanCreatedBy = (data.business?.createdBy || '').toString().replace(/\D/g, '').slice(-10);
+        const cleanBizPhone = (data.business?.phone || '').toString().replace(/\D/g, '').slice(-10);
+
+        if (adminToken) {
           setIsOwnerOrAdmin(true);
+        } else if (cleanUserPhone && cleanUserPhone.length === 10) {
+          if (cleanCreatedBy && cleanCreatedBy.length === 10) {
+            if (cleanUserPhone === cleanCreatedBy) setIsOwnerOrAdmin(true);
+          } else if (cleanBizPhone && cleanUserPhone === cleanBizPhone) {
+            setIsOwnerOrAdmin(true);
+          }
         }
       } catch (e) {
         console.error(e);

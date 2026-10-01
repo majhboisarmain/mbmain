@@ -1098,6 +1098,7 @@ export default function Navbar() {
 
                   <Link
                     href="/terms"
+                    rel="nofollow"
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >
@@ -1112,6 +1113,7 @@ export default function Navbar() {
 
                   <Link
                     href="/privacy"
+                    rel="nofollow"
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full flex items-center justify-between p-3.5 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >

@@ -2613,6 +2613,8 @@ _Powered by Majh Boisar (majhboisar.com)_`
   const [createBizError, setCreateBizError] = useState('');
 
   const categoriesList = [
+    'Home Loan', 'Personal Loan', 'Business Loan', 'Gold Loan', 'Vehicle Loan', 'Education Loan', 'Loans & Finance', 'Loan Consultants',
+    'Health Insurance', 'Life Insurance', 'Vehicle Insurance', 'Home Insurance', 'Travel Insurance', 'Shop & Commercial Insurance', 'Insurance Agents',
     'Wholesalers & Bulk Distributors', 'Retailers & Local Shops', 'Snacks & Farsan Shops', 'Doctors', 'CA, GST & Business Consultancy', 'Plumbers', 'Electricians', 'Coaching Classes', 'Grocery Shops',
     'Mobile Repair', 'Hardware & Paints', 'PG/Hostels', 'Hospitals', 'Dentists',
     'Contractors', 'Real Estate', 'Packers & Movers', 'Courier Service', 'Beauty Spa',
@@ -2629,8 +2631,23 @@ _Powered by Majh Boisar (majhboisar.com)_`
   const allAvailableCategories = React.useMemo(() => {
     const catalogCats = (CATEGORY_CATALOG || []).map(c => c.category);
     const combined = Array.from(new Set([...categoriesList, ...catalogCats])).filter(Boolean);
-    // Keep 'Other' at the end
-    return [...combined.filter(c => c !== 'Other'), 'Other'];
+    const protectedHomepageServices = [
+      'Home Loan',
+      'Personal Loan',
+      'Business Loan',
+      'Gold Loan',
+      'Vehicle Loan',
+      'Education Loan',
+      'Health Insurance',
+      'Life Insurance',
+      'Vehicle Insurance',
+      'Home Insurance',
+      'Travel Insurance',
+      'Shop & Commercial Insurance'
+    ];
+    // Regular businesses can only choose Loan Consultants / Loans & Finance / Insurance Agents; only Admin can assign Homepage Loan/Insurance cards
+    const allowed = combined.filter(c => !protectedHomepageServices.some(p => p.toLowerCase() === c.toLowerCase()) && c !== 'Other');
+    return [...allowed, 'Other'];
   }, []);
 
   const [wizardCatSearch, setWizardCatSearch] = useState('');
@@ -2709,6 +2726,30 @@ _Powered by Majh Boisar (majhboisar.com)_`
   useEffect(() => {
     // Keep user's chosen image, do not auto-fill default images
   }, [newBizCategory]);
+
+  // Helper to strictly verify business ownership:
+  // If createdBy has an assigned 10-digit phone number, ONLY that phone number is authorized!
+  // If business was assigned to B, then user A cannot open it under any condition.
+  const isBusinessOwnedByUser = (b: any, userPhoneDigits: string): boolean => {
+    if (!userPhoneDigits) return false;
+    const user10 = userPhoneDigits.replace(/\D/g, '').slice(-10);
+    if (!user10 || user10.length !== 10) return false;
+
+    const bizCreatedByDigits = (b.createdBy || '').toString().replace(/\D/g, '').slice(-10);
+    const bizPhoneDigits = (b.phone || '').toString().replace(/\D/g, '').slice(-10);
+    const bizWhatsappDigits = (b.whatsapp || '').toString().replace(/\D/g, '').slice(-10);
+
+    // If explicitly assigned to a 10-digit owner phone, ONLY that owner matches!
+    if (bizCreatedByDigits && bizCreatedByDigits.length === 10) {
+      return bizCreatedByDigits === user10;
+    }
+
+    // Fallback: match contact phone or whatsapp
+    return (
+      (bizPhoneDigits.length === 10 && bizPhoneDigits === user10) ||
+      (bizWhatsappDigits.length === 10 && bizWhatsappDigits === user10)
+    );
+  };
 
   // Fetch list of businesses to select from
   const fetchBusinessesList = async () => {
@@ -2790,12 +2831,8 @@ _Powered by Majh Boisar (majhboisar.com)_`
           }
 
           const myOwnBiz = combined.find((b: any) => {
-            if (savedBizIds.includes(b.id)) return true;
             if (!userPhoneDigits) return false;
-            const bp = (b.phone || '').replace(/\D/g, '').slice(-10);
-            const bw = (b.whatsapp || '').replace(/\D/g, '').slice(-10);
-            const bc = (b.createdBy || '').replace(/\D/g, '').slice(-10);
-            return bp === userPhoneDigits || bw === userPhoneDigits || bc === userPhoneDigits;
+            return isBusinessOwnedByUser(b, userPhoneDigits);
           });
 
           // Default target: user's owned business > first non-hotel business > first item
@@ -2824,9 +2861,13 @@ _Powered by Majh Boisar (majhboisar.com)_`
           if (!userPhoneDigits) return false;
           const hp = (h.phone || '').replace(/\D/g, '').slice(-10);
           const hw = (h.whatsapp || '').replace(/\D/g, '').slice(-10);
+          const hc = ((h as any).createdBy || '').toString().replace(/\D/g, '').slice(-10);
+          if (hc && hc.length === 10) {
+            return hc === userPhoneDigits;
+          }
           return (
-            (hp && (userPhoneDigits.endsWith(hp) || hp.endsWith(userPhoneDigits))) ||
-            (hw && (userPhoneDigits.endsWith(hw) || hw.endsWith(userPhoneDigits)))
+            (hp && hp === userPhoneDigits) ||
+            (hw && hw === userPhoneDigits)
           );
         });
 
@@ -2838,27 +2879,17 @@ _Powered by Majh Boisar (majhboisar.com)_`
           hotelSlug: h.slug
         }));
 
-        let savedIds: number[] = [];
+        const myBizList = data.filter((b: any) => isBusinessOwnedByUser(b, userPhoneDigits));
+
+        // Sync & sanitize localStorage: remove any business IDs that were reassigned or no longer owned
         if (typeof window !== 'undefined' && userPhoneDigits) {
           try {
             const key = `majh_boisar_my_biz_ids_${userPhoneDigits}`;
-            const raw = localStorage.getItem(key);
-            if (raw) savedIds = JSON.parse(raw);
+            const validOwnedIds = myBizList.map((b: any) => b.id);
+            localStorage.setItem(key, JSON.stringify(validOwnedIds));
+            localStorage.removeItem('majh_boisar_my_biz_ids');
           } catch (e) { }
         }
-
-        const myBizList = data.filter((b: any) => {
-          if (savedIds.includes(b.id)) return true;
-          if (!userPhoneDigits) return false;
-          const bizPhoneDigits = b.phone ? b.phone.replace(/\D/g, '').slice(-10) : '';
-          const bizWhatsappDigits = b.whatsapp ? b.whatsapp.replace(/\D/g, '').slice(-10) : '';
-          const bizCreatedByDigits = b.createdBy ? b.createdBy.replace(/\D/g, '').slice(-10) : '';
-          return (
-            (bizPhoneDigits && (bizPhoneDigits === userPhoneDigits || userPhoneDigits.endsWith(bizPhoneDigits) || bizPhoneDigits.endsWith(userPhoneDigits))) ||
-            (bizWhatsappDigits && (bizWhatsappDigits === userPhoneDigits || userPhoneDigits.endsWith(bizWhatsappDigits) || bizWhatsappDigits.endsWith(userPhoneDigits))) ||
-            (bizCreatedByDigits && (bizCreatedByDigits === userPhoneDigits || userPhoneDigits.endsWith(bizCreatedByDigits) || bizCreatedByDigits.endsWith(userPhoneDigits)))
-          );
-        });
 
         const myTotalOwnedList: { id: number; name: string; category?: string; hotelRefId?: string; hotelSlug?: string }[] = [
           ...myHotelItems,
@@ -2893,9 +2924,8 @@ _Powered by Majh Boisar (majhboisar.com)_`
               showToast('🔒 Access Restricted: You can only view and manage your own registered business listings.', 'error');
             }
           } else {
-            const latestId = savedIds.length > 0 ? savedIds[savedIds.length - 1] : myTotalOwnedList[0].id;
             const isValidCurrent = selectedId && myTotalOwnedList.some((b: any) => b.id === selectedId);
-            chosenId = isValidCurrent ? selectedId : (myTotalOwnedList.some((b: any) => b.id === latestId) ? latestId : myTotalOwnedList[0].id);
+            chosenId = isValidCurrent ? selectedId : myTotalOwnedList[0].id;
           }
 
           setSelectedId(chosenId);
@@ -3017,6 +3047,16 @@ _Powered by Majh Boisar (majhboisar.com)_`
         return;
       }
       const data = await res.json();
+
+      // Strict security: If not admin, ensure the fetched business is strictly owned by this logged in user
+      if (!isAdminAuth) {
+        const userPhoneDigits = loggedInUser?.phone ? loggedInUser.phone.replace(/\D/g, '').slice(-10) : '';
+        if (!isBusinessOwnedByUser(data, userPhoneDigits)) {
+          setBusiness(null);
+          setLoading(false);
+          return;
+        }
+      }
 
       // Expiry & Notification logic
       if (typeof window !== 'undefined') {
@@ -5583,7 +5623,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
                       Go Back Home
                     </a>
                     <a
-                      href={`https://wa.me/918208712398?text=Hello%20Majh%20Boisar%20Support!%20My%20business%20"${encodeURIComponent(business.name)}"%20is%20pending%20approval.%20Please%20verify%20it%20fast.`}
+                      href={`https://wa.me/917769947217?text=Hello%20Majh%20Boisar%20Support!%20My%20business%20"${encodeURIComponent(business.name)}"%20is%20pending%20approval.%20Please%20verify%20it%20fast.`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-black text-xs py-3 rounded-xl uppercase tracking-wider text-center cursor-pointer transition-colors flex items-center justify-center gap-1.5"
@@ -10015,7 +10055,8 @@ _Powered by Majh Boisar (majhboisar.com)_`
                                   body: JSON.stringify({ createdBy: phone })
                                 });
                                 if (!res.ok) throw new Error('Failed');
-                                alert(`✅ Owner phone set to ${phone}. They can now login with OTP to manage this business.`);
+                                alert(`✅ Business transferred & owner set to ${phone}. User A can no longer access this business, and ${phone} is now the exclusive owner.`);
+                                await fetchBusinessesList();
                                 await fetchBusinessData();
                               } catch {
                                 alert('❌ Failed to assign owner phone. Try again.');
@@ -10718,7 +10759,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
 
                             {/* WhatsApp Manual Verification for UPI */}
                             <a
-                              href={`https://wa.me/919699729167?text=${encodeURIComponent(`Hi Admin, I have paid ₹${planInfo.amountNum} for ${planInfo.name} on Majh Boisar (Business: ${business?.name || ''}). Here is my payment confirmation. Please verify and activate my subscription.`)}`}
+                              href={`https://wa.me/917769947217?text=${encodeURIComponent(`Hi Admin, I have paid ₹${planInfo.amountNum} for ${planInfo.name} on Majh Boisar (Business: ${business?.name || ''}). Here is my payment confirmation. Please verify and activate my subscription.`)}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="w-full py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer mt-1 text-center"

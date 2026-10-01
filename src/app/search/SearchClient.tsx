@@ -629,13 +629,6 @@ export default function SearchClient() {
                             </span>
                           )}
                         </div>
-
-                        <div className="flex items-center gap-1">
-                          <div className="inline-flex items-center gap-0.5 bg-emerald-600 text-white text-[9.5px] font-black px-1.5 py-0.5 rounded-md shadow-xs">
-                            <span>{business.rating}</span>
-                            <Star className="w-2.5 h-2.5 fill-white text-white" />
-                          </div>
-                        </div>
                       </div>
 
                       {/* Bottom Visits / Distance Indicators */}
@@ -667,10 +660,10 @@ export default function SearchClient() {
 
                       {/* Category & Review Ratings Row (Category first, Review next to it) */}
                       <div className="flex items-center gap-2 flex-wrap pt-0.5">
-                        <span className="bg-teal-50 border border-teal-200/80 text-teal-800 text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md">
+                        <span className="bg-teal-50 border border-teal-200/80 text-teal-800 text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md shrink-0">
                           {business.category}
                         </span>
-                        <span className="text-[10.5px] font-bold text-slate-500 flex items-center gap-1">
+                        <span className="text-[10.5px] font-bold text-slate-500 flex items-center gap-1 shrink-0">
                           <Star className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
                           <span className="text-slate-800 font-black">{business.rating ? business.rating.toFixed(1) : '4.5'}</span>
                           <span className="text-slate-400">({business.reviewCount} {business.reviewCount === 1 ? 'Rating' : 'Ratings'})</span>
@@ -811,7 +804,7 @@ export default function SearchClient() {
               {sidebarAds[0]?.image ? (
                 /* Clean 100% Direct Image Banner (No colored gradient, No opacity overlay, No text over image) */
                 <a 
-                  href={sidebarAds[0].targetUrl || (sidebarAds[0].businessId ? `/business/${sidebarAds[0].businessId}` : 'https://wa.me/918208712398')} 
+                  href={sidebarAds[0].targetUrl || (sidebarAds[0].businessId ? `/business/${sidebarAds[0].businessId}` : 'https://wa.me/917769947217')} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="w-full aspect-[300/250] rounded-2xl border border-slate-200 shadow-2xs relative overflow-hidden group block cursor-pointer bg-slate-950"

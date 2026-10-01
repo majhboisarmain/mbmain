@@ -419,8 +419,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
               <div className="text-center pt-1">
                 <p className="text-[11px] text-slate-400 font-medium">By continuing, you agree to our</p>
                 <div className="flex items-center justify-center gap-3 mt-0.5">
-                  <a href="/terms" target="_blank" className="text-xs text-slate-600 font-semibold underline underline-offset-2 hover:text-purple-700 transition-colors">Terms of Service</a>
-                  <a href="/privacy" target="_blank" className="text-xs text-slate-600 font-semibold underline underline-offset-2 hover:text-purple-700 transition-colors">Privacy Policy</a>
+                  <a href="/terms" target="_blank" rel="nofollow noopener noreferrer" className="text-xs text-slate-600 font-semibold underline underline-offset-2 hover:text-purple-700 transition-colors">Terms of Service</a>
+                  <a href="/privacy" target="_blank" rel="nofollow noopener noreferrer" className="text-xs text-slate-600 font-semibold underline underline-offset-2 hover:text-purple-700 transition-colors">Privacy Policy</a>
                 </div>
               </div>
             </form>

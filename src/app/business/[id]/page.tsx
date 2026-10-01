@@ -144,10 +144,18 @@ export default function BusinessDetailsPage() {
   const isOwnerOrAdmin = useMemo(() => {
     if (!isLoggedIn) return false;
     if (currentRole === 'Admin') return true;
-    const cleanUserPhone = (loggedInUser?.phone || '').replace(/\D/g, '');
-    const cleanBizPhone = (business?.phone || '').replace(/\D/g, '');
-    const cleanCreatedBy = ((business as any)?.createdBy || '').replace(/\D/g, '');
-    return Boolean(cleanUserPhone && (cleanUserPhone === cleanBizPhone || cleanUserPhone === cleanCreatedBy));
+    const cleanUserPhone = (loggedInUser?.phone || '').replace(/\D/g, '').slice(-10);
+    if (!cleanUserPhone || cleanUserPhone.length !== 10) return false;
+
+    const cleanCreatedBy = (((business as any)?.createdBy) || '').toString().replace(/\D/g, '').slice(-10);
+    // If explicitly assigned to a 10-digit owner phone, ONLY that owner matches!
+    if (cleanCreatedBy && cleanCreatedBy.length === 10) {
+      return cleanUserPhone === cleanCreatedBy;
+    }
+
+    const cleanBizPhone = (business?.phone || '').toString().replace(/\D/g, '').slice(-10);
+    const cleanWaPhone = (business?.whatsapp || '').toString().replace(/\D/g, '').slice(-10);
+    return cleanUserPhone === cleanBizPhone || cleanUserPhone === cleanWaPhone;
   }, [isLoggedIn, currentRole, loggedInUser, business]);
 
   const rawImageParts = business?.image ? business.image.split('||gallery_sep||').filter(Boolean) : [];

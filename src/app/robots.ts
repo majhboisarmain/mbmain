@@ -35,8 +35,6 @@ export default function robots(): MetadataRoute.Robots {
           '/admin/',
           '/adminmb/',
           '/dashboard/',
-          '/terms',
-          '/privacy',
           '/api/',
           '/search?', // Don't let search query spam consume crawl budget
           '/*?*sort=*',
@@ -88,8 +86,6 @@ export default function robots(): MetadataRoute.Robots {
           '/admin/',
           '/adminmb/',
           '/dashboard/',
-          '/terms',
-          '/privacy',
           '/api/',
           '/search?',
         ],

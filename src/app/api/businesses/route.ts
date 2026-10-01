@@ -45,6 +45,8 @@ export async function GET(request: NextRequest) {
       where.verified = true;
     }
 
+    const andClauses: any[] = [];
+
     if (category && category !== 'All') {
       const categoryTerms = expandCategorySearchTerms(category);
       const cleanCat = category.trim();
@@ -74,15 +76,14 @@ export async function GET(request: NextRequest) {
 
       const categoryOrConditions: any[] = [
         { category: { in: allCategoryCandidates } },
-        { category: { contains: cleanCat } },
-        ...tokenVariants.map(token => ({ category: { contains: token } })),
-        ...tokenVariants.map(token => ({ name: { contains: token } }))
+        { category: { contains: cleanCat, mode: 'insensitive' } },
+        ...tokenVariants.map(token => ({ category: { contains: token, mode: 'insensitive' } })),
+        ...tokenVariants.map(token => ({ name: { contains: token, mode: 'insensitive' } })),
+        { services: { some: { name: { contains: cleanCat, mode: 'insensitive' } } } },
+        ...tokenVariants.map(token => ({ services: { some: { name: { contains: token, mode: 'insensitive' } } } }))
       ];
 
-      where.OR = [
-        ...(where.OR || []),
-        ...categoryOrConditions
-      ];
+      andClauses.push({ OR: categoryOrConditions });
     }
 
     if (premium) {
@@ -107,10 +108,10 @@ export async function GET(request: NextRequest) {
         if (isMultiWord) {
           // For multi-word queries (e.g. "Personal Loan", "Home Loan", "Gold Loan"):
           // 1. EXACT PHRASE match in name/category/description (highest priority)
-          orConditions.push({ name: { contains: cleanQuery } });
-          orConditions.push({ category: { contains: cleanQuery } });
-          orConditions.push({ description: { contains: cleanQuery } });
-          orConditions.push({ services: { some: { name: { contains: cleanQuery } } } });
+          orConditions.push({ name: { contains: cleanQuery, mode: 'insensitive' } });
+          orConditions.push({ category: { contains: cleanQuery, mode: 'insensitive' } });
+          orConditions.push({ description: { contains: cleanQuery, mode: 'insensitive' } });
+          orConditions.push({ services: { some: { name: { contains: cleanQuery, mode: 'insensitive' } } } });
 
           // 2. KEY TOKEN: use only the LAST meaningful non-generic token as the key classifier
           //    e.g. "Personal Loan" -> key = "loan", "Home Loan" -> key = "loan"
@@ -120,41 +121,54 @@ export async function GET(request: NextRequest) {
           const primaryTokens = keyTokens.length > 0 ? keyTokens : filteredTokens;
 
           primaryTokens.forEach(st => {
-            orConditions.push({ name: { contains: st } });
-            orConditions.push({ category: { contains: st } });
+            orConditions.push({ name: { contains: st, mode: 'insensitive' } });
+            orConditions.push({ category: { contains: st, mode: 'insensitive' } });
+            orConditions.push({ services: { some: { name: { contains: st, mode: 'insensitive' } } } });
+          });
+
+          // Also check all individual tokens in category and services
+          filteredTokens.forEach(st => {
+            orConditions.push({ category: { contains: st, mode: 'insensitive' } });
+            orConditions.push({ services: { some: { name: { contains: st, mode: 'insensitive' } } } });
           });
 
           // 3. Expanded terms from category mapping
           expandedTerms.forEach(term => {
-            orConditions.push({ category: { contains: term.toLowerCase() } });
-            orConditions.push({ name: { contains: term.toLowerCase() } });
+            orConditions.push({ category: { contains: term.toLowerCase(), mode: 'insensitive' } });
+            orConditions.push({ name: { contains: term.toLowerCase(), mode: 'insensitive' } });
           });
         } else {
           // Single token: search broadly across all fields
           filteredTokens.forEach(st => {
-            orConditions.push({ name: { contains: st } });
-            orConditions.push({ description: { contains: st } });
-            orConditions.push({ category: { contains: st } });
-            orConditions.push({ address: { contains: st } });
+            orConditions.push({ name: { contains: st, mode: 'insensitive' } });
+            orConditions.push({ description: { contains: st, mode: 'insensitive' } });
+            orConditions.push({ category: { contains: st, mode: 'insensitive' } });
+            orConditions.push({ address: { contains: st, mode: 'insensitive' } });
             orConditions.push({
               services: {
                 some: {
-                  name: { contains: st }
+                  name: { contains: st, mode: 'insensitive' }
                 }
               }
             });
           });
 
           expandedTerms.forEach(term => {
-            orConditions.push({ category: { contains: term.toLowerCase() } });
-            orConditions.push({ name: { contains: term.toLowerCase() } });
+            orConditions.push({ category: { contains: term.toLowerCase(), mode: 'insensitive' } });
+            orConditions.push({ name: { contains: term.toLowerCase(), mode: 'insensitive' } });
           });
         }
 
         if (orConditions.length > 0) {
-          where.OR = orConditions;
+          andClauses.push({ OR: orConditions });
         }
       }
+    }
+
+    if (andClauses.length === 1) {
+      where.OR = andClauses[0].OR;
+    } else if (andClauses.length > 1) {
+      where.AND = andClauses;
     }
 
     const businesses = await prisma.business.findMany({
@@ -382,12 +396,23 @@ export async function POST(request: NextRequest) {
 
     const cleanDesc = (description || '').replace(/\[Created by Admin\]\s*/gi, '').trim();
 
+    let finalCategory = category;
+    if (body.createdBy !== 'Admin') {
+      const protectedLoans = ['home loan', 'personal loan', 'business loan', 'gold loan', 'vehicle loan', 'education loan'];
+      const protectedIns = ['health insurance', 'life insurance', 'vehicle insurance', 'home insurance', 'travel insurance', 'shop & commercial insurance'];
+      if (protectedLoans.includes((category || '').toLowerCase())) {
+        finalCategory = 'Loan Consultants';
+      } else if (protectedIns.includes((category || '').toLowerCase())) {
+        finalCategory = 'Insurance Agents';
+      }
+    }
+
     let business: any;
     try {
       business = await prisma.business.create({
         data: {
           name,
-          category,
+          category: finalCategory,
           description: cleanDesc,
           address: address || '',
           phone,

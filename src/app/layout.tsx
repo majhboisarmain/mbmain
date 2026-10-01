@@ -11,6 +11,7 @@ import NetworkStatusListener from "@/components/NetworkStatusListener";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import ScrollToTopOnNav from "@/components/ScrollToTopOnNav";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import VisitorTracker from "@/components/VisitorTracker";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -460,6 +461,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             </Suspense>
             <ServiceWorkerRegister />
             <NetworkStatusListener />
+            <VisitorTracker />
             <div className="w-full min-h-screen flex flex-col relative">
               <Suspense fallback={<div className="h-16 bg-white border-b border-slate-200 w-full shrink-0" />}>
                 <Navbar />

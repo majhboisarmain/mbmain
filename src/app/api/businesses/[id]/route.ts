@@ -134,6 +134,7 @@ export async function PUT(
 
     const {
       name,
+      category,
       description,
       address,
       phone,
@@ -156,9 +157,37 @@ export async function PUT(
       websiteClicks
     } = body;
 
+    const PROTECTED_HOMEPAGE_SERVICES = [
+      'Home Loan',
+      'Personal Loan',
+      'Business Loan',
+      'Gold Loan',
+      'Vehicle Loan',
+      'Education Loan',
+      'Health Insurance',
+      'Life Insurance',
+      'Vehicle Insurance',
+      'Home Insurance',
+      'Travel Insurance',
+      'Shop & Commercial Insurance'
+    ];
+
+    const isAdmin = body.isAdmin === true;
+
     // Build update object based on what was passed
     const data: any = {};
     if (name !== undefined) data.name = name;
+    if (category !== undefined) {
+      let finalCat = category;
+      // If not admin, protect homepage loan/insurance categories from direct self-assignment
+      if (!isAdmin) {
+        const isProtectedLoan = ['home loan', 'personal loan', 'business loan', 'gold loan', 'vehicle loan', 'education loan'].includes((category || '').toLowerCase());
+        const isProtectedIns = ['health insurance', 'life insurance', 'vehicle insurance', 'home insurance', 'travel insurance', 'shop & commercial insurance'].includes((category || '').toLowerCase());
+        if (isProtectedLoan) finalCat = 'Loan Consultants';
+        else if (isProtectedIns) finalCat = 'Insurance Agents';
+      }
+      data.category = finalCat;
+    }
     if (description !== undefined) data.description = description;
     if (address !== undefined) data.address = address;
     if (phone !== undefined) data.phone = phone;
@@ -216,6 +245,36 @@ export async function PUT(
     // Admin: assign/update business owner phone (used for dashboard login)
     if (body.createdBy !== undefined) data.createdBy = body.createdBy ? body.createdBy.toString().replace(/\D/g, '').slice(-10) : null;
 
+    // Sync services if provided
+    if (body.services !== undefined && Array.isArray(body.services)) {
+      let validServices = body.services
+        .map((s: any) => typeof s === 'string' ? s.trim() : (s?.name || '').trim())
+        .filter(Boolean);
+
+      // If not admin, do not allow regular businesses to self-assign protected homepage loan/insurance services
+      if (!isAdmin) {
+        const existingServices = await prisma.service.findMany({ where: { businessId } });
+        const existingProtected = existingServices
+          .filter(s => PROTECTED_HOMEPAGE_SERVICES.some(p => p.toLowerCase() === s.name.toLowerCase()))
+          .map(s => s.name);
+
+        validServices = validServices.filter((s: string) => {
+          const isProtected = PROTECTED_HOMEPAGE_SERVICES.some(p => p.toLowerCase() === s.toLowerCase());
+          if (!isProtected) return true;
+          return existingProtected.some(ep => ep.toLowerCase() === s.toLowerCase());
+        });
+      }
+
+      await prisma.service.deleteMany({ where: { businessId } });
+      if (validServices.length > 0) {
+        await prisma.service.createMany({
+          data: validServices.map((name: string) => ({
+            businessId,
+            name
+          }))
+        });
+      }
+    }
 
     const updated = await prisma.business.update({
       where: { id: businessId },

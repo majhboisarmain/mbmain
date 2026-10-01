@@ -61,6 +61,24 @@ const nextConfig = {
         ],
       },
       {
+        source: '/terms',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive, nosnippet',
+          },
+        ],
+      },
+      {
+        source: '/privacy',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow, noarchive, nosnippet',
+          },
+        ],
+      },
+      {
         source: '/:path*',
         headers: [
           {

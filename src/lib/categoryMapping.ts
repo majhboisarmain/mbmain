@@ -877,6 +877,66 @@ export const CATEGORY_CATALOG: CategoryItem[] = [
     "parent": "Finance"
   },
   {
+    "id": 1391,
+    "category": "Personal Loan",
+    "slug": "personal-loan",
+    "parent": "Finance"
+  },
+  {
+    "id": 1392,
+    "category": "Business Loan",
+    "slug": "business-loan",
+    "parent": "Finance"
+  },
+  {
+    "id": 1393,
+    "category": "Vehicle Loan",
+    "slug": "vehicle-loan",
+    "parent": "Finance"
+  },
+  {
+    "id": 1394,
+    "category": "Education Loan",
+    "slug": "education-loan",
+    "parent": "Finance"
+  },
+  {
+    "id": 1395,
+    "category": "Loans & Finance",
+    "slug": "loans-finance",
+    "parent": "Finance"
+  },
+  {
+    "id": 1396,
+    "category": "Health Insurance",
+    "slug": "health-insurance",
+    "parent": "Finance"
+  },
+  {
+    "id": 1397,
+    "category": "Life Insurance",
+    "slug": "life-insurance",
+    "parent": "Finance"
+  },
+  {
+    "id": 1398,
+    "category": "Vehicle Insurance",
+    "slug": "vehicle-insurance",
+    "parent": "Finance"
+  },
+  {
+    "id": 1399,
+    "category": "Home Insurance",
+    "slug": "home-insurance",
+    "parent": "Finance"
+  },
+  {
+    "id": 1400,
+    "category": "Shop & Commercial Insurance",
+    "slug": "shop-commercial-insurance",
+    "parent": "Finance"
+  },
+  {
     "id": 140,
     "category": "Microfinance",
     "slug": "microfinance",
@@ -5301,7 +5361,33 @@ const COMMON_SYNONYMS: Record<string, string[]> = {
   "bike": ["Car & Bike Rentals", "Automobile Garages & Repair"],
   "bike rental": ["Car & Bike Rentals"],
   "scooty": ["Car & Bike Rentals", "Automobile Garages & Repair"],
-  "driver": ["Car & Bike Rentals", "Travel Agencies & Tours"]
+  "driver": ["Car & Bike Rentals", "Travel Agencies & Tours"],
+  "loan": ["Loans & Finance", "Home Loan", "Personal Loan", "Business Loan", "Gold Loan", "Vehicle Loan", "Education Loan", "Loan Consultants"],
+  "loans": ["Loans & Finance", "Home Loan", "Personal Loan", "Business Loan", "Gold Loan", "Vehicle Loan", "Education Loan", "Loan Consultants"],
+  "home loan": ["Home Loan", "Loan Consultants", "Loans & Finance"],
+  "homeloan": ["Home Loan", "Loan Consultants"],
+  "personal loan": ["Personal Loan", "Loan Consultants", "Loans & Finance"],
+  "personalloan": ["Personal Loan", "Loan Consultants"],
+  "business loan": ["Business Loan", "Loan Consultants", "Loans & Finance"],
+  "gold loan": ["Gold Loan", "Loan Consultants"],
+  "vehicle loan": ["Vehicle Loan", "Loan Consultants"],
+  "car loan": ["Vehicle Loan", "Loan Consultants"],
+  "bike loan": ["Vehicle Loan", "Loan Consultants"],
+  "education loan": ["Education Loan", "Loan Consultants"],
+  "insurance": ["Insurance Agents", "Health Insurance", "Life Insurance", "Vehicle Insurance", "Home Insurance", "Travel Insurance", "Shop & Commercial Insurance"],
+  "bima": ["Insurance Agents", "Life Insurance", "Health Insurance"],
+  "lic": ["Life Insurance", "Insurance Agents"],
+  "mediclaim": ["Health Insurance", "Insurance Agents"],
+  "health insurance": ["Health Insurance", "Insurance Agents"],
+  "life insurance": ["Life Insurance", "Insurance Agents"],
+  "term life": ["Life Insurance", "Insurance Agents"],
+  "vehicle insurance": ["Vehicle Insurance", "Insurance Agents"],
+  "car insurance": ["Vehicle Insurance", "Insurance Agents"],
+  "bike insurance": ["Vehicle Insurance", "Insurance Agents"],
+  "motor insurance": ["Vehicle Insurance", "Insurance Agents"],
+  "home insurance": ["Home Insurance", "Insurance Agents"],
+  "travel insurance": ["Travel Insurance", "Insurance Agents"],
+  "insurance agent": ["Insurance Agents", "Life Insurance", "Health Insurance"]
 };
 
 /**

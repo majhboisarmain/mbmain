@@ -95,30 +95,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (!Array.isArray(data)) return;
 
-      let savedIds: number[] = [];
-      if (typeof window !== 'undefined') {
-        try {
-          const raw = localStorage.getItem(`majh_boisar_my_biz_ids_${phoneDigits}`) || localStorage.getItem('majh_boisar_my_biz_ids');
-          if (raw) savedIds = JSON.parse(raw);
-        } catch(e){}
-      }
-
-      const last7 = phoneDigits.slice(-7);
+      const user10 = phoneDigits.slice(-10);
       const myBiz = data.filter((b: any) => {
-        if (savedIds.includes(b.id)) return true;
-        const bizPhone = (b.phone || '').replace(/\D/g, '');
-        const bizWa = (b.whatsapp || '').replace(/\D/g, '');
-        const bizCreatedBy = (b.createdBy || '').replace(/\D/g, '');
+        if (!user10 || user10.length !== 10) return false;
+        const bizCreatedByDigits = (b.createdBy || '').toString().replace(/\D/g, '').slice(-10);
+        const bizPhoneDigits = (b.phone || '').toString().replace(/\D/g, '').slice(-10);
+        const bizWhatsappDigits = (b.whatsapp || '').toString().replace(/\D/g, '').slice(-10);
+
+        // If explicitly assigned to a 10-digit owner phone, ONLY that owner matches!
+        if (bizCreatedByDigits && bizCreatedByDigits.length === 10) {
+          return bizCreatedByDigits === user10;
+        }
+
+        // Fallback: match contact phone or whatsapp
         return (
-          // Match by business contact phone (last 7 digits)
-          (last7 && (bizPhone.includes(last7) || bizWa.includes(last7))) ||
-          // Match by exact createdBy phone number stored at registration time
-          (bizCreatedBy && phoneDigits.includes(bizCreatedBy.slice(-7))) ||
-          // Match by exact createdBy = user phone stored at registration
-          b.createdBy === phone ||
-          b.createdBy === phoneDigits
+          (bizPhoneDigits.length === 10 && bizPhoneDigits === user10) ||
+          (bizWhatsappDigits.length === 10 && bizWhatsappDigits === user10)
         );
       });
+
+      // Sanitize localStorage to purge any businesses transferred to another number
+      if (typeof window !== 'undefined' && user10) {
+        try {
+          const key = `majh_boisar_my_biz_ids_${user10}`;
+          localStorage.setItem(key, JSON.stringify(myBiz.map((b: any) => b.id)));
+          localStorage.removeItem('majh_boisar_my_biz_ids');
+        } catch(e){}
+      }
 
       const hasBusiness = myBiz.length > 0;
       setHasRegisteredBusinessState(hasBusiness);
