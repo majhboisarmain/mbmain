@@ -10,12 +10,14 @@ import {
   ChevronRight, Mic, Heart, Key, HardHat, HeartPulse,
   PawPrint, Landmark, Activity, Coins, Truck, Mail, LayoutGrid, ChevronLeft,
   Smartphone, Store, Sprout, Camera, ShoppingBag, Zap, FileText, Droplet, Tv,
-  ChevronDown, Users, Briefcase, Home, Tag, AlertTriangle, Lock, Car, CreditCard
+  ChevronDown, Users, User, Briefcase, Home, Tag, AlertTriangle, Lock, Car, CreditCard,
+  Share2
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
 import AdModal from '@/components/AdModal';
 import PostPropertyModal, { BOISAR_PROPERTY_AREAS } from '@/components/PostPropertyModal';
+import HomeLoanModal from '@/components/HomeLoanModal';
 import LocalMarketplaceModal from '@/components/LocalHub/LocalMarketplaceModal';
 import LocalOffersModal from '@/components/LocalHub/LocalOffersModal';
 import TempoHelplineModal from '@/components/LocalHub/TempoHelplineModal';
@@ -274,26 +276,6 @@ export const QUICK_PORTAL_PILLS: PortalSearchPill[] = [
     targetUrl: '/creators',
     actionType: 'url',
     keywords: ['influencer', 'creator', 'instagram', 'reels', 'blogger', 'model', 'promotion', 'collab', 'creators']
-  },
-  {
-    id: 'turf',
-    title: 'Sports Turf & Game Zone',
-    subtitle: 'Box Cricket Turf, Football & Gaming Arena',
-    icon: '🏏',
-    badge: 'Sports Hub',
-    targetUrl: 'modal:turf',
-    actionType: 'modal',
-    keywords: ['turf', 'cricket', 'box cricket', 'football', 'game zone', 'ground', 'sports club', 'gaming']
-  },
-  {
-    id: 'offers',
-    title: 'Shop Offers & Deals in Boisar',
-    subtitle: 'Local Store Discounts, Coupons & Sale Alerts',
-    icon: '🏷️',
-    badge: 'City Deals',
-    targetUrl: 'modal:offers',
-    actionType: 'modal',
-    keywords: ['offer', 'offers', 'discount', 'sale', 'deal', 'deals', 'coupon', 'coupons', 'discount coupon']
   },
   {
     id: 'marketplace',
@@ -571,6 +553,97 @@ function getCategoryImage(name: string): string {
   return "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=260&q=80";
 }
 
+const BOISAR_ICONIC_PLACES = [
+  {
+    id: 'chinchani-beach',
+    name: 'Chinchani, Boisar',
+    category: 'Beach & Sunset',
+    distance: '15 mins from Boisar',
+    travelTime: '12 km • ~20 mins',
+    image: '/places/chinchani-beach.jpg',
+    description: 'Serene black-sand coastline famous for mesmerizing Arabian Sea sunsets, local street food & family beach outings.',
+    highlights: ['Breathtaking Sunsets', 'Beach Snacks & Coconut Water', 'Horse Cart & ATV Rides', 'Peaceful Shoreline'],
+    mapQuery: 'Chinchani Beach Boisar Maharashtra',
+  },
+  {
+    id: 'kelve-beach',
+    name: 'Kelve Beach, Palghar',
+    category: 'Sea Coast & Fort',
+    distance: '25 mins from Boisar',
+    travelTime: '22 km • ~35 mins',
+    image: '/places/kelve-beach.jpg',
+    description: 'One of the longest beaches in Palghar district with fragrant Suru pine tree forests and an ancient Portuguese water fort.',
+    highlights: ['Historic Kelve Fort', 'Dense Casuarina (Suru) Grove', 'Water Sports & Camel Rides', 'Beachside Resorts'],
+    mapQuery: 'Kelve Beach Palghar Maharashtra',
+  },
+  {
+    id: 'shirgaon-fort',
+    name: 'Shirgaon Fort, Boisar',
+    category: 'Historic Sea Fort',
+    distance: '18 mins from Boisar',
+    travelTime: '14 km • ~25 mins',
+    image: '/places/shirgaon-fort.jpg',
+    description: 'Well-preserved 16th-century Maratha stone fortress perched beside palm-fringed coast with commanding panoramic ocean views.',
+    highlights: ['Chhatrapati Shivaji Maharaj Era Fort', 'Ocean View Bastions', 'Quiet Coastal Beach', 'Photography Hotspot'],
+    mapQuery: 'Shirgaon Fort Palghar Maharashtra',
+  },
+  {
+    id: 'tarapur-fort',
+    name: 'Tarapur Fort & Light',
+    category: 'Lighthouse & History',
+    distance: '12 mins from Boisar',
+    travelTime: '10 km • ~15 mins',
+    image: '/places/tarapur-fort.jpg',
+    description: 'Ancient 13th-century coastal fortress near Tarapur harbour and the historic lighthouse guiding maritime vessels.',
+    highlights: ['13th-Century Heritage Ramparts', 'Coastal Lighthouse Views', 'Fishing Village Culture', 'Fresh Sea Breeze'],
+    mapQuery: 'Tarapur Fort Boisar Maharashtra',
+  },
+  {
+    id: 'dahanu-beach',
+    name: 'Dahanu Coast, Dahanu',
+    category: 'Chikoo & Beach',
+    distance: '30 mins from Boisar',
+    travelTime: '28 km • ~40 mins',
+    image: '/places/dahanu-beach.jpg',
+    description: 'Sprawling clean beach lined with world-famous lush Chikoo (sapodilla) orchards, Parsi heritage villas, and tranquil shores.',
+    highlights: ['Chikoo Orchards', 'Bordi Coastal Drive', 'Parsi Heritage Cuisine', 'Tranquil Clean Water'],
+    mapQuery: 'Dahanu Beach Maharashtra',
+  },
+  {
+    id: 'asava-fort',
+    name: 'Asava Fort Trek, Manor',
+    category: 'Nature & Trekking',
+    distance: '25 mins from Boisar',
+    travelTime: '20 km • ~30 mins',
+    image: '/places/asava-fort.jpg',
+    description: 'Scenic hill fort trek offering breathtaking 360-degree vistas of the green Sahyadri ranges and Surya River valley.',
+    highlights: ['Beginner Friendly Trek', 'Ancient Water Cisterns', 'Lush Green Vistas', 'Monsoon Cloud Walks'],
+    mapQuery: 'Asava Fort Palghar Maharashtra',
+  },
+  {
+    id: 'vandri-lake',
+    name: 'Vandri Lake, Palghar',
+    category: 'Lake & Camping',
+    distance: '35 mins from Boisar',
+    travelTime: '30 km • ~45 mins',
+    image: '/places/vandri-lake.jpg',
+    description: 'Serene freshwater reservoir nested amidst green hills, popular for weekend camping, stargazing, and nature picnics.',
+    highlights: ['Lakeside Camping', 'Misty Morning Views', 'Peaceful Picnic Spots', 'Birdwatching'],
+    mapQuery: 'Vandri Lake Palghar Maharashtra',
+  },
+  {
+    id: 'mahalaxmi-temple',
+    name: 'Mahalaxmi Temple, Dahanu',
+    category: 'Pilgrimage Shrine',
+    distance: '40 mins from Boisar',
+    travelTime: '35 km • ~50 mins',
+    image: '/places/mahalaxmi-temple.jpg',
+    description: 'Sacred ancient shrine of Goddess Mahalaxmi situated along the highway, visited by thousands of pilgrims every week.',
+    highlights: ['Ancient Sacred Shrine', 'Hilltop Temple Setting', 'Temple Prasad & Bazaar', 'Spiritual Atmosphere'],
+    mapQuery: 'Mahalaxmi Temple Charoti Dahanu Maharashtra',
+  }
+];
+
 export default function HomeClient({ initialSpecialCategory }: { initialSpecialCategory?: 'influencers' | 'properties' | 'helpers' | 'caterers' | null } = {}) {
   const { userName, currentRole, isLoggedIn, loggedInUser, loginModalOpen, setLoginModalOpen, adModalOpen, setAdModalOpen, showToast } = useApp();
   const { t } = useLanguage();
@@ -613,6 +686,48 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
   const [userUnlockedPropsState, setUserUnlockedPropsState] = useState<string[]>([]);
   const [activeHomeTab, setActiveHomeTab] = useState<'foryou' | 'loans' | 'insurance' | 'events' | 'store'>('foryou');
+
+  const digitalMarketingRef = useRef<HTMLDivElement>(null);
+  const scrollDigitalLeft = () => {
+    digitalMarketingRef.current?.scrollBy({ left: -(digitalMarketingRef.current?.offsetWidth || 340), behavior: 'smooth' });
+  };
+  const scrollDigitalRight = () => {
+    digitalMarketingRef.current?.scrollBy({ left: (digitalMarketingRef.current?.offsetWidth || 340), behavior: 'smooth' });
+  };
+
+  const loansRef = useRef<HTMLDivElement>(null);
+  const scrollLoansLeft = () => {
+    loansRef.current?.scrollBy({ left: -(loansRef.current?.offsetWidth || 340), behavior: 'smooth' });
+  };
+  const scrollLoansRight = () => {
+    loansRef.current?.scrollBy({ left: (loansRef.current?.offsetWidth || 340), behavior: 'smooth' });
+  };
+
+  const insuranceRef = useRef<HTMLDivElement>(null);
+  const scrollInsuranceLeft = () => {
+    insuranceRef.current?.scrollBy({ left: -(insuranceRef.current?.offsetWidth || 340), behavior: 'smooth' });
+  };
+  const scrollInsuranceRight = () => {
+    insuranceRef.current?.scrollBy({ left: (insuranceRef.current?.offsetWidth || 340), behavior: 'smooth' });
+  };
+
+  const storeRef = useRef<HTMLDivElement>(null);
+  const scrollStoreLeft = () => {
+    storeRef.current?.scrollBy({ left: -(storeRef.current?.offsetWidth || 340), behavior: 'smooth' });
+  };
+  const scrollStoreRight = () => {
+    storeRef.current?.scrollBy({ left: (storeRef.current?.offsetWidth || 340), behavior: 'smooth' });
+  };
+
+  const iconicScrollRef = useRef<HTMLDivElement>(null);
+  const scrollIconicLeft = () => {
+    iconicScrollRef.current?.scrollBy({ left: -260, behavior: 'smooth' });
+  };
+  const scrollIconicRight = () => {
+    iconicScrollRef.current?.scrollBy({ left: 260, behavior: 'smooth' });
+  };
+  const [selectedIconicPlace, setSelectedIconicPlace] = useState<typeof BOISAR_ICONIC_PLACES[0] | null>(null);
+  const [selectedUtilityService, setSelectedUtilityService] = useState<string | null>(null);
 
   useEffect(() => {
     setUserUnlockedPropsState(getUserUnlockedProps());
@@ -893,6 +1008,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   const [activeSpecialCategory, setActiveSpecialCategory] = useState<'influencers' | 'properties' | 'helpers' | 'caterers' | null>(initialSpecialCategory || null);
   const [propertyMode, setPropertyMode] = useState<'buy' | 'sell' | 'rent' | null>(null);
   const [postPropertyModalOpen, setPostPropertyModalOpen] = useState(false);
+  const [homeLoanModalOpen, setHomeLoanModalOpen] = useState(false);
   const [buyDropdownOpen, setBuyDropdownOpen] = useState(false);
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
   const [bhkDropdownOpen, setBhkDropdownOpen] = useState(false);
@@ -1212,6 +1328,49 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
     };
     fetchPropertiesFromDb();
   }, []);
+
+  // Auto-select property if id parameter is provided in URL (?id=123)
+  useEffect(() => {
+    if (activeSpecialCategory === 'properties') {
+      const propId = searchParams?.get('id');
+      if (propId && profilesState.properties && profilesState.properties.length > 0) {
+        const found = profilesState.properties.find((p: any) => String(p.id) === String(propId));
+        if (found) {
+          setSelectedProfile(found);
+        }
+      }
+    }
+  }, [activeSpecialCategory, searchParams, profilesState.properties]);
+
+  const handleShareProperty = async () => {
+    if (!selectedProfile) return;
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://majhboisar.in';
+    const shareUrl = `${origin}/properties?id=${selectedProfile.id}`;
+    const propTitle = selectedProfile.category || selectedProfile.name || selectedProfile.title || 'Property in Boisar';
+    const propPrice = formatPrice(selectedProfile.price);
+    const propLocation = selectedProfile.location || selectedProfile.addressLocality || 'Boisar';
+    const shareText = `Check out this property on Majh Boisar: ${propTitle} (${propPrice}) at ${propLocation}. View details:`;
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: `${propTitle} | Majh Boisar Real Estate`,
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      showToast('Property link copied to clipboard!', 'success');
+    } catch (e) {
+      showToast('Could not copy link to clipboard', 'error');
+    }
+  };
 
   // Helper function to update specialist plan subscription
   const updateSpecialistSubscription = (tier: 'Free' | 'Pro' | 'Premium') => {
@@ -1894,7 +2053,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   const displayedCategories = isCategoriesExpanded ? categories : categories.slice(0, 8);
 
   return (
-    <div className="min-h-screen pb-16 text-slate-800 font-sans" style={{background: 'var(--bg-page)'}}>
+    <div className="min-h-screen pb-2 sm:pb-3 text-slate-800 font-sans bg-white">
       
       {/* 1. Hero Search Panel */}
       <div 
@@ -2152,14 +2311,38 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
           {/* Main Ad Banner Carousel (Left Side - 6 cols, 1:1 ratio) */}
-          <div className="lg:col-span-6">
+          <div className="lg:col-span-6 relative group">
+            {/* Navigation Arrows (Positioned on the side edges like other carousels) */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrevSlide();
+              }}
+              className="absolute -left-2 sm:-left-3.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white shadow-md border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-slate-950 hover:bg-slate-50 cursor-pointer transition-all active:scale-95 z-30"
+              title="Previous Slide"
+            >
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNextSlide();
+              }}
+              className="absolute -right-2 sm:-right-3.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-teal-600 hover:bg-teal-700 shadow-md flex items-center justify-center text-white cursor-pointer transition-all active:scale-95 z-30"
+              title="Next Slide"
+            >
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+            </button>
+
             <div 
               onTouchStart={onCarouselTouchStart}
               onTouchMove={onCarouselTouchMove}
               onTouchEnd={onCarouselTouchEnd}
               onMouseEnter={() => setIsSlidePlaying(false)}
               onMouseLeave={() => setIsSlidePlaying(true)}
-              className="relative w-full aspect-[2.1/1] sm:aspect-[2.1/1] lg:aspect-auto lg:h-[312px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-[#1c0836] group touch-pan-y select-none"
+              className="relative w-full aspect-[2.1/1] sm:aspect-[2.1/1] lg:aspect-auto lg:h-[312px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-[#1c0836] touch-pan-y select-none"
             >
               {/* Main Slide Image & Click Trigger */}
               <div 
@@ -2248,27 +2431,6 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 </div>
               )}
 
-              {/* Navigation Arrows */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePrevSlide();
-                }}
-                className="absolute left-1.5 sm:left-2 top-1/2 -translate-y-1/2 h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-black/50 hover:bg-black/80 active:scale-95 text-white flex items-center justify-center cursor-pointer transition-all z-30 shadow-md"
-                title="Previous Slide"
-              >
-                <ChevronLeft className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleNextSlide();
-                }}
-                className="absolute right-1.5 sm:right-2 top-1/2 -translate-y-1/2 h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-black/50 hover:bg-black/80 active:scale-95 text-white flex items-center justify-center cursor-pointer transition-all z-30 shadow-md"
-                title="Next Slide"
-              >
-                <ChevronRight className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
-              </button>
 
               {/* Dots Indicator */}
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30">
@@ -2291,510 +2453,910 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
           {/* Right Side Promos — side-by-side on desktop */}
           <div className="lg:col-span-6 flex flex-col gap-3 sm:gap-4 h-full">
-            {/* Wrapper box — gives the nice "box" feel on desktop */}
-            <div className="flex flex-row gap-3 sm:gap-4 h-full bg-slate-50 border border-slate-200/70 rounded-3xl p-2.5 shadow-sm">
+            {/* Wrapper box — Clean App Card matching reference icon style */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 h-full bg-white border border-slate-200/90 rounded-3xl p-3 sm:p-5 shadow-[0_4px_24px_rgb(0,0,0,0.04)]">
 
               {/* Promo Card 1 - Real Estate */}
               <Link
                 href="/properties"
                 onClick={() => { setActiveSpecialCategory('properties'); setSelectedProfile(null); }}
-                className="flex-1 min-h-[135px] sm:min-h-[160px] lg:min-h-0 lg:h-full rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group relative border border-slate-200 block"
+                className="flex flex-col items-center justify-center text-center rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#f0fdfa] border-2 border-teal-200/90 hover:border-[#008080] hover:bg-[#ccfbf1]/50 transition-all duration-300 cursor-pointer group shadow-xs hover:shadow-md h-full min-h-[140px] sm:min-h-[180px]"
               >
-                <img
-                  loading="eager"
-                  fetchPriority="high"
-                  decoding="sync"
-                  src="/imagess/ChatGPT Image Jul 20, 2026, 03_14_16 PM.png"
-                  alt="Find Property in Boisar"
-                  className="w-full h-full object-cover"
-                />
-                {/* subtle label */}
-                <div className="absolute bottom-2 left-2">
-                  <span className="bg-teal-600/90 backdrop-blur text-white text-[9px] font-black px-2 py-0.5 rounded-full">🏠 Property</span>
+                {/* Vector Icon */}
+                <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                  <svg className="w-14 h-14 sm:w-18 sm:h-18 lg:w-22 lg:h-22 drop-shadow-xs" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 28L32 10L56 28" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M14 24V52C14 53.1 14.9 54 16 54H48C49.1 54 50 53.1 50 52V24" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M42 18V11H48V23" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                    <rect x="20" y="27" width="9" height="9" rx="2" fill="#008080" stroke="#0f172a" strokeWidth="2.5"/>
+                    <path d="M24.5 27V36" stroke="white" strokeWidth="1.5"/>
+                    <path d="M20 31.5H29" stroke="white" strokeWidth="1.5"/>
+                    <rect x="35" y="27" width="9" height="9" rx="2" fill="#008080" stroke="#0f172a" strokeWidth="2.5"/>
+                    <path d="M39.5 27V36" stroke="white" strokeWidth="1.5"/>
+                    <path d="M35 31.5H44" stroke="white" strokeWidth="1.5"/>
+                    <path d="M26 54V42C26 40.9 26.9 40 28 40H36C37.1 40 38 40.9 38 42V54" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
+                    <circle cx="35" cy="47" r="1.5" fill="#008080"/>
+                    <circle cx="48" cy="18" r="8" fill="#008080" stroke="#0f172a" strokeWidth="2.5"/>
+                    <path d="M48 14V19H51" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M6 54H58" stroke="#0f172a" strokeWidth="3" strokeLinecap="round"/>
+                  </svg>
                 </div>
+
+                {/* Title only */}
+                <h3 className="text-sm sm:text-lg lg:text-xl font-black text-slate-900 group-hover:text-[#008080] transition-colors mt-2 sm:mt-3 leading-tight tracking-tight">
+                  Properties
+                </h3>
               </Link>
 
               {/* Promo Card 2 - Careers */}
               <Link
                 href="/jobs"
-                className="flex-1 min-h-[135px] sm:min-h-[160px] lg:min-h-0 lg:h-full rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group relative border border-slate-200 block"
+                className="flex flex-col items-center justify-center text-center rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#fef2f2] border-2 border-rose-200/90 hover:border-[#e50914] hover:bg-[#ffe4e6]/50 transition-all duration-300 cursor-pointer group shadow-xs hover:shadow-md h-full min-h-[140px] sm:min-h-[180px]"
               >
-                <img
-                  loading="eager"
-                  fetchPriority="high"
-                  decoding="sync"
-                  src="/imagess/ChatGPT Image Jul 20, 2026, 03_41_37 PM.png"
-                  alt="Looking for a Job in Boisar?"
-                  className="w-full h-full object-cover"
-                />
-                {/* subtle label */}
-                <div className="absolute bottom-2 left-2">
-                  <span className="bg-indigo-600/90 backdrop-blur text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-xs">💼 Jobs</span>
+                {/* Vector Icon */}
+                <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                  <svg className="w-14 h-14 sm:w-18 sm:h-18 lg:w-22 lg:h-22 drop-shadow-xs" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="10" y="22" width="44" height="32" rx="6" fill="white" stroke="#0f172a" strokeWidth="3"/>
+                    <path d="M10 33H54" stroke="#0f172a" strokeWidth="2.5"/>
+                    <path d="M24 22V14C24 12.9 24.9 12 26 12H38C39.1 12 40 12.9 40 14V22" stroke="#0f172a" strokeWidth="3" strokeLinecap="round"/>
+                    <rect x="18" y="22" width="5" height="32" fill="#e50914" stroke="#0f172a" strokeWidth="2"/>
+                    <rect x="41" y="22" width="5" height="32" fill="#e50914" stroke="#0f172a" strokeWidth="2"/>
+                    <rect x="28" y="29" width="8" height="8" rx="2" fill="#e50914" stroke="#0f172a" strokeWidth="2.5"/>
+                    <circle cx="32" cy="33" r="1.5" fill="white"/>
+                    <circle cx="48" cy="18" r="8" fill="#e50914" stroke="#0f172a" strokeWidth="2.5"/>
+                    <circle cx="47" cy="17" r="3.5" fill="white"/>
+                    <path d="M53 23L57 27" stroke="#0f172a" strokeWidth="3" strokeLinecap="round"/>
+                  </svg>
                 </div>
+
+                {/* Title only */}
+                <h3 className="text-sm sm:text-lg lg:text-xl font-black text-slate-900 group-hover:text-[#e50914] transition-colors mt-2 sm:mt-3 leading-tight tracking-tight">
+                  Find a Job
+                </h3>
               </Link>
 
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2.5 Quick Portals & Hubs (Clean App Card Style with Vector Icons matching reference) */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6">
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_24px_rgb(0,0,0,0.04)] p-4 sm:p-6 transition-all">
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-y-5 gap-x-2 sm:gap-4 items-center">
+
+            {/* 1. Properties */}
+            <Link
+              href="/properties"
+              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
+            >
+              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 21L24 7L41 21" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M11 18V39C11 40.1 11.9 41 13 41H35C36.1 41 37 40.1 37 39V18" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M31 13V9H35V16" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="15" y="22" width="7" height="7" rx="1.5" fill="#008080" stroke="#0f172a" strokeWidth="2"/>
+                  <rect x="26" y="22" width="7" height="7" rx="1.5" fill="#008080" stroke="#0f172a" strokeWidth="2"/>
+                  <path d="M20 41V32C20 31.4 20.4 31 21 31H27C27.6 31 28 31.4 28 32V41" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
+                Properties
+              </span>
+            </Link>
+
+            {/* 2. Home Services */}
+            <div
+              onClick={() => router.push('/services')}
+              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
+            >
+              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="8" y="16" width="32" height="24" rx="4" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
+                  <path d="M8 25H40" stroke="#0f172a" strokeWidth="2"/>
+                  <path d="M18 16V10C18 9.4 18.4 9 19 9H29C29.6 9 30 9.4 30 10V16" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round"/>
+                  <rect x="21" y="22" width="6" height="6" rx="1.5" fill="#008080" stroke="#0f172a" strokeWidth="2"/>
+                  <path d="M15 34L20 29" stroke="#008080" strokeWidth="2.5" strokeLinecap="round"/>
+                  <path d="M33 34L28 29" stroke="#008080" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
+                Services
+              </span>
+            </div>
+
+            {/* 3. Travels */}
+            <div
+              onClick={() => router.push('/hire-vehicle')}
+              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
+            >
+              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="10" y="10" width="28" height="26" rx="5" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
+                  <rect x="14" y="15" width="20" height="11" rx="2" fill="#008080" stroke="#0f172a" strokeWidth="2"/>
+                  <circle cx="16" cy="30" r="2.5" fill="#008080" stroke="#0f172a" strokeWidth="1.5"/>
+                  <circle cx="32" cy="30" r="2.5" fill="#008080" stroke="#0f172a" strokeWidth="1.5"/>
+                  <path d="M21 30H27" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
+                  <rect x="12" y="36" width="6" height="4" rx="1" fill="#0f172a"/>
+                  <rect x="30" y="36" width="6" height="4" rx="1" fill="#0f172a"/>
+                  <path d="M10 20H7V24H10" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M38 20H41V24H38" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
+                Travels
+              </span>
+            </div>
+
+            {/* 4. Resorts */}
+            <div
+              onClick={() => router.push('/resorts')}
+              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
+            >
+              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M33 7C28 7 24 11 24 16H42C42 11 38 7 33 7Z" fill="#008080" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
+                  <path d="M33 7V23" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M30 7C28.5 10 28 13 28 16" stroke="#0f172a" strokeWidth="1.5"/>
+                  <path d="M36 7C37.5 10 38 13 38 16" stroke="#0f172a" strokeWidth="1.5"/>
+                  <path d="M8 31L18 23L34 25L38 31" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 31L12 37" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M34 30L36 37" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M17 24L33 26" stroke="#008080" strokeWidth="3" strokeLinecap="round"/>
+                  <path d="M6 39H42" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
+                Resorts
+              </span>
+            </div>
+
+            {/* 5. Hotels */}
+            <div
+              onClick={() => router.push('/hotels')}
+              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
+            >
+              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 12C14 10.9 14.9 10 16 10H32C33.1 10 34 10.9 34 12V40H14V12Z" fill="#008080" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
+                  <rect x="12" y="8" width="24" height="4" rx="1.5" fill="white" stroke="#0f172a" strokeWidth="2"/>
+                  <rect x="18" y="16" width="3" height="4" rx="0.5" fill="white"/>
+                  <rect x="27" y="16" width="3" height="4" rx="0.5" fill="white"/>
+                  <rect x="18" y="23" width="3" height="4" rx="0.5" fill="white"/>
+                  <rect x="27" y="23" width="3" height="4" rx="0.5" fill="white"/>
+                  <path d="M21 40V33H27V40" fill="white" stroke="#0f172a" strokeWidth="2"/>
+                  <path d="M8 40H40" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
+                Hotels
+              </span>
+            </div>
+
+            {/* 6. Creators */}
+            <div
+              onClick={() => router.push('/creators')}
+              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
+            >
+              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="8" y="13" width="22" height="22" rx="4" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
+                  <path d="M30 19L40 13V35L30 29" fill="#008080" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
+                  <polygon points="17,19 17,29 25,24" fill="#008080" stroke="#0f172a" strokeWidth="1.5" strokeLinejoin="round"/>
+                  <path d="M14 35L11 41" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M19 35L19 41" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M24 35L27 41" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
+                Creators
+              </span>
+            </div>
+
+            {/* 7. Used Items */}
+            <div
+              onClick={() => setPortraitMarketplaceOpen(true)}
+              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
+            >
+              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 16L15 40H33L36 16H12Z" fill="white" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
+                  <path d="M19 18V12C19 9.8 20.8 8 23 8H25C27.2 8 29 9.8 29 12V18" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round"/>
+                  <circle cx="24" cy="27" r="6" fill="#008080" stroke="#0f172a" strokeWidth="2"/>
+                  <path d="M22 25L26 29" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="23" cy="28.5" r="0.75" fill="white"/>
+                  <circle cx="25" cy="25.5" r="0.75" fill="white"/>
+                </svg>
+              </div>
+              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
+                Marketplace
+              </span>
+            </div>
+
+            {/* 8. Blood Donors */}
+            <div
+              onClick={() => router.push('/blood-donation')}
+              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
+            >
+              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M24 6C24 6 12 20 12 28C12 34.6 17.4 40 24 40C30.6 40 36 34.6 36 28C36 20 24 6 24 6Z" fill="#e50914" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
+                  <path d="M20 28H28" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                  <path d="M24 24V32" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#e50914] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
+                Blood Donors
+              </span>
+            </div>
+
           </div>
         </div>
       </div>
 
       {/* 3. Grid of Category Blocks (Explore Categories - Popular style compact cards) */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-5 sm:mt-7">
-        <div className="flex items-center justify-between border-b border-slate-200/60 pb-2 mb-3.5">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight flex items-center gap-1.5">
-                <span className="h-4 w-1 rounded-full bg-teal-600 shrink-0"></span>
-                <span>{t('hero.explore_categories')}</span>
-              </h2>
-            </div>
-            <div className="h-1 w-10 sm:w-12 bg-gradient-to-r from-teal-600 to-emerald-500 rounded-full mt-1"></div>
-          </div>
+        <div className="flex items-center justify-between border-b border-slate-200/60 pb-2.5 mb-3.5">
+          <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <span className="h-3.5 w-1 rounded-full bg-[#008080] shrink-0"></span>
+            <span>Explore Categories</span>
+          </h2>
           <button
             onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
-            className="text-[10.5px] sm:text-xs font-black text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200/70 px-3 py-1 rounded-full shadow-2xs transition-all cursor-pointer"
+            className="text-[11px] sm:text-xs font-black text-[#008080] hover:text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200/80 px-3 py-1 rounded-full shadow-2xs transition-all cursor-pointer"
           >
-            {isCategoriesExpanded ? 'View Less ↑' : `View All ${categories.length} Categories ↓`}
+            {isCategoriesExpanded ? 'Less ↑' : `All (${categories.length}) ↓`}
           </button>
         </div>
 
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 gap-2 sm:gap-3">
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 gap-2.5 sm:gap-3">
           {displayedCategories.map((cat) => (
             <div
               key={cat.name}
               onClick={() => router.push(`/search?category=${encodeURIComponent(cat.name)}`)}
-              className="group bg-white rounded-2xl border border-slate-200/80 p-2 sm:p-2.5 shadow-2xs hover:shadow-md hover:border-teal-300/80 transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col items-center justify-between text-center relative"
+              className="group bg-white rounded-[22px_22px_38px_6px] border border-[#ead9d0] p-2 sm:p-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md hover:border-[#dfc4b6] hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center justify-between text-center relative"
             >
-              {/* Clean Image Box */}
-              <div className="w-full aspect-square rounded-xl bg-slate-100 overflow-hidden transition-transform duration-300 group-hover:scale-105 shadow-2xs">
+              {/* Clean Image Box matching 2nd image */}
+              <div className="w-full aspect-square rounded-[14px] sm:rounded-[16px] bg-slate-100 overflow-hidden transition-transform duration-300 group-hover:scale-105 shadow-2xs">
                 <img
                   src={cat.image}
                   alt={cat.name}
                   loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/imagess/shop offer.png';
+                    (e.target as HTMLImageElement).src = '/imagess/used items.png';
                   }}
                 />
               </div>
 
-              {/* Title label */}
-              <p className="text-[10px] sm:text-[11px] font-bold text-slate-800 text-center leading-tight mt-1.5 line-clamp-2 group-hover:text-teal-700 transition-colors w-full px-0.5">
-                {cat.name}
-              </p>
+              {/* Title label matching 2nd image */}
+              <div className="min-h-[2.3rem] sm:min-h-[2.5rem] flex items-center justify-center w-full px-0.5 mt-1.5 sm:mt-2 mb-0.5">
+                <p className="text-[10.5px] sm:text-[12px] font-bold text-slate-700 text-center leading-tight line-clamp-2 group-hover:text-teal-700 transition-colors">
+                  {cat.name}
+                </p>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-
-      {/* 3. Portrait Style Action Cards Grid (Trending Quick Portals - Sorted by Priority) */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-6 sm:mt-9">
-        <div className="flex items-center justify-between gap-2 border-b border-slate-200/60 pb-2.5 mb-3">
-          <h2 className="text-xs sm:text-[13px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap min-w-0">
-            <span className="h-4 w-1 rounded-full bg-teal-600 shrink-0"></span>
-            <span>Trending Quick Portals &amp; Hubs</span>
-          </h2>
-          <span className="text-[9.5px] sm:text-[10.5px] font-bold text-slate-400 whitespace-nowrap shrink-0">1-Tap Direct Access</span>
-        </div>
-
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-10 gap-2.5 sm:gap-3.5">
-
-          {/* 0. Properties in Boisar */}
-          <Link
-            href="/properties"
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-cyan-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group block"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img 
-                src="/imagess/find best real estate.png" 
-                alt="Properties & Flats in Boisar"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-              />
-            </div>
-          </Link>
-
-          {/* 1. Home Services */}
-          <div
-            onClick={() => router.push('/services')}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-teal-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/home servvies pill.png" alt="Home Services"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* 2. Travels (Bus + Cab + Tempo) */}
-          <div
-            onClick={() => router.push('/hire-vehicle')}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-orange-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/travels.png" alt="Travels"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* 3. Resort & Villa Booking */}
-          <div
-            onClick={() => router.push('/resorts')}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-emerald-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img 
-                src="/imagess/resort booking.png" 
-                alt="Resort & Villa Booking"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/imagess/hotel booking.png";
-                }}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-              />
-            </div>
-          </div>
-
-          {/* 4. Hotel Booking */}
-          <div
-            onClick={() => router.push('/hotels')}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-purple-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/hotel booking.png" alt="Hotel Booking"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* 5. Influencers & Creators */}
-          <div
-            onClick={() => router.push('/creators')}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-rose-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/hire a influcer.png" alt="Influencers"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* 7. Sports Turf & Game Zone */}
-          <div
-            onClick={() => setPortraitTurfOpen(true)}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-indigo-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/turf game.png" alt="Sports Turf & Game Zone"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* 8. Shop Offers */}
-          <div
-            onClick={() => setPortraitOffersOpen(true)}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-amber-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/shop offer.png" alt="Shop Offers"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* 9. Used Items (Marketplace) */}
-          <div
-            onClick={() => setPortraitMarketplaceOpen(true)}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-emerald-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/used items.png" alt="Used Items"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-          {/* 10. Blood Donors */}
-          <div
-            onClick={() => router.push('/blood-donation')}
-            className="relative aspect-square w-full max-w-[160px] mx-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-md hover:shadow-xl hover:border-red-400/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
-          >
-            <div className="relative w-full h-full rounded-xl overflow-hidden bg-slate-50">
-              <img src="/imagess/blood donor.png" alt="Blood Donors"
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* 4. Verified Services & Financial Rails (District/BookMyShow Portrait Poster Cards Style) */}
+      {/* 4. Verified Services & Financial Rails */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-7 sm:mt-10">
         <div className="space-y-7 sm:space-y-10">
-          {[
-            {
-              id: 'loans',
-              title: 'Loans in Boisar',
-              searchQuery: 'Loan',
-              items: [
-                {
-                  title: 'Home Loan',
-                  subtitle: '8.4% ROI | Zero Prepay',
-                  tag: 'From 8.4%',
-                  searchQuery: 'Home Loan',
-                  image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Personal Loan',
-                  subtitle: 'In 24h | Instant Disbursal',
-                  tag: '24h Disbursal',
-                  searchQuery: 'Personal Loan',
-                  image: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Business Loan',
-                  subtitle: '₹50L Limit | Collateral Free',
-                  tag: 'Up to ₹50L',
-                  searchQuery: 'Business Loan',
-                  image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Gold Loan',
-                  subtitle: 'Instant Cash | Low Interest',
-                  tag: 'Instant Cash',
-                  searchQuery: 'Gold Loan',
-                  image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Vehicle Loan',
-                  subtitle: '100% On-road | Fast Approval',
-                  tag: '100% Funding',
-                  searchQuery: 'Vehicle Loan',
-                  image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Education Loan',
-                  subtitle: 'Global & India | Low Margin',
-                  tag: '0% Prepay',
-                  searchQuery: 'Education Loan',
-                  image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=500&q=80'
-                },
-              ]
-            },
-            {
-              id: 'insurance',
-              title: 'Insurance Plans',
-              searchQuery: 'Insurance',
-              items: [
-                {
-                  title: 'Health Insurance',
-                  subtitle: 'Cashless | 10,000+ Hospitals',
-                  tag: 'Cashless',
-                  searchQuery: 'Health Insurance',
-                  image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Term Life',
-                  subtitle: '₹1 Cr Cover | From ₹490/mo',
-                  tag: '₹1 Cr Cover',
-                  searchQuery: 'Life Insurance',
-                  image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Vehicle Cover',
-                  subtitle: 'In 2 Mins | 0% Dep Included',
-                  tag: 'Instant Policy',
-                  searchQuery: 'Vehicle Insurance',
-                  image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Shop & Godown',
-                  subtitle: 'Tarapur MIDC | Fire & Theft',
-                  tag: 'MIDC Safe',
-                  searchQuery: 'Insurance',
-                  image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Home & Flat',
-                  subtitle: 'From ₹3/Day | Structure & Items',
-                  tag: '₹3/Day',
-                  searchQuery: 'Home Insurance',
-                  image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Travel Policy',
-                  subtitle: 'Worldwide Cover | Medical & Flight',
-                  tag: 'Global Cover',
-                  searchQuery: 'Travel Insurance',
-                  image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=500&q=80'
-                },
-              ]
-            },
-            {
-              id: 'events',
-              title: 'Events & Experiences',
-              searchQuery: 'Events',
-              items: [
-                {
-                  title: 'Live Music Nights',
-                  subtitle: 'This Weekend | Cafes & Lounges',
-                  tag: 'Live Gigs',
-                  searchQuery: 'Music',
-                  image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Turf & Cricket',
-                  subtitle: 'Box Cricket | Night Leagues',
-                  tag: 'Tournaments',
-                  searchQuery: 'Turf',
-                  image: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Festivals & Flea',
-                  subtitle: 'Family & Food | Weekend Carnival',
-                  tag: 'Family Fun',
-                  searchQuery: 'Events',
-                  image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Workshops & Art',
-                  subtitle: 'Hands-on DIY | Kids & Adults',
-                  tag: 'Hands-on',
-                  searchQuery: 'Workshops',
-                  image: 'https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Stand-up Comedy',
-                  subtitle: 'Live Laughs | Weekend Lineup',
-                  tag: 'Comedy',
-                  searchQuery: 'Comedy',
-                  image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Business Meetups',
-                  subtitle: 'Monthly | Boisar Entrepreneurs',
-                  tag: 'Networking',
-                  searchQuery: 'Business',
-                  image: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=500&q=80'
-                },
-              ]
-            },
-            {
-              id: 'store',
-              title: 'Stores & Shopping',
-              searchQuery: 'Store',
-              items: [
-                {
-                  title: 'Electronics & Mobiles',
-                  subtitle: '0% EMI | Official Brand Warranty',
-                  tag: 'Best Deals',
-                  searchQuery: 'Electronics',
-                  image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Fashion & Boutiques',
-                  subtitle: 'Ethnic & Western | Latest Trends',
-                  tag: 'New Styles',
-                  searchQuery: 'Clothing',
-                  image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Daily Groceries',
-                  subtitle: 'Express Delivery | Fresh Daily',
-                  tag: 'Fast Delivery',
-                  searchQuery: 'Grocery',
-                  image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Furniture & Living',
-                  subtitle: 'Direct Factory Prices | Home Decor',
-                  tag: 'Direct Factory',
-                  searchQuery: 'Furniture',
-                  image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Books & Supplies',
-                  subtitle: 'School & College | Office Needs',
-                  tag: 'Supplies',
-                  searchQuery: 'Stationery',
-                  image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=500&q=80'
-                },
-                {
-                  title: 'Fitness & Sports',
-                  subtitle: 'Original Gear | Gym Supplements',
-                  tag: '100% Genuine',
-                  searchQuery: 'Gym',
-                  image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=500&q=80'
-                },
-              ]
-            },
-          ].map(section => (
-            <div key={section.id}>
-              {/* Section Header */}
-              <div className="mb-2.5 sm:mb-3 flex items-center justify-between">
-                <h3 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
-                  {section.title}
-                </h3>
-                <button
-                  onClick={() => {
-                    const query = section.searchQuery || section.title;
-                    router.push(`/search?query=${encodeURIComponent(query)}`);
-                  }}
-                  className="text-xs sm:text-sm font-bold text-teal-700 hover:text-teal-800 flex items-center gap-0.5 shrink-0 cursor-pointer"
-                >
-                  <span>See all</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
+          {/* Loans in Boisar Section - 2x2 Grid with Swipe */}
+          <div className="py-2 sm:py-4">
+            {/* Left-Aligned Section Header with Amber Underline */}
+            <div className="text-left mb-3.5 sm:mb-4 px-1">
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight inline-block">
+                Loans in <span className="border-b-4 border-amber-500 pb-0.5">Boisar</span>
+              </h3>
+              <p className="text-[11px] min-[400px]:text-xs sm:text-sm text-slate-500 font-semibold mt-0.5 tracking-wide">
+                Lowest Interest Rates • Instant Disbursal
+              </p>
+            </div>
 
-              {/* Horizontal Side-by-Side Swipeable Rail on Mobile, Grid on Desktop (Portrait Movie Poster Cards) */}
-              <div className="flex sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 overflow-x-auto no-scrollbar pb-3 pt-0.5 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory">
-                {section.items.map((item, i) => (
+            {/* Carousel Container with Left & Right Arrow Buttons */}
+            <div className="relative group px-1">
+              {/* Left Arrow Button */}
+              <button
+                type="button"
+                onClick={scrollLoansLeft}
+                aria-label="Scroll Left"
+                className="absolute -left-2 sm:-left-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white shadow-md border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-slate-950 hover:bg-slate-50 cursor-pointer transition-all active:scale-95"
+              >
+                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              </button>
+
+              {/* Right Arrow Button (Amber circular button) */}
+              <button
+                type="button"
+                onClick={scrollLoansRight}
+                aria-label="Scroll Right"
+                className="absolute -right-2 sm:-right-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-amber-500 hover:bg-amber-600 shadow-md flex items-center justify-center text-white cursor-pointer transition-all active:scale-95"
+              >
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              </button>
+
+              {/* 2x2 Grid per slide with Swipe Track */}
+              <div
+                ref={loansRef}
+                className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth py-1 px-0.5 snap-x snap-mandatory"
+              >
+                {[
+                  // Slide 1 (4 items in 2x2 grid)
+                  [
+                    {
+                      id: 'home-loan',
+                      title: 'Home Loan',
+                      subtitle: 'From 8.4% ROI • Zero Prepay',
+                      rating: '4.8',
+                      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'personal-loan',
+                      title: 'Personal Loan',
+                      subtitle: 'In 24h • Instant Disbursal',
+                      rating: '4.9',
+                      image: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'business-loan',
+                      title: 'Business Loan',
+                      subtitle: '₹50L Limit • Collateral Free',
+                      rating: '4.8',
+                      image: 'https://images.unsplash.com/photo-1664575602276-acd073f104c1?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'gold-loan',
+                      title: 'Gold Loan',
+                      subtitle: 'Instant Cash • Low Interest',
+                      rating: '4.9',
+                      image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=600&q=80'
+                    }
+                  ],
+                  // Slide 2 (4 items in 2x2 grid)
+                  [
+                    {
+                      id: 'vehicle-loan',
+                      title: 'Vehicle Loan',
+                      subtitle: '100% On-road • Fast Approval',
+                      rating: '4.7',
+                      image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'education-loan',
+                      title: 'Education Loan',
+                      subtitle: 'Global & India • Low Margin',
+                      rating: '4.8',
+                      image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'property-loan',
+                      title: 'Loan Against Property',
+                      subtitle: 'Up to ₹5 Cr • Low Interest',
+                      rating: '4.8',
+                      image: 'https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'commercial-loan',
+                      title: 'Commercial Loan',
+                      subtitle: 'Tarapur MIDC & Boisar Hub',
+                      rating: '4.9',
+                      image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80'
+                    }
+                  ]
+                ].map((slide, slideIdx) => (
                   <div
-                    key={i}
-                    onClick={() => {
-                      const query = item.searchQuery || item.title;
-                      router.push(`/search?query=${encodeURIComponent(query)}`);
-                    }}
-                    className="group w-[145px] min-[390px]:w-[160px] sm:w-auto shrink-0 cursor-pointer text-left snap-start transition-all duration-300"
+                    key={slideIdx}
+                    className="w-full min-w-full shrink-0 snap-start grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4"
                   >
-                    {/* Portrait Poster Image Container */}
-                    <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/80 shadow-2xs group-hover:shadow-lg transition-all duration-300 group-hover:-translate-y-1">
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      
-                      {item.tag && (
-                        <span className="absolute bottom-2 left-2 text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md bg-black/65 text-white backdrop-blur-xs tracking-tight">
-                          {item.tag}
-                        </span>
-                      )}
-                    </div>
+                    {slide.map((loan) => (
+                      <div
+                        key={loan.id}
+                        onClick={() => router.push(`/search?query=${encodeURIComponent(loan.title)}`)}
+                        className="group relative aspect-[1.15/1] sm:aspect-[1.3/1] md:aspect-[1.4/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200/90 bg-slate-900"
+                      >
+                        {/* Full-bleed photo */}
+                        <img
+                          src={loan.image}
+                          alt={loan.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                        />
+                        {/* Dark gradient overlay matching reference */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
 
-                    {/* Movie-Style Typography (Title + Subtitle below image) */}
-                    <div className="pt-2 px-0.5">
-                      <h4 className="text-xs sm:text-[13.5px] font-black text-slate-900 group-hover:text-teal-700 transition-colors truncate">
-                        {item.title}
-                      </h4>
-                      <p className="text-[10.5px] sm:text-[11.5px] text-slate-500 font-medium truncate mt-0.5">
-                        {item.subtitle}
-                      </p>
-                    </div>
+                        {/* Bottom Content Bar matching user's image */}
+                        <div className="absolute bottom-2.5 sm:bottom-3.5 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 flex items-end justify-between gap-1.5 z-10 pointer-events-none">
+                          <div className="min-w-0 pr-1 text-left">
+                            <h4 className="text-white font-black text-xs sm:text-sm lg:text-base leading-tight drop-shadow-md">
+                              {loan.title}
+                            </h4>
+                            {loan.subtitle && (
+                              <p className="text-white/80 text-[10px] sm:text-xs font-semibold mt-0.5 truncate hidden min-[360px]:block">
+                                {loan.subtitle}
+                              </p>
+                            )}
+                          </div>
+                          <div className="shrink-0 bg-black/60 backdrop-blur-md text-white text-[9.5px] sm:text-xs font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border border-white/20 flex items-center gap-1 shadow-xs">
+                            <span className="text-amber-400">★</span>
+                            <span>{loan.rating}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
             </div>
-          ))}
+          </div>
+
+          {/* Insurance Plans Section - 2x2 Grid with Swipe */}
+          <div className="py-2 sm:py-4">
+            {/* Left-Aligned Section Header with Emerald Underline */}
+            <div className="text-left mb-3.5 sm:mb-4 px-1">
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight inline-block">
+                Insurance <span className="border-b-4 border-emerald-500 pb-0.5">Plans</span>
+              </h3>
+              <p className="text-[11px] min-[400px]:text-xs sm:text-sm text-slate-500 font-semibold mt-0.5 tracking-wide">
+                100% Cashless Claims • Complete Family Cover
+              </p>
+            </div>
+
+            {/* Carousel Container with Left & Right Arrow Buttons */}
+            <div className="relative group px-1">
+              {/* Left Arrow Button */}
+              <button
+                type="button"
+                onClick={scrollInsuranceLeft}
+                aria-label="Scroll Left"
+                className="absolute -left-2 sm:-left-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white shadow-md border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-slate-950 hover:bg-slate-50 cursor-pointer transition-all active:scale-95"
+              >
+                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              </button>
+
+              {/* Right Arrow Button (Emerald circular button) */}
+              <button
+                type="button"
+                onClick={scrollInsuranceRight}
+                aria-label="Scroll Right"
+                className="absolute -right-2 sm:-right-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-emerald-600 hover:bg-emerald-700 shadow-md flex items-center justify-center text-white cursor-pointer transition-all active:scale-95"
+              >
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              </button>
+
+              {/* 2x2 Grid per slide with Swipe Track */}
+              <div
+                ref={insuranceRef}
+                className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth py-1 px-0.5 snap-x snap-mandatory"
+              >
+                {[
+                  // Slide 1 (4 items in 2x2 grid)
+                  [
+                    {
+                      id: 'health-insurance',
+                      title: 'Health Insurance',
+                      subtitle: 'Cashless • 10,000+ Hospitals',
+                      rating: '4.9',
+                      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'term-life',
+                      title: 'Term Life Cover',
+                      subtitle: '₹1 Cr Cover • From ₹490/mo',
+                      rating: '4.8',
+                      image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'vehicle-insurance',
+                      title: 'Vehicle Cover',
+                      subtitle: 'In 2 Mins • Zero Dep Included',
+                      rating: '4.9',
+                      image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'shop-insurance',
+                      title: 'Shop & Godown',
+                      subtitle: 'Tarapur MIDC • Fire & Theft',
+                      rating: '4.8',
+                      image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80'
+                    }
+                  ],
+                  // Slide 2 (4 items in 2x2 grid)
+                  [
+                    {
+                      id: 'home-insurance',
+                      title: 'Home & Flat',
+                      subtitle: 'From ₹3/Day • Structure & Assets',
+                      rating: '4.7',
+                      image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'travel-insurance',
+                      title: 'Travel Policy',
+                      subtitle: 'Worldwide • Flight & Medical',
+                      rating: '4.8',
+                      image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'fire-insurance',
+                      title: 'Fire & Burglary',
+                      subtitle: 'Factory, Warehouse & Stock',
+                      rating: '4.8',
+                      image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'senior-health',
+                      title: 'Senior Citizen Care',
+                      subtitle: 'Pre-existing Illness Covered',
+                      rating: '4.9',
+                      image: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?auto=format&fit=crop&w=600&q=80'
+                    }
+                  ]
+                ].map((slide, slideIdx) => (
+                  <div
+                    key={slideIdx}
+                    className="w-full min-w-full shrink-0 snap-start grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4"
+                  >
+                    {slide.map((plan) => (
+                      <div
+                        key={plan.id}
+                        onClick={() => router.push(`/search?query=${encodeURIComponent(plan.title)}`)}
+                        className="group relative aspect-[1.15/1] sm:aspect-[1.3/1] md:aspect-[1.4/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200/90 bg-slate-900"
+                      >
+                        {/* Full-bleed photo */}
+                        <img
+                          src={plan.image}
+                          alt={plan.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                        />
+                        {/* Dark gradient overlay matching reference */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
+
+                        {/* Bottom Content Bar matching user's image */}
+                        <div className="absolute bottom-2.5 sm:bottom-3.5 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 flex items-end justify-between gap-1.5 z-10 pointer-events-none">
+                          <div className="min-w-0 pr-1 text-left">
+                            <h4 className="text-white font-black text-xs sm:text-sm lg:text-base leading-tight drop-shadow-md">
+                              {plan.title}
+                            </h4>
+                            {plan.subtitle && (
+                              <p className="text-white/80 text-[10px] sm:text-xs font-semibold mt-0.5 truncate hidden min-[360px]:block">
+                                {plan.subtitle}
+                              </p>
+                            )}
+                          </div>
+                          <div className="shrink-0 bg-black/60 backdrop-blur-md text-white text-[9.5px] sm:text-xs font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border border-white/20 flex items-center gap-1 shadow-xs">
+                            <span className="text-amber-400">★</span>
+                            <span>{plan.rating}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Digital Marketing Services Section - 2x2 Grid with Swipe */}
+          <div className="py-2 sm:py-4">
+            {/* Left-Aligned Section Header with Red Underline */}
+            <div className="text-left mb-3.5 sm:mb-4 px-1">
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight inline-block">
+                Digital Marketing <span className="border-b-4 border-red-500 pb-0.5">Services</span>
+              </h3>
+              <p className="text-[11px] min-[400px]:text-xs sm:text-sm text-slate-500 font-semibold mt-0.5 tracking-wide">
+                Leading Digital Marketing Agency in India
+              </p>
+            </div>
+
+            {/* Carousel Container with Left & Right Arrow Buttons */}
+            <div className="relative group px-1">
+              {/* Left Arrow Button */}
+              <button
+                type="button"
+                onClick={scrollDigitalLeft}
+                aria-label="Scroll Left"
+                className="absolute -left-2 sm:-left-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white shadow-md border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-slate-950 hover:bg-slate-50 cursor-pointer transition-all active:scale-95"
+              >
+                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              </button>
+
+              {/* Right Arrow Button (Red circular button from reference screenshot) */}
+              <button
+                type="button"
+                onClick={scrollDigitalRight}
+                aria-label="Scroll Right"
+                className="absolute -right-2 sm:-right-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-600 hover:bg-red-700 shadow-md flex items-center justify-center text-white cursor-pointer transition-all active:scale-95"
+              >
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              </button>
+
+              {/* 2x2 Grid per slide with Swipe Track */}
+              <div
+                ref={digitalMarketingRef}
+                className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth py-1 px-0.5 snap-x snap-mandatory"
+              >
+                {[
+                  // Slide 1 (4 items in 2x2 grid)
+                  [
+                    {
+                      id: 'web-dev',
+                      title: 'Web Development',
+                      subtitle: 'Modern Websites & Apps',
+                      rating: '4.9',
+                      image: '/marketing/web-dev.jpg'
+                    },
+                    {
+                      id: 'ugc-video',
+                      title: 'UGC Video Ads',
+                      subtitle: 'High Converting Content',
+                      rating: '4.8',
+                      image: '/marketing/ugc-video.jpg'
+                    },
+                    {
+                      id: 'graphic-design',
+                      title: 'Graphic Designing',
+                      subtitle: 'Logos, Banners & Branding',
+                      rating: '4.9',
+                      image: '/marketing/graphic-design.jpg'
+                    },
+                    {
+                      id: 'seo',
+                      title: 'SEO & Google Ranking',
+                      subtitle: '#1 Rank & Leads',
+                      rating: '4.8',
+                      image: '/marketing/seo.jpg'
+                    }
+                  ],
+                  // Slide 2 (4 items in 2x2 grid)
+                  [
+                    {
+                      id: 'social-media',
+                      title: 'Social Media Growth',
+                      subtitle: 'Instagram & Facebook Ads',
+                      rating: '4.9',
+                      image: '/marketing/social-media.jpg'
+                    },
+                    {
+                      id: 'local-pr',
+                      title: 'Google My Business',
+                      subtitle: 'Local SEO & Reviews',
+                      rating: '4.8',
+                      image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'performance-ads',
+                      title: 'Performance Marketing',
+                      subtitle: 'Meta & WhatsApp Funnels',
+                      rating: '4.9',
+                      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'influencer-marketing',
+                      title: 'Creator Collaborations',
+                      subtitle: 'Boisar & Palghar Influencers',
+                      rating: '4.8',
+                      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'
+                    }
+                  ]
+                ].map((slide, slideIdx) => (
+                  <div
+                    key={slideIdx}
+                    className="w-full min-w-full shrink-0 snap-start grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4"
+                  >
+                    {slide.map((service) => (
+                      <div
+                        key={service.id}
+                        onClick={() => router.push(`/search?query=${encodeURIComponent(service.title)}`)}
+                        className="group relative aspect-[1.15/1] sm:aspect-[1.3/1] md:aspect-[1.4/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200/90 bg-slate-900"
+                      >
+                        {/* Full-bleed photo */}
+                        <img
+                          src={service.image}
+                          alt={service.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                        />
+                        {/* Dark gradient overlay matching reference */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
+
+                        {/* Bottom Content Bar matching user's image */}
+                        <div className="absolute bottom-2.5 sm:bottom-3.5 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 flex items-end justify-between gap-1.5 z-10 pointer-events-none">
+                          <div className="min-w-0 pr-1 text-left">
+                            <h4 className="text-white font-black text-xs sm:text-sm lg:text-base leading-tight drop-shadow-md">
+                              {service.title}
+                            </h4>
+                            {service.subtitle && (
+                              <p className="text-white/80 text-[10px] sm:text-xs font-semibold mt-0.5 truncate hidden min-[360px]:block">
+                                {service.subtitle}
+                              </p>
+                            )}
+                          </div>
+                          <div className="shrink-0 bg-black/60 backdrop-blur-md text-white text-[9.5px] sm:text-xs font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border border-white/20 flex items-center gap-1 shadow-xs">
+                            <span className="text-amber-400">★</span>
+                            <span>{service.rating}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Stores & Shopping Section - 2x2 Grid with Swipe */}
+          <div className="py-2 sm:py-4">
+            {/* Left-Aligned Section Header with Indigo Underline */}
+            <div className="text-left mb-3.5 sm:mb-4 px-1">
+              <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight inline-block">
+                Stores &amp; <span className="border-b-4 border-indigo-500 pb-0.5">Shopping</span>
+              </h3>
+              <p className="text-[11px] min-[400px]:text-xs sm:text-sm text-slate-500 font-semibold mt-0.5 tracking-wide">
+                Explore Boisar&apos;s Best Stores &amp; Markets
+              </p>
+            </div>
+
+            {/* Carousel Container with Left & Right Arrow Buttons */}
+            <div className="relative group px-1">
+              {/* Left Arrow Button */}
+              <button
+                type="button"
+                onClick={scrollStoreLeft}
+                aria-label="Scroll Left"
+                className="absolute -left-2 sm:-left-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white shadow-md border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-slate-950 hover:bg-slate-50 cursor-pointer transition-all active:scale-95"
+              >
+                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              </button>
+
+              {/* Right Arrow Button (Indigo circular button) */}
+              <button
+                type="button"
+                onClick={scrollStoreRight}
+                aria-label="Scroll Right"
+                className="absolute -right-2 sm:-right-3.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-indigo-600 hover:bg-indigo-700 shadow-md flex items-center justify-center text-white cursor-pointer transition-all active:scale-95"
+              >
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
+              </button>
+
+              {/* 2x2 Grid per slide with Swipe Track */}
+              <div
+                ref={storeRef}
+                className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth py-1 px-0.5 snap-x snap-mandatory"
+              >
+                {[
+                  // Slide 1 (4 items in 2x2 grid)
+                  [
+                    {
+                      id: 'electronics',
+                      title: 'Electronics & Mobiles',
+                      subtitle: '0% EMI | Brand Warranty',
+                      rating: '4.9',
+                      searchQuery: 'Electronics',
+                      image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'fashion',
+                      title: 'Fashion & Boutiques',
+                      subtitle: 'Ethnic & Western Latest Trends',
+                      rating: '4.8',
+                      searchQuery: 'Clothing',
+                      image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'grocery',
+                      title: 'Daily Groceries',
+                      subtitle: 'Express Delivery | Fresh Daily',
+                      rating: '4.8',
+                      searchQuery: 'Grocery',
+                      image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'furniture',
+                      title: 'Furniture & Living',
+                      subtitle: 'Factory Prices | Home Decor',
+                      rating: '4.9',
+                      searchQuery: 'Furniture',
+                      image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80'
+                    }
+                  ],
+                  // Slide 2 (4 items in 2x2 grid)
+                  [
+                    {
+                      id: 'books',
+                      title: 'Books & Supplies',
+                      subtitle: 'School & College | Office Needs',
+                      rating: '4.7',
+                      searchQuery: 'Stationery',
+                      image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'sports',
+                      title: 'Fitness & Sports',
+                      subtitle: 'Original Gear | Supplements',
+                      rating: '4.8',
+                      searchQuery: 'Gym',
+                      image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'jewellery',
+                      title: 'Jewellery & Gold',
+                      subtitle: 'Hallmarked & Bridal Sets',
+                      rating: '4.9',
+                      searchQuery: 'Jewellery',
+                      image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'appliances',
+                      title: 'Home Appliances',
+                      subtitle: 'ACs, TVs & Kitchen Setup',
+                      rating: '4.8',
+                      searchQuery: 'Appliances',
+                      image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=600&q=80'
+                    }
+                  ]
+                ].map((slide, slideIdx) => (
+                  <div
+                    key={slideIdx}
+                    className="w-full min-w-full shrink-0 snap-start grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4"
+                  >
+                    {slide.map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => {
+                          const query = item.searchQuery || item.title;
+                          router.push(`/search?query=${encodeURIComponent(query)}`);
+                        }}
+                        className="group relative aspect-[1.15/1] sm:aspect-[1.3/1] md:aspect-[1.4/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200/90 bg-slate-900"
+                      >
+                        {/* Full-bleed photo */}
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                        />
+                        {/* Dark gradient overlay matching reference */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
+
+                        {/* Bottom Content Bar matching user's image */}
+                        <div className="absolute bottom-2.5 sm:bottom-3.5 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 flex items-end justify-between gap-1.5 z-10 pointer-events-none">
+                          <div className="min-w-0 pr-1 text-left">
+                            <h4 className="text-white font-black text-xs sm:text-sm lg:text-base leading-tight drop-shadow-md">
+                              {item.title}
+                            </h4>
+                            {item.subtitle && (
+                              <p className="text-white/80 text-[10px] sm:text-xs font-semibold mt-0.5 truncate hidden min-[360px]:block">
+                                {item.subtitle}
+                              </p>
+                            )}
+                          </div>
+                          <div className="shrink-0 bg-black/60 backdrop-blur-md text-white text-[9.5px] sm:text-xs font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border border-white/20 flex items-center gap-1 shadow-xs">
+                            <span className="text-amber-400">★</span>
+                            <span>{item.rating}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* Direct WhatsApp Assistance Footer (Short & Compact) */}
-          <div className="max-w-xl mx-auto py-2 sm:py-2.5 px-3.5 sm:px-4 rounded-xl sm:rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3 text-left shadow-2xs">
-            <div className="min-w-0">
-              <p className="text-xs sm:text-[13px] font-black text-slate-900 truncate">Need help or want to list your business?</p>
-              <p className="text-[10.5px] sm:text-[11.5px] text-slate-500 font-medium truncate">Chat with our Boisar coordinator</p>
+          <div className="max-w-xl mx-auto py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl bg-white border border-slate-200/80 flex items-center justify-between gap-2.5 text-left shadow-2xs">
+            <div className="min-w-0 flex-1">
+              <p className="text-[11.5px] sm:text-xs md:text-[13px] font-black text-slate-900 leading-tight">Need Help or List Business?</p>
+              <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium leading-tight mt-0.5">Chat with Boisar Team</p>
             </div>
             <a
-              href="https://wa.me/917769947217?text=Hi%20Majh%20Boisar,%20I%20need%20help%20with%20Loans/Insurance/Events/Store"
+              href="https://wa.me/917769947217?text=Hi%20Majh%20Boisar,%20I%20need%20help%20with%20Loans/Insurance/Digital%20Marketing/Store"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3.5 py-1.5 rounded-full bg-teal-700 hover:bg-teal-800 text-white text-[11px] sm:text-xs font-black transition-all shadow-xs shrink-0 inline-flex items-center gap-1 hover:scale-105 active:scale-95"
+              className="px-3 py-1.5 rounded-full bg-[#0d6e5a] hover:bg-[#0a5848] text-white text-[10.5px] sm:text-xs font-black transition-all shadow-xs shrink-0 inline-flex items-center gap-1 active:scale-95"
             >
               <span>WhatsApp</span>
               <ChevronRight className="w-3 h-3" />
@@ -2803,90 +3365,187 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
         </div>
       </div>
 
-      {/* 7. Sponsored & Promoted Section (Clean & Simple) */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-8 sm:mt-10">
-        <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4">
-          <div className="flex items-center gap-2">
-            <span className="h-4 w-1 rounded-full bg-teal-600"></span>
-            <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
-              Promote &amp; Grow Your Business
-            </h3>
+
+      {/* Daily Online & Travel Services (Train Ticket, Flight Ticket, Aadhaar Card, PAN Card) - placed above Boisar Places */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-6 sm:mt-8">
+        <div className="bg-[#f8fafc] rounded-3xl border border-slate-200/90 p-3 sm:p-5 shadow-[0_4px_24px_rgb(0,0,0,0.03)]">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
+            
+            {/* 1. Train Ticket */}
+            <div
+              onClick={() => setSelectedUtilityService('train')}
+              className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300 transition-all flex items-center gap-2.5 sm:gap-4 cursor-pointer group select-none"
+            >
+              <div className="relative shrink-0 w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                <svg className="w-10 h-10 sm:w-12 sm:h-12" viewBox="0 0 56 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="6" width="50" height="32" rx="6" fill="#fff" stroke="#1e293b" strokeWidth="2.5"/>
+                  <path d="M3 22H9" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round"/>
+                  <path d="M47 22H53" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round"/>
+                  <path d="M15 17H27" stroke="#1e293b" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M15 27H35" stroke="#1e293b" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="41" cy="14" r="8" fill="#ef4444"/>
+                  <path d="M37.5 14L40 16.5L45 11.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className="min-w-0 text-left">
+                <h4 className="text-xs sm:text-base lg:text-lg font-black text-slate-900 group-hover:text-rose-600 transition-colors leading-tight">
+                  Train Ticket
+                </h4>
+                <p className="text-[10px] sm:text-xs text-slate-500 font-semibold mt-0.5 truncate hidden min-[380px]:block">
+                  IRCTC &amp; PNR Status
+                </p>
+              </div>
+            </div>
+
+            {/* 2. Flight Ticket */}
+            <div
+              onClick={() => setSelectedUtilityService('flight')}
+              className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300 transition-all flex items-center gap-2.5 sm:gap-4 cursor-pointer group select-none"
+            >
+              <div className="relative shrink-0 w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                <svg className="w-10 h-10 sm:w-12 sm:h-12" viewBox="0 0 56 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 24L26 8L34 14L24 24L38 27L42 32L32 32L26 38L22 36L24 28L10 24Z" fill="#fff" stroke="#1e293b" strokeWidth="2.5" strokeLinejoin="round"/>
+                  <path d="M8 36H48" stroke="#1e293b" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 3"/>
+                  <circle cx="41" cy="14" r="8" fill="#ef4444"/>
+                  <circle cx="41" cy="14" r="3" fill="white"/>
+                </svg>
+              </div>
+              <div className="min-w-0 text-left">
+                <h4 className="text-xs sm:text-base lg:text-lg font-black text-slate-900 group-hover:text-rose-600 transition-colors leading-tight">
+                  Flight Ticket
+                </h4>
+                <p className="text-[10px] sm:text-xs text-slate-500 font-semibold mt-0.5 truncate hidden min-[380px]:block">
+                  Domestic &amp; Global Booking
+                </p>
+              </div>
+            </div>
+
+            {/* 3. Aadhaar Card */}
+            <div
+              onClick={() => setSelectedUtilityService('aadhaar')}
+              className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300 transition-all flex items-center gap-2.5 sm:gap-4 cursor-pointer group select-none"
+            >
+              <div className="relative shrink-0 w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                <svg className="w-10 h-10 sm:w-12 sm:h-12" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M22 6C13.1 6 6 13.1 6 22C6 30.9 13.1 38 22 38C30.9 38 38 30.9 38 22" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round"/>
+                  <path d="M14 22C14 17.6 17.6 14 22 14C26.4 14 30 17.6 30 22" stroke="#1e293b" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M18 22C18 19.8 19.8 18 22 18C24.2 18 26 19.8 26 22" stroke="#1e293b" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M22 22V32" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round"/>
+                  <circle cx="34" cy="10" r="5" fill="#ef4444"/>
+                  <path d="M32 10H36" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div className="min-w-0 text-left">
+                <h4 className="text-xs sm:text-base lg:text-lg font-black text-slate-900 group-hover:text-rose-600 transition-colors leading-tight">
+                  Aadhaar Card
+                </h4>
+                <p className="text-[10px] sm:text-xs text-slate-500 font-semibold mt-0.5 truncate hidden min-[380px]:block">
+                  UIDAI Services &amp; Update
+                </p>
+              </div>
+            </div>
+
+            {/* 4. PAN Card */}
+            <div
+              onClick={() => setSelectedUtilityService('pan')}
+              className="bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-slate-300 transition-all flex items-center gap-2.5 sm:gap-4 cursor-pointer group select-none"
+            >
+              <div className="relative shrink-0 w-11 h-11 sm:w-14 sm:h-14 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                <svg className="w-10 h-10 sm:w-12 sm:h-12" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="6" y="10" width="32" height="24" rx="4" fill="#fff" stroke="#1e293b" strokeWidth="2.5"/>
+                  <circle cx="14" cy="20" r="3.5" stroke="#1e293b" strokeWidth="2"/>
+                  <path d="M10 28C10 26 12 25 14 25C16 25 18 26 18 28" stroke="#1e293b" strokeWidth="2"/>
+                  <path d="M22 17H32" stroke="#1e293b" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M22 23H30" stroke="#1e293b" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="34" cy="10" r="5" fill="#ef4444"/>
+                  <path d="M34 8V12" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div className="min-w-0 text-left">
+                <h4 className="text-xs sm:text-base lg:text-lg font-black text-slate-900 group-hover:text-rose-600 transition-colors leading-tight">
+                  PAN Card
+                </h4>
+                <p className="text-[10px] sm:text-xs text-slate-500 font-semibold mt-0.5 truncate hidden min-[380px]:block">
+                  Apply &amp; Link Aadhaar
+                </p>
+              </div>
+            </div>
+
           </div>
-          <button
-            onClick={() => setAdModalOpen(true)}
-            className="text-xs sm:text-sm font-bold text-teal-700 hover:text-teal-800 flex items-center gap-0.5 cursor-pointer"
-          >
-            <span>Partner with us</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+        </div>
+      </div>
+
+      {/* 8. Iconic Places You Need to See (Boisar & Palghar Travel Destinations placed at the bottom of the page) */}
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-5 sm:mt-6 mb-2 sm:mb-3">
+        <div className="flex items-center justify-between mb-3.5 sm:mb-4">
+          <div>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#064e3b] tracking-tight">
+              Iconic places you need to see
+            </h2>
+            <p className="text-[11px] sm:text-xs text-slate-500 font-semibold mt-0.5">
+              Must-visit beaches, sea forts &amp; scenic spots in &amp; around Boisar
+            </p>
+          </div>
+
+          {/* Carousel Arrow Controls */}
+          <div className="hidden sm:flex items-center gap-2">
+            <button
+              type="button"
+              onClick={scrollIconicLeft}
+              aria-label="Previous Destinations"
+              className="w-8 h-8 rounded-full bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-700 hover:text-slate-950 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+            </button>
+            <button
+              type="button"
+              onClick={scrollIconicRight}
+              aria-label="Next Destinations"
+              className="w-8 h-8 rounded-full bg-[#064e3b] text-white shadow-xs hover:bg-[#043d2e] flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+            >
+              <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4">
-          {/* Card 1: Featured Ad Slot */}
-          <div
-            onClick={() => setAdModalOpen(true)}
-            className="group relative rounded-2xl bg-white border border-slate-200/90 hover:border-teal-500/60 p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer col-span-1"
-          >
-            <div>
-              <div className="flex items-center justify-between gap-1.5 mb-2 sm:mb-2.5">
-                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 truncate">
-                  Ad Slot
-                </span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 shrink-0">Available</span>
-              </div>
-              <h4 className="text-xs sm:text-sm md:text-base font-black text-slate-900 group-hover:text-teal-700 transition-colors leading-snug">
-                Get 5x More Customers in Boisar
-              </h4>
-            </div>
-            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs font-bold text-teal-700 group-hover:text-teal-800">
-              <span>Book spot</span>
-              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
-            </div>
-          </div>
+        {/* Destination Cards Track */}
+        <div
+          ref={iconicScrollRef}
+          className="flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth py-1 snap-x snap-mandatory"
+        >
+          {BOISAR_ICONIC_PLACES.map((place) => (
+            <div
+              key={place.id}
+              onClick={() => setSelectedIconicPlace(place)}
+              className="w-[170px] min-[400px]:w-[195px] sm:w-[220px] md:w-[240px] aspect-[3.2/4.2] sm:aspect-[3.2/4.4] rounded-2xl sm:rounded-3xl overflow-hidden relative shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group cursor-pointer shrink-0 snap-start border border-slate-100"
+            >
+              <img
+                src={place.image}
+                alt={place.name}
+                loading="lazy"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/places/chinchani-beach.jpg';
+                }}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
 
-          {/* Card 2: Direct Customer Inquiries (Links directly to /register-business) */}
-          <div
-            onClick={() => router.push('/register-business')}
-            className="group relative rounded-2xl bg-white border border-slate-200/90 hover:border-teal-500/60 p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer col-span-1"
-          >
-            <div>
-              <div className="flex items-center justify-between gap-1.5 mb-2 sm:mb-2.5">
-                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 truncate">
-                  Direct Inquiries
+              <div className="absolute top-3 left-3 z-10">
+                <span className="bg-white/90 backdrop-blur-xs text-[#064e3b] text-[9.5px] sm:text-[10.5px] font-black px-2 py-0.5 rounded-full shadow-xs">
+                  {place.category}
                 </span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-emerald-600 shrink-0">0% Comm.</span>
               </div>
-              <h4 className="text-xs sm:text-sm md:text-base font-black text-slate-900 group-hover:text-teal-700 transition-colors leading-snug">
-                Receive Direct Calls &amp; Leads
-              </h4>
-            </div>
-            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs font-bold text-teal-700 group-hover:text-teal-800">
-              <span>List business</span>
-              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
-            </div>
-          </div>
 
-          {/* Card 3: Dedicated Custom Campaigns (Centered on Mobile) */}
-          <div
-            onClick={() => setAdModalOpen(true)}
-            className="group relative rounded-2xl bg-white border border-slate-200/90 hover:border-teal-500/60 p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer col-span-2 lg:col-span-1 w-full max-w-sm sm:max-w-md lg:max-w-none mx-auto"
-          >
-            <div>
-              <div className="flex items-center justify-between gap-1.5 mb-2 sm:mb-2.5">
-                <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-100 truncate">
-                  Featured Partner
-                </span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-slate-500 shrink-0">Reach 50,000+</span>
+              <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 z-10">
+                <h3 className="text-white font-extrabold text-base sm:text-lg lg:text-xl leading-tight drop-shadow-sm group-hover:text-emerald-300 transition-colors">
+                  {place.name}
+                </h3>
+                <p className="text-white/80 text-[11px] sm:text-xs font-medium mt-0.5 truncate">
+                  {place.distance}
+                </p>
               </div>
-              <h4 className="text-xs sm:text-sm md:text-base font-black text-slate-900 group-hover:text-teal-700 transition-colors leading-snug">
-                Custom Advertising Campaigns
-              </h4>
             </div>
-            <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] sm:text-xs font-bold text-teal-700 group-hover:text-teal-800">
-              <span>Contact Ad Desk</span>
-              <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform shrink-0" />
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
@@ -2918,35 +3577,35 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
               : 'h-full max-h-[92vh] sm:max-h-[85vh] max-w-5xl rounded-3xl shadow-2xl border border-slate-200'
           }`}>
 
-            {/* Full Real Estate Portal Navbar Header */}
+            {/* Full Real Estate Portal Navbar Header — Fully responsive on iPhone & Android */}
             {activeSpecialCategory === 'properties' ? (
-              <div className="px-3 sm:px-6 py-2 sm:py-2.5 min-h-[52px] sm:min-h-[56px] border-b border-slate-200 flex items-center justify-between gap-1.5 sm:gap-2 bg-white text-slate-800 shadow-sm z-30 shrink-0 sticky top-0">
-                {/* Logo & Portal Badge */}
-                <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
+              <div className="px-2.5 min-[390px]:px-4 sm:px-6 min-h-[58px] sm:h-18 border-b border-slate-200 flex items-center justify-between gap-1.5 sm:gap-4 bg-white text-slate-800 shadow-sm z-30 shrink-0 sticky top-0 pt-[env(safe-area-inset-top,0px)]">
+                {/* Logo & Portal Badge — Beautifully sized so it never pushes other buttons out */}
+                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
                   <img 
                     src="/majh-boisar-full-logo.png" 
                     alt="Majh Boisar" 
-                    className="h-8 sm:h-9 md:h-10.5 w-auto object-contain cursor-pointer transition-transform active:scale-95 shrink-0"
+                    className="h-8 min-[360px]:h-9 min-[390px]:h-10 sm:h-13 md:h-15 max-w-[130px] min-[360px]:max-w-[155px] min-[390px]:max-w-[200px] sm:max-w-none w-auto object-contain cursor-pointer transition-transform active:scale-95 shrink-0"
                     onClick={() => {
                       setActiveSpecialCategory(null);
                       setSelectedProfile(null);
                       setPropertyMode(null);
                     }}
                   />
-                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-teal-50 border border-teal-200 text-teal-700 text-[9.5px] font-black uppercase shrink-0">
+                  <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#da0c23]/10 border border-[#da0c23]/25 text-[#da0c23] text-[10px] font-black uppercase shrink-0">
                     Real Estate
                   </span>
                 </div>
 
-                {/* Right Action Items */}
-                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                {/* Right Action Items: Enquiries, Free Calls & Close — Guaranteed visible on all phones */}
+                <div className="flex items-center gap-1 min-[360px]:gap-1.5 sm:gap-2.5 shrink-0">
                   <button
                     onClick={() => setViewEnquiriesModalOpen(true)}
-                    className="flex items-center gap-1 text-[10.5px] sm:text-xs font-bold text-slate-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-2 sm:px-2.5 py-1.5 rounded-full transition-colors relative shadow-xs shrink-0 cursor-pointer"
+                    className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-bold text-slate-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-2 min-[360px]:px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full transition-colors relative shadow-xs shrink-0 cursor-pointer"
                     title="View property inquiries"
                   >
-                    <Mail className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                    <span className="hidden md:inline">Enquiries</span>
+                    <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-700 shrink-0" />
+                    <span className="hidden min-[430px]:inline">Enquiries</span>
                     {(() => {
                       try {
                         if (typeof window === 'undefined') return null;
@@ -2969,7 +3628,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         }).length;
 
                         return count > 0 ? (
-                          <span className="bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                          <span className="bg-rose-500 text-white text-[9px] sm:text-[9.5px] font-black px-1.5 py-0.2 rounded-full">
                             {count}
                           </span>
                         ) : null;
@@ -2988,7 +3647,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         setBuyerPassModalOpen(true);
                       }
                     }}
-                    className={`flex items-center gap-1 text-[10.5px] sm:text-xs font-black px-2 sm:px-2.5 py-1.5 rounded-full border transition-all cursor-pointer shadow-xs whitespace-nowrap shrink-0 ${
+                    className={`flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-black px-2 min-[360px]:px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-full border transition-all cursor-pointer shadow-xs whitespace-nowrap shrink-0 ${
                       !isLoggedIn 
                         ? 'bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100'
                         : userUnlockedPropsState.length >= 2 && buyerCallCredits <= 0
@@ -2997,7 +3656,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     }`}
                     title="Your Free Owner Contact Quota"
                   >
-                    <Phone className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 shrink-0" />
                     <span>
                       {!isLoggedIn 
                         ? '2 Free Calls'
@@ -3009,29 +3668,16 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     </span>
                   </button>
 
-                  {!isLoggedIn ? (
-                    <button 
-                      onClick={() => setLoginModalOpen(true)}
-                      className="flex items-center gap-1 text-[10.5px] sm:text-xs font-bold text-slate-700 hover:text-teal-700 bg-slate-100 hover:bg-teal-50 px-2 sm:px-3 py-1.5 rounded-full transition-colors shrink-0 cursor-pointer"
-                    >
-                      Login
-                    </button>
-                  ) : (
-                    <span className="inline text-[10.5px] sm:text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1.5 rounded-full truncate max-w-[60px] sm:max-w-[120px] shrink-0">
-                      {userName}
-                    </span>
-                  )}
-
                   <button 
                     onClick={() => {
                       setActiveSpecialCategory(null);
                       setSelectedProfile(null);
                       setPropertyMode(null);
                     }}
-                    className="p-1 sm:p-1.5 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors shrink-0 cursor-pointer ml-0.5"
+                    className="p-1 sm:p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors shrink-0 cursor-pointer ml-0.5"
                     title="Exit Real Estate Portal"
                   >
-                    <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <X className="w-5 h-5 sm:w-6 sm:h-6" />
                   </button>
                 </div>
               </div>
@@ -3097,6 +3743,15 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                       </div>
 
                       <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={handleShareProperty}
+                          className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-700 border border-slate-200 text-[11px] sm:text-xs font-black transition-all cursor-pointer active:scale-95 shadow-2xs"
+                          title="Share Property"
+                        >
+                          <Share2 className="w-3.5 h-3.5 text-slate-600 hover:text-teal-600" />
+                          <span>Share</span>
+                        </button>
                         <button 
                           onClick={closePortal}
                           className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
@@ -3691,39 +4346,36 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                    </div>
                 </div>
               ) : activeSpecialCategory === 'properties' && propertyMode === null ? (
-                <div className="w-full bg-white min-h-full flex flex-col">
-                  {/* Header with soft light tinted background */}
-                  <div className="bg-gradient-to-b from-teal-50/80 via-emerald-50/30 to-slate-50/80 border-b border-teal-100/80 px-3 sm:px-8 py-3.5 sm:py-5 text-left shadow-2xs">
-                    <div className="max-w-5xl mx-auto space-y-3.5">
-                      {/* Title */}
-                      <div className="flex items-center justify-between gap-2.5">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl">🏡</span>
-                          <h2 className="text-base sm:text-xl font-black text-slate-900 tracking-tight">
-                            Boisar Real Estate
-                          </h2>
-                        </div>
-                        <span className="text-[10px] font-extrabold text-teal-800 bg-teal-100/90 border border-teal-200/80 px-2.5 py-0.5 rounded-full shadow-2xs">
-                          Verified Properties
-                        </span>
+                <div className="w-full bg-white min-h-full flex flex-col pb-20 sm:pb-24">
+                  {/* Header with clean white card styling */}
+                  <div className="bg-white border-b border-slate-200/80 px-3.5 sm:px-8 py-3 sm:py-4 text-left shadow-2xs">
+                    <div className="max-w-5xl mx-auto space-y-3">
+                      {/* Title Bar */}
+                      <div>
+                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">
+                          Boisar Real Estate
+                        </h2>
+                        <p className="text-xs sm:text-sm text-slate-500 font-semibold mt-0.5">
+                          Verified Flats, Shops &amp; Plots in Boisar
+                        </p>
                       </div>
 
-                      {/* 3 Equal Buttons — Full Width Row */}
-                      <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5">
+                      {/* 3 Action Buttons — Exact Logo Red & sleek styling */}
+                      <div className="grid grid-cols-3 gap-2">
                         <button
                           type="button"
                           onClick={() => setPropertyMode('buy')}
-                          className="py-2.5 sm:py-3 px-1 sm:px-2 rounded-xl bg-gradient-to-r from-teal-900 via-slate-900 to-teal-950 hover:from-teal-800 hover:to-slate-800 text-white text-xs sm:text-sm font-black transition-all shadow-md hover:shadow-lg hover:shadow-teal-950/25 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.97] border-2 border-teal-400/60 hover:border-teal-300 ring-2 ring-teal-500/20"
+                          className="py-2.5 px-2 rounded-xl bg-[#da0c23] hover:bg-[#b8081c] text-white text-xs sm:text-sm font-black transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                         >
-                          <Building className="w-4 h-4 text-teal-300 shrink-0" />
+                          <Building className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/90 shrink-0" />
                           <span>Buy</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => setPropertyMode('rent')}
-                          className="py-2.5 sm:py-3 px-1 sm:px-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-black transition-all border-2 border-slate-200 hover:border-teal-400 flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.97] shadow-xs hover:shadow-sm"
+                          className="py-2.5 px-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-black transition-all border border-slate-200 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
                         >
-                          <Home className="w-4 h-4 text-slate-700 shrink-0" />
+                          <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-600 shrink-0" />
                           <span>Rent</span>
                         </button>
                         <button
@@ -3737,25 +4389,21 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                             setActiveSpecialCategory(null);
                             setPostPropertyModalOpen(true);
                           }}
-                          className="py-2.5 sm:py-3 px-1 sm:px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.97] text-white text-[11px] sm:text-xs font-black transition-all shadow-sm hover:shadow-md hover:shadow-emerald-700/20 flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap"
+                          className="py-2.5 px-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-black transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap"
                         >
-                          <PlusCircle className="w-4 h-4 text-white shrink-0" />
-                          <span className="truncate">Post Property</span>
+                          <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#da0c23] shrink-0" />
+                          <span className="truncate">Post Free Ad</span>
                         </button>
                       </div>
 
-                      {/* Quick Area Chips Row - Sleek Rounded Pills */}
-                      <div className="pt-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 select-none">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-0.5 mr-0.5">
-                          <MapPin className="w-3 h-3 text-teal-600" />
-                          Area:
-                        </span>
+                      {/* Clean Filter Chips Row (Exact logo red active chip & accents) */}
+                      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5 pb-0.5 select-none text-[11px]">
                         <button
                           type="button"
                           onClick={() => setPropertyAreaFilter('All Areas')}
-                          className={`px-2.5 py-0.5 sm:py-1 rounded-full text-[10.5px] font-black whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
+                          className={`px-3 py-1 rounded-full font-black whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
                             propertyAreaFilter === 'All Areas'
-                              ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                              ? 'bg-[#da0c23] text-white border-[#da0c23] shadow-xs'
                               : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/80'
                           }`}
                         >
@@ -3766,22 +4414,18 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                             key={area}
                             type="button"
                             onClick={() => setPropertyAreaFilter(area === propertyAreaFilter ? 'All Areas' : area)}
-                            className={`px-2.5 py-0.5 sm:py-1 rounded-full text-[10.5px] font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
+                            className={`px-3 py-1 rounded-full font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
                               propertyAreaFilter === area
-                                ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
-                                : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200/80 hover:border-slate-300'
+                                ? 'bg-[#da0c23] text-white border-[#da0c23] shadow-xs'
+                                : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200/80'
                             }`}
                           >
                             {area}
                           </button>
                         ))}
-                      </div>
 
-                      {/* Quick Type Chips Row - Sleek Rounded Pills */}
-                      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 select-none">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0 mr-0.5">
-                          Quick:
-                        </span>
+                        <div className="h-4 w-px bg-slate-200 shrink-0 mx-0.5" />
+
                         {[
                           { label: '1 BHK', mode: 'buy', bhk: '1 BHK', type: 'Flat/Apartment' },
                           { label: '2 BHK', mode: 'buy', bhk: '2 BHK', type: 'Flat/Apartment' },
@@ -3797,7 +4441,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                               setPropertyTypeFilter(chip.type);
                               setPropertyMode(chip.mode as any);
                             }}
-                            className="bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-0.5 sm:py-1 rounded-full text-[10.5px] font-bold transition-all hover:border-slate-300 cursor-pointer shrink-0 whitespace-nowrap"
+                            className="bg-[#da0c23]/10 hover:bg-[#da0c23]/15 text-[#da0c23] border border-[#da0c23]/25 px-3 py-1 rounded-full font-black transition-all cursor-pointer shrink-0 whitespace-nowrap"
                           >
                             {chip.label}
                           </button>
@@ -4157,7 +4801,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                   </div>
                 </div>
               ) : activeSpecialCategory === 'properties' ? (
-                <div className="w-full bg-slate-50 min-h-full flex flex-col">
+                <div className="w-full bg-slate-50 min-h-full flex flex-col pb-20 sm:pb-24">
                   {/* Top Bar with Buy/Rent Switcher & Compact Filters - Natural Scroll (Scrolls away, only seen at top) */}
                   <div className="bg-white border-b border-slate-200 px-3 sm:px-6 py-2 sm:py-2.5 shadow-2xs">
                     <div className="max-w-5xl mx-auto flex items-center justify-between gap-2">
@@ -4177,9 +4821,9 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           <button
                             type="button"
                             onClick={() => setPropertyMode('buy')}
-                            className={`px-2.5 sm:px-3.5 py-1 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-black transition-all cursor-pointer ${
+                            className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-md sm:rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer ${
                               propertyMode === 'buy'
-                                ? 'bg-slate-900 text-white shadow-xs'
+                                ? 'bg-[#da0c23] text-white shadow-xs'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -4188,9 +4832,9 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           <button
                             type="button"
                             onClick={() => setPropertyMode('rent')}
-                            className={`px-2.5 sm:px-3.5 py-1 rounded-md sm:rounded-lg text-[11px] sm:text-xs font-black transition-all cursor-pointer ${
+                            className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-md sm:rounded-lg text-xs sm:text-sm font-black transition-all cursor-pointer ${
                               propertyMode === 'rent'
-                                ? 'bg-slate-900 text-white shadow-xs'
+                                ? 'bg-[#da0c23] text-white shadow-xs'
                                 : 'text-slate-600 hover:text-slate-900'
                             }`}
                           >
@@ -4210,7 +4854,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           }
                           setPostPropertyModalOpen(true);
                         }}
-                        className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[11px] sm:text-xs font-black px-2.5 sm:px-3.5 py-1.5 rounded-lg sm:rounded-xl transition-all shadow-xs flex items-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap"
+                        className="bg-[#da0c23] hover:bg-[#b8081c] active:scale-95 text-white text-[11px] sm:text-xs font-black px-2.5 sm:px-3.5 py-1.5 rounded-lg sm:rounded-xl transition-all shadow-xs flex items-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap"
                       >
                         <PlusCircle className="w-3.5 h-3.5 text-white" />
                         <span className="hidden sm:inline">Post Property</span>
@@ -5175,6 +5819,127 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 </div>
               )}
             </div>
+
+            {/* Real Estate App-Style Bottom Navigation Bar (Home, Buy, Post [Center Elevated], Home Loan, Account) */}
+            {activeSpecialCategory === 'properties' && (
+              <nav 
+                aria-label="Real Estate Quick Navigation"
+                className="shrink-0 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.06)] z-40 select-none pb-[env(safe-area-inset-bottom,0px)]"
+              >
+                <div className="max-w-md sm:max-w-lg mx-auto px-2 sm:px-6 h-15 flex items-center justify-between relative">
+                  
+                  {/* 1. Home */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPropertyMode(null);
+                      setSelectedProfile(null);
+                      portalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`relative flex-1 flex flex-col items-center justify-center py-1 transition-all cursor-pointer group ${
+                      propertyMode === null && !selectedProfile
+                        ? 'text-[#da0c23]'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    {propertyMode === null && !selectedProfile && (
+                      <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-[2.5px] bg-[#da0c23] rounded-full" />
+                    )}
+                    <Home className={`w-5 h-5 transition-transform group-hover:scale-110 ${
+                      propertyMode === null && !selectedProfile ? 'stroke-[2.5]' : 'stroke-2'
+                    }`} />
+                    <span className={`text-[10.5px] mt-0.5 tracking-tight ${
+                      propertyMode === null && !selectedProfile ? 'font-black' : 'font-bold'
+                    }`}>
+                      Home
+                    </span>
+                  </button>
+
+                  {/* 2. Buy */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPropertyMode('buy');
+                      setSelectedProfile(null);
+                      portalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`relative flex-1 flex flex-col items-center justify-center py-1 transition-all cursor-pointer group ${
+                      propertyMode === 'buy' && !selectedProfile
+                        ? 'text-[#da0c23]'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    {propertyMode === 'buy' && !selectedProfile && (
+                      <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-[2.5px] bg-[#da0c23] rounded-full" />
+                    )}
+                    <Building className={`w-5 h-5 transition-transform group-hover:scale-110 ${
+                      propertyMode === 'buy' && !selectedProfile ? 'stroke-[2.5]' : 'stroke-2'
+                    }`} />
+                    <span className={`text-[10.5px] mt-0.5 tracking-tight ${
+                      propertyMode === 'buy' && !selectedProfile ? 'font-black' : 'font-bold'
+                    }`}>
+                      Buy
+                    </span>
+                  </button>
+
+                  {/* 3. Post (Center Elevated Circular Button) */}
+                  <div className="relative flex-1 flex flex-col items-center justify-center -mt-6">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!isLoggedIn) {
+                          showToast("Please login first to post your property.", "info", 4000);
+                          setLoginModalOpen(true);
+                          return;
+                        }
+                        setPostPropertyModalOpen(true);
+                      }}
+                      className="w-13 h-13 rounded-full bg-[#da0c23] hover:bg-[#b8081c] text-white flex items-center justify-center shadow-[0_6px_20px_rgba(218,12,35,0.38)] ring-4 ring-white active:scale-90 transition-all cursor-pointer group"
+                      title="Post Property Free"
+                    >
+                      <Plus className="w-6 h-6 stroke-[3] transition-transform group-hover:rotate-90 duration-300" />
+                    </button>
+                    <span className="text-[10px] font-black text-slate-700 tracking-tight mt-0.5">
+                      Post
+                    </span>
+                  </div>
+
+                  {/* 4. Home Loan — Navigates to Home Loan category businesses */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveSpecialCategory(null);
+                      router.push('/search?query=Home%20Loan');
+                    }}
+                    className="relative flex-1 flex flex-col items-center justify-center py-1 transition-all cursor-pointer group text-slate-500 hover:text-slate-800"
+                  >
+                    <Landmark className="w-5 h-5 transition-transform group-hover:scale-110 stroke-2" />
+                    <span className="text-[10.5px] mt-0.5 tracking-tight font-bold">
+                      Home Loan
+                    </span>
+                  </button>
+
+                  {/* 5. Account */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isLoggedIn) {
+                        setLoginModalOpen(true);
+                      } else {
+                        window.dispatchEvent(new CustomEvent('open_user_menu'));
+                      }
+                    }}
+                    className="relative flex-1 flex flex-col items-center justify-center py-1 text-slate-500 hover:text-slate-800 transition-all cursor-pointer group"
+                  >
+                    <User className="w-5 h-5 transition-transform group-hover:scale-110 stroke-2" />
+                    <span className="text-[10.5px] font-bold mt-0.5 tracking-tight">
+                      Account
+                    </span>
+                  </button>
+
+                </div>
+              </nav>
+            )}
           </div>
         </div>
       )}
@@ -6511,6 +7276,12 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
         }}
       />
 
+      {/* Boisar Home Loan Assistance Modal */}
+      <HomeLoanModal
+        isOpen={homeLoanModalOpen}
+        onClose={() => setHomeLoanModalOpen(false)}
+      />
+
       {/* Report Invalid Listing Modal */}
       <ReportModal 
         isOpen={reportModalOpen} 
@@ -6822,6 +7593,386 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       <CommunityEventsModal isOpen={portraitEventsOpen} onClose={() => setPortraitEventsOpen(false)} />
       <HotelBookingModal isOpen={portraitHotelOpen} onClose={() => setPortraitHotelOpen(false)} />
       <ResortVillaModal isOpen={portraitResortOpen} onClose={() => setPortraitResortOpen(false)} />
+
+      {/* Iconic Places Detail Modal */}
+      {selectedIconicPlace && (
+        <div
+          className="fixed inset-0 z-[250] bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
+          onClick={() => setSelectedIconicPlace(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Image Header */}
+            <div className="relative h-48 sm:h-56 w-full">
+              <img
+                src={selectedIconicPlace.image}
+                alt={selectedIconicPlace.name}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/places/chinchani-beach.jpg';
+                }}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent" />
+              <button
+                type="button"
+                onClick={() => setSelectedIconicPlace(null)}
+                aria-label="Close"
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-colors cursor-pointer z-10"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <div className="absolute bottom-3 left-4 right-4">
+                <span className="inline-block bg-emerald-500 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full mb-1">
+                  {selectedIconicPlace.category}
+                </span>
+                <h3 className="text-white text-xl sm:text-2xl font-black drop-shadow-md">
+                  {selectedIconicPlace.name}
+                </h3>
+                <p className="text-white/80 text-xs font-medium">
+                  {selectedIconicPlace.travelTime}
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 sm:p-5 space-y-4">
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                {selectedIconicPlace.description}
+              </p>
+
+              <div>
+                <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider mb-2">
+                  Key Highlights
+                </h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedIconicPlace.highlights.map((h, i) => (
+                    <span
+                      key={i}
+                      className="text-[11px] font-bold bg-emerald-50 text-[#064e3b] border border-emerald-200/80 px-2.5 py-1 rounded-lg"
+                    >
+                      ✓ {h}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedIconicPlace(null);
+                    router.push('/hire-vehicle');
+                  }}
+                  className="py-2.5 px-3 rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
+                >
+                  <span>🚐 Book Travels</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedIconicPlace(null);
+                    router.push('/resorts');
+                  }}
+                  className="py-2.5 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
+                >
+                  <span>🏖️ Nearby Resorts</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  window.open(
+                    'https://www.google.com/maps/search/?api=1&query=' +
+                      encodeURIComponent(selectedIconicPlace.mapQuery),
+                    '_blank'
+                  );
+                }}
+                className="w-full py-2 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <span>📍 View on Google Maps (Directions)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Utility Service Direct Actions Modal */}
+      {selectedUtilityService && (
+        <div
+          className="fixed inset-0 z-[250] bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
+          onClick={() => setSelectedUtilityService(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200 text-left"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setSelectedUtilityService(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {selectedUtilityService === 'train' && (
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[10px] font-extrabold text-rose-600 uppercase tracking-wider bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                    Indian Railways • IRCTC
+                  </span>
+                  <h3 className="text-lg font-black text-slate-900 mt-1">Check PNR &amp; Train Tickets</h3>
+                  <p className="text-xs text-slate-500 font-medium">1-Tap direct access to official IRCTC portals</p>
+                </div>
+                <div className="space-y-2">
+                  <a
+                    href="https://www.indianrail.gov.in/enquiry/PNR/PnrEnquiry.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-between transition-colors shadow-xs"
+                  >
+                    <span>🔍 Check Live PNR Status</span>
+                    <span>→</span>
+                  </a>
+                  <a
+                    href="https://www.irctc.co.in/nget/train-search"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-between transition-colors shadow-xs"
+                  >
+                    <span>🎫 Book Tickets on IRCTC</span>
+                    <span>→</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedUtilityService(null);
+                      router.push('/search?query=Travel%20Agencies');
+                    }}
+                    className="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-between transition-colors cursor-pointer"
+                  >
+                    <span>📞 Find Boisar Ticket &amp; Tatkal Agents</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {selectedUtilityService === 'flight' && (
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                    Air Travel • Flights
+                  </span>
+                  <h3 className="text-lg font-black text-slate-900 mt-1">Flight Tickets &amp; Booking</h3>
+                  <p className="text-xs text-slate-500 font-medium">Domestic &amp; International flight assistance</p>
+                </div>
+                <div className="space-y-2">
+                  <a
+                    href="https://www.makemytrip.com/flights/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-between transition-colors shadow-xs"
+                  >
+                    <span>✈️ Compare &amp; Search Flight Fares</span>
+                    <span>→</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedUtilityService(null);
+                      router.push('/search?query=Travel%20Agencies');
+                    }}
+                    className="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-between transition-colors cursor-pointer"
+                  >
+                    <span>📞 Contact Boisar Flight Booking Agent</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {selectedUtilityService === 'aadhaar' && (
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[10px] font-extrabold text-emerald-600 uppercase tracking-wider bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                    UIDAI Government Portal
+                  </span>
+                  <h3 className="text-lg font-black text-slate-900 mt-1">Aadhaar Card Services</h3>
+                  <p className="text-xs text-slate-500 font-medium">Download, update or find Boisar Aadhaar centers</p>
+                </div>
+                <div className="space-y-2">
+                  <a
+                    href="https://myaadhaar.uidai.gov.in/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-between transition-colors shadow-xs"
+                  >
+                    <span>🆔 Download E-Aadhaar (myAadhaar)</span>
+                    <span>→</span>
+                  </a>
+                  <a
+                    href="https://myaadhaar.uidai.gov.in/genricPVC"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-between transition-colors shadow-xs"
+                  >
+                    <span>💳 Order Aadhaar PVC Card</span>
+                    <span>→</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedUtilityService(null);
+                      router.push('/search?query=Aadhar%20Center');
+                    }}
+                    className="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-between transition-colors cursor-pointer"
+                  >
+                    <span>📍 Find Aadhaar Seva Kendra in Boisar</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {selectedUtilityService === 'pan' && (
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[10px] font-extrabold text-indigo-600 uppercase tracking-wider bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                    NSDL / UTI Services
+                  </span>
+                  <h3 className="text-lg font-black text-slate-900 mt-1">PAN Card Services</h3>
+                  <p className="text-xs text-slate-500 font-medium">Apply new PAN, correction &amp; local Setu Kendra</p>
+                </div>
+                <div className="space-y-2">
+                  <a
+                    href="https://www.onlineservices.nsdl.com/paam/endUserRegisterContact.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-between transition-colors shadow-xs"
+                  >
+                    <span>📋 Apply New PAN Card Online</span>
+                    <span>→</span>
+                  </a>
+                  <a
+                    href="https://eportal.incometax.gov.in/iec/foservices/#/pre-login/bl-link-aadhaar"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-between transition-colors shadow-xs"
+                  >
+                    <span>🔗 Link PAN with Aadhaar</span>
+                    <span>→</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedUtilityService(null);
+                      router.push('/search?query=CSC%20Center');
+                    }}
+                    className="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-between transition-colors cursor-pointer"
+                  >
+                    <span>📍 Find CSC / Setu Kendra in Boisar</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {selectedUtilityService === 'schedule' && (
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[10px] font-extrabold text-amber-600 uppercase tracking-wider bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                    Western Railway
+                  </span>
+                  <h3 className="text-lg font-black text-slate-900 mt-1">Boisar Train Schedule</h3>
+                  <p className="text-xs text-slate-500 font-medium">Live train timings &amp; Dahanu local schedule</p>
+                </div>
+                <div className="space-y-2">
+                  <a
+                    href="https://enquiry.indianrail.gov.in/mntes/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center justify-between transition-colors shadow-xs"
+                  >
+                    <span>🚉 Live Train Running Status (NTES)</span>
+                    <span>→</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedUtilityService(null);
+                      router.push('/search?query=Train');
+                    }}
+                    className="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-between transition-colors cursor-pointer"
+                  >
+                    <span>📋 View Boisar Local Train Timetable</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {selectedUtilityService === 'coach' && (
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[10px] font-extrabold text-purple-600 uppercase tracking-wider bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
+                    Platform &amp; Coach
+                  </span>
+                  <h3 className="text-lg font-black text-slate-900 mt-1">Coach Position</h3>
+                  <p className="text-xs text-slate-500 font-medium">Find your coach position on platform</p>
+                </div>
+                <div className="space-y-2">
+                  <a
+                    href="https://enquiry.indianrail.gov.in/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center justify-between transition-colors shadow-xs"
+                  >
+                    <span>📍 Find Live Coach Position</span>
+                    <span>→</span>
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {selectedUtilityService === 'link_aadhaar' && (
+              <div className="space-y-4">
+                <div>
+                  <span className="text-[10px] font-extrabold text-rose-600 uppercase tracking-wider bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                    Income Tax Department
+                  </span>
+                  <h3 className="text-lg font-black text-slate-900 mt-1">Link Aadhaar with PAN</h3>
+                  <p className="text-xs text-slate-500 font-medium">Verify or link your Aadhaar card online</p>
+                </div>
+                <div className="space-y-2">
+                  <a
+                    href="https://eportal.incometax.gov.in/iec/foservices/#/pre-login/bl-link-aadhaar"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-between transition-colors shadow-xs"
+                  >
+                    <span>🔗 Link Aadhaar Online (Official)</span>
+                    <span>→</span>
+                  </a>
+                  <a
+                    href="https://myaadhaar.uidai.gov.in/verify-email-mobile"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-between transition-colors cursor-pointer"
+                  >
+                    <span>📱 Verify Mobile Number in Aadhaar</span>
+                    <span>→</span>
+                  </a>
+                </div>
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
 
     </div>
   );

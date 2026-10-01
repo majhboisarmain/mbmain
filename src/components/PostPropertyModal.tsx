@@ -124,17 +124,17 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
   const [description, setDescription] = useState('');
 
   const pillClass = (active: boolean) => 
-    `px-2 sm:px-2.5 py-0.5 sm:py-1 border rounded-full text-[10px] sm:text-[11px] font-bold cursor-pointer transition-colors ${
+    `px-3 sm:px-3.5 py-1 sm:py-1.5 border rounded-full text-xs sm:text-sm font-bold cursor-pointer transition-colors ${
       active 
-      ? 'bg-teal-50 border-teal-500 text-teal-700' 
-      : 'bg-white border-slate-200 text-slate-650 hover:border-teal-300'
+      ? 'bg-red-50 border-[#da0c23] text-[#da0c23]' 
+      : 'bg-white border-slate-200 text-slate-650 hover:border-red-300'
     }`;
 
   const numPillClass = (active: boolean) => 
-    `w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center border rounded-full text-[10px] sm:text-[11px] font-bold cursor-pointer transition-colors ${
+    `w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center border rounded-full text-xs sm:text-sm font-bold cursor-pointer transition-colors ${
       active 
-      ? 'bg-teal-50 border-teal-500 text-teal-700' 
-      : 'bg-white border-slate-200 text-slate-650 hover:border-teal-300'
+      ? 'bg-red-50 border-[#da0c23] text-[#da0c23]' 
+      : 'bg-white border-slate-200 text-slate-650 hover:border-red-300'
     }`;
 
   if (!isOpen) return null;
@@ -289,16 +289,16 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
 
   return (
     <div className="fixed inset-0 z-[650] flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-hidden animate-in fade-in duration-200">
-      <div className="w-[96%] sm:w-full max-w-[620px] h-[58dvh] max-h-[58dvh] sm:h-[65vh] sm:max-h-[65vh] bg-slate-50 flex flex-col rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200">
+      <div className="w-[98%] sm:w-full max-w-[700px] h-[75dvh] max-h-[75dvh] sm:h-[80vh] sm:max-h-[80vh] bg-slate-50 flex flex-col rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200">
         
         {/* Header */}
-        <div className="bg-[#0b5c47] text-white px-3 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between shrink-0 rounded-t-2xl shadow-sm z-10">
+        <div className="bg-[#da0c23] text-white px-4 sm:px-5 py-2.5 sm:py-3 flex items-center justify-between shrink-0 rounded-t-2xl shadow-sm z-10">
           <div>
-            <h2 className="text-xs sm:text-sm font-black">Sell or Rent your Property</h2>
-            <p className="text-[9px] sm:text-[11px] font-bold text-teal-100/90">You are posting this property for FREE!</p>
+            <h2 className="text-sm sm:text-base font-black">Sell or Rent your Property</h2>
+            <p className="text-[10px] sm:text-xs font-bold text-red-100/90">You are posting this property for FREE!</p>
           </div>
-          <button onClick={handleClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
-            <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <button onClick={handleClose} className="p-1.5 hover:bg-white/10 rounded-full transition-colors">
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
@@ -311,22 +311,22 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
             </div>
             
             <div className="space-y-2.5 text-[11px] font-bold">
-              <div className={`flex items-center gap-1.5 ${step >= 1 ? 'text-teal-700 font-extrabold' : 'text-slate-400'}`}>
-                <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] border ${step > 1 ? 'bg-teal-600 border-teal-600 text-white' : step === 1 ? 'border-teal-600 text-teal-650' : 'border-slate-300'}`}>
+              <div className={`flex items-center gap-1.5 ${step >= 1 ? 'text-[#da0c23] font-extrabold' : 'text-slate-400'}`}>
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] border ${step > 1 ? 'bg-[#da0c23] border-[#da0c23] text-white' : step === 1 ? 'border-[#da0c23] text-[#da0c23]' : 'border-slate-300'}`}>
                   {step > 1 ? <Check className="w-2.5 h-2.5" /> : '1'}
                 </div>
                 <span>Basic Details</span>
               </div>
 
-              <div className={`flex items-center gap-1.5 ${step >= 2 ? 'text-teal-700 font-extrabold' : 'text-slate-400'}`}>
-                <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] border ${step > 2 ? 'bg-teal-600 border-teal-600 text-white' : step === 2 ? 'border-teal-600 text-teal-650' : 'border-slate-300'}`}>
+              <div className={`flex items-center gap-1.5 ${step >= 2 ? 'text-[#da0c23] font-extrabold' : 'text-slate-400'}`}>
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] border ${step > 2 ? 'bg-[#da0c23] border-[#da0c23] text-white' : step === 2 ? 'border-[#da0c23] text-[#da0c23]' : 'border-slate-300'}`}>
                   {step > 2 ? <Check className="w-2.5 h-2.5" /> : '2'}
                 </div>
                 <span>Upload Photos</span>
               </div>
 
-              <div className={`flex items-center gap-1.5 ${step >= 3 ? 'text-teal-700 font-extrabold' : 'text-slate-400'}`}>
-                <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] border ${step === 3 ? 'border-teal-600 text-teal-650' : 'border-slate-300'}`}>
+              <div className={`flex items-center gap-1.5 ${step >= 3 ? 'text-[#da0c23] font-extrabold' : 'text-slate-400'}`}>
+                <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] border ${step === 3 ? 'border-[#da0c23] text-[#da0c23]' : 'border-slate-300'}`}>
                   3
                 </div>
                 <span>Pricing & Deposit</span>
@@ -335,16 +335,16 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
           </div>
 
           {/* Right Content Form */}
-          <div className="flex-1 overflow-y-auto p-2 sm:p-3.5 space-y-2 sm:space-y-3 pb-3">
+          <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4 pb-4">
             
             {/* STEP 1: BASIC DETAILS */}
             {step === 1 && (
               <div className="space-y-2 sm:space-y-3 animate-in fade-in duration-150">
                 {/* Personal Details */}
-                <div className="bg-white p-2 sm:p-3 rounded-lg sm:rounded-xl border border-slate-200 shadow-sm space-y-2">
-                  <h3 className="text-[11px] sm:text-xs font-black text-slate-800 mb-1 pb-0.5 border-b border-slate-100">Personal & Contact Details</h3>
+                <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+                  <h3 className="text-xs sm:text-sm font-black text-slate-800 mb-1.5 pb-1 border-b border-slate-100">Personal & Contact Details</h3>
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">I am</label>
+                    <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">I am</label>
                     <div className="flex gap-2">
                       {['Owner', 'Agent', 'Builder'].map(opt => (
                         <div key={opt} onClick={() => setIAm(opt)} className={pillClass(iAm === opt)}>
@@ -356,17 +356,17 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Contact Person Name</label>
+                      <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Contact Person Name</label>
                       <input 
                         type="text" 
                         placeholder="Your Name" 
                         value={contactName} 
                         onChange={(e) => setContactName(e.target.value)} 
-                        className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none transition-colors font-bold text-slate-800" 
+                        className="w-full border-b-2 border-slate-250 py-1.5 sm:py-2 text-sm focus:border-[#da0c23] outline-none transition-colors font-bold text-slate-800" 
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Phone Number (Calling)</label>
+                      <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Phone Number (Calling)</label>
                       <input 
                         type="text" 
                         placeholder="10-digit Phone Number" 
@@ -378,7 +378,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                             setWhatsappPhone(val);
                           }
                         }} 
-                        className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none transition-colors font-bold text-slate-800" 
+                        className="w-full border-b-2 border-slate-250 py-1.5 sm:py-2 text-sm focus:border-[#da0c23] outline-none transition-colors font-bold text-slate-800" 
                       />
                     </div>
                   </div>
@@ -386,10 +386,10 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                   {/* WhatsApp Number Details */}
                   <div className="pt-2 border-t border-slate-100 space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                        <MessageSquare className="w-3.5 h-3.5 text-teal-600" /> WhatsApp Number
+                      <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <MessageSquare className="w-4 h-4 text-[#da0c23]" /> WhatsApp Number
                       </label>
-                      <label className="flex items-center gap-1.5 cursor-pointer text-xs font-bold text-teal-700">
+                      <label className="flex items-center gap-2 cursor-pointer text-sm font-bold text-[#da0c23]">
                         <input 
                           type="checkbox" 
                           checked={sameAsPhone} 
@@ -400,7 +400,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                               setWhatsappPhone(contactPhone);
                             }
                           }} 
-                          className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 w-3.5 h-3.5"
+                          className="rounded border-slate-300 text-[#da0c23] focus:ring-[#da0c23] w-4 h-4"
                         />
                         <span>Same as Calling Number</span>
                       </label>
@@ -411,18 +411,18 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                         placeholder="Enter separate WhatsApp Number" 
                         value={whatsappPhone} 
                         onChange={(e) => setWhatsappPhone(e.target.value)} 
-                        className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none transition-colors font-bold text-slate-800" 
+                        className="w-full border-b-2 border-slate-250 py-1.5 sm:py-2 text-sm focus:border-[#da0c23] outline-none transition-colors font-bold text-slate-800" 
                       />
                     )}
                   </div>
                 </div>
 
                 {/* Property Details */}
-                <div className="bg-white p-4.5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                  <h3 className="text-xs font-black text-slate-800 mb-3 pb-1.5 border-b border-slate-100">Property Details</h3>
+                <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                  <h3 className="text-xs sm:text-sm font-black text-slate-800 mb-3 pb-1.5 border-b border-slate-100">Property Details</h3>
                   
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">For</label>
+                    <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">For</label>
                     <div className="flex flex-wrap gap-2">
                       {['Sale', 'Rent/ Lease', 'PG/Hostel'].map(opt => (
                         <div key={opt} onClick={() => setForAction(opt)} className={pillClass(forAction === opt)}>
@@ -433,7 +433,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Property Type</label>
+                    <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Property Type</label>
                     <div className="flex flex-wrap gap-2">
                       {['Flat/ Apartment', 'Independent House/ Villa', 'Plot/ Land'].map(opt => (
                         <div key={opt} onClick={() => setPropertyType(opt)} className={pillClass(propertyType === opt)}>
@@ -445,22 +445,22 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                 </div>
 
                 {/* Property Location */}
-                <div className="bg-white p-4.5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
                   <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
-                    <h3 className="text-xs font-black text-slate-800">Property Location</h3>
-                    <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md">
+                    <h3 className="text-xs sm:text-sm font-black text-slate-800">Property Location</h3>
+                    <span className="text-[11px] sm:text-xs font-bold text-[#da0c23] bg-red-50 px-2.5 py-1 rounded-md">
                       📍 {cityName} &amp; Surrounding
                     </span>
                   </div>
 
                   {/* Region Selection */}
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-teal-600" />
+                    <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-[#da0c23]" />
                         Select Region / City <span className="text-rose-500">*</span>
                       </span>
-                      <span className="text-teal-700 font-black">{cityName}</span>
+                      <span className="text-[#da0c23] font-black">{cityName}</span>
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {PROPERTY_REGIONS.map((reg) => (
@@ -487,19 +487,19 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                   
                   {/* Select Area in Region */}
                   <div className="space-y-1.5 pt-1 border-t border-slate-100">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-teal-600" />
+                    <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-[#da0c23]" />
                         Select Area / Locality <span className="text-rose-500">*</span>
                       </span>
-                      <span className="text-teal-700 font-black">{selectedArea}</span>
+                      <span className="text-[#da0c23] font-black">{selectedArea}</span>
                     </label>
 
                     {/* Area Dropdown */}
                     <select
                       value={selectedArea}
                       onChange={(e) => setSelectedArea(e.target.value)}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 bg-slate-50 focus:bg-white focus:border-teal-500 outline-none transition-all cursor-pointer shadow-2xs"
+                      className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-slate-800 bg-slate-50 focus:bg-white focus:border-[#da0c23] outline-none transition-all cursor-pointer shadow-2xs"
                     >
                       <option value="">-- Choose Area / Locality --</option>
                       {BOISAR_PROPERTY_AREAS.map((area) => (
@@ -514,9 +514,9 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                           key={area}
                           type="button"
                           onClick={() => setSelectedArea(area)}
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border text-center cursor-pointer ${
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border text-center cursor-pointer ${
                             selectedArea === area
-                              ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
+                              ? 'bg-[#da0c23] text-white border-[#da0c23] shadow-xs'
                               : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
                           }`}
                         >
@@ -528,53 +528,53 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 border-t border-slate-100">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">City / Town</label>
-                      <input type="text" placeholder="Enter City (e.g. Boisar)" value={cityName} onChange={(e) => setCityName(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none transition-colors font-bold text-slate-800" />
+                      <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">City / Town</label>
+                      <input type="text" placeholder="Enter City (e.g. Boisar)" value={cityName} onChange={(e) => setCityName(e.target.value)} className="w-full border-b-2 border-slate-250 py-1.5 sm:py-2 text-sm focus:border-[#da0c23] outline-none transition-colors font-bold text-slate-800" />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Name of Project / Society</label>
-                      <input type="text" placeholder="e.g. Ostwal Empire, Tata Shubh Griha" value={projectName} onChange={(e) => setProjectName(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none transition-colors font-bold text-slate-800" />
+                      <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Name of Project / Society</label>
+                      <input type="text" placeholder="e.g. Ostwal Empire, Tata Shubh Griha" value={projectName} onChange={(e) => setProjectName(e.target.value)} className="w-full border-b-2 border-slate-250 py-1.5 sm:py-2 text-sm focus:border-[#da0c23] outline-none transition-colors font-bold text-slate-800" />
                     </div>
                   </div>
 
                   <div className="space-y-1 pt-1 border-t border-slate-100">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Full Address / Landmark (Optional)</label>
+                    <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Full Address / Landmark (Optional)</label>
                     <input 
                       type="text" 
                       placeholder="e.g. Flat 302, B-Wing, Near Railway Station, Tarapur Road" 
                       value={addressLocality} 
                       onChange={(e) => setAddressLocality(e.target.value)} 
-                      className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none transition-colors font-bold text-slate-800" 
+                      className="w-full border-b-2 border-slate-250 py-1.5 sm:py-2 text-sm focus:border-[#da0c23] outline-none transition-colors font-bold text-slate-800" 
                     />
                   </div>
 
                   <div className="space-y-1 pt-1 border-t border-slate-100">
                     <div className="flex items-center justify-between">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-teal-600" />
+                      <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-[#da0c23]" />
                         <span>Google Maps Link</span>
                       </label>
-                      <span className="text-[9px] text-teal-700 font-bold bg-teal-50 px-1.5 py-0.2 rounded border border-teal-200">Optional</span>
+                      <span className="text-[10px] sm:text-[11px] text-[#da0c23] font-bold bg-red-50 px-2 py-0.5 rounded border border-red-200">Optional</span>
                     </div>
                     <input 
                       type="url" 
                       placeholder="Paste Google Maps link (e.g. https://maps.app.goo.gl/...)" 
                       value={mapUrl} 
                       onChange={(e) => setMapUrl(e.target.value)} 
-                      className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none transition-colors font-bold text-slate-800" 
+                      className="w-full border-b-2 border-slate-250 py-1.5 sm:py-2 text-sm focus:border-[#da0c23] outline-none transition-colors font-bold text-slate-800" 
                     />
-                    <p className="text-[9.5px] text-slate-400">Buyers can click to view exact location and get directions on Google Maps.</p>
+                    <p className="text-[10px] sm:text-[11px] text-slate-400">Buyers can click to view exact location and get directions on Google Maps.</p>
                   </div>
                 </div>
 
                 {/* Property Features (Hidden for Plot / Land) */}
                 {propertyType !== 'Plot/ Land' ? (
-                  <div className="bg-white p-4.5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                    <h3 className="text-xs font-black text-slate-800 mb-3 pb-1.5 border-b border-slate-100">Property Features</h3>
+                  <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                    <h3 className="text-xs sm:text-sm font-black text-slate-800 mb-3 pb-1.5 border-b border-slate-100">Property Features</h3>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Bedrooms</label>
+                        <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Bedrooms</label>
                         <div className="flex flex-wrap gap-1.5">
                           {['0', '1', '2', '3', '4', '5+'].map(opt => (
                             <div key={opt} onClick={() => setBedrooms(opt)} className={numPillClass(bedrooms === opt)}>
@@ -585,7 +585,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Balconies</label>
+                        <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Balconies</label>
                         <div className="flex flex-wrap gap-1.5">
                           {['0', '1', '2', '3', '3+'].map(opt => (
                             <div key={opt} onClick={() => setBalconies(opt)} className={numPillClass(balconies === opt)}>
@@ -596,7 +596,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Furnished Status</label>
+                        <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Furnished Status</label>
                         <div className="flex flex-wrap gap-2">
                           {['Furnished', 'Unfurnished', 'Semi-Furnished'].map(opt => (
                             <div key={opt} onClick={() => setFurnishing(opt)} className={pillClass(furnishing === opt)}>
@@ -607,7 +607,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Bathrooms</label>
+                        <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Bathrooms</label>
                         <div className="flex flex-wrap gap-1.5">
                           {['0', '1', '2', '3', '4', '5+'].map(opt => (
                             <div key={opt} onClick={() => setBathrooms(opt)} className={numPillClass(bathrooms === opt)}>
@@ -619,47 +619,47 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-teal-50/50 border border-teal-200/70 p-4 rounded-xl text-xs space-y-1">
-                    <p className="font-extrabold text-teal-900">🏞️ Plot / Land Selected</p>
-                    <p className="text-[11px] text-teal-700 font-medium">Bedrooms, Bathrooms, and Furnishing details are automatically hidden for plots.</p>
+                  <div className="bg-red-50/50 border border-red-200/70 p-4 rounded-xl text-xs space-y-1">
+                    <p className="font-extrabold text-red-950">🏞️ Plot / Land Selected</p>
+                    <p className="text-[11px] text-red-700 font-medium">Bedrooms, Bathrooms, and Furnishing details are automatically hidden for plots.</p>
                   </div>
                 )}
 
                 {/* Technical Property Specifications Box */}
-                <div className="bg-white p-4.5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                  <h3 className="text-xs font-black text-slate-800 mb-3 pb-1.5 border-b border-slate-100 flex items-center justify-between">
+                <div className="bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                  <h3 className="text-xs sm:text-sm font-black text-slate-800 mb-3 pb-1.5 border-b border-slate-100 flex items-center justify-between">
                     <span>Technical Property Specifications</span>
-                    <span className="text-[10px] text-teal-600 font-bold uppercase">Area & Building Info</span>
+                    <span className="text-[10px] sm:text-[11px] text-[#da0c23] font-bold uppercase">Area & Building Info</span>
                   </h3>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Carpet Area (sqft)</label>
-                      <input type="text" placeholder="e.g. 650 sqft" value={carpetAreaInput} onChange={(e) => setCarpetAreaInput(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none transition-colors font-bold text-slate-800" />
+                      <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Carpet Area (sqft)</label>
+                      <input type="text" placeholder="e.g. 650 sqft" value={carpetAreaInput} onChange={(e) => setCarpetAreaInput(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-[#da0c23] outline-none transition-colors font-bold text-slate-800" />
                     </div>
 
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Super Built-Up Area (sqft)</label>
-                      <input type="text" placeholder="e.g. 850 sqft" value={superAreaInput} onChange={(e) => setSuperAreaInput(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none transition-colors font-bold text-slate-800" />
+                      <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Super Built-Up Area (sqft)</label>
+                      <input type="text" placeholder="e.g. 850 sqft" value={superAreaInput} onChange={(e) => setSuperAreaInput(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-[#da0c23] outline-none transition-colors font-bold text-slate-800" />
                     </div>
                   </div>
 
                   {propertyType !== 'Plot/ Land' && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 border-t border-slate-100">
                       <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Floor No.</label>
-                        <input type="text" placeholder="e.g. 2" value={floorNo} onChange={(e) => setFloorNo(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none transition-colors font-bold text-slate-800" />
+                        <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Floor No.</label>
+                        <input type="text" placeholder="e.g. 2" value={floorNo} onChange={(e) => setFloorNo(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-[#da0c23] outline-none transition-colors font-bold text-slate-800" />
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Total Floors in Building</label>
-                        <input type="text" placeholder="e.g. 4" value={totalFloorsCount} onChange={(e) => setTotalFloorsCount(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none transition-colors font-bold text-slate-800" />
+                        <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Total Floors in Building</label>
+                        <input type="text" placeholder="e.g. 4" value={totalFloorsCount} onChange={(e) => setTotalFloorsCount(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-[#da0c23] outline-none transition-colors font-bold text-slate-800" />
                       </div>
                     </div>
                   )}
 
                   <div className="space-y-2 pt-1 border-t border-slate-100">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Property Status</label>
+                    <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Property Status</label>
                     <div className="flex flex-wrap gap-2">
                       {['Ready to Move', 'Under Construction', 'Ready to Construct'].map(opt => (
                         <div key={opt} onClick={() => setPropertyStatus(opt)} className={pillClass(propertyStatus === opt)}>
@@ -670,7 +670,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                   </div>
 
                   <div className="space-y-2 pt-1 border-t border-slate-100">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Transaction Type</label>
+                    <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Transaction Type</label>
                     <div className="flex flex-wrap gap-2">
                       {['Resale', 'New Property', 'Lease'].map(opt => (
                         <div key={opt} onClick={() => setTransactionTypeState(opt)} className={pillClass(transactionTypeState === opt)}>
@@ -682,7 +682,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 border-t border-slate-100">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Facing Direction</label>
+                      <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Facing Direction</label>
                       <div className="flex flex-wrap gap-1.5">
                         {['East', 'West', 'North', 'South', 'North-East'].map(opt => (
                           <div key={opt} onClick={() => setFacingState(opt)} className={pillClass(facingState === opt)}>
@@ -693,7 +693,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Ownership Type</label>
+                      <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Ownership Type</label>
                       <div className="flex flex-wrap gap-1.5">
                         {['Freehold', 'Leasehold', 'Co-operative Society'].map(opt => (
                           <div key={opt} onClick={() => setOwnershipState(opt)} className={pillClass(ownershipState === opt)}>
@@ -705,8 +705,8 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                   </div>
 
                   <div className="space-y-1 pt-1 border-t border-slate-100">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Developer / Builder Name (Optional)</label>
-                    <input type="text" placeholder="e.g. Ostwal Builders / Independent / Owner" value={developerInput} onChange={(e) => setDeveloperInput(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none transition-colors font-bold text-slate-800" />
+                    <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Developer / Builder Name (Optional)</label>
+                    <input type="text" placeholder="e.g. Ostwal Builders / Independent / Owner" value={developerInput} onChange={(e) => setDeveloperInput(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-[#da0c23] outline-none transition-colors font-bold text-slate-800" />
                   </div>
                 </div>
               </div>
@@ -719,7 +719,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <div>
                       <h3 className="text-xs font-black text-slate-800 flex items-center gap-2">
-                        <Camera className="w-4 h-4 text-teal-600" /> Property Photos
+                        <Camera className="w-4 h-4 text-[#da0c23]" /> Property Photos
                       </h3>
                       <p className="text-[11px] text-slate-500 mt-0.5">
                         Upload photos directly from your phone/computer. The 1st photo will be your <strong>Cover Photo</strong>.
@@ -738,7 +738,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                       />
                       <label 
                         htmlFor="property-file-input" 
-                        className="cursor-pointer bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-4 py-2 rounded-lg transition-all shadow-sm flex items-center gap-1.5 shrink-0"
+                        className="cursor-pointer bg-[#da0c23] hover:bg-[#b8081c] text-white font-bold text-xs px-4 py-2 rounded-lg transition-all shadow-sm flex items-center gap-1.5 shrink-0"
                       >
                         <Upload className="w-4 h-4" />
                         <span>Upload Photos</span>
@@ -753,7 +753,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
                           Uploaded / Selected Photos ({selectedPhotos.length})
                         </span>
-                        <span className="text-[10px] text-teal-700 font-bold">
+                        <span className="text-[10px] text-[#da0c23] font-bold">
                           ★ First photo is set as Cover Photo
                         </span>
                       </div>
@@ -779,7 +779,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                                 <button 
                                   type="button"
                                   onClick={() => makeCoverPhoto(index)}
-                                  className="absolute top-2 left-2 bg-slate-900/80 hover:bg-teal-600 text-white font-bold text-[9px] px-2 py-1 rounded-md opacity-90 group-hover:opacity-100 transition-all shadow z-10"
+                                  className="absolute top-2 left-2 bg-slate-900/80 hover:bg-[#da0c23] text-white font-bold text-[9px] px-2 py-1 rounded-md opacity-90 group-hover:opacity-100 transition-all shadow z-10"
                                 >
                                   Set as Cover
                                 </button>
@@ -801,7 +801,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                     </div>
                   ) : (
                     <div className="border-2 border-dashed border-slate-250 rounded-xl p-6 text-center space-y-2">
-                      <Camera className="w-8 h-8 text-slate-400 mx-auto text-teal-600" />
+                      <Camera className="w-8 h-8 mx-auto text-[#da0c23]" />
                       <p className="text-xs text-slate-600 font-bold">No photos selected yet.</p>
                       <p className="text-[10px] text-slate-400">Click the 'Upload Photos' button to choose photos from your device.</p>
                     </div>
@@ -812,7 +812,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                          <Video className="w-4 h-4 text-teal-600" />
+                          <Video className="w-4 h-4 text-[#da0c23]" />
                           <span>Property Walkthrough Video</span>
                         </h4>
                         <p className="text-[10px] text-slate-500 mt-0.5">Upload a short video tour of your property (Optional — Max 1 Video).</p>
@@ -835,11 +835,11 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                         </div>
                       </div>
                     ) : (
-                      <label className="border-2 border-dashed border-teal-200 hover:border-teal-500 bg-teal-50/40 hover:bg-teal-50/80 rounded-xl p-4 flex items-center justify-center gap-3 cursor-pointer transition-all">
-                        <Video className="w-5 h-5 text-teal-600 shrink-0" />
+                      <label className="border-2 border-dashed border-red-200 hover:border-[#da0c23] bg-red-50/40 hover:bg-red-50/80 rounded-xl p-4 flex items-center justify-center gap-3 cursor-pointer transition-all">
+                        <Video className="w-5 h-5 text-[#da0c23] shrink-0" />
                         <div className="text-left">
-                          <span className="text-xs font-extrabold text-teal-900 block">Click to Upload Video Tour</span>
-                          <span className="text-[10px] text-teal-700 font-medium">MP4, WebM or MOV format (Max 1 video)</span>
+                          <span className="text-xs font-extrabold text-red-950 block">Click to Upload Video Tour</span>
+                          <span className="text-[10px] text-red-700 font-medium">MP4, WebM or MOV format (Max 1 video)</span>
                         </div>
                         <input type="file" accept="video/*" onChange={handleVideoUpload} className="hidden" />
                       </label>
@@ -855,35 +855,35 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
               <div className="space-y-6 animate-in fade-in duration-200">
                 <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-4">
                   <h3 className="text-xs font-black text-slate-800 mb-2 pb-1.5 border-b border-slate-100 flex items-center gap-2">
-                    <Coins className="w-4 h-4 text-teal-600" /> Pricing & Deposit
+                    <Coins className="w-4 h-4 text-[#da0c23]" /> Pricing & Deposit
                   </h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Expected Price (₹)</label>
-                      <input type="text" placeholder="e.g. 35,00,000" value={priceInput} onChange={(e) => setPriceInput(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none font-bold text-slate-800" />
+                      <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Expected Price (₹)</label>
+                      <input type="text" placeholder="e.g. 35,00,000" value={priceInput} onChange={(e) => setPriceInput(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-[#da0c23] outline-none font-bold text-slate-800" />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Security Deposit (₹)</label>
-                      <input type="text" placeholder="e.g. 50,000" value={securityDeposit} onChange={(e) => setSecurityDeposit(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none font-bold text-slate-800" />
+                      <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Security Deposit (₹)</label>
+                      <input type="text" placeholder="e.g. 50,000" value={securityDeposit} onChange={(e) => setSecurityDeposit(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-[#da0c23] outline-none font-bold text-slate-800" />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Maintenance /Month (₹)</label>
-                      <input type="text" placeholder="e.g. 1,500" value={maintenance} onChange={(e) => setMaintenance(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-teal-500 outline-none font-bold text-slate-800" />
+                      <label className="text-[11px] sm:text-xs font-black text-slate-400 uppercase tracking-wider">Maintenance /Month (₹)</label>
+                      <input type="text" placeholder="e.g. 1,500" value={maintenance} onChange={(e) => setMaintenance(e.target.value)} className="w-full border-b border-slate-250 py-1 text-xs focus:border-[#da0c23] outline-none font-bold text-slate-800" />
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-3">
                   <h3 className="text-xs font-black text-slate-800 mb-1 pb-1.5 border-b border-slate-100 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-teal-600" /> Property Description
+                    <FileText className="w-4 h-4 text-[#da0c23]" /> Property Description
                   </h3>
                   <textarea 
                     rows={4} 
                     placeholder="Describe your property (amenities, proximity to Boisar station, nearby markets, schools, family features, etc.)"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full border border-slate-250 rounded-lg p-2.5 text-xs focus:border-teal-500 focus:outline-none font-medium text-slate-700 leading-normal"
+                    className="w-full border border-slate-250 rounded-lg p-2.5 text-xs focus:border-[#da0c23] focus:outline-none font-medium text-slate-700 leading-normal"
                   />
                 </div>
               </div>
@@ -903,13 +903,13 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                     </p>
                   </div>
                 </div>
-                <div className="bg-teal-50/20 border border-teal-100/60 rounded-xl p-4 text-left max-w-md w-full mt-2">
-                  <span className="text-[9px] font-black text-teal-700 uppercase tracking-widest block mb-2">Listing Summary</span>
+                <div className="bg-red-50/25 border border-red-100/80 rounded-xl p-4 text-left max-w-md w-full mt-2">
+                  <span className="text-[9px] font-black text-[#da0c23] uppercase tracking-widest block mb-2">Listing Summary</span>
                   <p className="text-xs font-black text-slate-800 leading-snug">{bedrooms && bedrooms !== '0' ? `${bedrooms} BHK ` : ''}{propertyType} for {forAction === 'Sale' ? 'Sale' : 'Rent'}</p>
                   <p className="text-[10px] font-medium text-slate-500 mt-0.5">{projectName || addressLocality || 'Boisar'}, Boisar</p>
                   <div className="flex justify-between items-center border-t border-slate-200/50 pt-2 mt-2">
                     <span className="text-[10px] text-slate-400 font-bold">Price</span>
-                    <strong className="text-sm font-black text-teal-700">₹{priceInput}</strong>
+                    <strong className="text-sm font-black text-[#da0c23]">₹{priceInput}</strong>
                   </div>
                 </div>
               </div>
@@ -919,7 +919,7 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
         </div>
 
         {/* Footer Actions - Sticky at bottom */}
-        <div className="bg-white border-t border-slate-200 px-3.5 sm:px-5 py-2.5 sm:py-3.5 flex justify-between items-center shadow-lg shrink-0 rounded-b-2xl sm:rounded-b-3xl z-30 sticky bottom-0">
+        <div className="bg-white border-t border-slate-200 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center shadow-lg shrink-0 rounded-b-2xl sm:rounded-b-3xl z-30 sticky bottom-0">
           {step === 4 ? (
             <div className="flex items-center justify-between w-full gap-3">
               <button 
@@ -927,13 +927,13 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
                   handleClose();
                   window.location.href = '/dashboard?mode=property';
                 }}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-1.5 touch-manipulation"
+                className="bg-[#da0c23] hover:bg-[#b8081c] text-white font-extrabold text-sm px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-all shadow-sm cursor-pointer flex items-center gap-1.5 touch-manipulation"
               >
                 <span>🏢 Go to Property Dashboard</span>
               </button>
               <button 
                 onClick={handleClose} 
-                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-colors cursor-pointer touch-manipulation"
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-colors cursor-pointer touch-manipulation"
               >
                 Done
               </button>
@@ -942,13 +942,13 @@ export default function PostPropertyModal({ isOpen, onClose, onAddProperty }: Po
             <>
               <button 
                 onClick={step === 1 ? handleClose : handlePrevStep} 
-                className="px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-colors cursor-pointer touch-manipulation"
+                className="px-4 sm:px-5 py-2.5 sm:py-3 text-sm text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-colors cursor-pointer touch-manipulation"
               >
                 {step === 1 ? 'Cancel' : 'Back'}
               </button>
               <button 
                 onClick={step === 3 ? handleFormSubmit : handleNextStep} 
-                className="bg-[#0d9488] hover:bg-[#0f766e] active:scale-95 text-white font-black text-xs sm:text-sm px-4.5 sm:px-6 py-2 sm:py-2.5 rounded-xl transition-all shadow-md cursor-pointer touch-manipulation flex items-center gap-1.5"
+                className="bg-[#da0c23] hover:bg-[#b8081c] active:scale-95 text-white font-black text-sm sm:text-base px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl transition-all shadow-md cursor-pointer touch-manipulation flex items-center gap-1.5"
               >
                 <span>{step === 1 ? 'Continue to Photos' : step === 2 ? 'Continue to Pricing' : 'List Property'}</span>
               </button>

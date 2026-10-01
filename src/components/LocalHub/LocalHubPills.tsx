@@ -78,18 +78,6 @@ export default function LocalHubPills() {
       onClick: () => router.push('/hire-vehicle?category=tempo')
     },
     {
-      id: 'turf',
-      title: 'Sports Turf & Game Zone',
-      image: '/imagess/turf game.png',
-      onClick: () => setTurfOpen(true)
-    },
-    {
-      id: 'offers',
-      title: 'Shop Offers',
-      image: '/imagess/shop offer.png',
-      onClick: () => setOffersOpen(true)
-    },
-    {
       id: 'marketplace',
       title: 'Used Items',
       image: '/imagess/used items.png',

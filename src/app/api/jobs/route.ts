@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
             address: location || 'Boisar, Palghar',
             phone: contactPhone || '9022388123',
             whatsapp: contactPhone || '9022388123',
-            image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop&q=80',
+            image: body.image || '',
             location: location || 'Boisar',
             verified: false
           }

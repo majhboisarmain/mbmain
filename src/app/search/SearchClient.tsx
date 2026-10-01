@@ -603,9 +603,10 @@ export default function SearchClient() {
                                 onError={(e) => { (e.target as HTMLImageElement).src = '/majh-boisar-mb-logo.png'; }}
                                 className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
                               />
-                              {pIdx === 2 && allPhotos.length > 3 && (
-                                <div className="absolute bottom-1.5 right-1.5 bg-slate-950/85 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none">
-                                  +{allPhotos.length - 3} more
+                              {/* Visits badge on the 3rd photo where +more used to be */}
+                              {pIdx === 2 && business.views != null && business.views > 0 && (
+                                <div className="absolute bottom-1.5 right-1.5 bg-slate-950/85 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none backdrop-blur-xs">
+                                  <span>👁️ {business.views.toLocaleString()} visits</span>
                                 </div>
                               )}
                             </div>
@@ -631,20 +632,14 @@ export default function SearchClient() {
                         </div>
                       </div>
 
-                      {/* Bottom Visits / Distance Indicators */}
-                      <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 pt-1 pb-0.5 px-2 bg-white/90 border-t border-slate-100">
-                        {business.views != null && business.views > 0 ? (
-                          <span className="bg-amber-50 border border-amber-200 text-amber-700 text-[8.5px] font-black px-1.5 py-0.5 rounded">
-                            👁️ {business.views.toLocaleString()} visits
-                          </span>
-                        ) : <span />}
-
-                        {business.distanceKm != null && (
+                      {/* Optional Distance Indicator only (Visits moved to image) */}
+                      {business.distanceKm != null && (
+                        <div className="flex items-center justify-end text-[10px] font-bold text-slate-500 pt-1 pb-0.5 px-2 bg-white/90 border-t border-slate-100">
                           <span className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-[8.5px] font-black px-1.5 py-0.5 rounded">
                             📍 {business.distanceKm} km away
                           </span>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Middle Section: Business Information Details */}
