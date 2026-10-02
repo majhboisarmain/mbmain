@@ -11,7 +11,7 @@ import {
   PawPrint, Landmark, Activity, Coins, Truck, Mail, LayoutGrid, ChevronLeft,
   Smartphone, Store, Sprout, Camera, ShoppingBag, Zap, FileText, Droplet, Tv,
   ChevronDown, Users, User, Briefcase, Home, Tag, AlertTriangle, Lock, Car, CreditCard,
-  Share2
+  Share2, Calendar, Bath, Bed, Compass, Maximize2, Armchair, Layers
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -660,6 +660,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   const [enquirySenderPhone, setEnquirySenderPhone] = useState('');
   const [enquiryMessage, setEnquiryMessage] = useState('Hi, I am interested in this property. Please share details.');
   const [viewEnquiriesModalOpen, setViewEnquiriesModalOpen] = useState(false);
+  const [neighbourhoodTab, setNeighbourhoodTab] = useState<'transit' | 'essentials' | 'utility'>('transit');
 
   // Buyer Direct Call Pass states
   const [buyerCallCredits, setBuyerCallCredits] = useState<number>(() => {
@@ -1007,6 +1008,8 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   const [filterRating, setFilterRating] = useState(false);
   const [activeSpecialCategory, setActiveSpecialCategory] = useState<'influencers' | 'properties' | 'helpers' | 'caterers' | null>(initialSpecialCategory || null);
   const [propertyMode, setPropertyMode] = useState<'buy' | 'sell' | 'rent' | null>(null);
+  const [activePropertyTab, setActivePropertyTab] = useState<'buy' | 'rent' | 'commercial'>('buy');
+  const [propertySearchQuery, setPropertySearchQuery] = useState('');
   const [postPropertyModalOpen, setPostPropertyModalOpen] = useState(false);
   const [homeLoanModalOpen, setHomeLoanModalOpen] = useState(false);
   const [buyDropdownOpen, setBuyDropdownOpen] = useState(false);
@@ -1370,6 +1373,54 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
     } catch (e) {
       showToast('Could not copy link to clipboard', 'error');
     }
+  };
+
+  const [shortlistedPropIds, setShortlistedPropIds] = useState<number[]>(() => {
+    try {
+      if (typeof window === 'undefined') return [];
+      const saved = localStorage.getItem('majh_boisar_shortlisted_properties');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const toggleShortlistProperty = (propId: number) => {
+    setShortlistedPropIds((prev) => {
+      const isLiked = prev.includes(propId);
+      const updated = isLiked ? prev.filter((id) => id !== propId) : [...prev, propId];
+      try {
+        localStorage.setItem('majh_boisar_shortlisted_properties', JSON.stringify(updated));
+      } catch (e) {}
+      showToast(isLiked ? 'Removed from shortlisted properties' : 'Added to shortlisted properties! ❤️', 'success');
+      return updated;
+    });
+  };
+
+  const calculateEstimatedEmi = (priceStr: string | number | undefined) => {
+    if (!priceStr) return 8450;
+    const num = parseInt(String(priceStr).replace(/[^\d]/g, ''), 10);
+    if (!num || isNaN(num) || num <= 0) return 8450;
+    const p = num * 0.8;
+    const r = 8.5 / 12 / 100;
+    const n = 240;
+    const emi = Math.round((p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+    return emi > 0 ? emi : 8450;
+  };
+
+  const formatPriceInLacs = (price: string | number | undefined): string => {
+    if (!price) return 'Price on Request';
+    const rawNum = parseInt(String(price).replace(/[^\d]/g, ''), 10);
+    if (!rawNum || isNaN(rawNum)) return String(price);
+    if (rawNum >= 10000000) {
+      const cr = (rawNum / 10000000).toFixed(2).replace(/\.00$/, '');
+      return `₹ ${cr} Cr`;
+    }
+    if (rawNum >= 100000) {
+      const lacs = (rawNum / 100000).toFixed(2).replace(/\.00$/, '');
+      return `₹ ${lacs} Lacs`;
+    }
+    return `₹ ${rawNum.toLocaleString('en-IN')}`;
   };
 
   // Helper function to update specialist plan subscription
@@ -2057,7 +2108,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       
       {/* 1. Hero Search Panel */}
       <div 
-        className="relative border-b border-slate-150 py-7 sm:py-11 overflow-visible bg-cover bg-no-repeat bg-center z-40"
+        className="relative border-b border-slate-150 pt-2.5 pb-3 sm:pt-4 sm:pb-5 overflow-visible bg-cover bg-no-repeat bg-center z-40"
         style={{ backgroundImage: "url('/hero-bg.png')" }}
       >
         {/* Large watermark MB Logo centered in the background - clear and prominent */}
@@ -2065,73 +2116,42 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           <img loading="lazy" decoding="async" 
             src="/majh-boisar-mb-logo.png" 
             alt="Watermark MB" 
-            className="h-36 sm:h-48 md:h-56 w-auto object-contain opacity-[0.30] select-none" 
+            className="h-24 sm:h-36 md:h-44 w-auto object-contain opacity-[0.25] select-none" 
           />
         </div>
         
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-40 overflow-visible">
 
-          {/* Search Inputs Bar */}
-          <div className="max-w-lg mx-auto flex items-center justify-center gap-2 sm:gap-2.5 relative z-50">
-            {/* Location Selector (MapPin Circle Button with select overlay) */}
-            <div className="relative h-11 w-11 rounded-full flex items-center justify-center bg-white border border-slate-200 shadow-md hover:border-rose-400 hover:shadow-lg transition-all duration-300 shrink-0 group cursor-pointer">
-              <MapPin className="w-5 h-5 text-rose-500 group-hover:scale-110 transition-transform" />
-              <select
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full rounded-full"
-                title={`Location: ${selectedLocation === 'All' ? 'All Boisar Areas' : selectedLocation}`}
-              >
-                <option value="All">All Boisar Areas</option>
-                <option value="Boisar West">Boisar West</option>
-                <option value="Boisar East">Boisar East</option>
-                <option value="Tarapur MIDC">Tarapur MIDC</option>
-                <option value="Ostwal Empire">Ostwal Empire</option>
-              </select>
-            </div>
-
-            {/* Keyword Search Input & Button (Pill Container) */}
-            <div className="bg-white border border-slate-200/90 shadow-[0_6px_25px_rgb(0,0,0,0.07)] hover:border-teal-400/70 focus-within:border-teal-500 focus-within:ring-4 focus-within:ring-teal-500/10 rounded-full p-1.5 flex items-center gap-2 flex-1 transition-all duration-300">
-              <div className="flex items-center gap-2 px-3 sm:px-4 py-1 w-full">
-                {loading && searchQuery && (
-                  <div className="w-3.5 h-3.5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin shrink-0" />
-                )}
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setIsSearchFocused(true);
-                  }}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
-                  onKeyDown={(e) => { 
-                    if (e.key === 'Enter') {
-                      setIsSearchFocused(false);
-                      fetchBusinesses(); 
-                    }
-                  }}
-                  placeholder={t('nav.search_placeholder')}
-                  className="bg-transparent border-0 text-xs sm:text-[13px] focus:outline-none w-full text-slate-800 placeholder:text-slate-400 font-extrabold"
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 shrink-0 cursor-pointer">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Submit Button (Prominent Teal Round Button with Search Icon) */}
-              <button
-                onClick={() => {
-                  setIsSearchFocused(false);
-                  fetchBusinesses();
+          {/* Search Inputs Bar — Clean Single NoBroker Rounded Input Style */}
+          <div className="max-w-xl mx-auto relative z-50">
+            <div className="bg-white border border-slate-200/90 shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-md hover:border-slate-350 focus-within:border-slate-700 focus-within:ring-4 focus-within:ring-slate-900/5 rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2.5 transition-all">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 shrink-0 stroke-[2.2]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchFocused(true);
                 }}
-                className="h-9 w-9 rounded-full bg-[#0d9488] hover:bg-[#0f766e] active:scale-95 text-white flex items-center justify-center shrink-0 shadow-md cursor-pointer transition-all mr-0.5"
-                title="Search Directory"
-              >
-                <Search className="w-4 h-4 text-white" />
-              </button>
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 250)}
+                onKeyDown={(e) => { 
+                  if (e.key === 'Enter') {
+                    setIsSearchFocused(false);
+                    fetchBusinesses(); 
+                  }
+                }}
+                placeholder="Search Plumbing, Electrical, Cleaning..."
+                className="bg-transparent border-0 text-xs sm:text-sm focus:outline-none w-full text-slate-800 placeholder:text-slate-400 font-bold"
+              />
+              {loading && searchQuery && (
+                <div className="w-3.5 h-3.5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin shrink-0" />
+              )}
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 shrink-0 cursor-pointer">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
             {/* Live Instant Search Suggestions Dropdown */}
@@ -2307,251 +2327,79 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
         </div>
       </div>
 
-      {/* 2. Desktop 2-Column Layout: Ad Slider Left + Property (Top) & Jobs (Bottom) Right */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-          {/* Main Ad Banner Carousel (Left Side - 6 cols, 1:1 ratio) */}
-          <div className="lg:col-span-6 relative group">
-            {/* Navigation Arrows (Positioned on the side edges like other carousels) */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrevSlide();
-              }}
-              className="absolute -left-2 sm:-left-3.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white shadow-md border border-slate-200/90 flex items-center justify-center text-slate-700 hover:text-slate-950 hover:bg-slate-50 cursor-pointer transition-all active:scale-95 z-30"
-              title="Previous Slide"
-            >
-              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNextSlide();
-              }}
-              className="absolute -right-2 sm:-right-3.5 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-teal-600 hover:bg-teal-700 shadow-md flex items-center justify-center text-white cursor-pointer transition-all active:scale-95 z-30"
-              title="Next Slide"
-            >
-              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
-            </button>
+      {/* 2. Quick Services & Hubs — NoBroker 8 Cards Grid Style (Open floating cards, no outer box) */}
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 mt-3.5 sm:mt-5">
+        <div className="grid grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3.5 items-stretch">
 
-            <div 
-              onTouchStart={onCarouselTouchStart}
-              onTouchMove={onCarouselTouchMove}
-              onTouchEnd={onCarouselTouchEnd}
-              onMouseEnter={() => setIsSlidePlaying(false)}
-              onMouseLeave={() => setIsSlidePlaying(true)}
-              className="relative w-full aspect-[2.1/1] sm:aspect-[2.1/1] lg:aspect-auto lg:h-[312px] rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-[#1c0836] touch-pan-y select-none"
-            >
-              {/* Main Slide Image & Click Trigger */}
-              <div 
-                onClick={() => {
-                  const activeSlide = slides[currentSlide];
-                  if (activeSlide.action === 'home_services' || activeSlide.category === 'Home Services' || activeSlide.targetUrl === '/services') {
-                    router.push('/services');
-                  } else if (activeSlide.action === 'hotel_booking' || activeSlide.category === 'Hotels' || activeSlide.targetUrl === '/hotels') {
-                    router.push('/hotels');
-                  } else if (activeSlide.action === 'hospitals' || activeSlide.category === 'Hospitals' || activeSlide.targetUrl === '/search?category=Hospitals') {
-                    router.push('/search?category=Hospitals');
-                  } else if (activeSlide.targetUrl && activeSlide.targetUrl !== '#') {
-                    if (activeSlide.targetUrl.startsWith('/')) {
-                      router.push(activeSlide.targetUrl);
-                    } else {
-                      window.open(activeSlide.targetUrl, '_blank');
-                    }
-                  } else if (activeSlide.category) {
-                    router.push(`/search?category=${encodeURIComponent(activeSlide.category)}`);
-                  }
-                }}
-                className="block w-full h-full cursor-pointer absolute inset-0 z-20"
-              >
-                <span className="sr-only">Open Slide Action</span>
-              </div>
-              
-              {slides[currentSlide].image ? (
-                <img 
-                  loading="eager" 
-                  fetchPriority="high"
-                  decoding="sync" 
-                  src={slides[currentSlide].image} 
-                  alt={slides[currentSlide].title} 
-                  className="w-full h-full object-cover object-center"
-                />
-              ) : null}
-              
-              {/* AD Badge - Only for sponsored merchant ads */}
-              {(slides[currentSlide].isSponsoredAd || slides[currentSlide].isAd) && (
-                <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-xs z-30">
-                  AD
-                </div>
-              )}
-
-              {/* Dark overlay for text contrast */}
-              {slides[currentSlide].showTextOverlay !== false && (
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent pointer-events-none"></div>
-              )}
-              
-              {/* Slide Text Content */}
-              {slides[currentSlide].showTextOverlay !== false && (
-                <div className="absolute bottom-5 left-0 right-0 px-5 sm:px-8 flex flex-col justify-end text-white space-y-2 pointer-events-none z-10 text-left">
-                  <div className="space-y-0.5">
-                    <span className="text-[10px] sm:text-xs font-black text-amber-300 block uppercase tracking-wider">
-                      {slides[currentSlide].label}
-                    </span>
-                    <h2 className="text-base sm:text-2xl font-black tracking-tight leading-snug drop-shadow-md">
-                      {slides[currentSlide].title}
-                    </h2>
-                  </div>
-                  
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const activeSlide = slides[currentSlide];
-                      if (activeSlide.action === 'home_services' || activeSlide.category === 'Home Services' || activeSlide.targetUrl === '/services') {
-                        router.push('/services');
-                      } else if (activeSlide.action === 'hotel_booking' || activeSlide.category === 'Hotels' || activeSlide.targetUrl === '/hotels') {
-                        router.push('/hotels');
-                      } else if (activeSlide.action === 'hospitals' || activeSlide.category === 'Hospitals' || activeSlide.targetUrl === '/search?category=Hospitals') {
-                        router.push('/search?category=Hospitals');
-                      } else if (activeSlide.targetUrl && activeSlide.targetUrl !== '#') {
-                        if (activeSlide.targetUrl.startsWith('/')) {
-                          router.push(activeSlide.targetUrl);
-                        } else {
-                          window.open(activeSlide.targetUrl, '_blank');
-                        }
-                      } else {
-                        router.push(`/search?category=${encodeURIComponent(activeSlide.category)}`);
-                      }
-                    }}
-                    className="bg-[#d49e35] hover:bg-[#c28e2d] active:scale-95 text-slate-950 font-black text-xs px-4 py-1.5 rounded-lg shadow-sm transition-all self-start cursor-pointer pointer-events-auto"
-                  >
-                    {slides[currentSlide].cta}
-                  </button>
-                </div>
-              )}
-
-
-              {/* Dots Indicator */}
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30">
-                {slides.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSelectSlide(idx);
-                    }}
-                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                      currentSlide === idx ? 'bg-white w-5 shadow-xs' : 'bg-white/50 w-2 hover:bg-white/80'
-                    }`}
-                    title={`Go to slide ${idx + 1}`}
-                  />
-                ))}
-              </div>
+          {/* 1. Properties */}
+          <Link
+            href="/properties"
+            onClick={() => { setActiveSpecialCategory('properties'); setSelectedProfile(null); }}
+            className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-teal-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
+          >
+            <div className="min-h-[26px] sm:min-h-[28px] flex items-center justify-center w-full px-0.5">
+              <h3 className="text-[10px] min-[360px]:text-[11px] sm:text-xs font-bold text-slate-800 group-hover:text-teal-700 transition-colors text-center leading-tight truncate">
+                Properties
+              </h3>
             </div>
-          </div>
-
-          {/* Right Side Promos — side-by-side on desktop */}
-          <div className="lg:col-span-6 flex flex-col gap-3 sm:gap-4 h-full">
-            {/* Wrapper box — Clean App Card matching reference icon style */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 h-full bg-white border border-slate-200/90 rounded-3xl p-3 sm:p-5 shadow-[0_4px_24px_rgb(0,0,0,0.04)]">
-
-              {/* Promo Card 1 - Real Estate */}
-              <Link
-                href="/properties"
-                onClick={() => { setActiveSpecialCategory('properties'); setSelectedProfile(null); }}
-                className="flex flex-col items-center justify-center text-center rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#f0fdfa] border-2 border-teal-200/90 hover:border-[#008080] hover:bg-[#ccfbf1]/50 transition-all duration-300 cursor-pointer group shadow-xs hover:shadow-md h-full min-h-[140px] sm:min-h-[180px]"
-              >
-                {/* Vector Icon */}
-                <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                  <svg className="w-14 h-14 sm:w-18 sm:h-18 lg:w-22 lg:h-22 drop-shadow-xs" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 28L32 10L56 28" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M14 24V52C14 53.1 14.9 54 16 54H48C49.1 54 50 53.1 50 52V24" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M42 18V11H48V23" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                    <rect x="20" y="27" width="9" height="9" rx="2" fill="#008080" stroke="#0f172a" strokeWidth="2.5"/>
-                    <path d="M24.5 27V36" stroke="white" strokeWidth="1.5"/>
-                    <path d="M20 31.5H29" stroke="white" strokeWidth="1.5"/>
-                    <rect x="35" y="27" width="9" height="9" rx="2" fill="#008080" stroke="#0f172a" strokeWidth="2.5"/>
-                    <path d="M39.5 27V36" stroke="white" strokeWidth="1.5"/>
-                    <path d="M35 31.5H44" stroke="white" strokeWidth="1.5"/>
-                    <path d="M26 54V42C26 40.9 26.9 40 28 40H36C37.1 40 38 40.9 38 42V54" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
-                    <circle cx="35" cy="47" r="1.5" fill="#008080"/>
-                    <circle cx="48" cy="18" r="8" fill="#008080" stroke="#0f172a" strokeWidth="2.5"/>
-                    <path d="M48 14V19H51" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                    <path d="M6 54H58" stroke="#0f172a" strokeWidth="3" strokeLinecap="round"/>
-                  </svg>
-                </div>
-
-                {/* Title only */}
-                <h3 className="text-sm sm:text-lg lg:text-xl font-black text-slate-900 group-hover:text-[#008080] transition-colors mt-2 sm:mt-3 leading-tight tracking-tight">
-                  Properties
-                </h3>
-              </Link>
-
-              {/* Promo Card 2 - Careers */}
-              <Link
-                href="/jobs"
-                className="flex flex-col items-center justify-center text-center rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-[#fef2f2] border-2 border-rose-200/90 hover:border-[#e50914] hover:bg-[#ffe4e6]/50 transition-all duration-300 cursor-pointer group shadow-xs hover:shadow-md h-full min-h-[140px] sm:min-h-[180px]"
-              >
-                {/* Vector Icon */}
-                <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                  <svg className="w-14 h-14 sm:w-18 sm:h-18 lg:w-22 lg:h-22 drop-shadow-xs" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="10" y="22" width="44" height="32" rx="6" fill="white" stroke="#0f172a" strokeWidth="3"/>
-                    <path d="M10 33H54" stroke="#0f172a" strokeWidth="2.5"/>
-                    <path d="M24 22V14C24 12.9 24.9 12 26 12H38C39.1 12 40 12.9 40 14V22" stroke="#0f172a" strokeWidth="3" strokeLinecap="round"/>
-                    <rect x="18" y="22" width="5" height="32" fill="#e50914" stroke="#0f172a" strokeWidth="2"/>
-                    <rect x="41" y="22" width="5" height="32" fill="#e50914" stroke="#0f172a" strokeWidth="2"/>
-                    <rect x="28" y="29" width="8" height="8" rx="2" fill="#e50914" stroke="#0f172a" strokeWidth="2.5"/>
-                    <circle cx="32" cy="33" r="1.5" fill="white"/>
-                    <circle cx="48" cy="18" r="8" fill="#e50914" stroke="#0f172a" strokeWidth="2.5"/>
-                    <circle cx="47" cy="17" r="3.5" fill="white"/>
-                    <path d="M53 23L57 27" stroke="#0f172a" strokeWidth="3" strokeLinecap="round"/>
-                  </svg>
-                </div>
-
-                {/* Title only */}
-                <h3 className="text-sm sm:text-lg lg:text-xl font-black text-slate-900 group-hover:text-[#e50914] transition-colors mt-2 sm:mt-3 leading-tight tracking-tight">
-                  Find a Job
-                </h3>
-              </Link>
-
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 2.5 Quick Portals & Hubs (Clean App Card Style with Vector Icons matching reference) */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4 sm:mt-6">
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_4px_24px_rgb(0,0,0,0.04)] p-4 sm:p-6 transition-all">
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-y-5 gap-x-2 sm:gap-4 items-center">
-
-            {/* 1. Properties */}
-            <Link
-              href="/properties"
-              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
-            >
-              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 21L24 7L41 21" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M11 18V39C11 40.1 11.9 41 13 41H35C36.1 41 37 40.1 37 39V18" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M31 13V9H35V16" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <rect x="15" y="22" width="7" height="7" rx="1.5" fill="#008080" stroke="#0f172a" strokeWidth="2"/>
-                  <rect x="26" y="22" width="7" height="7" rx="1.5" fill="#008080" stroke="#0f172a" strokeWidth="2"/>
-                  <path d="M20 41V32C20 31.4 20.4 31 21 31H27C27.6 31 28 31.4 28 32V41" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
+              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#f0fdfa] border border-teal-100/80 mt-1 transition-colors group-hover:bg-[#ccfbf1]/50">
+                <svg className="w-9 h-9 sm:w-11 sm:h-11 transition-transform duration-300 group-hover:scale-110 drop-shadow-xs" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 28L32 10L56 28" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M14 24V52C14 53.1 14.9 54 16 54H48C49.1 54 50 52V24" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M42 18V11H48V23" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="20" y="27" width="9" height="9" rx="2" fill="#008080" stroke="#0f172a" strokeWidth="2.5"/>
+                  <path d="M24.5 27V36" stroke="white" strokeWidth="1.5"/>
+                  <path d="M20 31.5H29" stroke="white" strokeWidth="1.5"/>
+                  <rect x="35" y="27" width="9" height="9" rx="2" fill="#008080" stroke="#0f172a" strokeWidth="2.5"/>
+                  <path d="M39.5 27V36" stroke="white" strokeWidth="1.5"/>
+                  <path d="M35 31.5H44" stroke="white" strokeWidth="1.5"/>
+                  <path d="M26 54V42C26 40.9 26.9 40 28 40H36C37.1 40 38 40.9 38 42V54" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
+                  <circle cx="35" cy="47" r="1.5" fill="#008080"/>
+                  <circle cx="48" cy="18" r="8" fill="#008080" stroke="#0f172a" strokeWidth="2.5"/>
+                  <path d="M48 14V19H51" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M6 54H58" stroke="#0f172a" strokeWidth="3" strokeLinecap="round"/>
                 </svg>
               </div>
-              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
-                Properties
-              </span>
             </Link>
 
-            {/* 2. Home Services */}
+            {/* 2. Find a Job */}
+            <Link
+              href="/jobs"
+              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-rose-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
+            >
+              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#e50914] transition-colors text-center leading-tight line-clamp-1">
+                  Jobs
+                </h3>
+              </div>
+              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#fef2f2] border border-rose-100/80 mt-1 transition-colors group-hover:bg-[#ffe4e6]/50">
+                <svg className="w-9 h-9 sm:w-11 sm:h-11 transition-transform duration-300 group-hover:scale-110 drop-shadow-xs" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="10" y="22" width="44" height="32" rx="6" fill="white" stroke="#0f172a" strokeWidth="3"/>
+                  <path d="M10 33H54" stroke="#0f172a" strokeWidth="2.5"/>
+                  <path d="M24 22V14C24 12.9 24.9 12 26 12H38C39.1 12 40 12.9 40 14V22" stroke="#0f172a" strokeWidth="3" strokeLinecap="round"/>
+                  <rect x="18" y="22" width="5" height="32" fill="#e50914" stroke="#0f172a" strokeWidth="2"/>
+                  <rect x="41" y="22" width="5" height="32" fill="#e50914" stroke="#0f172a" strokeWidth="2"/>
+                  <rect x="28" y="29" width="8" height="8" rx="2" fill="#e50914" stroke="#0f172a" strokeWidth="2.5"/>
+                  <circle cx="32" cy="33" r="1.5" fill="white"/>
+                  <circle cx="48" cy="18" r="8" fill="#e50914" stroke="#0f172a" strokeWidth="2.5"/>
+                  <circle cx="47" cy="17" r="3.5" fill="white"/>
+                  <path d="M53 23L57 27" stroke="#0f172a" strokeWidth="3" strokeLinecap="round"/>
+                </svg>
+              </div>
+            </Link>
+
+            {/* 3. Home Services */}
             <div
               onClick={() => router.push('/services')}
-              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
+              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-teal-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
             >
-              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-teal-700 transition-colors text-center leading-tight line-clamp-1">
+                  Services
+                </h3>
+              </div>
+              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#f0fdfa] border border-teal-100/80 mt-1 transition-colors group-hover:bg-[#ccfbf1]/50">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="8" y="16" width="32" height="24" rx="4" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
                   <path d="M8 25H40" stroke="#0f172a" strokeWidth="2"/>
                   <path d="M18 16V10C18 9.4 18.4 9 19 9H29C29.6 9 30 9.4 30 10V16" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round"/>
@@ -2560,18 +2408,68 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                   <path d="M33 34L28 29" stroke="#008080" strokeWidth="2.5" strokeLinecap="round"/>
                 </svg>
               </div>
-              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
-                Services
-              </span>
             </div>
 
-            {/* 3. Travels */}
+            {/* 4. Hotel Booking */}
+            <div
+              onClick={() => router.push('/hotels')}
+              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-teal-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
+            >
+              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-teal-700 transition-colors text-center leading-tight line-clamp-1">
+                  Hotels
+                </h3>
+              </div>
+              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#f0fdfa] border border-teal-100/80 mt-1 transition-colors group-hover:bg-[#ccfbf1]/50">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 12C14 10.9 14.9 10 16 10H32C33.1 10 34 10.9 34 12V40H14V12Z" fill="#008080" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
+                  <rect x="12" y="8" width="24" height="4" rx="1.5" fill="white" stroke="#0f172a" strokeWidth="2"/>
+                  <rect x="18" y="16" width="3" height="4" rx="0.5" fill="white"/>
+                  <rect x="27" y="16" width="3" height="4" rx="0.5" fill="white"/>
+                  <rect x="18" y="23" width="3" height="4" rx="0.5" fill="white"/>
+                  <rect x="27" y="23" width="3" height="4" rx="0.5" fill="white"/>
+                  <path d="M21 40V33H27V40" fill="white" stroke="#0f172a" strokeWidth="2"/>
+                  <path d="M8 40H40" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* 5. Hospitals */}
+            <div
+              onClick={() => router.push('/search?category=Hospitals')}
+              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-red-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
+            >
+              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-red-700 transition-colors text-center leading-tight line-clamp-1">
+                  Hospitals
+                </h3>
+              </div>
+              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#fef2f2] border border-red-100/80 mt-1 transition-colors group-hover:bg-[#ffe4e6]/50">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="10" y="14" width="28" height="26" rx="4" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
+                  <path d="M16 14V10C16 8.9 16.9 8 18 8H30C31.1 8 32 8.9 32 10V14" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round"/>
+                  <rect x="21" y="19" width="6" height="12" rx="1" fill="#e50914"/>
+                  <rect x="18" y="22" width="12" height="6" rx="1" fill="#e50914"/>
+                  <path d="M20 40V34H28V40" stroke="#0f172a" strokeWidth="2"/>
+                  <circle cx="36" cy="14" r="6" fill="#e50914" stroke="#0f172a" strokeWidth="2"/>
+                  <path d="M36 11V17" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M33 14H39" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* 6. Travels */}
             <div
               onClick={() => router.push('/hire-vehicle')}
-              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
+              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-teal-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
             >
-              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-teal-700 transition-colors text-center leading-tight line-clamp-1">
+                  Travels
+                </h3>
+              </div>
+              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#f0fdfa] border border-teal-100/80 mt-1 transition-colors group-hover:bg-[#ccfbf1]/50">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="10" y="10" width="28" height="26" rx="5" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
                   <rect x="14" y="15" width="20" height="11" rx="2" fill="#008080" stroke="#0f172a" strokeWidth="2"/>
                   <circle cx="16" cy="30" r="2.5" fill="#008080" stroke="#0f172a" strokeWidth="1.5"/>
@@ -2583,18 +2481,20 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                   <path d="M38 20H41V24H38" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
-                Travels
-              </span>
             </div>
 
-            {/* 4. Resorts */}
+            {/* 7. Resorts */}
             <div
               onClick={() => router.push('/resorts')}
-              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
+              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-teal-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
             >
-              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-teal-700 transition-colors text-center leading-tight line-clamp-1">
+                  Resorts
+                </h3>
+              </div>
+              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#f0fdfa] border border-teal-100/80 mt-1 transition-colors group-hover:bg-[#ccfbf1]/50">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M33 7C28 7 24 11 24 16H42C42 11 38 7 33 7Z" fill="#008080" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
                   <path d="M33 7V23" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
                   <path d="M30 7C28.5 10 28 13 28 16" stroke="#0f172a" strokeWidth="1.5"/>
@@ -2606,92 +2506,28 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                   <path d="M6 39H42" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
               </div>
-              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
-                Resorts
-              </span>
-            </div>
-
-            {/* 5. Hotels */}
-            <div
-              onClick={() => router.push('/hotels')}
-              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
-            >
-              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 12C14 10.9 14.9 10 16 10H32C33.1 10 34 10.9 34 12V40H14V12Z" fill="#008080" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
-                  <rect x="12" y="8" width="24" height="4" rx="1.5" fill="white" stroke="#0f172a" strokeWidth="2"/>
-                  <rect x="18" y="16" width="3" height="4" rx="0.5" fill="white"/>
-                  <rect x="27" y="16" width="3" height="4" rx="0.5" fill="white"/>
-                  <rect x="18" y="23" width="3" height="4" rx="0.5" fill="white"/>
-                  <rect x="27" y="23" width="3" height="4" rx="0.5" fill="white"/>
-                  <path d="M21 40V33H27V40" fill="white" stroke="#0f172a" strokeWidth="2"/>
-                  <path d="M8 40H40" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
-                Hotels
-              </span>
-            </div>
-
-            {/* 6. Creators */}
-            <div
-              onClick={() => router.push('/creators')}
-              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
-            >
-              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="8" y="13" width="22" height="22" rx="4" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
-                  <path d="M30 19L40 13V35L30 29" fill="#008080" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
-                  <polygon points="17,19 17,29 25,24" fill="#008080" stroke="#0f172a" strokeWidth="1.5" strokeLinejoin="round"/>
-                  <path d="M14 35L11 41" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M19 35L19 41" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M24 35L27 41" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
-                Creators
-              </span>
-            </div>
-
-            {/* 7. Used Items */}
-            <div
-              onClick={() => setPortraitMarketplaceOpen(true)}
-              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
-            >
-              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 16L15 40H33L36 16H12Z" fill="white" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
-                  <path d="M19 18V12C19 9.8 20.8 8 23 8H25C27.2 8 29 9.8 29 12V18" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round"/>
-                  <circle cx="24" cy="27" r="6" fill="#008080" stroke="#0f172a" strokeWidth="2"/>
-                  <path d="M22 25L26 29" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                  <circle cx="23" cy="28.5" r="0.75" fill="white"/>
-                  <circle cx="25" cy="25.5" r="0.75" fill="white"/>
-                </svg>
-              </div>
-              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#008080] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
-                Marketplace
-              </span>
             </div>
 
             {/* 8. Blood Donors */}
             <div
               onClick={() => router.push('/blood-donation')}
-              className="flex flex-col items-center justify-center text-center cursor-pointer group py-1"
+              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-rose-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
             >
-              <div className="w-11 h-11 sm:w-13 sm:h-13 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
-                <svg className="w-10 h-10 sm:w-11 sm:h-11" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#e50914] transition-colors text-center leading-tight line-clamp-1">
+                  Blood Donors
+                </h3>
+              </div>
+              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#fef2f2] border border-rose-100/80 mt-1 transition-colors group-hover:bg-[#ffe4e6]/50">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 group-hover:scale-110 drop-shadow-xs" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M24 6C24 6 12 20 12 28C12 34.6 17.4 40 24 40C30.6 40 36 34.6 36 28C36 20 24 6 24 6Z" fill="#e50914" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
                   <path d="M20 28H28" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
                   <path d="M24 24V32" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
                 </svg>
               </div>
-              <span className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#e50914] transition-colors mt-1.5 tracking-tight truncate w-full px-0.5">
-                Blood Donors
-              </span>
             </div>
 
           </div>
-        </div>
       </div>
 
       {/* 3. Grid of Category Blocks (Explore Categories - Popular style compact cards) */}
@@ -3227,24 +3063,8 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth py-1 px-0.5 snap-x snap-mandatory"
               >
                 {[
-                  // Slide 1 (4 items in 2x2 grid)
+                  // Slide 1 (Front: Daily Groceries, Jewellery & Gold, Home Appliances, Electronics)
                   [
-                    {
-                      id: 'electronics',
-                      title: 'Electronics & Mobiles',
-                      subtitle: '0% EMI | Brand Warranty',
-                      rating: '4.9',
-                      searchQuery: 'Electronics',
-                      image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80'
-                    },
-                    {
-                      id: 'fashion',
-                      title: 'Fashion & Boutiques',
-                      subtitle: 'Ethnic & Western Latest Trends',
-                      rating: '4.8',
-                      searchQuery: 'Clothing',
-                      image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=600&q=80'
-                    },
                     {
                       id: 'grocery',
                       title: 'Daily Groceries',
@@ -3252,33 +3072,6 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                       rating: '4.8',
                       searchQuery: 'Grocery',
                       image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80'
-                    },
-                    {
-                      id: 'furniture',
-                      title: 'Furniture & Living',
-                      subtitle: 'Factory Prices | Home Decor',
-                      rating: '4.9',
-                      searchQuery: 'Furniture',
-                      image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80'
-                    }
-                  ],
-                  // Slide 2 (4 items in 2x2 grid)
-                  [
-                    {
-                      id: 'books',
-                      title: 'Books & Supplies',
-                      subtitle: 'School & College | Office Needs',
-                      rating: '4.7',
-                      searchQuery: 'Stationery',
-                      image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80'
-                    },
-                    {
-                      id: 'sports',
-                      title: 'Fitness & Sports',
-                      subtitle: 'Original Gear | Supplements',
-                      rating: '4.8',
-                      searchQuery: 'Gym',
-                      image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'jewellery',
@@ -3295,6 +3088,49 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                       rating: '4.8',
                       searchQuery: 'Appliances',
                       image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'electronics',
+                      title: 'Electronics & Mobiles',
+                      subtitle: '0% EMI | Brand Warranty',
+                      rating: '4.9',
+                      searchQuery: 'Electronics',
+                      image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80'
+                    }
+                  ],
+                  // Slide 2 (Fashion, Furniture, Books & Supplies, Fitness & Sports)
+                  [
+                    {
+                      id: 'fashion',
+                      title: 'Fashion & Boutiques',
+                      subtitle: 'Ethnic & Western Latest Trends',
+                      rating: '4.8',
+                      searchQuery: 'Clothing',
+                      image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'furniture',
+                      title: 'Furniture & Living',
+                      subtitle: 'Factory Prices | Home Decor',
+                      rating: '4.9',
+                      searchQuery: 'Furniture',
+                      image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'books',
+                      title: 'Books & Supplies',
+                      subtitle: 'School & College | Office Needs',
+                      rating: '4.7',
+                      searchQuery: 'Stationery',
+                      image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                      id: 'sports',
+                      title: 'Fitness & Sports',
+                      subtitle: 'Original Gear | Supplements',
+                      rating: '4.8',
+                      searchQuery: 'Gym',
+                      image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80'
                     }
                   ]
                 ].map((slide, slideIdx) => (
@@ -3578,7 +3414,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           }`}>
 
             {/* Full Real Estate Portal Navbar Header — Fully responsive on iPhone & Android */}
-            {activeSpecialCategory === 'properties' ? (
+            {selectedProfile?.listingType === 'property' ? null : activeSpecialCategory === 'properties' ? (
               <div className="px-2.5 min-[390px]:px-4 sm:px-6 min-h-[58px] sm:h-18 border-b border-slate-200 flex items-center justify-between gap-1.5 sm:gap-4 bg-white text-slate-800 shadow-sm z-30 shrink-0 sticky top-0 pt-[env(safe-area-inset-top,0px)]">
                 {/* Logo & Portal Badge — Beautifully sized so it never pushes other buttons out */}
                 <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
@@ -3723,742 +3559,852 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
             {/* Content Body */}
             <div ref={portalContentRef} className={`flex-1 overflow-y-auto ${activeSpecialCategory === 'properties' || selectedProfile?.listingType === 'property' ? 'p-0' : 'p-4 sm:p-6 space-y-6'}`}>
               {selectedProfile?.listingType === 'property' ? (
-                /* PROPERTY DETAIL VIEW (Clean Modern Majh Boisar Style) */
-                <div className="animate-in fade-in duration-200 bg-slate-50/50 min-h-full pb-24 relative text-left">
-                   {/* Top Header Section - Compact */}
-                    <div className="w-full flex items-center justify-between px-3 sm:px-8 py-2 sm:py-2.5 border-b border-slate-200 bg-white shrink-0 shadow-2xs">
-                      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                        <button 
-                          onClick={() => setSelectedProfile(null)} 
-                          className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg sm:rounded-xl transition-all flex items-center gap-1 text-[11px] sm:text-xs font-black cursor-pointer shrink-0 whitespace-nowrap active:scale-95 shadow-2xs"
-                          title="Back to property listings"
-                        >
-                          <ChevronLeft className="w-3.5 h-3.5 text-slate-700" />
-                          <span>Back</span>
-                        </button>
-                        <div className="h-4 w-px bg-slate-200" />
-                        <span className="text-xs text-slate-600 font-bold truncate">
-                          Boisar Real Estate
-                        </span>
-                      </div>
+                /* PROPERTY DETAIL VIEW (Exact NoBroker Style) */
+                <div className="animate-in fade-in duration-200 bg-slate-50 min-h-full pb-28 relative text-left">
+                  {(() => {
+                    const photos = selectedProfile.gallery?.length ? selectedProfile.gallery : [selectedProfile.avatar || '/imagess/nobroker_3d_house.jpg'];
+                    const activePhoto = photos[activePhotoIndex % photos.length] || photos[0];
+                    const isShortlisted = shortlistedPropIds.includes(selectedProfile.id);
+                    const propTitle = selectedProfile.category || selectedProfile.name || `${selectedProfile.bedrooms || 1} BHK Flat for ${selectedProfile.forAction || 'Sale'}`;
+                    const propLocation = selectedProfile.address || selectedProfile.location || selectedProfile.addressLocality || 'Boisar, Maharashtra';
+                    const similarProps = (profilesState.properties || [])
+                      .filter((p: any) => {
+                        if (p.listingType !== 'property') return false;
+                        if (p.id === selectedProfile.id) return false;
+                        const isSoldOrRented = Boolean(
+                          p.isSold || 
+                          p.status?.toLowerCase().includes('sold') || 
+                          p.status?.toLowerCase().includes('rented')
+                        );
+                        return !isSoldOrRented;
+                      })
+                      .slice(0, 8);
+                    const isPropertySold = Boolean(
+                      selectedProfile.isSold || 
+                      selectedProfile.status?.toLowerCase().includes('sold') || 
+                      selectedProfile.status?.toLowerCase().includes('rented')
+                    );
+                    const postedByRole = (selectedProfile.postedBy || selectedProfile.iAm || 'Owner').trim();
 
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={handleShareProperty}
-                          className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-700 border border-slate-200 text-[11px] sm:text-xs font-black transition-all cursor-pointer active:scale-95 shadow-2xs"
-                          title="Share Property"
-                        >
-                          <Share2 className="w-3.5 h-3.5 text-slate-600 hover:text-teal-600" />
-                          <span>Share</span>
-                        </button>
-                        <button 
-                          onClick={closePortal}
-                          className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-                          title="Exit Real Estate"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Gallery & Content Area */}
-                    <div className="max-w-6xl mx-auto p-3 sm:p-6 flex flex-col gap-3 sm:gap-4">
-                      {Boolean(selectedProfile.isSold || selectedProfile.status?.toLowerCase().includes('sold') || selectedProfile.status?.toLowerCase().includes('rented')) && (
-                        <div className={`w-full p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border flex items-center justify-between gap-3 shadow-md ${
-                          selectedProfile.forAction === 'Rent' || selectedProfile.category?.toLowerCase().includes('rent')
-                            ? 'bg-amber-500 text-slate-950 border-amber-400'
-                            : 'bg-rose-600 text-white border-rose-500'
-                        }`}>
-                          <div className="flex items-center gap-2">
-                            <Lock className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-                            <div>
-                              <span className="text-xs sm:text-sm font-black uppercase tracking-wider block">
-                                {selectedProfile.forAction === 'Rent' || selectedProfile.category?.toLowerCase().includes('rent')
-                                  ? 'THIS PROPERTY HAS BEEN RENTED OUT'
-                                  : 'THIS PROPERTY HAS BEEN SOLD OUT'}
-                              </span>
-                              <span className="text-[10px] sm:text-xs opacity-90 font-medium block">
-                                This listing is archived for record and is no longer available.
-                              </span>
-                            </div>
-                          </div>
-                          <span className="text-[9px] sm:text-[10px] font-black uppercase bg-black/20 px-2.5 py-1 rounded-lg shrink-0">
-                            Closed Deal
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Title & Price Header Card - Compact, Short & Modern */}
-                      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs space-y-2">
-                        {/* Top row: Badges on left + Bold Price on right */}
-                        <div className="flex items-center justify-between gap-2.5">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="bg-slate-900 text-white text-[10px] font-black px-2.5 py-0.5 rounded-md tracking-wider">
-                              {selectedProfile.forAction === 'Rent' || selectedProfile.category?.toLowerCase().includes('rent') ? 'FOR RENT' : 'FOR SALE'}
-                            </span>
-                            {(() => {
-                              const role = (selectedProfile.postedBy || selectedProfile.iAm || '').trim();
-                              const isAgent = role.toLowerCase().includes('agent') || role.toLowerCase().includes('broker');
-                              const isBuilder = role.toLowerCase().includes('builder') || role.toLowerCase().includes('developer');
-                              const isOwner = role.toLowerCase().includes('owner');
-                              
-                              const vipBadge = getPropertyVipBadge(selectedProfile);
-                              if (vipBadge) {
-                                return (
-                                  <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-md flex items-center gap-1 shadow-xs border ${
-                                    vipBadge === 'VIP Developer'
-                                      ? 'bg-gradient-to-r from-purple-900 via-purple-950 to-indigo-950 text-amber-300 border-amber-400/80'
-                                      : vipBadge === 'VIP Broker'
-                                        ? 'bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-950 text-cyan-300 border-cyan-400/80'
-                                        : 'bg-gradient-to-r from-emerald-900 via-teal-950 to-slate-950 text-emerald-300 border-emerald-400/80'
-                                  }`}>
-                                    <span>👑 {vipBadge}</span>
-                                  </span>
-                                );
-                              }
-                              if (isAgent) {
-                                return (
-                                  <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
-                                    <CheckCircle className="w-3 h-3 text-blue-600" />
-                                    <span>Agent</span>
-                                  </span>
-                                );
-                              }
-                              if (isBuilder) {
-                                return (
-                                  <span className="bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
-                                    <CheckCircle className="w-3 h-3 text-purple-600" />
-                                    <span>Builder</span>
-                                  </span>
-                                );
-                              }
-                              if (isOwner) {
-                                return (
-                                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
-                                    <CheckCircle className="w-3 h-3 text-emerald-600" />
-                                    <span>Direct Owner</span>
-                                  </span>
-                                );
-                              }
-                              return (
-                                <span className="bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
-                                  <CheckCircle className="w-3 h-3 text-slate-500" />
-                                  <span>{role || 'Verified'}</span>
-                                </span>
-                              );
-                            })()}
-                            {Boolean(selectedProfile.video || (selectedProfile.videos && selectedProfile.videos.length > 0)) && (
-                              <span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
-                                <span>🎥 Video</span>
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Price aligned cleanly on the right */}
-                          <div className="text-right shrink-0">
-                            <span className="text-base sm:text-2xl font-black text-slate-900 tracking-tight leading-none block">
-                              {formatPrice(selectedProfile.price)}
-                            </span>
-                            {selectedProfile.pricePerSqft ? (
-                              <span className="text-[10px] text-slate-400 font-semibold block leading-tight mt-0.5">
-                                {formatPrice(selectedProfile.pricePerSqft)}
-                              </span>
-                            ) : (
-                              <span className="text-[10px] text-teal-700 font-bold block leading-tight mt-0.5">
-                                Verified Listing
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Title & Location */}
-                        <div className="pt-0.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                          <div className="min-w-0">
-                            <h1 className="text-sm sm:text-lg font-black text-slate-900 leading-snug">
-                              {selectedProfile.category || selectedProfile.name || selectedProfile.title}
-                            </h1>
-                            <p className="text-[11px] sm:text-xs text-slate-500 font-semibold flex items-center gap-1.5 mt-0.5">
-                              <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              <span className="truncate">{selectedProfile.address || selectedProfile.location || selectedProfile.addressLocality || selectedProfile.projectName || 'Boisar, Maharashtra'}</span>
-                              {selectedProfile.projectName && selectedProfile.addressLocality && selectedProfile.projectName !== selectedProfile.addressLocality && (
-                                <span className="text-slate-400 font-normal truncate">• {selectedProfile.projectName}</span>
-                              )}
-                            </p>
-                          </div>
-                          {(selectedProfile.mapUrl || hasDirectOwnerCall(selectedProfile)) && (
-                            <a
-                              href={selectedProfile.mapUrl || `https://maps.google.com/?q=${encodeURIComponent(`${selectedProfile.projectName || selectedProfile.category || 'Property'}, ${selectedProfile.address || selectedProfile.location || 'Boisar'}`)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[10.5px] sm:text-[11px] font-black text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-2.5 py-1 rounded-lg shrink-0 transition-colors w-fit shadow-2xs cursor-pointer active:scale-95"
+                    return (
+                      <div className="flex flex-col">
+                        {/* 1. Sticky Top Red App Header (Image 2 & 3) */}
+                        <div className="sticky top-0 z-40 bg-[#e50914] text-white px-3 sm:px-6 h-13 sm:h-14 flex items-center justify-between shadow-md">
+                          <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+                            <button 
+                              type="button"
+                              onClick={() => setSelectedProfile(null)}
+                              className="p-1.5 -ml-1 text-white hover:bg-white/15 rounded-full transition-colors cursor-pointer shrink-0 active:scale-95"
+                              title="Back to property listings"
                             >
-                              <MapPin className="w-3 h-3 text-blue-600 shrink-0" />
-                              <span>Google Map Directions ↗</span>
-                            </a>
+                              <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.5]" />
+                            </button>
+                            <h2 className="text-xs sm:text-sm font-bold text-white truncate max-w-[220px] sm:max-w-md">
+                              {propTitle}
+                            </h2>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={handleShareProperty}
+                              className="p-2 text-white hover:bg-white/15 rounded-full transition-colors cursor-pointer active:scale-95"
+                              title="Share Property"
+                            >
+                              <Share2 className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => toggleShortlistProperty(selectedProfile.id)}
+                              className="p-2 text-white hover:bg-white/15 rounded-full transition-colors cursor-pointer active:scale-95"
+                              title="Save to Wishlist"
+                            >
+                              <Heart className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-all ${isShortlisted ? 'fill-white text-white scale-110' : 'text-white'}`} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={closePortal}
+                              className="p-2 text-white hover:bg-white/15 rounded-full transition-colors cursor-pointer ml-0.5 active:scale-95"
+                              title="Close"
+                            >
+                              <X className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Sold Out Banner if closed */}
+                        {isPropertySold && (
+                          <div className="w-full bg-rose-600 text-white px-4 py-2.5 flex items-center justify-between text-xs font-black">
+                            <span className="flex items-center gap-1.5">
+                              <Lock className="w-4 h-4" />
+                              <span>THIS PROPERTY HAS BEEN {(selectedProfile.forAction || '').toLowerCase() === 'rent' ? 'RENTED OUT' : 'SOLD OUT'}</span>
+                            </span>
+                            <span className="bg-black/20 text-[10px] uppercase px-2 py-0.5 rounded-sm">Archived</span>
+                          </div>
+                        )}
+
+                        {/* 2. Main Edge-to-Edge Hero Image Carousel (Image 2) */}
+                        <div className="relative w-full h-[260px] min-[390px]:h-[300px] sm:h-[420px] bg-slate-950 overflow-hidden select-none">
+                          <img
+                            src={activePhoto}
+                            alt=""
+                            aria-hidden="true"
+                            className="absolute inset-0 w-full h-full object-cover blur-md opacity-35 scale-110 pointer-events-none"
+                          />
+                          <img
+                            src={activePhoto}
+                            alt={propTitle}
+                            onClick={() => setFullImagePreview(activePhoto)}
+                            className="w-full h-full object-contain relative z-[1] cursor-pointer"
+                          />
+
+                          {/* Watermark / Logo Overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[2] opacity-35">
+                            <span className="text-white font-black tracking-widest text-lg sm:text-2xl drop-shadow-md select-none">
+                              MAJH BOISAR
+                            </span>
+                          </div>
+
+                          {/* Photos counter badge */}
+                          <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-xs text-white text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-lg flex items-center gap-1.5 z-10 pointer-events-none">
+                            <Camera className="w-3.5 h-3.5 text-white" />
+                            <span>{activePhotoIndex + 1}/{photos.length} Photos</span>
+                          </div>
+
+                          {/* Full Photo Lightbox Trigger Button */}
+                          <button
+                            type="button"
+                            onClick={() => setFullImagePreview(activePhoto)}
+                            className="absolute bottom-3 right-3 bg-black/60 hover:bg-black/80 backdrop-blur-xs text-white text-[10px] sm:text-[11px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 z-10 cursor-pointer shadow-md transition-all active:scale-95"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Full Photo</span>
+                          </button>
+
+                          {/* Left & Right Chevrons */}
+                          {photos.length > 1 && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActivePhotoIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
+                                }}
+                                className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur-xs z-10 cursor-pointer transition-all active:scale-90"
+                                title="Previous"
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActivePhotoIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
+                                }}
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur-xs z-10 cursor-pointer transition-all active:scale-90"
+                                title="Next"
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </button>
+                            </>
                           )}
                         </div>
-                      </div>
 
-                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
-                      {/* Left: Gallery Grid */}
-                      <div className="lg:col-span-7 flex flex-col gap-2.5">
-                        {(() => {
-                          const photos = selectedProfile.gallery?.length ? selectedProfile.gallery : [selectedProfile.avatar || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'];
-                          const activePhoto = photos[activePhotoIndex % photos.length] || photos[0];
-                          return (
-                            <>
-                              {/* Mobile View: Swipeable Carousel */}
-                              <div className="sm:hidden relative w-full h-[280px] rounded-2xl overflow-hidden bg-slate-950 border border-slate-250 shadow-2xs">
-                                <div
-                                  className="w-full h-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth"
-                                  onScroll={(e) => {
-                                    const el = e.currentTarget;
-                                    if (el.clientWidth > 0) {
-                                      const index = Math.round(el.scrollLeft / el.clientWidth);
-                                      if (index !== activePhotoIndex && index >= 0 && index < photos.length) {
-                                        setActivePhotoIndex(index);
-                                      }
+                        {/* Content Container (Image 2 & 3) */}
+                        <div className="max-w-4xl mx-auto w-full space-y-2.5">
+                          {/* 3. Title & Price Card (Image 2) */}
+                          <div className="bg-white border-b border-slate-200 p-4 sm:p-5 shadow-2xs">
+                            <div className="flex items-start justify-between gap-4">
+                              {/* Left Column */}
+                              <div className="flex-1 min-w-0 space-y-1">
+                                <h1 className="text-sm sm:text-base font-black text-slate-900 leading-snug">
+                                  {propTitle}
+                                </h1>
+                                <p className="text-[11px] sm:text-xs text-slate-500 font-medium flex items-center gap-1">
+                                  <span className="text-slate-400 font-mono text-sm leading-none">↳</span>
+                                  <span className="truncate">{propLocation}</span>
+                                </p>
+
+                                {/* 3 Key Specs Icons Row */}
+                                <div className="flex items-center gap-6 pt-2 text-[11px] sm:text-xs text-slate-600 font-semibold">
+                                  <div className="flex flex-col items-center gap-0.5 text-center">
+                                    <Armchair className="w-4 h-4 text-slate-500" />
+                                    <span className="text-[10px] text-slate-500 leading-tight">{selectedProfile.furnishing || 'Not furnished'}</span>
+                                  </div>
+                                  <div className="flex flex-col items-center gap-0.5 text-center">
+                                    <Maximize2 className="w-4 h-4 text-slate-500" />
+                                    <span className="text-[10px] text-slate-500 leading-tight">{selectedProfile.carpetArea || selectedProfile.superArea || '650 sqft'}</span>
+                                  </div>
+                                  <div className="flex flex-col items-center gap-0.5 text-center">
+                                    <Users className="w-4 h-4 text-slate-500" />
+                                    <span className="text-[10px] text-slate-500 leading-tight">
+                                      {selectedProfile.preferredTenants || (selectedProfile.forAction === 'Rent' ? 'Family/Bachelors' : 'Family')}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Right Column: Price */}
+                              <div className="text-right shrink-0 border-l border-slate-200 pl-4 py-1">
+                                <div className="text-base sm:text-xl font-black text-slate-900 tracking-tight">
+                                  {formatPriceInLacs(selectedProfile.price)}
+                                </div>
+                                <div className="text-[10px] sm:text-[10.5px] text-slate-500 font-medium mt-0.5">
+                                  {selectedProfile.isNegotiable !== false ? 'Price Negotiable' : 'Price Non-Negotiable'}
+                                </div>
+                                <div className="text-[9.5px] text-emerald-600 font-bold mt-1">
+                                  ✓ Verified Listing
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* 4. Area & Loan Box (Image 2) */}
+                          <div className="bg-white border-y border-slate-200 py-3 px-4 sm:px-6 shadow-2xs">
+                            <div className="grid grid-cols-2 divide-x divide-slate-200">
+                              <div className="text-center">
+                                <div className="text-sm sm:text-base font-black text-slate-900">
+                                  {selectedProfile.carpetArea || selectedProfile.superArea || '650 SqFt'}
+                                </div>
+                                <div className="text-[10.5px] text-slate-400 font-semibold mt-0.5">
+                                  Built Up Area
+                                </div>
+                              </div>
+                              <div className="text-center flex flex-col items-center justify-center">
+                                <div className="flex items-center gap-1 text-xs sm:text-sm font-black text-slate-800">
+                                  <Coins className="w-3.5 h-3.5 text-amber-500" />
+                                  <span>{selectedProfile.isLoanApproved ? 'Pre-Approved Loan' : 'Loan Available'}</span>
+                                </div>
+                                <div className="text-[10px] text-emerald-600 font-bold mt-0.5">
+                                  Verified Bank Partners
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* 5. Estimated EMI & Apply Loan Box (Image 2) */}
+                          <div className="bg-white border-y border-slate-200 p-3.5 sm:p-5 shadow-2xs">
+                            <div className="bg-slate-50/90 border border-slate-200 rounded-xl p-3 sm:p-4 flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-sm sm:text-base font-black text-slate-900 leading-tight">
+                                  ₹ {calculateEstimatedEmi(selectedProfile.price).toLocaleString('en-IN')}/Month
+                                </div>
+                                <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                                  Estimated EMI
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="hidden sm:block text-right">
+                                  <span className="text-xs font-black text-slate-800 block">Need Home Loan?</span>
+                                  <span className="text-[10px] text-slate-400 block">Lowest Rates in Boisar</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setHomeLoanModalOpen(true)}
+                                  className="bg-[#e50914] hover:bg-[#c90812] active:scale-95 text-white font-black text-xs px-3.5 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer whitespace-nowrap"
+                                >
+                                  Apply Loan
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* 6. Overview Section (Image 3) */}
+                          <div className="bg-white border-y border-slate-200 p-4 sm:p-6 space-y-3.5 shadow-2xs">
+                            <div className="border-b-2 border-[#e50914] inline-block pb-1">
+                              <h3 className="text-sm sm:text-base font-black text-slate-900">Overview</h3>
+                            </div>
+
+                            {/* 2-Column Overview Grid */}
+                            <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-200">
+                              {/* Row 1 */}
+                              <div className="grid grid-cols-2 divide-x divide-slate-200">
+                                <div className="p-3 sm:p-3.5 flex items-start gap-2.5">
+                                  <Bed className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+                                  <div>
+                                    <div className="text-xs sm:text-sm font-black text-slate-900">
+                                      {selectedProfile.bedrooms || '1'} Bedroom
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 font-medium">No. of Bedroom</div>
+                                  </div>
+                                </div>
+                                <div className="p-3 sm:p-3.5 flex items-start gap-2.5">
+                                  <Calendar className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+                                  <div>
+                                    <div className="text-xs sm:text-sm font-black text-slate-900 truncate">
+                                      {selectedProfile.createdAt ? new Date(selectedProfile.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 font-medium">Posted On</div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Row 2 */}
+                              <div className="grid grid-cols-2 divide-x divide-slate-200">
+                                <div className="p-3 sm:p-3.5 flex items-start gap-2.5">
+                                  <Bath className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+                                  <div>
+                                    <div className="text-xs sm:text-sm font-black text-slate-900">
+                                      {selectedProfile.bathrooms || '1'} Bathroom
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 font-medium">No. of Bathroom</div>
+                                  </div>
+                                </div>
+                                <div className="p-3 sm:p-3.5 flex items-start gap-2.5">
+                                  <Key className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+                                  <div>
+                                    <div className="text-xs sm:text-sm font-black text-slate-900">
+                                      {selectedProfile.status || selectedProfile.possession || 'Immediately'}
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 font-medium">Possession</div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Row 3 */}
+                              <div className="grid grid-cols-2 divide-x divide-slate-200">
+                                <div className="p-3 sm:p-3.5 flex items-start gap-2.5">
+                                  <Home className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+                                  <div>
+                                    <div className="text-xs sm:text-sm font-black text-slate-900">
+                                      {selectedProfile.balconies ? `${selectedProfile.balconies} Balcony` : 'NA'}
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 font-medium">Balcony</div>
+                                  </div>
+                                </div>
+                                <div className="p-3 sm:p-3.5 flex items-start gap-2.5">
+                                  <Building className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+                                  <div>
+                                    <div className="text-xs sm:text-sm font-black text-slate-900 truncate">
+                                      {selectedProfile.projectName || selectedProfile.category || 'Apartment'}
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 font-medium">Apartment</div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Row 4 */}
+                              <div className="grid grid-cols-2 divide-x divide-slate-200">
+                                <div className="p-3 sm:p-3.5 flex items-start gap-2.5">
+                                  <Car className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+                                  <div>
+                                    <div className="text-xs sm:text-sm font-black text-slate-900">
+                                      {selectedProfile.parking || 'Bike & Car'}
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 font-medium">Parking</div>
+                                  </div>
+                                </div>
+                                <div className="p-3 sm:p-3.5 flex items-start gap-2.5">
+                                  <Zap className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+                                  <div>
+                                    <div className="text-xs sm:text-sm font-black text-slate-900">
+                                      {selectedProfile.powerBackup || 'Full'}
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 font-medium">Power Backup</div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Detailed Specifications Table */}
+                            <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-200 text-xs">
+                              <div className="grid grid-cols-2 p-3 items-center">
+                                <div className="flex items-center gap-2 text-slate-500 font-semibold">
+                                  <Building className="w-4 h-4 text-slate-400" />
+                                  <span>Builtup Area</span>
+                                </div>
+                                <div className="font-bold text-slate-900">
+                                  {selectedProfile.superArea || selectedProfile.carpetArea || '650 Sq.Ft'}
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 p-3 items-center">
+                                <div className="flex items-center gap-2 text-slate-500 font-semibold">
+                                  <Compass className="w-4 h-4 text-slate-400" />
+                                  <span>Facing</span>
+                                </div>
+                                <div className="font-bold text-slate-900">
+                                  {selectedProfile.facing || 'East'}
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 p-3 items-center">
+                                <div className="flex items-center gap-2 text-slate-500 font-semibold">
+                                  <Layers className="w-4 h-4 text-slate-400" />
+                                  <span>Floor</span>
+                                </div>
+                                <div className="font-bold text-slate-900">
+                                  {selectedProfile.floor ? `${selectedProfile.floor}/${selectedProfile.totalFloors || 4}` : '2/4'}
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 p-3 items-center">
+                                <div className="flex items-center gap-2 text-slate-500 font-semibold">
+                                  <ShieldCheck className="w-4 h-4 text-slate-400" />
+                                  <span>Gated Security</span>
+                                </div>
+                                <div className="font-bold text-slate-900">
+                                  {selectedProfile.gatedSecurity || 'Yes'}
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 p-3 items-center">
+                                <div className="flex items-center gap-2 text-slate-500 font-semibold">
+                                  <FileText className="w-4 h-4 text-slate-400" />
+                                  <span>Ownership</span>
+                                </div>
+                                <div className="font-bold text-slate-900">
+                                  {selectedProfile.ownership || 'Freehold'}
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 p-3 items-center">
+                                <div className="flex items-center gap-2 text-slate-500 font-semibold">
+                                  <CheckCircle className="w-4 h-4 text-slate-400" />
+                                  <span>Transaction</span>
+                                </div>
+                                <div className="font-bold text-slate-900">
+                                  {selectedProfile.transactionType || 'Resale'}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Video Walkthrough (if available) */}
+                          {Boolean(selectedProfile.video || (selectedProfile.videos && selectedProfile.videos.length > 0)) && (
+                            <div className="bg-white border-y border-slate-200 p-4 sm:p-6 space-y-3 shadow-2xs">
+                              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                                <span>🎥</span>
+                                <span>Property Video Walkthrough</span>
+                              </h3>
+                              <div className="w-full rounded-xl overflow-hidden bg-black aspect-video shadow-xs border border-slate-200">
+                                <video 
+                                  src={selectedProfile.video || (selectedProfile.videos && selectedProfile.videos[0])} 
+                                  controls 
+                                  playsInline
+                                  preload="metadata"
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Bio / Description */}
+                          {selectedProfile.bio && (
+                            <div className="bg-white border-y border-slate-200 p-4 sm:p-6 space-y-2 shadow-2xs">
+                              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                                <FileText className="w-3.5 h-3.5 text-slate-500" />
+                                <span>More Details</span>
+                              </h3>
+                              <p className="text-xs text-slate-600 font-normal leading-relaxed">
+                                {selectedProfile.bio}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* 7. Neighbourhood Section (Image 4) */}
+                          <div className="bg-white border-y border-slate-200 p-4 sm:p-6 space-y-3.5 shadow-2xs">
+                            <div className="border-b-2 border-[#e50914] inline-block pb-1">
+                              <h3 className="text-sm sm:text-base font-black text-slate-900">Neighbourhood</h3>
+                            </div>
+
+                            {/* Direction search box */}
+                            <div className="relative">
+                              <div className="flex items-center border border-slate-300 rounded-xl px-3 py-2.5 bg-white shadow-2xs">
+                                <MapPin className="w-4 h-4 text-[#e50914] shrink-0 mr-2" />
+                                <input 
+                                  type="text" 
+                                  placeholder="Type in place to get direction" 
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      const val = (e.target as HTMLInputElement).value;
+                                      window.open(`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(val)}&destination=${encodeURIComponent(`${selectedProfile.projectName || ''} ${selectedProfile.address || selectedProfile.location || 'Boisar'}`)}`, '_blank');
                                     }
                                   }}
+                                  className="w-full text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-hidden"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    window.open(selectedProfile.mapUrl || `https://maps.google.com/?q=${encodeURIComponent(`${selectedProfile.projectName || ''} ${selectedProfile.address || selectedProfile.location || 'Boisar'}`)}`, '_blank');
+                                  }}
+                                  className="text-[11px] font-black text-[#e50914] hover:underline shrink-0 ml-2 cursor-pointer"
                                 >
-                                  {photos.map((img: string, idx: number) => (
-                                    <div
-                                      key={idx}
-                                      onClick={() => setFullImagePreview(img)}
-                                      className="w-full h-full shrink-0 snap-center snap-always relative flex items-center justify-center bg-slate-950 cursor-pointer"
-                                    >
-                                      {/* Ambient blurred backdrop so image never feels awkwardly cropped */}
-                                      <img
-                                        src={img}
-                                        alt=""
-                                        aria-hidden="true"
-                                        className="absolute inset-0 w-full h-full object-cover blur-sm opacity-35 scale-110 pointer-events-none"
-                                      />
-                                      <img
-                                        src={img}
-                                        alt={`Property Photo ${idx + 1}`}
-                                        className="w-full h-full object-contain relative z-[1]"
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-
-                                {/* Badges */}
-                                <div className="absolute top-3 left-3 bg-slate-900/80 text-white text-[10px] font-black px-2.5 py-1 rounded-lg backdrop-blur-xs shadow-xs flex items-center gap-1.5 z-10 pointer-events-none">
-                                  <Camera className="w-3 h-3 text-white" />
-                                  <span>{activePhotoIndex + 1} / {photos.length} Photos{photos.length > 1 ? ' • Swipe ↔' : ''}</span>
-                                </div>
-
-                                <div 
-                                  onClick={() => setFullImagePreview(photos[activePhotoIndex] || photos[0])}
-                                  className="absolute bottom-3 right-3 bg-slate-900/80 text-white text-[10px] font-black px-2.5 py-1 rounded-lg backdrop-blur-xs transition-all flex items-center gap-1 shadow-xs z-10 cursor-pointer"
-                                >
-                                  <Eye className="w-3 h-3 text-white" />
-                                  <span>Full Photo</span>
-                                </div>
-
-                                {/* Pagination Dots (Mobile) */}
-                                {photos.length > 1 && (
-                                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10 pointer-events-none bg-black/40 backdrop-blur-xs px-2.5 py-1 rounded-full">
-                                    {photos.map((_: any, dotIdx: number) => (
-                                      <span
-                                        key={dotIdx}
-                                        className={`h-1.5 rounded-full transition-all duration-300 ${
-                                          dotIdx === activePhotoIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/50'
-                                        }`}
-                                      />
-                                    ))}
-                                  </div>
-                                )}
+                                  Directions ↗
+                                </button>
                               </div>
-
-                              {/* Desktop View: High-Res Single View with Prev/Next buttons & Thumbnail Row */}
-                              <div className="hidden sm:block space-y-2.5">
-                                <div 
-                                  onClick={() => setFullImagePreview(activePhoto)}
-                                  className="w-full h-[380px] rounded-2xl overflow-hidden bg-slate-950 relative group border border-slate-200 shadow-2xs cursor-pointer flex items-center justify-center"
-                                >
-                                  <img
-                                    src={activePhoto}
-                                    alt=""
-                                    aria-hidden="true"
-                                    className="absolute inset-0 w-full h-full object-cover blur-sm opacity-35 scale-110 pointer-events-none"
-                                  />
-                                  <img 
-                                    src={activePhoto} 
-                                    alt={selectedProfile.category || selectedProfile.name || 'Property Photo'}
-                                    className="w-full h-full object-contain relative z-[1] group-hover:scale-102 transition-transform duration-500" 
-                                  />
-                                  
-                                  {/* Photo Navigation Prev/Next */}
-                                  {photos.length > 1 && (
-                                    <>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setActivePhotoIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
-                                        }}
-                                        className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-slate-900/80 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-xs transition-all shadow-md cursor-pointer z-10"
-                                        title="Previous photo"
-                                      >
-                                        <ChevronLeft className="w-4 h-4 text-white" />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setActivePhotoIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
-                                        }}
-                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-slate-900/80 hover:bg-slate-900 text-white p-2 rounded-full backdrop-blur-xs transition-all shadow-md cursor-pointer z-10"
-                                        title="Next photo"
-                                      >
-                                        <ChevronRight className="w-4 h-4 text-white" />
-                                      </button>
-                                    </>
-                                  )}
-
-                                  <div className="absolute top-3 left-3 bg-slate-900/80 text-white text-xs font-black px-3 py-1 rounded-lg backdrop-blur-xs shadow-xs flex items-center gap-1.5 z-10">
-                                    <Camera className="w-3.5 h-3.5 text-white" />
-                                    <span>{activePhotoIndex + 1} / {photos.length} Photos</span>
-                                  </div>
-                                  <div className="absolute bottom-3 right-3 bg-slate-900/80 text-white text-[10px] font-black px-3 py-1 rounded-lg backdrop-blur-xs transition-all flex items-center gap-1 opacity-90 group-hover:opacity-100 shadow-xs z-10">
-                                    <Eye className="w-3.5 h-3.5 text-white" />
-                                    <span>Full Photo Lightbox</span>
-                                  </div>
-                                </div>
-
-                                {/* Desktop Thumbnail Grid Row */}
-                                {photos.length > 1 && (
-                                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-2.5">
-                                    {photos.slice(0, 6).map((img: string, i: number) => {
-                                      const isActive = (activePhotoIndex % photos.length) === i;
-                                      const isLastAndMore = i === 5 && photos.length > 6;
-                                      return (
-                                        <div 
-                                          key={i} 
-                                          onClick={() => setActivePhotoIndex(i)}
-                                          className={`h-16 sm:h-20 rounded-xl overflow-hidden bg-slate-900 relative cursor-pointer border transition-all ${
-                                            isActive ? 'ring-2 ring-slate-900 border-transparent shadow-xs scale-[1.02]' : 'border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100'
-                                          }`}
-                                        >
-                                          <img src={img} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
-                                          {isLastAndMore && (
-                                            <div className="absolute inset-0 bg-slate-900/70 flex items-center justify-center text-white font-black text-xs backdrop-blur-xs">
-                                              +{photos.length - 6} More
-                                            </div>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                            </>
-                          );
-                        })()}
-
-                        {/* Video Tour Section (if available) */}
-                        {Boolean(selectedProfile.video || (selectedProfile.videos && selectedProfile.videos.length > 0)) && (
-                          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3 mt-1">
-                            <div className="flex items-center justify-between">
-                              <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                                <span className="text-base">🎥</span>
-                                <span>Property Video Tour &amp; Walkthrough</span>
-                              </h3>
-                              <span className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-black px-2 py-0.5 rounded-md">
-                                HD Video Tour
-                              </span>
                             </div>
-                            <div className="w-full rounded-xl overflow-hidden bg-black aspect-video shadow-xs border border-slate-200 relative flex items-center justify-center">
-                              <video 
-                                src={selectedProfile.video || (selectedProfile.videos && selectedProfile.videos[0])} 
-                                controls 
-                                playsInline
-                                preload="metadata"
-                                className="w-full h-full object-contain"
+
+                            {/* Interactive OpenStreetMap Embed (Reliable & Never Blocked) */}
+                            <div className="w-full h-60 sm:h-72 rounded-2xl overflow-hidden border border-slate-200 shadow-2xs relative bg-slate-100">
+                              <iframe
+                                title="Property Location in Boisar"
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0 }}
+                                loading="lazy"
+                                src="https://www.openstreetmap.org/export/embed.html?bbox=72.7200%2C19.7800%2C72.7800%2C19.8200&layer=mapnik&marker=19.8035%2C72.7570"
                               />
-                            </div>
-                          </div>
-                        )}
-                      </div>
 
-                      {/* Right: Info Section */}
-                      <div className="lg:col-span-5 flex flex-col gap-4">
-                        {/* Highlights Row */}
-                        <div className="grid grid-cols-4 bg-white border border-slate-200 rounded-2xl divide-x divide-slate-100 shadow-2xs overflow-hidden">
-                          <div className="p-3 flex flex-col items-center justify-center text-center">
-                            <span className="text-base sm:text-lg font-black text-slate-900">{selectedProfile.bedrooms || 1}</span>
-                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Beds</span>
-                          </div>
-                          <div className="p-3 flex flex-col items-center justify-center text-center">
-                            <span className="text-base sm:text-lg font-black text-slate-900">{selectedProfile.bathrooms || 1}</span>
-                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Baths</span>
-                          </div>
-                          <div className="p-3 flex flex-col items-center justify-center text-center">
-                            <span className="text-base sm:text-lg font-black text-slate-900">{selectedProfile.balconies || 1}</span>
-                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Balcony</span>
-                          </div>
-                          <div className="p-3 flex flex-col items-center justify-center text-center">
-                            <span className="text-xs font-black text-slate-900 leading-tight">{selectedProfile.furnishing || 'Semi'}</span>
-                            <span className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">Furnished</span>
-                          </div>
-                        </div>
-
-                        {/* Intricate Specs Grid */}
-                        <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3">
-                          <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Property Specifications</h3>
-                          <div className="grid grid-cols-2 gap-3 text-left">
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Carpet Area</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.carpetArea || '650 sqft'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Super Area</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.superArea || selectedProfile.carpetArea || 'N/A'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Status</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.status || 'Ready to Move'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Floor</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.floor ? `${selectedProfile.floor} of ${selectedProfile.totalFloors || 4}` : '2 of 4'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Transaction</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.transactionType || 'Resale'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Facing</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.facing || 'East'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Ownership</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.ownership || 'Freehold'}</strong>
-                            </div>
-                            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                              <span className="text-[9px] text-slate-400 font-bold uppercase block">Developer</span>
-                              <strong className="text-xs font-black text-slate-900">{selectedProfile.developer || selectedProfile.projectName || 'Independent'}</strong>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Description */}
-                        {selectedProfile.bio && (
-                          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-2">
-                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                              <FileText className="w-3.5 h-3.5 text-slate-500" />
-                              <span>More Details</span>
-                            </h3>
-                            <p className="text-xs text-slate-600 font-normal leading-relaxed">
-                              {selectedProfile.bio}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Location & Google Map Directions Card */}
-                        {selectedProfile.mapUrl && (
-                          <div className="bg-gradient-to-br from-blue-50/80 via-white to-blue-50/40 border border-blue-200/90 rounded-2xl p-3.5 sm:p-4 shadow-2xs space-y-2 text-left">
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                                  <MapPin className="w-4 h-4" />
+                              {/* Floating Pin / Location Badge */}
+                              <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2 pointer-events-none">
+                                <div className="bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-xl shadow-md border border-slate-200/80 flex items-center gap-1.5 text-left max-w-[65%]">
+                                  <span className="w-2.5 h-2.5 rounded-full bg-[#e50914] animate-pulse shrink-0" />
+                                  <span className="text-[11px] font-extrabold text-slate-900 truncate">
+                                    {selectedProfile.projectName || selectedProfile.category || 'Property Location'}
+                                  </span>
                                 </div>
-                                <div className="min-w-0">
-                                  <h4 className="text-xs font-black text-slate-900 leading-tight truncate">Google Maps Location</h4>
-                                  <p className="text-[10px] text-slate-500 font-medium truncate">View exact location & directions</p>
-                                </div>
+
+                                <a
+                                  href={selectedProfile.mapUrl || `https://maps.google.com/?q=${encodeURIComponent(`${selectedProfile.projectName || ''} ${selectedProfile.address || selectedProfile.location || 'Boisar, Maharashtra'}`)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="pointer-events-auto bg-[#e50914] hover:bg-[#cf0812] active:scale-95 text-white text-[10px] sm:text-xs font-black px-2.5 sm:px-3 py-1.5 rounded-xl shadow-md transition-all flex items-center gap-1 shrink-0"
+                                >
+                                  <span>Google Maps ↗</span>
+                                </a>
                               </div>
-                              <a
-                                href={selectedProfile.mapUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-black text-xs px-3 py-1.5 rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95 shrink-0"
+                            </div>
+
+                            {/* Filter chips below map */}
+                            <div className="flex items-center justify-around pt-1 text-xs font-bold border-b border-slate-100 pb-2">
+                              <button
+                                type="button"
+                                onClick={() => setNeighbourhoodTab('transit')}
+                                className={`px-3 py-1 rounded-full transition-colors cursor-pointer ${
+                                  neighbourhoodTab === 'transit'
+                                    ? 'bg-rose-50 text-[#e50914] font-black'
+                                    : 'text-slate-600 hover:text-slate-900'
+                                }`}
                               >
-                                <span>Open Maps</span>
-                                <span>↗</span>
-                              </a>
+                                🚆 Transit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setNeighbourhoodTab('essentials')}
+                                className={`px-3 py-1 rounded-full transition-colors cursor-pointer ${
+                                  neighbourhoodTab === 'essentials'
+                                    ? 'bg-rose-50 text-[#e50914] font-black'
+                                    : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                              >
+                                🛒 Essentials
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setNeighbourhoodTab('utility')}
+                                className={`px-3 py-1 rounded-full transition-colors cursor-pointer ${
+                                  neighbourhoodTab === 'utility'
+                                    ? 'bg-rose-50 text-[#e50914] font-black'
+                                    : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                              >
+                                ⚡ Utility
+                              </button>
+                            </div>
+
+                            {/* Nearby List based on active tab */}
+                            <div className="space-y-1.5 pt-0.5 text-left">
+                              {neighbourhoodTab === 'transit' && (
+                                <>
+                                  <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-slate-50 border border-slate-100/80">
+                                    <span className="font-semibold text-slate-800">🚆 Boisar Railway Station (West)</span>
+                                    <span className="font-bold text-slate-500 text-[11px]">1.2 km • 5 mins</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-slate-50 border border-slate-100/80">
+                                    <span className="font-semibold text-slate-800">🚌 Boisar ST Bus Depot</span>
+                                    <span className="font-bold text-slate-500 text-[11px]">1.0 km • 4 mins</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-slate-50 border border-slate-100/80">
+                                    <span className="font-semibold text-slate-800">🛺 Chitralaya Auto Stand</span>
+                                    <span className="font-bold text-slate-500 text-[11px]">200 m • 1 min</span>
+                                  </div>
+                                </>
+                              )}
+                              {neighbourhoodTab === 'essentials' && (
+                                <>
+                                  <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-slate-50 border border-slate-100/80">
+                                    <span className="font-semibold text-slate-800">🛒 DMart Boisar</span>
+                                    <span className="font-bold text-slate-500 text-[11px]">2.1 km • 7 mins</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-slate-50 border border-slate-100/80">
+                                    <span className="font-semibold text-slate-800">🛍️ Chitralaya Market & Daily Groceries</span>
+                                    <span className="font-bold text-slate-500 text-[11px]">300 m • 2 mins</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-slate-50 border border-slate-100/80">
+                                    <span className="font-semibold text-slate-800">🏥 Sanjeevani & Anand Hospital</span>
+                                    <span className="font-bold text-slate-500 text-[11px]">1.4 km • 5 mins</span>
+                                  </div>
+                                </>
+                              )}
+                              {neighbourhoodTab === 'utility' && (
+                                <>
+                                  <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-slate-50 border border-slate-100/80">
+                                    <span className="font-semibold text-slate-800">🏧 SBI & HDFC ATM (Chitralaya)</span>
+                                    <span className="font-bold text-slate-500 text-[11px]">350 m • 2 mins</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-slate-50 border border-slate-100/80">
+                                    <span className="font-semibold text-slate-800">⛽ BPCL Petrol Pump (MIDC Road)</span>
+                                    <span className="font-bold text-slate-500 text-[11px]">1.5 km • 5 mins</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-xs py-1.5 px-2.5 rounded-xl bg-slate-50 border border-slate-100/80">
+                                    <span className="font-semibold text-slate-800">👮 Boisar Police Station</span>
+                                    <span className="font-bold text-slate-500 text-[11px]">1.9 km • 6 mins</span>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </div>
-                        )}
 
-                        {/* Contact Card - LOCKED IF SOLD OUT */}
-                        {(() => {
-                          const isPropertySold = Boolean(
-                            selectedProfile.isSold || 
-                            selectedProfile.status?.toLowerCase().includes('sold') || 
-                            selectedProfile.status?.toLowerCase().includes('rented')
-                          );
-
-                          if (isPropertySold) {
-                            return (
-                              <div className="bg-slate-100/90 border border-slate-250 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-2 text-center">
-                                <div className="w-9 h-9 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center mx-auto shadow-2xs">
-                                  <Lock className="w-4 h-4" />
-                                </div>
-                                <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                                  Contact Details Closed
-                                </h4>
-                                <p className="text-[11px] text-slate-500 font-medium leading-relaxed max-w-xs mx-auto">
-                                  This property is {(selectedProfile.forAction || '').toLowerCase() === 'rent' ? 'Rented Out' : 'Sold Out'}. Contact info is locked and no longer accessible.
-                                </p>
-                              </div>
-                            );
-                          }
-
-                          const rawPhone = selectedProfile.contactPhone || selectedProfile.phone || '';
-                          const rawWhatsapp = selectedProfile.whatsappPhone || selectedProfile.whatsapp || rawPhone;
-                          const ownerName = selectedProfile.contactName || selectedProfile.name || 'Owner';
-                          const postedByRole = selectedProfile.postedBy || 'Owner';
-
-                          const isUnlocked = isPropertyContactUnlocked(selectedProfile.id, selectedProfile);
-                          const phoneDisplay = formatPropertyPhoneDisplay(rawPhone, selectedProfile.id, selectedProfile);
-
-                          return (
-                            <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-3 text-left">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-800 font-black text-xs">
-                                    {ownerName.charAt(0).toUpperCase()}
-                                  </div>
-                                  <div>
-                                    <h4 className="text-xs font-black text-slate-900">{ownerName}</h4>
-                                    <span className="text-[10px] text-slate-400 font-semibold">Posted by {postedByRole}</span>
-                                  </div>
-                                </div>
-                                <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
-                                  isUnlocked 
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                                    : 'bg-amber-50 text-amber-800 border-amber-200'
-                                }`}>
-                                  {isUnlocked ? '✓ Contact Unlocked' : '🔒 Direct Contact'}
-                                </span>
+                          {/* 8. Similar Properties Carousel (Image 5) */}
+                          {similarProps.length > 0 && (
+                            <div className="bg-white border-y border-slate-200 p-4 sm:p-6 space-y-3.5 shadow-2xs">
+                              <div className="border-b-2 border-[#e50914] inline-block pb-1">
+                                <h3 className="text-sm sm:text-base font-black text-slate-900">Similar Properties</h3>
                               </div>
 
-                              {/* Phone Number Display Box */}
-                              <div className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs font-black ${
-                                isUnlocked 
-                                  ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 font-mono' 
-                                  : 'bg-slate-50 border-slate-200 text-slate-700'
-                              }`}>
-                                <span className="flex items-center gap-1.5 truncate">
-                                  <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                                  <span>{phoneDisplay}</span>
-                                </span>
-                                {!isUnlocked && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handlePropertyContactCall(selectedProfile, false)}
-                                    className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shrink-0 cursor-pointer shadow-xs active:scale-95"
-                                  >
-                                    {!isLoggedIn ? 'Login' : userUnlockedPropsState.length < 2 ? 'Unlock Free' : 'Upgrade'}
-                                  </button>
-                                )}
-                              </div>
-
-                              <div className="flex items-center gap-2 pt-0.5">
-                                <button
-                                  onClick={() => handlePropertyContactCall(selectedProfile, false)}
-                                  className="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-black text-xs py-2.5 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-                                >
-                                  <Phone className="w-3.5 h-3.5" />
-                                  <span>{postedByRole.toLowerCase().includes('agent') ? 'Call Agent' : postedByRole.toLowerCase().includes('builder') ? 'Call Builder' : 'Call Owner'}</span>
-                                </button>
-                                <button
-                                  onClick={() => handlePropertyContactCall(selectedProfile, true)}
-                                  className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs py-2.5 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-                                >
-                                  <MessageSquare className="w-3.5 h-3.5" />
-                                  <span>WhatsApp</span>
-                                </button>
+                              <div className="flex items-stretch gap-3 overflow-x-auto no-scrollbar pb-2 pt-1 select-none">
+                                {similarProps.map((simProp: any) => {
+                                  const simPhotos = simProp.gallery?.length ? simProp.gallery : [simProp.avatar || '/imagess/nobroker_3d_house.jpg'];
+                                  return (
+                                    <div
+                                      key={simProp.id}
+                                      onClick={() => {
+                                        setSelectedProfile(simProp);
+                                        setActivePhotoIndex(0);
+                                        portalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                                      }}
+                                      className="w-56 sm:w-64 shrink-0 bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden flex flex-col cursor-pointer transition-all hover:shadow-md hover:border-slate-300"
+                                    >
+                                      <div className="relative w-full h-32 bg-slate-950 overflow-hidden">
+                                        <img
+                                          src={simPhotos[0]}
+                                          alt={simProp.category}
+                                          className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-1.5 px-2.5 flex items-center justify-between text-white text-[10px] font-bold">
+                                          <span className="flex items-center gap-1">
+                                            <Armchair className="w-3 h-3 text-slate-300" />
+                                            <span>{simProp.furnishing || 'Unfurnished'}</span>
+                                          </span>
+                                          <span className="flex items-center gap-1">
+                                            <Maximize2 className="w-3 h-3 text-slate-300" />
+                                            <span>{simProp.carpetArea || '650 sqft'}</span>
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="p-3 flex-1 flex flex-col justify-between space-y-2 text-left">
+                                        <div>
+                                          <h4 className="text-xs font-black text-slate-900 truncate">
+                                            {simProp.category || simProp.name}
+                                          </h4>
+                                          <div className="text-sm font-black text-slate-900 mt-1">
+                                            {formatPriceInLacs(simProp.price)}
+                                          </div>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedProfile(simProp);
+                                            setActivePhotoIndex(0);
+                                            portalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                                          }}
+                                          className="w-full bg-[#e50914] hover:bg-[#c90812] active:scale-95 text-white text-xs font-black py-2 rounded-xl shadow-xs transition-all cursor-pointer text-center"
+                                        >
+                                          Contact {simProp.postedBy || 'Owner'}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
-                          );
-                        })()}
+                          )}
+                        </div>
+
+                        {/* 9. Sticky Bottom Action Bar (Image 2 & 3) */}
+                        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3 py-2.5 sm:px-6 sm:py-3 shadow-[0_-4px_25px_rgba(0,0,0,0.12)] z-50">
+                          <div className="max-w-xl mx-auto flex items-center gap-2.5">
+                            {/* Contact Button */}
+                            <button
+                              type="button"
+                              onClick={() => handlePropertyContactCall(selectedProfile, false)}
+                              className="flex-1 bg-white hover:bg-slate-50 text-[#e50914] border-2 border-[#e50914] font-black text-xs sm:text-sm py-2.5 sm:py-3 rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                            >
+                              <Phone className="w-4 h-4 text-[#e50914]" />
+                              <span>{postedByRole.toLowerCase().includes('agent') ? 'Call Agent' : postedByRole.toLowerCase().includes('builder') ? 'Call Builder' : 'Contact'}</span>
+                            </button>
+
+                            {/* WhatsApp Button */}
+                            <button
+                              type="button"
+                              onClick={() => handlePropertyContactCall(selectedProfile, true)}
+                              className="bg-[#25D366] hover:bg-[#20bd5a] text-white p-2.5 sm:p-3 rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 shrink-0"
+                              title="WhatsApp"
+                            >
+                              <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                            </button>
+
+                            {/* Schedule Visit Button (Solid Red #e50914) */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEnquirySenderName(userName || '');
+                                setEnquirySenderPhone('');
+                                setEnquiryMessage(`Hi ${selectedProfile.contactName || 'Owner'}, I would like to schedule a visit for ${propTitle} in Boisar. Please let me know your available time.`);
+                                setEnquiryModalProperty(selectedProfile);
+                              }}
+                              className="flex-1 bg-[#e50914] hover:bg-[#c90812] active:scale-95 text-white font-black text-xs sm:text-sm py-2.5 sm:py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                              <Calendar className="w-4 h-4 text-white" />
+                              <span>Schedule Visit</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                     </div>
-                   </div>
-
-                   {/* Sticky Bottom Action Bar */}
-                   <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 px-3 py-2 sm:px-8 sm:py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-50">
-                     <div className="max-w-5xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
-                       {/* Left: Listed By info (protected from shrinking & wrapping) */}
-                       <div className="flex items-center gap-1.5 min-w-0 shrink-0 max-w-[105px] sm:max-w-none">
-                         <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 border border-slate-200 text-slate-800 font-black text-xs flex items-center justify-center shrink-0">
-                           {(selectedProfile.contactName || selectedProfile.name || 'O').charAt(0).toUpperCase()}
-                         </div>
-                         <div className="flex flex-col text-left min-w-0">
-                           <span className="text-[8.5px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate whitespace-nowrap">
-                             Listed by {selectedProfile.postedBy || selectedProfile.iAm || 'Owner'}
-                           </span>
-                           <span className="text-xs sm:text-sm font-black text-slate-900 leading-tight truncate">
-                             {selectedProfile.contactName || selectedProfile.name || 'Owner'}
-                           </span>
-                         </div>
-                       </div>
-
-                       {/* Right: Actions */}
-                       {Boolean(selectedProfile.isSold || selectedProfile.status?.toLowerCase().includes('sold') || selectedProfile.status?.toLowerCase().includes('rented')) ? (
-                         <div className="flex items-center gap-2 shrink-0">
-                           <span className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 shadow-2xs">
-                             🔒 {(selectedProfile.forAction || '').toLowerCase() === 'rent' ? 'Rented Out (Closed)' : 'Sold Out (Closed)'}
-                           </span>
-                         </div>
-                       ) : (
-                         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-                           <button 
-                             onClick={() => handlePropertyContactCall(selectedProfile, false)}
-                             className="bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-200 font-black text-xs p-2 sm:px-3.5 sm:py-2 rounded-xl transition-all shadow-2xs whitespace-nowrap cursor-pointer flex items-center gap-1.5 active:scale-95"
-                             title="Call"
-                           >
-                             <Phone className="w-3.5 h-3.5 text-slate-700 shrink-0" />
-                             <span className="hidden sm:inline">
-                               {(selectedProfile.postedBy || selectedProfile.iAm || '').toLowerCase().includes('agent') ? 'Call Agent' : (selectedProfile.postedBy || selectedProfile.iAm || '').toLowerCase().includes('builder') ? 'Call Builder' : 'Call Owner'}
-                             </span>
-                           </button>
-
-                           <button 
-                             onClick={() => handlePropertyContactCall(selectedProfile, true)}
-                             className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs p-2 sm:px-3.5 sm:py-2 rounded-xl shadow-xs transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 active:scale-95"
-                             title="WhatsApp"
-                           >
-                             <MessageSquare className="w-3.5 h-3.5 shrink-0" />
-                             <span className="hidden sm:inline">WhatsApp</span>
-                           </button>
-
-                           <button 
-                             onClick={() => {
-                               setEnquirySenderName(userName || '');
-                               setEnquirySenderPhone('');
-                               setEnquiryMessage(`Hi ${selectedProfile.contactName || 'Owner'}, I am interested in your property (${selectedProfile.category}). Please share details.`);
-                               setEnquiryModalProperty(selectedProfile);
-                             }}
-                             className="bg-slate-900 hover:bg-slate-800 text-white font-black text-xs px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-xs transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer active:scale-95"
-                           >
-                             <Send className="w-3.5 h-3.5 text-white shrink-0" />
-                             <span>Send Enquiry</span>
-                           </button>
-                         </div>
-                       )}
-                     </div>
-                   </div>
+                    );
+                  })()}
                 </div>
               ) : activeSpecialCategory === 'properties' && propertyMode === null ? (
                 <div className="w-full bg-white min-h-full flex flex-col pb-20 sm:pb-24">
-                  {/* Header with clean white card styling */}
-                  <div className="bg-white border-b border-slate-200/80 px-3.5 sm:px-8 py-3 sm:py-4 text-left shadow-2xs">
-                    <div className="max-w-5xl mx-auto space-y-3">
-                      {/* Title Bar */}
-                      <div>
-                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">
-                          Boisar Real Estate
-                        </h2>
-                        <p className="text-xs sm:text-sm text-slate-500 font-semibold mt-0.5">
-                          Verified Flats, Shops &amp; Plots in Boisar
-                        </p>
+                  {/* NoBroker Style Buy/Rent/Commercial Hero Section */}
+                  <div className="bg-white border-b border-slate-200/80 px-3 sm:px-6 py-2.5 sm:py-3 text-center shadow-2xs">
+                    <div className="max-w-2xl mx-auto space-y-2.5">
+                      
+                      {/* 1. Three Tabs (Buy / Rent / Commercial) with active red underline */}
+                      <div className="flex items-center justify-center gap-10 sm:gap-16 border-b border-slate-200/80 pt-1">
+                        {[
+                          { id: 'buy', label: 'Buy' },
+                          { id: 'rent', label: 'Rent' },
+                          { id: 'commercial', label: 'Commercial' }
+                        ].map((tab) => {
+                          const isActive = activePropertyTab === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => {
+                                setActivePropertyTab(tab.id as any);
+                                if (tab.id === 'commercial') {
+                                  setPropertyTypeFilter('Commercial');
+                                } else {
+                                  setPropertyTypeFilter('All Types');
+                                }
+                              }}
+                              className={`text-base sm:text-lg font-black tracking-tight transition-all cursor-pointer pb-2 sm:pb-2.5 relative px-1.5 sm:px-2 ${
+                                isActive
+                                  ? 'text-[#e50914]'
+                                  : 'text-slate-500 hover:text-slate-800'
+                              }`}
+                            >
+                              {tab.label}
+                              {isActive && (
+                                <span className="absolute bottom-0 inset-x-0 h-[3px] bg-[#e50914] rounded-full shadow-xs" />
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
 
-                      {/* 3 Action Buttons — Exact Logo Red & sleek styling */}
-                      <div className="grid grid-cols-3 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setPropertyMode('buy')}
-                          className="py-2.5 px-2 rounded-xl bg-[#da0c23] hover:bg-[#b8081c] text-white text-xs sm:text-sm font-black transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-                        >
-                          <Building className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/90 shrink-0" />
-                          <span>Buy</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPropertyMode('rent')}
-                          className="py-2.5 px-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-black transition-all border border-slate-200 shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
-                        >
-                          <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-600 shrink-0" />
-                          <span>Rent</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!isLoggedIn) {
-                              showToast("Please login first to post your property.", "info", 4000);
-                              setLoginModalOpen(true);
-                              return;
-                            }
-                            setActiveSpecialCategory(null);
-                            setPostPropertyModalOpen(true);
-                          }}
-                          className="py-2.5 px-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-black transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap"
-                        >
-                          <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#da0c23] shrink-0" />
-                          <span className="truncate">Post Free Ad</span>
-                        </button>
+                      {/* 2. Compact Dark Promo Card: "Looking for Tenants / Buyers ?" */}
+                      <div className="bg-[#36241c] rounded-xl p-2.5 sm:p-3 text-white relative overflow-hidden shadow-xs border border-amber-950/40 text-left">
+                        {/* Content Left */}
+                        <div className="max-w-[64%] sm:max-w-[68%] space-y-1 z-10 relative">
+                          <h3 className="text-xs sm:text-[13px] font-black text-white tracking-tight leading-tight">
+                            Looking for Tenants / Buyers ?
+                          </h3>
+                          <div className="space-y-0.5 text-[9.5px] sm:text-[10px] text-amber-100/90 font-semibold">
+                            <div className="flex items-center gap-1.5">
+                              <Zap className="w-3 h-3 text-amber-400 shrink-0" />
+                              <span>Faster &amp; Verified Tenants/Buyers</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!isLoggedIn) {
+                                showToast("Please login first to post your property.", "info", 4000);
+                                setLoginModalOpen(true);
+                                return;
+                              }
+                              setPostPropertyModalOpen(true);
+                            }}
+                            className="mt-0.5 bg-[#e50914] hover:bg-[#c90812] active:scale-95 text-white text-[10px] sm:text-xs font-black px-3 py-1 rounded-md shadow-xs transition-all inline-flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>Post FREE Property Ad</span>
+                          </button>
+                        </div>
+
+                        {/* 3D House & Key Illustration Right */}
+                        <div className="absolute right-0 bottom-0 top-0 w-[36%] sm:w-[32%] flex items-center justify-end pointer-events-none overflow-hidden">
+                          <img
+                            src="/imagess/nobroker_3d_house.jpg"
+                            alt="Looking for Tenants / Buyers"
+                            className="w-full h-full object-cover object-center"
+                          />
+                          <div className="absolute inset-y-0 left-0 w-5 bg-gradient-to-r from-[#36241c] to-transparent pointer-events-none" />
+                        </div>
                       </div>
 
-                      {/* Clean Filter Chips Row (Exact logo red active chip & accents) */}
-                      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5 pb-0.5 select-none text-[11px]">
+                      {/* Clean Locality Filter Chips */}
+                      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1.5 px-0.5 select-none text-xs sm:text-[13px] justify-start sm:justify-center scroll-smooth">
                         <button
                           type="button"
                           onClick={() => setPropertyAreaFilter('All Areas')}
-                          className={`px-3 py-1 rounded-full font-black whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
+                          className={`px-3.5 sm:px-4 py-1.5 rounded-full font-black whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
                             propertyAreaFilter === 'All Areas'
-                              ? 'bg-[#da0c23] text-white border-[#da0c23] shadow-xs'
-                              : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/80'
+                              ? 'bg-[#e50914] text-white border-[#e50914] shadow-sm'
+                              : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200 hover:border-slate-300'
                           }`}
                         >
-                          All
+                          All Areas
                         </button>
                         {BOISAR_PROPERTY_AREAS.map((area) => (
                           <button
                             key={area}
                             type="button"
                             onClick={() => setPropertyAreaFilter(area === propertyAreaFilter ? 'All Areas' : area)}
-                            className={`px-3 py-1 rounded-full font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
+                            className={`px-3.5 sm:px-4 py-1.5 rounded-full font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 border active:scale-95 ${
                               propertyAreaFilter === area
-                                ? 'bg-[#da0c23] text-white border-[#da0c23] shadow-xs'
-                                : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200/80'
+                                ? 'bg-[#e50914] text-white border-[#e50914] shadow-sm'
+                                : 'bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border-slate-200 hover:border-slate-300 shadow-2xs'
                             }`}
                           >
                             {area}
                           </button>
                         ))}
-
-                        <div className="h-4 w-px bg-slate-200 shrink-0 mx-0.5" />
-
-                        {[
-                          { label: '1 BHK', mode: 'buy', bhk: '1 BHK', type: 'Flat/Apartment' },
-                          { label: '2 BHK', mode: 'buy', bhk: '2 BHK', type: 'Flat/Apartment' },
-                          { label: 'Rentals', mode: 'rent', bhk: 'All BHK', type: 'Flat/Apartment' },
-                          { label: 'Shops', mode: 'buy', bhk: 'All BHK', type: 'Commercial' },
-                          { label: 'Plots', mode: 'buy', bhk: 'All BHK', type: 'Plot/Land' }
-                        ].map((chip, cIdx) => (
-                          <button
-                            key={cIdx}
-                            type="button"
-                            onClick={() => {
-                              setBhkFilter(chip.bhk);
-                              setPropertyTypeFilter(chip.type);
-                              setPropertyMode(chip.mode as any);
-                            }}
-                            className="bg-[#da0c23]/10 hover:bg-[#da0c23]/15 text-[#da0c23] border border-[#da0c23]/25 px-3 py-1 rounded-full font-black transition-all cursor-pointer shrink-0 whitespace-nowrap"
-                          >
-                            {chip.label}
-                          </button>
-                        ))}
                       </div>
+
                     </div>
                   </div>
 
-                  {/* Recent Listings */}
+                  {/* Listings matching selected Tab & Search */}
                   <div className="max-w-5xl mx-auto w-full p-4 sm:p-6 space-y-3 text-left flex-1 bg-slate-50/50">
                     {(() => {
                       const allProps = (profilesState.properties || []).filter((p: any) => p.listingType === 'property');
                       const filteredListings = allProps.filter((p: any) => {
+                        // 1. Tab filter (Buy vs Rent vs Commercial)
+                        const isRentListing = p.forAction === 'Rent' || p.category?.toLowerCase().includes('rent') || p.transactionType === 'Lease';
+                        const isCommercialListing = (p.category || '').toLowerCase().includes('shop') || (p.category || '').toLowerCase().includes('office') || (p.category || '').toLowerCase().includes('commercial');
+                        
+                        if (activePropertyTab === 'buy') {
+                          if (isRentListing) return false;
+                        } else if (activePropertyTab === 'rent') {
+                          if (!isRentListing) return false;
+                        } else if (activePropertyTab === 'commercial') {
+                          if (!isCommercialListing) return false;
+                        }
+
+                        // 2. Keyword/Locality Search input
+                        if (propertySearchQuery.trim()) {
+                          const q = propertySearchQuery.toLowerCase().trim();
+                          const text = `${p.location || ''} ${p.addressLocality || ''} ${p.projectName || ''} ${p.title || ''} ${p.name || ''} ${p.category || ''} ${p.address || ''}`.toLowerCase();
+                          if (!text.includes(q)) return false;
+                        }
+
+                        // 3. Area filter chip
                         if (propertyAreaFilter !== 'All Areas') {
                           const text = `${p.location || ''} ${p.addressLocality || ''} ${p.projectName || ''} ${p.title || ''} ${p.name || ''} ${p.category || ''}`.toLowerCase();
                           if (!text.includes(propertyAreaFilter.toLowerCase())) return false;
                         }
+
+                        // 4. Type & BHK
                         if (propertyTypeFilter !== 'All Types') {
                           const cat = (p.category || '').toLowerCase();
                           if (propertyTypeFilter === 'Flat/Apartment' && !cat.includes('flat') && !cat.includes('apartment') && !cat.includes('bhk')) return false;
@@ -4490,23 +4436,30 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         <>
                           <div className="flex items-center justify-between">
                             <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider">
-                              Recent Listings {propertyAreaFilter !== 'All Areas' ? `in ${propertyAreaFilter}` : ''} ({filteredListings.length})
+                              {activePropertyTab === 'buy' ? 'Properties for Sale' : activePropertyTab === 'rent' ? 'Properties for Rent' : 'Commercial Properties'} {propertyAreaFilter !== 'All Areas' ? `in ${propertyAreaFilter}` : ''} ({filteredListings.length})
                             </h3>
                             <button
                               type="button"
-                              onClick={() => setPropertyMode('buy')}
-                              className="text-[11px] font-black text-slate-900 hover:underline cursor-pointer"
+                              onClick={() => setPropertyMode(activePropertyTab === 'rent' ? 'rent' : 'buy')}
+                              className="text-[11px] font-black text-[#e50914] hover:underline cursor-pointer"
                             >
-                              View All →
+                              Explore All →
                             </button>
                           </div>
 
                           {filteredListings.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-3.5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5">
                               {filteredListings.slice(0, 8).map((property: any) => {
                                 const isSoldOut = Boolean(property.isSold || property.status?.toLowerCase().includes('sold') || property.status?.toLowerCase().includes('rented'));
                                 const isRentProp = property.forAction === 'Rent' || property.category?.toLowerCase().includes('rent') || property.transactionType === 'Lease';
                                 const isFeaturedProp = Boolean(property.isFeatured || property.featured) && !isSoldOut;
+                                const isShortlisted = shortlistedPropIds.includes(property.id);
+
+                                const propGallery: string[] = (property.gallery && property.gallery.length > 0)
+                                  ? property.gallery
+                                  : property.avatar
+                                    ? [property.avatar]
+                                    : ['https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'];
 
                                 return (
                                 <div
@@ -4518,106 +4471,213 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                                     }
                                     setSelectedProfile(property);
                                   }}
-                                  className={`rounded-xl sm:rounded-2xl border transition-all flex flex-row group text-left relative overflow-hidden h-[135px] sm:h-[150px] ${
+                                  className={`rounded-2xl border transition-all flex flex-col group text-left relative overflow-hidden bg-white shadow-2xs hover:shadow-lg ${
                                     isSoldOut
-                                      ? 'bg-slate-100/90 border-slate-300 opacity-70 grayscale-[35%] cursor-not-allowed select-none shadow-2xs'
+                                      ? 'border-slate-300 opacity-75 grayscale-[25%] cursor-not-allowed select-none'
                                       : isFeaturedProp
-                                        ? 'cursor-pointer bg-white border-amber-300 shadow-sm hover:shadow-md ring-1 ring-amber-400/30'
-                                        : 'cursor-pointer bg-white border-slate-200 shadow-2xs hover:shadow-md'
+                                        ? 'cursor-pointer border-amber-300 ring-1 ring-amber-400/40 hover:border-amber-400'
+                                        : 'cursor-pointer border-slate-200 hover:border-slate-300'
                                   }`}
                                 >
-                                  {/* Image Column - Uniform fixed thumbnail */}
-                                  <div className="w-[115px] xs:w-[125px] sm:w-[160px] shrink-0 h-full relative bg-slate-900 overflow-hidden">
-                                    <img
-                                      src={property.avatar || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'}
-                                      alt={property.name}
-                                      className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isSoldOut ? 'grayscale-[50%]' : ''}`}
-                                    />
-
-                                    {/* Big Bold SOLD OUT / RENTED OUT Overlay */}
-                                    {isSoldOut && (
-                                      <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-20 p-2 text-center">
-                                        <div className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border-2 shadow-2xl transform -rotate-6 text-center tracking-wider ${
-                                          isRentProp 
-                                            ? 'bg-amber-500 border-amber-200 text-slate-950 font-black' 
-                                            : 'bg-rose-600 border-rose-300 text-white font-black'
-                                        }`}>
-                                          <span className="text-[10.5px] sm:text-xs font-black uppercase block leading-tight drop-shadow-sm">
+                                  {/* Top Area: Solid dark panel when Sold Out, or photos when Available */}
+                                  {isSoldOut ? (
+                                    <div className="w-full h-48 sm:h-56 bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 flex flex-col items-center justify-center p-6 text-center select-none relative shrink-0">
+                                      <div className={`px-5 py-3 rounded-2xl border-2 shadow-2xl text-center transform -rotate-3 ${
+                                        isRentProp 
+                                          ? 'bg-amber-500 border-amber-300 text-slate-950' 
+                                          : 'bg-rose-600 border-rose-300 text-white'
+                                      }`}>
+                                        <div className="flex items-center justify-center gap-2 mb-1">
+                                          <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+                                          <span className="text-sm sm:text-base font-black uppercase tracking-wider">
                                             {isRentProp ? 'RENTED OUT' : 'SOLD OUT'}
                                           </span>
-                                          <span className="text-[7px] sm:text-[7.5px] font-extrabold uppercase opacity-90 block mt-0.5">
-                                            Not Available
-                                          </span>
                                         </div>
+                                        <span className="text-[9.5px] sm:text-[10.5px] font-extrabold uppercase opacity-95 tracking-wide block">
+                                          Not Available • Property Closed
+                                        </span>
                                       </div>
-                                    )}
-
-                                    {/* Featured Badge */}
-                                    {isFeaturedProp && (
-                                      <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full z-10 shadow-xs flex items-center gap-0.5 border border-amber-300/60">
-                                        <span>⭐ FEATURED</span>
-                                      </div>
-                                    )}
-
-                                    <div className="absolute top-1.5 left-1.5 bg-black/65 backdrop-blur-xs text-white text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-full z-10">
-                                      {property.gallery?.length || 1}+
                                     </div>
-                                    {Boolean(property.video || (property.videos && property.videos.length > 0)) && (
-                                      <div className="absolute bottom-1.5 right-1.5 bg-rose-600/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs z-10">
-                                        <span>🎥 Video</span>
-                                      </div>
-                                    )}
-                                  </div>
+                                  ) : (
+                                    <div className="w-full relative bg-slate-50 pt-2.5 px-2.5 overflow-hidden shrink-0">
+                                      {propGallery.length <= 1 ? (
+                                        <div className="w-full h-56 sm:h-64 rounded-2xl bg-slate-950 overflow-hidden relative shadow-2xs flex items-center justify-center">
+                                          <img
+                                            src={propGallery[0]}
+                                            alt=""
+                                            aria-hidden="true"
+                                            className="absolute inset-0 w-full h-full object-cover blur-lg scale-110 opacity-40 pointer-events-none"
+                                          />
+                                          <img
+                                            src={propGallery[0]}
+                                            alt={property.name || property.category}
+                                            className="relative max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div 
+                                          className="flex items-center gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory py-0.5 select-none"
+                                        >
+                                          {propGallery.map((imgUrl: string, idx: number) => (
+                                            <div 
+                                              key={idx} 
+                                              className="w-[60%] sm:w-[50%] shrink-0 h-56 sm:h-64 rounded-2xl overflow-hidden bg-slate-950 snap-start relative shadow-2xs border border-slate-200/50 flex items-center justify-center"
+                                            >
+                                              <img
+                                                src={imgUrl}
+                                                alt=""
+                                                aria-hidden="true"
+                                                className="absolute inset-0 w-full h-full object-cover blur-lg scale-110 opacity-40 pointer-events-none"
+                                              />
+                                              <img
+                                                src={imgUrl}
+                                                alt={`${property.name || property.category} photo ${idx + 1}`}
+                                                className="relative max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                                                loading="lazy"
+                                              />
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
 
-                                  {/* Content Column - Uniform flex column */}
-                                  <div className="flex-1 p-2 sm:p-3 flex flex-col justify-between min-w-0 h-full">
+                                      {/* Top-Left: Gallery Count & Type Badge */}
+                                      <div className="absolute top-4 left-4 flex items-center gap-1.5 z-10 pointer-events-none">
+                                        <div className="bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+                                          <Camera className="w-3 h-3 text-slate-200" />
+                                          <span>{propGallery.length}+</span>
+                                        </div>
+                                        <span className="bg-slate-950/80 backdrop-blur-xs text-white text-[9.5px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                          {isRentProp ? 'RENT' : 'SALE'}
+                                        </span>
+                                      </div>
+
+                                      {/* Top-Right: Floating Circular Share Button */}
+                                      <div className="absolute top-4 right-4 z-20">
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (navigator.share) {
+                                              navigator.share({
+                                                title: property.title || property.category || 'Property in Boisar',
+                                                url: window.location.href,
+                                              }).catch(() => {});
+                                            } else {
+                                              navigator.clipboard.writeText(window.location.href);
+                                              showToast('Property link copied to clipboard! 📋', 'success');
+                                            }
+                                          }}
+                                          className="w-8 h-8 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-slate-900 shadow-md flex items-center justify-center transition-all active:scale-90 cursor-pointer backdrop-blur-xs"
+                                          title="Share Property"
+                                        >
+                                          <Share2 className="w-3.5 h-3.5 text-slate-600" />
+                                        </button>
+                                      </div>
+
+                                      {/* Video Pill */}
+                                      {Boolean(property.video || (property.videos && property.videos.length > 0)) && (
+                                        <div className="absolute bottom-4 right-4 bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm z-10">
+                                          <span>🎥 Video Tour</span>
+                                        </div>
+                                      )}
+
+                                      {/* Featured Badge */}
+                                      {isFeaturedProp && (
+                                        <div className="absolute bottom-4 left-4 bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full z-10 shadow-xs flex items-center gap-1 border border-amber-300">
+                                          <span>⭐ FEATURED</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Card Body (Image 2 NoBroker Content Layout) */}
+                                  <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-1 min-w-0">
                                     <div>
-                                      <div className="flex justify-between items-start gap-1 mb-0.5">
-                                        <div className="space-y-0.5 min-w-0">
-                                          <span className="bg-teal-50 border border-teal-200 text-teal-700 text-[8.5px] sm:text-[10px] font-black px-1.5 py-0.2 rounded uppercase truncate max-w-[130px] sm:max-w-none inline-block">
-                                            {property.location || 'Boisar West'}
-                                          </span>
-                                          <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 leading-tight group-hover:text-teal-700 transition-colors line-clamp-1 mt-0.5">
-                                            {property.category || property.title || property.name}
+                                      {/* Row 1: Title (Left) & Price (Right) */}
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0 flex-1">
+                                          <h4 className="text-sm sm:text-base font-bold text-slate-900 leading-snug line-clamp-2 group-hover:text-rose-600 transition-colors">
+                                            {property.category || property.title || property.name || 'Property for Sale'}{property.projectName ? ` in ${property.projectName}` : ''}
                                           </h4>
-                                          <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium line-clamp-1">
-                                            {property.projectName || 'Independent Property in Boisar'}
+                                          <p className="text-[11px] sm:text-xs text-slate-500 font-medium line-clamp-1 mt-0.5">
+                                            {property.projectName || (isRentProp ? 'Rental Property in Boisar' : 'Verified Owner Listing in Boisar')}
                                           </p>
                                         </div>
-                                        <span className={`text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded shrink-0 ${
-                                          isSoldOut 
-                                            ? 'bg-slate-300 text-slate-700' 
-                                            : 'bg-slate-900 text-white'
-                                        }`}>
-                                          {isSoldOut ? (isRentProp ? 'RENTED' : 'SOLD') : (isRentProp ? 'RENT' : 'SALE')}
-                                        </span>
+
+                                        <div className="text-right shrink-0">
+                                          <span className="text-base sm:text-lg font-black text-slate-900 block leading-tight">
+                                            {formatPriceInLacs(property.price || property.budget)}
+                                          </span>
+                                          <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium block">
+                                            {property.pricePerSqft || (isRentProp ? '/month' : 'Negotiable')}
+                                          </span>
+                                        </div>
                                       </div>
 
-                                      <div className="flex items-center gap-1 sm:gap-1.5 my-1 text-[8.5px] sm:text-[10px] text-slate-600 font-bold flex-wrap">
-                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{property.carpetArea || '650 sqft'}</span>
-                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{property.status || 'Ready'}</span>
-                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{property.floor ? `${property.floor}/${property.totalFloors}` : '2/4'}</span>
+                                      {/* Row 2: Location with green return arrow ↳ (Single clean location row) */}
+                                      <p className="text-[11px] sm:text-xs text-slate-500 font-medium flex items-center gap-1.5 mt-2 line-clamp-1">
+                                        <span className="text-emerald-600 font-bold text-sm leading-none shrink-0">↳</span>
+                                        <span className="truncate">{property.addressLocality || property.address || property.location || 'Boisar, Palghar'}</span>
+                                      </p>
+
+                                      {/* Row 3: Landmark ONLY if distinct from address */}
+                                      {Boolean(property.landmark && property.landmark !== property.addressLocality && property.landmark !== property.location) && (
+                                        <div className="bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1.5 flex items-center gap-2 text-[10.5px] sm:text-[11px] text-slate-600 mt-2.5">
+                                          <MapPin className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
+                                          <span className="truncate font-medium">Near {property.landmark}</span>
+                                        </div>
+                                      )}
+
+                                      {/* Row 4: 3-Column Specs Divider (Image 2 style) */}
+                                      <div className="grid grid-cols-3 border-y border-slate-100 py-2.5 my-3 divide-x divide-slate-100 text-center">
+                                        <div className="flex flex-col items-center justify-center px-1">
+                                          <Armchair className="w-4 h-4 text-slate-400 mb-0.5" />
+                                          <span className="text-[11px] font-semibold text-slate-700 truncate max-w-full">
+                                            {property.furnishing || 'Unfurnished'}
+                                          </span>
+                                        </div>
+                                        <div className="flex flex-col items-center justify-center px-1">
+                                          <Maximize2 className="w-4 h-4 text-slate-400 mb-0.5" />
+                                          <span className="text-[11px] font-semibold text-slate-700 truncate max-w-full">
+                                            {property.carpetArea || '650 sqft'}
+                                          </span>
+                                        </div>
+                                        <div className="flex flex-col items-center justify-center px-1">
+                                          <Compass className="w-4 h-4 text-slate-400 mb-0.5" />
+                                          <span className="text-[11px] font-semibold text-slate-700 truncate max-w-full">
+                                            {property.facing || property.status || 'Ready'}
+                                          </span>
+                                        </div>
                                       </div>
                                     </div>
 
-                                    <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-1.5 mt-auto">
-                                      <div>
-                                        <span className="text-xs sm:text-sm font-black text-slate-900 block leading-tight">{formatPrice(property.price || property.budget)}</span>
-                                        <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold block truncate">{property.pricePerSqft || 'Boisar'}</span>
+                                    {/* Row 5: Action Row (Details on left, Vibrant Red Contact Owner on right) */}
+                                    <div className="flex items-center justify-between gap-2 pt-1 mt-auto">
+                                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-800 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200/60 transition-colors">
+                                        <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                                        <span>Details</span>
                                       </div>
+
                                       {isSoldOut ? (
-                                        <span className={`text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1 border shrink-0 ${
+                                        <span className={`text-xs font-black px-3 py-1.5 rounded-xl border flex items-center gap-1 ${
                                           isRentProp 
-                                            ? 'bg-amber-50 text-amber-800 border-amber-200' 
+                                            ? 'bg-amber-50 text-amber-800 border-amber-300' 
                                             : 'bg-rose-50 text-rose-700 border-rose-200'
                                         }`}>
-                                          <Lock className="w-2.5 h-2.5 shrink-0" />
-                                          <span>{isRentProp ? 'Rented' : 'Sold Out'}</span>
+                                          <Lock className="w-3 h-3" />
+                                          <span>{isRentProp ? 'Rented Out' : 'Sold Out'}</span>
                                         </span>
                                       ) : (
-                                        <span className="text-[10px] sm:text-xs font-bold text-teal-700 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                                          Details →
-                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedProfile(property);
+                                          }}
+                                          className="bg-[#E13B4B] hover:bg-[#cf2f3e] text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                                        >
+                                          <span>Contact {property.postedBy || 'Owner'}</span>
+                                        </button>
                                       )}
                                     </div>
                                   </div>
@@ -4626,21 +4686,33 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                               })}
                             </div>
                           ) : (
-                            <div className="bg-white rounded-2xl border border-slate-200 p-6 text-center space-y-2">
-                              <p className="text-xs font-black text-slate-800">
-                                {propertyAreaFilter !== 'All Areas' ? `No properties found in ${propertyAreaFilter}` : 'No properties listed yet'}
-                              </p>
-                              <p className="text-[11px] text-slate-500">
-                                {propertyAreaFilter !== 'All Areas' ? `Be the first to list a property in ${propertyAreaFilter}!` : 'Are you selling or renting a flat, shop, or plot in Boisar?'}
-                              </p>
-                              <div className="flex items-center justify-center gap-2 pt-1">
+                            <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 text-center space-y-4 shadow-xs my-3 max-w-lg mx-auto">
+                              {/* Icon Badge */}
+                              <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 text-[#e50914] flex items-center justify-center mx-auto shadow-2xs">
+                                <Building className="w-7 h-7 text-[#e50914]" />
+                              </div>
+
+                              {/* Title & Description */}
+                              <div className="space-y-1">
+                                <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                                  {propertyAreaFilter !== 'All Areas' ? `No Properties Found in ${propertyAreaFilter}` : 'No Properties Found'}
+                                </h3>
+                                <p className="text-xs sm:text-sm text-slate-500 font-medium max-w-sm mx-auto leading-relaxed">
+                                  {propertyAreaFilter !== 'All Areas'
+                                    ? `Be the first owner to list a property in ${propertyAreaFilter} , or explore available homes across Boisar.`
+                                    : 'Be the first owner to list a property and connect directly with genuine buyers.'}
+                                </p>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
                                 {propertyAreaFilter !== 'All Areas' && (
                                   <button
                                     type="button"
                                     onClick={() => setPropertyAreaFilter('All Areas')}
-                                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black px-3 py-2 rounded-xl transition-all cursor-pointer"
+                                    className="w-full sm:w-auto border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all cursor-pointer active:scale-95"
                                   >
-                                    Show All Areas
+                                    Explore All Areas
                                   </button>
                                 )}
                                 <button
@@ -4653,151 +4725,20 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                                     }
                                     setPostPropertyModalOpen(true);
                                   }}
-                                  className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-black px-4 py-2 rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
+                                  className="w-full sm:w-auto bg-[#e50914] hover:bg-[#cf0812] active:scale-95 text-white font-black text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                                 >
-                                  <Plus className="w-3.5 h-3.5" />
-                                  <span>Post Your Property Free</span>
+                                  <Plus className="w-4 h-4" />
+                                  <span>Post Free Property</span>
                                 </button>
                               </div>
+
+                              {/* Trust Highlights */}
+                              
                             </div>
                           )}
                         </>
                       );
                     })()}
-
-                    {/* 2 Sponsored Property Ad Slots */}
-                    <div className="pt-2 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                          Sponsored Property Ad Space
-                        </span>
-                        <a
-                          href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar,%20I%20want%20to%20place%20an%20Ad%20Banner%20in%20the%20*Boisar%20Real%20Estate%20/%20Property%20Section*.%20Please%20share%20pricing%20and%20banner%20slot%20details."
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[10px] font-bold text-emerald-700 hover:underline cursor-pointer"
-                        >
-                          Book Your Ad Here →
-                        </a>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {/* Ad Slot 1 */}
-                        {propertyCustomAds.slot1?.active ? (
-                          <a
-                            href={
-                              propertyCustomAds.slot1.linkUrl ||
-                              `https://wa.me/91${(propertyCustomAds.slot1.whatsapp || '7769947217').replace(/\D/g, '')}?text=${encodeURIComponent(
-                                `Hello, I saw your Ad "${propertyCustomAds.slot1.title}" on Majh Boisar Real Estate portal and want more details!`
-                              )}`
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="relative rounded-2xl border-2 border-emerald-400 hover:border-emerald-600 bg-white p-3.5 flex items-center justify-between gap-3 shadow-2xs hover:shadow-md transition-all group cursor-pointer overflow-hidden"
-                          >
-                            {propertyCustomAds.slot1.image && (
-                              <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
-                                <img src={propertyCustomAds.slot1.image} alt={propertyCustomAds.slot1.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <span className="inline-block bg-emerald-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider mb-1">
-                                {propertyCustomAds.slot1.badge || 'Featured Builder'}
-                              </span>
-                              <h4 className="text-xs font-black text-slate-900 group-hover:text-emerald-800 transition-colors line-clamp-1">
-                                {propertyCustomAds.slot1.title}
-                              </h4>
-                              <p className="text-[10px] text-slate-500 font-medium mt-0.5 line-clamp-1">
-                                {propertyCustomAds.slot1.subtitle || 'Verified Project in Boisar'}
-                              </p>
-                            </div>
-                            <div className="bg-[#25D366] hover:bg-[#20bd5a] text-white p-2.5 rounded-xl shrink-0 shadow-xs flex items-center justify-center group-hover:scale-105 transition-transform">
-                              <MessageSquare className="w-4 h-4" />
-                            </div>
-                          </a>
-                        ) : (
-                          <a
-                            href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar,%20I%20want%20to%20book%20*Property%20Ad%20Slot%201*%20for%20my%20real%20estate%20project%20/%20agency.%20Please%20share%20details."
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="relative rounded-2xl border-2 border-dashed border-emerald-300 hover:border-emerald-500 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/40 p-3.5 flex items-center justify-between gap-3 shadow-2xs hover:shadow-md transition-all group cursor-pointer"
-                          >
-                            <div className="min-w-0 flex-1">
-                              <span className="inline-block bg-amber-400 text-slate-950 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider mb-1">
-                                Ad Slot 1 • Available
-                              </span>
-                              <h4 className="text-xs font-black text-slate-900 group-hover:text-emerald-800 transition-colors">
-                                Promote Your Real Estate Project Here
-                              </h4>
-                              <p className="text-[10px] text-slate-500 font-medium mt-0.5 line-clamp-1">
-                                Reach 10,000+ local home buyers &amp; investors daily in Boisar
-                              </p>
-                            </div>
-                            <div className="bg-[#25D366] hover:bg-[#20bd5a] text-white p-2.5 rounded-xl shrink-0 shadow-xs flex items-center justify-center group-hover:scale-105 transition-transform">
-                              <MessageSquare className="w-4 h-4" />
-                            </div>
-                          </a>
-                        )}
-
-                        {/* Ad Slot 2 */}
-                        {propertyCustomAds.slot2?.active ? (
-                          <a
-                            href={
-                              propertyCustomAds.slot2.linkUrl ||
-                              `https://wa.me/91${(propertyCustomAds.slot2.whatsapp || '7769947217').replace(/\D/g, '')}?text=${encodeURIComponent(
-                                `Hello, I saw your Ad "${propertyCustomAds.slot2.title}" on Majh Boisar Real Estate portal and want more details!`
-                              )}`
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="relative rounded-2xl border-2 border-purple-400 hover:border-purple-600 bg-white p-3.5 flex items-center justify-between gap-3 shadow-2xs hover:shadow-md transition-all group cursor-pointer overflow-hidden"
-                          >
-                            {propertyCustomAds.slot2.image && (
-                              <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
-                                <img src={propertyCustomAds.slot2.image} alt={propertyCustomAds.slot2.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                              </div>
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <span className="inline-block bg-purple-900 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider mb-1">
-                                {propertyCustomAds.slot2.badge || 'Prime Broker'}
-                              </span>
-                              <h4 className="text-xs font-black text-slate-900 group-hover:text-purple-900 transition-colors line-clamp-1">
-                                {propertyCustomAds.slot2.title}
-                              </h4>
-                              <p className="text-[10px] text-slate-500 font-medium mt-0.5 line-clamp-1">
-                                {propertyCustomAds.slot2.subtitle || 'Verified Real Estate in Boisar'}
-                              </p>
-                            </div>
-                            <div className="bg-[#25D366] hover:bg-[#20bd5a] text-white p-2.5 rounded-xl shrink-0 shadow-xs flex items-center justify-center group-hover:scale-105 transition-transform">
-                              <MessageSquare className="w-4 h-4" />
-                            </div>
-                          </a>
-                        ) : (
-                          <a
-                            href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar,%20I%20want%20to%20book%20*Property%20Ad%20Slot%202*%20for%20my%20real%20estate%20agency%20/%20builder%20brand.%20Please%20share%20details."
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="relative rounded-2xl border-2 border-dashed border-purple-300 hover:border-purple-500 bg-gradient-to-br from-purple-50/70 via-white to-indigo-50/40 p-3.5 flex items-center justify-between gap-3 shadow-2xs hover:shadow-md transition-all group cursor-pointer"
-                          >
-                            <div className="min-w-0 flex-1">
-                              <span className="inline-block bg-purple-900 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider mb-1">
-                                Ad Slot 2 • Available
-                              </span>
-                              <h4 className="text-xs font-black text-slate-900 group-hover:text-purple-900 transition-colors">
-                                Builder / Broker Featured Banner Space
-                              </h4>
-                              <p className="text-[10px] text-slate-500 font-medium mt-0.5 line-clamp-1">
-                                Get high-intent calls &amp; direct WhatsApp property enquiries
-                              </p>
-                            </div>
-                            <div className="bg-[#25D366] hover:bg-[#20bd5a] text-white p-2.5 rounded-xl shrink-0 shadow-xs flex items-center justify-center group-hover:scale-105 transition-transform">
-                              <MessageSquare className="w-4 h-4" />
-                            </div>
-                          </a>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 </div>
               ) : activeSpecialCategory === 'properties' ? (
@@ -4945,17 +4886,17 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
                     {/* Quick Area Chips Row - Sleek Rounded Pills */}
                     <div className="max-w-5xl mx-auto pt-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5 select-none">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-0.5 mr-0.5">
-                        <MapPin className="w-3 h-3 text-teal-600" />
+                      <span className="text-[11px] font-black text-slate-500 uppercase tracking-wider shrink-0 flex items-center gap-1 mr-1">
+                        <MapPin className="w-3.5 h-3.5 text-[#e50914]" />
                         Area:
                       </span>
                       <button
                         type="button"
                         onClick={() => setPropertyAreaFilter('All Areas')}
-                        className={`px-2.5 py-0.5 sm:py-1 rounded-full text-[10.5px] font-black whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
+                        className={`px-3 py-1 rounded-full text-xs font-black whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
                           propertyAreaFilter === 'All Areas'
-                            ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200/80'
+                            ? 'bg-[#e50914] text-white border-[#e50914] shadow-xs'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
                         }`}
                       >
                         All
@@ -4965,10 +4906,10 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           key={area}
                           type="button"
                           onClick={() => setPropertyAreaFilter(area === propertyAreaFilter ? 'All Areas' : area)}
-                          className={`px-2.5 py-0.5 sm:py-1 rounded-full text-[10.5px] font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 border ${
+                          className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 border active:scale-95 ${
                             propertyAreaFilter === area
-                              ? 'bg-teal-700 text-white border-teal-700 shadow-xs'
-                              : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200/80 hover:border-slate-300'
+                              ? 'bg-[#e50914] text-white border-[#e50914] shadow-xs'
+                              : 'bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border-slate-200 hover:border-slate-300 shadow-2xs'
                           }`}
                         >
                           {area}
@@ -4978,7 +4919,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                   </div>
 
                   {/* Listings Grid - Responsive 2-column grid on desktop */}
-                  <div className="max-w-5xl mx-auto w-full p-2.5 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-4 text-left flex-1">
+                  <div className="max-w-5xl mx-auto w-full p-2.5 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5 text-left flex-1">
                     {((profilesState.properties || []).filter((p: any) => p.listingType === 'property'))
                       .filter((p: any) => {
                         if (propertyMode === 'buy') {
@@ -5034,16 +4975,23 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         const isSoldOut = Boolean(profile.isSold || profile.status?.toLowerCase().includes('sold') || profile.status?.toLowerCase().includes('rented'));
                         const isRentProp = profile.forAction === 'Rent' || profile.category?.toLowerCase().includes('rent') || profile.transactionType === 'Lease';
                         const isFeaturedProp = Boolean(profile.isFeatured || profile.featured) && !isSoldOut;
+                        const isShortlisted = shortlistedPropIds.includes(profile.id);
+
+                        const propGallery: string[] = (profile.gallery && profile.gallery.length > 0)
+                          ? profile.gallery
+                          : profile.avatar
+                            ? [profile.avatar]
+                            : ['https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'];
 
                         return (
                         <div 
                           key={profile.id}
-                          className={`rounded-xl sm:rounded-2xl border transition-all flex flex-row group text-left relative overflow-hidden h-[165px] sm:h-[172px] ${
+                          className={`rounded-2xl border transition-all flex flex-col group text-left relative overflow-hidden bg-white shadow-2xs hover:shadow-lg ${
                             isSoldOut
-                              ? 'bg-slate-100/90 border-slate-300 opacity-70 grayscale-[35%] cursor-not-allowed select-none shadow-2xs'
+                              ? 'border-slate-300 opacity-75 grayscale-[25%] cursor-not-allowed select-none'
                               : isFeaturedProp
-                                ? 'cursor-pointer bg-white border-amber-300 shadow-sm hover:shadow-md ring-1 ring-amber-400/30'
-                                : 'cursor-pointer bg-white border-slate-200 shadow-2xs hover:shadow-md'
+                                ? 'cursor-pointer border-amber-300 ring-1 ring-amber-400/40 hover:border-amber-400'
+                                : 'cursor-pointer border-slate-200 hover:border-slate-300'
                           }`}
                           onClick={() => {
                             if (isSoldOut) {
@@ -5053,216 +5001,245 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                             setSelectedProfile(profile);
                           }}
                         >
-                          {/* Image Column - Uniform compact thumbnail */}
-                          <div className="w-[115px] xs:w-[125px] sm:w-[160px] shrink-0 h-full relative bg-slate-900 overflow-hidden">
-                            <img
-                              src={profile.avatar || '/majh-boisar-mb-logo.png'}
-                              alt={profile.name}
-                              className={`absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${isSoldOut ? 'grayscale-[50%]' : ''}`}
-                            />
-
-                            {/* Big Bold SOLD OUT / RENTED OUT Overlay */}
-                            {isSoldOut && (
-                              <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] flex items-center justify-center z-20 p-2 text-center">
-                                <div className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border-2 shadow-2xl transform -rotate-6 text-center tracking-wider ${
-                                  isRentProp 
-                                    ? 'bg-amber-500 border-amber-200 text-slate-950 font-black' 
-                                    : 'bg-rose-600 border-rose-300 text-white font-black'
-                                }`}>
-                                  <span className="text-[10.5px] sm:text-xs font-black uppercase block leading-tight drop-shadow-sm">
+                          {/* Top Area: Solid dark panel when Sold Out, or photos when Available */}
+                          {isSoldOut ? (
+                            <div className="w-full h-48 sm:h-56 bg-gradient-to-br from-slate-900 via-slate-850 to-slate-950 flex flex-col items-center justify-center p-6 text-center select-none relative shrink-0">
+                              <div className={`px-5 py-3 rounded-2xl border-2 shadow-2xl text-center transform -rotate-3 ${
+                                isRentProp 
+                                  ? 'bg-amber-500 border-amber-300 text-slate-950' 
+                                  : 'bg-rose-600 border-rose-300 text-white'
+                              }`}>
+                                <div className="flex items-center justify-center gap-2 mb-1">
+                                  <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+                                  <span className="text-sm sm:text-base font-black uppercase tracking-wider">
                                     {isRentProp ? 'RENTED OUT' : 'SOLD OUT'}
                                   </span>
-                                  <span className="text-[7px] sm:text-[7.5px] font-extrabold uppercase opacity-90 block mt-0.5">
-                                    Not Available
-                                  </span>
                                 </div>
+                                <span className="text-[9.5px] sm:text-[10.5px] font-extrabold uppercase opacity-95 tracking-wide block">
+                                  Not Available • Property Closed
+                                </span>
                               </div>
-                            )}
-
-                            {/* VIP Badge (Developer / Broker / Owner) OR Featured Badge */}
-                            {(() => {
-                              const vipBadge = getPropertyVipBadge(profile);
-                              if (vipBadge === 'VIP Developer') {
-                                return (
-                                  <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-purple-800 via-purple-950 to-indigo-950 text-amber-300 text-[8px] sm:text-[8.5px] font-black px-2 py-0.5 rounded-full z-10 shadow-md flex items-center gap-1 border border-amber-400/80">
-                                    <span>👑 VIP DEVELOPER</span>
-                                  </div>
-                                );
-                              }
-                              if (vipBadge === 'VIP Broker') {
-                                return (
-                                  <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-blue-800 via-indigo-950 to-slate-950 text-cyan-300 text-[8px] sm:text-[8.5px] font-black px-2 py-0.5 rounded-full z-10 shadow-md flex items-center gap-1 border border-cyan-400/80">
-                                    <span>👑 VIP BROKER</span>
-                                  </div>
-                                );
-                              }
-                              if (vipBadge === 'VIP Owner') {
-                                return (
-                                  <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-emerald-800 via-teal-950 to-slate-950 text-emerald-300 text-[8px] sm:text-[8.5px] font-black px-2 py-0.5 rounded-full z-10 shadow-md flex items-center gap-1 border border-emerald-400/80">
-                                    <span>👑 VIP OWNER</span>
-                                  </div>
-                                );
-                              }
-                              if (isFeaturedProp) {
-                                return (
-                                  <div className="absolute top-1.5 right-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full z-10 shadow-xs flex items-center gap-0.5 border border-amber-300/60">
-                                    <span>⭐ FEATURED</span>
-                                  </div>
-                                );
-                              }
-                              return null;
-                            })()}
-
-                            <div className="absolute top-1.5 left-1.5 bg-black/65 backdrop-blur-xs text-white text-[8px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-full z-10">
-                              {profile.gallery?.length || 1}+
                             </div>
-                            {Boolean(profile.video || (profile.videos && profile.videos.length > 0)) && (
-                              <div className="absolute bottom-1.5 right-1.5 bg-rose-600/90 text-white text-[8px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs z-10">
-                                <span>🎥 Video</span>
-                              </div>
-                            )}
-                            <div className="hidden sm:block absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-xs text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full z-10">
-                              Updated {profile.updatedAt || 'Recently'}
-                            </div>
-                          </div>
-
-                          {/* Content Column - Compact & clean */}
-                          <div className="flex-1 p-2 sm:p-3 flex flex-col justify-between min-w-0 h-full">
-                            <div>
-                              <div className="flex justify-between items-start gap-1 mb-0.5">
-                                <div className="space-y-0.5 min-w-0 flex-1">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="bg-teal-50 border border-teal-200 text-teal-700 text-[8.5px] sm:text-[10px] font-black px-1.5 py-0.2 rounded uppercase truncate max-w-[140px] sm:max-w-none">
-                                      {profile.location || 'Boisar West'}
-                                    </span>
-                                    {/* Google Map location badge enabled for mapUrl or paid packages */}
-                                    {(profile.mapUrl || hasDirectOwnerCall(profile)) && (
-                                      <a
-                                        href={profile.mapUrl || `https://maps.google.com/?q=${encodeURIComponent(`${profile.projectName || profile.category || 'Property'}, ${profile.addressLocality || profile.location || 'Boisar'}`)}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="inline-flex items-center gap-0.5 text-[8.5px] sm:text-[9.5px] font-extrabold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-1.5 py-0.2 rounded transition-colors"
-                                      >
-                                        <MapPin className="w-2.5 h-2.5 text-blue-600 shrink-0" />
-                                        <span>Map ↗</span>
-                                      </a>
-                                    )}
-                                    {hasDirectOwnerCall(profile) && (
-                                      <span className="inline-flex items-center gap-0.5 text-[8.5px] sm:text-[9.5px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
-                                        ⚡ Direct Call Free
-                                      </span>
-                                    )}
-                                    {(() => {
-                                      const vipBadge = getPropertyVipBadge(profile);
-                                      if (!vipBadge) return null;
-                                      return (
-                                        <span className={`inline-flex items-center gap-0.5 text-[8.5px] sm:text-[9.5px] font-black px-1.5 py-0.2 rounded border ${
-                                          vipBadge === 'VIP Developer'
-                                            ? 'text-purple-900 bg-purple-50 border-purple-300'
-                                            : vipBadge === 'VIP Broker'
-                                              ? 'text-blue-900 bg-blue-50 border-blue-300'
-                                              : 'text-emerald-900 bg-emerald-50 border-emerald-300'
-                                        }`}>
-                                          👑 {vipBadge}
-                                        </span>
-                                      );
-                                    })()}
-                                  </div>
-                                  <h3 className="text-xs sm:text-base font-extrabold text-slate-900 leading-tight group-hover:text-teal-700 transition-colors line-clamp-1 mt-0.5">
-                                    {profile.category}
-                                  </h3>
-                                  <p className="text-[10px] sm:text-xs text-slate-500 font-medium line-clamp-1">{profile.projectName || 'Independent Property in Boisar'}</p>
+                          ) : (
+                            <div className="w-full relative bg-slate-50 pt-2.5 px-2.5 overflow-hidden shrink-0">
+                              {propGallery.length <= 1 ? (
+                                <div className="w-full h-56 sm:h-64 rounded-2xl bg-slate-950 overflow-hidden relative shadow-2xs flex items-center justify-center">
+                                  <img
+                                    src={propGallery[0]}
+                                    alt=""
+                                    aria-hidden="true"
+                                    className="absolute inset-0 w-full h-full object-cover blur-lg scale-110 opacity-40 pointer-events-none"
+                                  />
+                                  <img
+                                    src={propGallery[0]}
+                                    alt={profile.name || profile.category}
+                                    className="relative max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                                  />
                                 </div>
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); }}
-                                  className="p-1 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors shrink-0"
+                              ) : (
+                                <div 
+                                  className="flex items-center gap-2 overflow-x-auto no-scrollbar snap-x snap-mandatory py-0.5 select-none"
                                 >
-                                  <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                  {propGallery.map((imgUrl: string, idx: number) => (
+                                    <div 
+                                      key={idx} 
+                                      className="w-[60%] sm:w-[50%] shrink-0 h-56 sm:h-64 rounded-2xl overflow-hidden bg-slate-950 snap-start relative shadow-2xs border border-slate-200/50 flex items-center justify-center"
+                                    >
+                                      <img
+                                        src={imgUrl}
+                                        alt=""
+                                        aria-hidden="true"
+                                        className="absolute inset-0 w-full h-full object-cover blur-lg scale-110 opacity-40 pointer-events-none"
+                                      />
+                                      <img
+                                        src={imgUrl}
+                                        alt={`${profile.name || profile.category} photo ${idx + 1}`}
+                                        className="relative max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                                        loading="lazy"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Top-Left: Gallery Count & Type Badge & VIP Badge */}
+                              <div className="absolute top-4 left-4 flex items-center gap-1.5 z-10 flex-wrap pointer-events-none">
+                                <div className="bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+                                  <Camera className="w-3 h-3 text-slate-200" />
+                                  <span>{propGallery.length}+</span>
+                                </div>
+                                <span className="bg-slate-950/80 backdrop-blur-xs text-white text-[9.5px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                  {isRentProp ? 'RENT' : 'SALE'}
+                                </span>
+                                {(() => {
+                                  const vipBadge = getPropertyVipBadge(profile);
+                                  if (!vipBadge) return null;
+                                  return (
+                                    <span className={`text-[8.5px] font-black px-1.5 py-0.5 rounded-md shadow-xs flex items-center gap-0.5 border ${
+                                      vipBadge === 'VIP Developer'
+                                        ? 'bg-purple-900/90 text-amber-300 border-amber-400/80'
+                                        : vipBadge === 'VIP Broker'
+                                          ? 'bg-blue-900/90 text-cyan-300 border-cyan-400/80'
+                                          : 'bg-emerald-900/90 text-emerald-300 border-emerald-400/80'
+                                    }`}>
+                                      👑 {vipBadge}
+                                    </span>
+                                  );
+                                })()}
+                              </div>
+
+                              {/* Top-Right: Floating Circular Share Button */}
+                              <div className="absolute top-4 right-4 z-20">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (navigator.share) {
+                                      navigator.share({
+                                        title: profile.title || profile.category || 'Property in Boisar',
+                                        url: window.location.href,
+                                      }).catch(() => {});
+                                    } else {
+                                      navigator.clipboard.writeText(window.location.href);
+                                      showToast('Property link copied to clipboard! 📋', 'success');
+                                    }
+                                  }}
+                                  className="w-8 h-8 rounded-full bg-white/95 hover:bg-white text-slate-700 hover:text-slate-900 shadow-md flex items-center justify-center transition-all active:scale-90 cursor-pointer backdrop-blur-xs"
+                                  title="Share Property"
+                                >
+                                  <Share2 className="w-3.5 h-3.5 text-slate-600" />
                                 </button>
                               </div>
 
-                              {/* Specs Bar - Compact chips on mobile, grid on desktop */}
-                              <div className="flex sm:grid sm:grid-cols-3 items-center gap-1 sm:gap-2 my-1 text-[8.5px] sm:text-xs text-slate-600 font-bold flex-wrap sm:bg-slate-50 sm:border sm:border-slate-100 sm:rounded-xl sm:p-2">
-                                <div className="bg-slate-100 sm:bg-transparent px-1.5 py-0.5 sm:p-0 rounded">
-                                  <span className="hidden sm:block text-[9px] text-slate-400 font-black uppercase tracking-wider">Carpet Area</span>
-                                  <strong className="text-slate-800 font-black">{profile.carpetArea || '650 sqft'}</strong>
+                              {/* Video Pill */}
+                              {Boolean(profile.video || (profile.videos && profile.videos.length > 0)) && (
+                                <div className="absolute bottom-4 right-4 bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm z-10">
+                                  <span>🎥 Video Tour</span>
                                 </div>
-                                <div className="bg-slate-100 sm:bg-transparent px-1.5 py-0.5 sm:p-0 rounded">
-                                  <span className="hidden sm:block text-[9px] text-slate-400 font-black uppercase tracking-wider">Status</span>
-                                  <strong className="text-slate-800 font-black truncate">{profile.status || 'Ready'}</strong>
+                              )}
+
+                              {/* Featured Badge */}
+                              {isFeaturedProp && !getPropertyVipBadge(profile) && (
+                                <div className="absolute bottom-4 left-4 bg-amber-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full z-10 shadow-xs flex items-center gap-1 border border-amber-300">
+                                  <span>⭐ FEATURED</span>
                                 </div>
-                                <div className="bg-slate-100 sm:bg-transparent px-1.5 py-0.5 sm:p-0 rounded">
-                                  <span className="hidden sm:block text-[9px] text-slate-400 font-black uppercase tracking-wider">Floor</span>
-                                  <strong className="text-slate-800 font-black">{profile.floor ? `${profile.floor}/${profile.totalFloors}` : '2/4'}</strong>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Card Body (Image 2 NoBroker Content Layout) */}
+                          <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-1 min-w-0">
+                            <div>
+                              {/* Row 1: Title (Left) & Price (Right) */}
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1">
+                                  <h4 className="text-sm sm:text-base font-bold text-slate-900 leading-snug line-clamp-2 group-hover:text-rose-600 transition-colors">
+                                    {profile.category || profile.title || profile.name || 'Property'}{profile.projectName ? ` in ${profile.projectName}` : ''}
+                                  </h4>
+                                  <p className="text-[11px] sm:text-xs text-slate-500 font-medium line-clamp-1 mt-0.5">
+                                    {profile.projectName || (isRentProp ? 'Rental Property in Boisar' : 'Verified Owner Listing in Boisar')}
+                                  </p>
+                                </div>
+
+                                <div className="text-right shrink-0">
+                                  <span className="text-base sm:text-lg font-black text-slate-900 block leading-tight">
+                                    {formatPriceInLacs(profile.price || profile.budget)}
+                                  </span>
+                                  <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium block">
+                                    {profile.pricePerSqft || (isRentProp ? '/month' : 'Negotiable')}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Row 2: Location with green return arrow ↳ & Map Link */}
+                              <div className="flex items-center justify-between gap-1.5 mt-2">
+                                <p className="text-[11px] sm:text-xs text-slate-500 font-medium flex items-center gap-1.5 line-clamp-1 min-w-0 flex-1">
+                                  <span className="text-emerald-600 font-bold text-sm leading-none shrink-0">↳</span>
+                                  <span className="truncate">{profile.addressLocality || profile.address || profile.location || 'Boisar, Palghar'}</span>
+                                </p>
+                                {(profile.mapUrl || hasDirectOwnerCall(profile)) && (
+                                  <a
+                                    href={profile.mapUrl || `https://maps.google.com/?q=${encodeURIComponent(`${profile.projectName || profile.category || 'Property'}, ${profile.addressLocality || profile.location || 'Boisar'}`)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center gap-0.5 text-[9.5px] font-extrabold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-1.5 py-0.5 rounded shrink-0 transition-colors"
+                                  >
+                                    <MapPin className="w-2.5 h-2.5 text-blue-600 shrink-0" />
+                                    <span>Map ↗</span>
+                                  </a>
+                                )}
+                              </div>
+
+                              {/* Row 3: Landmark ONLY if distinct from address */}
+                              {Boolean(profile.landmark && profile.landmark !== profile.addressLocality && profile.landmark !== profile.location) && (
+                                <div className="bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1.5 flex items-center gap-2 text-[10.5px] sm:text-[11px] text-slate-600 mt-2.5">
+                                  <MapPin className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
+                                  <span className="truncate font-medium">Near {profile.landmark}</span>
+                                </div>
+                              )}
+
+                              {/* Row 4: 3-Column Specs Divider (Image 2 style) */}
+                              <div className="grid grid-cols-3 border-y border-slate-100 py-2.5 my-3 divide-x divide-slate-100 text-center">
+                                <div className="flex flex-col items-center justify-center px-1">
+                                  <Armchair className="w-4 h-4 text-slate-400 mb-0.5" />
+                                  <span className="text-[11px] font-semibold text-slate-700 truncate max-w-full">
+                                    {profile.furnishing || 'Unfurnished'}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col items-center justify-center px-1">
+                                  <Maximize2 className="w-4 h-4 text-slate-400 mb-0.5" />
+                                  <span className="text-[11px] font-semibold text-slate-700 truncate max-w-full">
+                                    {profile.carpetArea || '650 sqft'}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col items-center justify-center px-1">
+                                  <Compass className="w-4 h-4 text-slate-400 mb-0.5" />
+                                  <span className="text-[11px] font-semibold text-slate-700 truncate max-w-full">
+                                    {profile.facing || profile.status || 'Ready'}
+                                  </span>
                                 </div>
                               </div>
                             </div>
 
-                            {/* Price & Action Buttons Bar */}
-                            <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-1.5 flex-wrap sm:flex-nowrap mt-auto pb-0.5">
-                              <div className="min-w-0">
-                                <span className="text-xs sm:text-base font-black text-slate-900 block leading-tight">{formatPrice(profile.price)}</span>
-                                <span className="text-[8.5px] sm:text-[10px] text-slate-400 font-bold block truncate">{profile.pricePerSqft || 'Boisar'}</span>
-                              </div>
+                            {/* Row 5: Action Row (Enquiry/Details on left, Red Contact Owner on right) */}
+                            <div className="flex items-center justify-between gap-2 pt-1 mt-auto">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEnquirySenderName(userName || '');
+                                  setEnquirySenderPhone('');
+                                  setEnquiryMessage(`Hi ${profile.contactName || 'Owner'}, I am interested in your property (${profile.category || 'listing'}). Please share details.`);
+                                  setEnquiryModalProperty(profile);
+                                }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-800 bg-emerald-50/80 hover:bg-emerald-100 border border-emerald-200/60 transition-colors cursor-pointer"
+                              >
+                                <Mail className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Enquiry</span>
+                              </button>
 
                               {isSoldOut ? (
-                                <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
-                                  <span className={`text-[10px] sm:text-xs font-black px-2.5 sm:px-3 py-1.5 rounded-lg border flex items-center gap-1 ${
-                                    isRentProp 
-                                      ? 'bg-amber-50 text-amber-800 border-amber-300' 
-                                      : 'bg-rose-50 text-rose-700 border-rose-200'
-                                  }`}>
-                                    <Lock className="w-3 h-3" />
-                                    <span>{isRentProp ? 'Rented Out' : 'Sold Out'}</span>
-                                  </span>
-                                </div>
+                                <span className={`text-xs font-black px-3 py-1.5 rounded-xl border flex items-center gap-1 ${
+                                  isRentProp 
+                                    ? 'bg-amber-50 text-amber-800 border-amber-300' 
+                                    : 'bg-rose-50 text-rose-700 border-rose-200'
+                                }`}>
+                                  <Lock className="w-3 h-3" />
+                                  <span>{isRentProp ? 'Rented Out' : 'Sold Out'}</span>
+                                </span>
                               ) : (
-                                <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-auto">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEnquirySenderName(userName || '');
-                                      setEnquirySenderPhone('');
-                                      setEnquiryMessage(`Hi ${profile.contactName || 'Owner'}, I am interested in your property (${profile.category || 'listing'}). Please share details.`);
-                                      setEnquiryModalProperty(profile);
-                                    }}
-                                    className="bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] sm:text-xs px-2.5 sm:px-3 py-1.5 rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95 shrink-0"
-                                  >
-                                    <Mail className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                                    <span>Enquiry</span>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handlePropertyContactCall(profile, false);
-                                    }}
-                                    className={`text-white font-black text-[10px] sm:text-xs px-2.5 sm:px-3.5 py-1.5 rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer active:scale-95 shrink-0 ${
-                                      isPropertyContactUnlocked(profile.id, profile) 
-                                        ? 'bg-emerald-600 hover:bg-emerald-700' 
-                                        : !isLoggedIn 
-                                          ? 'bg-slate-800 hover:bg-slate-900' 
-                                          : userUnlockedPropsState.length < 2 
-                                            ? 'bg-emerald-600 hover:bg-emerald-700' 
-                                            : 'bg-gradient-to-r from-amber-600 to-teal-700 hover:from-amber-700 hover:to-teal-800'
-                                    }`}
-                                  >
-                                    <Phone className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                                    <span>
-                                      {hasDirectOwnerCall(profile)
-                                        ? 'Direct Call'
-                                        : isPropertyContactUnlocked(profile.id, profile) 
-                                          ? 'Call' 
-                                          : !isLoggedIn 
-                                            ? 'Call' 
-                                            : userUnlockedPropsState.length < 2 
-                                              ? 'Call' 
-                                              : 'Unlock'}
-                                    </span>
-                                  </button>
-                                </div>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePropertyContactCall(profile, false);
+                                  }}
+                                  className="bg-[#E13B4B] hover:bg-[#cf2f3e] text-white font-bold text-xs sm:text-sm px-4 py-2 rounded-xl shadow-xs transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  <Phone className="w-3.5 h-3.5" />
+                                  <span>Contact {profile.postedBy || 'Owner'}</span>
+                                </button>
                               )}
                             </div>
                           </div>
@@ -5294,26 +5271,32 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         }
                         return true;
                       }).length === 0 && (
-                      <div className="bg-white rounded-2xl p-8 text-center border border-slate-200 shadow-2xs my-4">
-                        <h3 className="text-sm sm:text-base font-black text-slate-800">
-                          {propertyAreaFilter !== 'All Areas' ? `No Properties Found in ${propertyAreaFilter}` : 'No Property Listings Yet'}
-                        </h3>
-                        <p className="text-xs text-slate-500 font-medium mt-1">
-                          {propertyAreaFilter !== 'All Areas' 
-                            ? `Try switching to "All Areas" or be the first to list a property in ${propertyAreaFilter}.` 
-                            : 'Post your property for sale or rent to reach genuine buyers across Boisar & Palghar.'}
-                        </p>
-                        <div className="flex items-center justify-center gap-2 pt-2">
+                      <div className="bg-white rounded-3xl p-6 sm:p-8 text-center border border-slate-200/90 shadow-xs my-4 space-y-4 max-w-lg mx-auto">
+                        <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 text-[#e50914] flex items-center justify-center mx-auto shadow-2xs">
+                          <Building className="w-7 h-7 text-[#e50914]" />
+                        </div>
+                        <div className="space-y-1">
+                          <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                            {propertyAreaFilter !== 'All Areas' ? `No Properties Found in ${propertyAreaFilter}` : 'No Property Listings Yet'}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-slate-500 font-medium max-w-sm mx-auto leading-relaxed">
+                            {propertyAreaFilter !== 'All Areas' 
+                              ? `Be the first owner to list a property in ${propertyAreaFilter} , or explore available homes across Boisar.` 
+                              : 'Post your property for sale or rent to reach genuine buyers across Boisar & Palghar.'}
+                          </p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
                           {propertyAreaFilter !== 'All Areas' && (
                             <button
                               type="button"
                               onClick={() => setPropertyAreaFilter('All Areas')}
-                              className="mt-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer"
+                              className="w-full sm:w-auto border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition-all cursor-pointer active:scale-95"
                             >
-                              Show All Areas
+                              Explore All Areas
                             </button>
                           )}
                           <button
+                            type="button"
                             onClick={() => {
                               if (!isLoggedIn) {
                                 showToast("Please login first to post your property.", "info", 4000);
@@ -5322,12 +5305,14 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                                 setPostPropertyModalOpen(true);
                               }
                             }}
-                            className="mt-4 bg-[#0b5c47] hover:bg-[#074737] text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer inline-flex items-center gap-1.5"
+                            className="w-full sm:w-auto bg-[#e50914] hover:bg-[#cf0812] active:scale-95 text-white font-black text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                           >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Post Property Free</span>
+                            <Plus className="w-4 h-4" />
+                            <span>Post Free Property</span>
                           </button>
                         </div>
+
+                        
                       </div>
                     )}
                   </div>
@@ -5821,12 +5806,12 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
             </div>
 
             {/* Real Estate App-Style Bottom Navigation Bar (Home, Buy, Post [Center Elevated], Home Loan, Account) */}
-            {activeSpecialCategory === 'properties' && (
+            {activeSpecialCategory === 'properties' && !selectedProfile && (
               <nav 
                 aria-label="Real Estate Quick Navigation"
                 className="shrink-0 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.06)] z-40 select-none pb-[env(safe-area-inset-bottom,0px)]"
               >
-                <div className="max-w-md sm:max-w-lg mx-auto px-2 sm:px-6 h-15 flex items-center justify-between relative">
+                <div className="max-w-md sm:max-w-lg mx-auto px-2 sm:px-6 h-13 flex items-center justify-between relative">
                   
                   {/* 1. Home */}
                   <button
@@ -5836,20 +5821,20 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                       setSelectedProfile(null);
                       portalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className={`relative flex-1 flex flex-col items-center justify-center py-1 transition-all cursor-pointer group ${
+                    className={`relative flex-1 flex flex-col items-center justify-center py-0.5 transition-all cursor-pointer group ${
                       propertyMode === null && !selectedProfile
                         ? 'text-[#da0c23]'
                         : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
                     {propertyMode === null && !selectedProfile && (
-                      <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-[2.5px] bg-[#da0c23] rounded-full" />
+                      <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-6 h-[2px] bg-[#da0c23] rounded-full" />
                     )}
-                    <Home className={`w-5 h-5 transition-transform group-hover:scale-110 ${
+                    <Home className={`w-4.5 h-4.5 transition-transform group-hover:scale-110 ${
                       propertyMode === null && !selectedProfile ? 'stroke-[2.5]' : 'stroke-2'
                     }`} />
-                    <span className={`text-[10.5px] mt-0.5 tracking-tight ${
-                      propertyMode === null && !selectedProfile ? 'font-black' : 'font-bold'
+                    <span className={`text-[10px] mt-0.5 tracking-tight ${
+                      propertyMode === null && !selectedProfile ? 'font-black' : 'font-semibold'
                     }`}>
                       Home
                     </span>
@@ -5863,27 +5848,27 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                       setSelectedProfile(null);
                       portalContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className={`relative flex-1 flex flex-col items-center justify-center py-1 transition-all cursor-pointer group ${
+                    className={`relative flex-1 flex flex-col items-center justify-center py-0.5 transition-all cursor-pointer group ${
                       propertyMode === 'buy' && !selectedProfile
                         ? 'text-[#da0c23]'
                         : 'text-slate-500 hover:text-slate-800'
                     }`}
                   >
                     {propertyMode === 'buy' && !selectedProfile && (
-                      <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-[2.5px] bg-[#da0c23] rounded-full" />
+                      <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-6 h-[2px] bg-[#da0c23] rounded-full" />
                     )}
-                    <Building className={`w-5 h-5 transition-transform group-hover:scale-110 ${
+                    <Building className={`w-4.5 h-4.5 transition-transform group-hover:scale-110 ${
                       propertyMode === 'buy' && !selectedProfile ? 'stroke-[2.5]' : 'stroke-2'
                     }`} />
-                    <span className={`text-[10.5px] mt-0.5 tracking-tight ${
-                      propertyMode === 'buy' && !selectedProfile ? 'font-black' : 'font-bold'
+                    <span className={`text-[10px] mt-0.5 tracking-tight ${
+                      propertyMode === 'buy' && !selectedProfile ? 'font-black' : 'font-semibold'
                     }`}>
                       Buy
                     </span>
                   </button>
 
-                  {/* 3. Post (Center Elevated Circular Button) */}
-                  <div className="relative flex-1 flex flex-col items-center justify-center -mt-6">
+                  {/* 3. Post (Center Elevated Circular Button - Compact Size) */}
+                  <div className="relative flex-1 flex flex-col items-center justify-center -mt-3.5">
                     <button
                       type="button"
                       onClick={() => {
@@ -5894,12 +5879,12 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         }
                         setPostPropertyModalOpen(true);
                       }}
-                      className="w-13 h-13 rounded-full bg-[#da0c23] hover:bg-[#b8081c] text-white flex items-center justify-center shadow-[0_6px_20px_rgba(218,12,35,0.38)] ring-4 ring-white active:scale-90 transition-all cursor-pointer group"
+                      className="w-10 h-10 rounded-full bg-[#da0c23] hover:bg-[#b8081c] text-white flex items-center justify-center shadow-[0_4px_14px_rgba(218,12,35,0.32)] ring-2 ring-white active:scale-90 transition-all cursor-pointer group"
                       title="Post Property Free"
                     >
-                      <Plus className="w-6 h-6 stroke-[3] transition-transform group-hover:rotate-90 duration-300" />
+                      <Plus className="w-5 h-5 stroke-[2.5] transition-transform group-hover:rotate-90 duration-300" />
                     </button>
-                    <span className="text-[10px] font-black text-slate-700 tracking-tight mt-0.5">
+                    <span className="text-[9.5px] font-black text-slate-700 tracking-tight mt-0.5">
                       Post
                     </span>
                   </div>
@@ -5911,10 +5896,10 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                       setActiveSpecialCategory(null);
                       router.push('/search?query=Home%20Loan');
                     }}
-                    className="relative flex-1 flex flex-col items-center justify-center py-1 transition-all cursor-pointer group text-slate-500 hover:text-slate-800"
+                    className="relative flex-1 flex flex-col items-center justify-center py-0.5 transition-all cursor-pointer group text-slate-500 hover:text-slate-800"
                   >
-                    <Landmark className="w-5 h-5 transition-transform group-hover:scale-110 stroke-2" />
-                    <span className="text-[10.5px] mt-0.5 tracking-tight font-bold">
+                    <Landmark className="w-4.5 h-4.5 transition-transform group-hover:scale-110 stroke-2" />
+                    <span className="text-[10px] mt-0.5 tracking-tight font-semibold">
                       Home Loan
                     </span>
                   </button>
@@ -5929,10 +5914,10 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         window.dispatchEvent(new CustomEvent('open_user_menu'));
                       }
                     }}
-                    className="relative flex-1 flex flex-col items-center justify-center py-1 text-slate-500 hover:text-slate-800 transition-all cursor-pointer group"
+                    className="relative flex-1 flex flex-col items-center justify-center py-0.5 text-slate-500 hover:text-slate-800 transition-all cursor-pointer group"
                   >
-                    <User className="w-5 h-5 transition-transform group-hover:scale-110 stroke-2" />
-                    <span className="text-[10.5px] font-bold mt-0.5 tracking-tight">
+                    <User className="w-4.5 h-4.5 transition-transform group-hover:scale-110 stroke-2" />
+                    <span className="text-[10px] font-semibold mt-0.5 tracking-tight">
                       Account
                     </span>
                   </button>
@@ -7158,34 +7143,64 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       {/* Send Property Enquiry Modal */}
       {enquiryModalProperty && (
         <div className="fixed inset-0 z-[650] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl relative animate-in zoom-in-95 duration-200 border border-slate-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl relative animate-in zoom-in-95 duration-200 border border-slate-200 overflow-hidden">
+            {/* Top Red Accent Strip */}
+            <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#e50914] via-[#ff3b30] to-[#e50914]" />
+
             <button 
+              type="button"
               onClick={() => setEnquiryModalProperty(null)}
-              className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer active:scale-95"
+              title="Close modal"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-                <Send className="w-4 h-4" />
+            {/* Header with Red Accent */}
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-100 text-[#e50914] flex items-center justify-center shrink-0 shadow-2xs">
+                <Send className="w-5 h-5 text-[#e50914]" />
               </div>
-              <div>
-                <h3 className="text-sm font-black text-slate-800">Send Direct Enquiry</h3>
-                <p className="text-[10px] text-slate-500">Contact {enquiryModalProperty.postedBy || 'Owner'} directly</p>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base font-black text-slate-900 leading-tight">Send Direct Enquiry</h3>
+                <p className="text-[11px] text-slate-500 font-medium">Contact {enquiryModalProperty.postedBy || 'Owner'} directly </p>
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4">
-              <p className="text-xs font-bold text-slate-800 truncate">{enquiryModalProperty.category}</p>
-              <p className="text-[11px] font-black text-teal-700 mt-0.5">{enquiryModalProperty.price}</p>
-              <p className="text-[10px] text-slate-500 mt-1">Listed by: <span className="font-bold text-slate-700">{enquiryModalProperty.contactName || enquiryModalProperty.name} ({enquiryModalProperty.postedBy || 'Owner'})</span></p>
+            {/* Property Summary Card Preview with Thumbnail */}
+            <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3 flex items-center gap-3 mb-4.5">
+              <img 
+                src={enquiryModalProperty.avatar || (enquiryModalProperty.gallery && enquiryModalProperty.gallery[0]) || '/imagess/nobroker_3d_house.jpg'} 
+                alt={enquiryModalProperty.category || 'Property'} 
+                className="w-16 h-16 rounded-xl object-cover border border-slate-200 shrink-0 shadow-2xs bg-slate-900" 
+              />
+              <div className="min-w-0 flex-1 text-left">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="bg-rose-50 text-[#e50914] border border-rose-200 text-[9px] font-black px-1.5 py-0.2 rounded uppercase">
+                    {enquiryModalProperty.forAction || 'For Sale'}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium truncate">
+                    {enquiryModalProperty.location || 'Boisar'}
+                  </span>
+                </div>
+                <p className="text-xs font-extrabold text-slate-900 truncate">
+                  {enquiryModalProperty.category || enquiryModalProperty.title || enquiryModalProperty.name}
+                </p>
+                <div className="flex items-baseline justify-between gap-1 mt-0.5">
+                  <span className="text-sm font-black text-slate-900">
+                    {formatPriceInLacs(enquiryModalProperty.price || enquiryModalProperty.budget)}
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium truncate">
+                    By {enquiryModalProperty.contactName || enquiryModalProperty.name || 'Owner'}
+                  </span>
+                </div>
+              </div>
             </div>
 
             <form 
               onSubmit={(e) => {
                 e.preventDefault();
-                if (!enquirySenderPhone.trim()) return alert('Please enter your phone number');
+                if (!enquirySenderPhone.trim()) return showToast('Please enter your phone number', 'error');
 
                 const newEnquiry = {
                   id: Date.now(),
@@ -7205,60 +7220,69 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 const updated = [newEnquiry, ...existing];
                 localStorage.setItem('majh_boisar_property_enquiries', JSON.stringify(updated));
 
-                alert(`🎉 Enquiry Sent Successfully!\n\nThe ${enquiryModalProperty.postedBy || 'owner'} (${enquiryModalProperty.contactName || 'Seller'}) has received your inquiry and will contact you shortly at ${enquirySenderPhone}.`);
+                showToast(`🎉 Enquiry Sent! The ${enquiryModalProperty.postedBy || 'owner'} will contact you shortly.`, 'success');
                 setEnquiryModalProperty(null);
               }}
-              className="space-y-3 text-left"
+              className="space-y-3.5 text-left"
             >
               <div>
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Your Name</label>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Your Name</label>
                 <input 
                   type="text"
                   required
                   placeholder="Enter your name"
                   value={enquirySenderName}
                   onChange={(e) => setEnquirySenderName(e.target.value)}
-                  className="w-full border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:border-teal-500 text-slate-800"
+                  className="w-full border border-slate-200 focus:border-[#e50914] focus:ring-2 focus:ring-rose-500/15 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Your Phone / WhatsApp Number</label>
-                <input 
-                  type="text"
-                  required
-                  placeholder="Enter 10-digit mobile number"
-                  value={enquirySenderPhone}
-                  onChange={(e) => setEnquirySenderPhone(e.target.value)}
-                  className="w-full border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none focus:border-teal-500 text-slate-800"
-                />
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Your Phone / WhatsApp Number</label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3 text-xs font-bold text-slate-500 select-none">🇮🇳 +91</span>
+                  <input 
+                    type="tel"
+                    required
+                    maxLength={10}
+                    placeholder="Enter 10-digit mobile number"
+                    value={enquirySenderPhone}
+                    onChange={(e) => setEnquirySenderPhone(e.target.value.replace(/\D/g, ''))}
+                    className="w-full border border-slate-200 focus:border-[#e50914] focus:ring-2 focus:ring-rose-500/15 rounded-xl pl-16 pr-3.5 py-2.5 text-xs font-semibold text-slate-900 outline-none transition-all"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">Message</label>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Message</label>
                 <textarea 
                   rows={3}
                   value={enquiryMessage}
                   onChange={(e) => setEnquiryMessage(e.target.value)}
-                  className="w-full border border-slate-250 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-teal-500 text-slate-800 resize-none"
+                  className="w-full border border-slate-200 focus:border-[#e50914] focus:ring-2 focus:ring-rose-500/15 rounded-xl p-3 text-xs font-medium text-slate-800 outline-none resize-none transition-all"
                 />
               </div>
 
-              <div className="pt-2 flex gap-2">
+              <div className="pt-2 flex items-center gap-2.5">
                 <button
                   type="button"
                   onClick={() => setEnquiryModalProperty(null)}
-                  className="flex-1 border border-slate-250 hover:bg-slate-50 text-slate-600 font-bold text-xs py-2.5 rounded-xl transition-all"
+                  className="flex-1 border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer active:scale-95"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5"
+                  className="flex-1 bg-[#e50914] hover:bg-[#cf0812] active:scale-95 text-white font-black text-xs py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Submit Enquiry</span>
                 </button>
+              </div>
+
+              <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400 font-medium pt-1 text-center">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Your contact details are shared directly with the owner only</span>
               </div>
             </form>
           </div>

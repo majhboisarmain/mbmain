@@ -5,8 +5,8 @@ import { useApp } from '@/context/AppContext';
 export const BOISAR_PROPERTY_AREAS = [
   'Boisar East',
   'Boisar West',
-  'Betegaon',
   'Palghar',
+  'Betegaon',
   'Umroli',
   'Tembhode',
   'Tarapur',

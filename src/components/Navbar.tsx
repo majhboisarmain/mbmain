@@ -190,21 +190,41 @@ export default function Navbar() {
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
+  const [isNavVisible, setIsNavVisible] = useState(true);
 
   useEffect(() => {
+    let lastScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 8);
+      const currentScrollY = window.scrollY;
+      setIsScrolled(currentScrollY > 8);
       if (pathname === '/') {
-        setIsScrolledPastHero(window.scrollY > 220);
+        setIsScrolledPastHero(currentScrollY > 220);
       } else {
         setIsScrolledPastHero(false);
       }
+
+      // Smart hide navbar on scroll down, show on scroll up or when near top
+      if (currentScrollY <= 25) {
+        setIsNavVisible(true);
+      } else if (currentScrollY > lastScrollY + 6 && currentScrollY > 60) {
+        // Scrolling down -> hide navbar (move up out of screen)
+        setIsNavVisible(false);
+      } else if (currentScrollY < lastScrollY - 6) {
+        // Scrolling up -> show navbar
+        setIsNavVisible(true);
+      }
+
+      lastScrollY = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
 
-    const handleOpenUserMenu = () => setMobileMenuOpen(true);
+    const handleOpenUserMenu = () => {
+      setIsNavVisible(true);
+      setMobileMenuOpen(true);
+    };
     window.addEventListener('open_user_menu', handleOpenUserMenu);
 
     return () => {
@@ -214,6 +234,8 @@ export default function Navbar() {
   }, [pathname]);
 
   const showHeaderSearch = pathname.startsWith('/search') || pathname.startsWith('/business') || pathname.startsWith('/category') || (pathname === '/' && isScrolledPastHero);
+  const isAnyMenuOpen = mobileMenuOpen || dropdownOpen || profileDropdownOpen || helpDropdownOpen || langDropdownOpen || isNavSearchFocused;
+  const isHeaderShown = isNavVisible || isAnyMenuOpen;
 
   const handleNavSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -259,7 +281,9 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={`sticky top-0 z-[150] bg-white transition-all duration-200 overflow-visible pt-[env(safe-area-inset-top,0px)] ${
+      <header className={`sticky top-0 z-[150] bg-white transition-transform duration-300 ease-in-out overflow-visible pt-[env(safe-area-inset-top,0px)] ${
+        isHeaderShown ? 'translate-y-0' : '-translate-y-full shadow-none pointer-events-none'
+      } ${
         isScrolled
           ? 'shadow-[0_4px_25px_rgba(0,0,0,0.12)] border-b border-slate-300'
           : 'border-b border-slate-200/90'
@@ -274,7 +298,7 @@ export default function Navbar() {
                 alt="Majh Boisar"
                 loading="eager"
                 decoding="async"
-                className="h-9.5 min-[360px]:h-10 min-[390px]:h-11.5 sm:h-13 md:h-15 max-w-[160px] min-[360px]:max-w-[185px] min-[390px]:max-w-[220px] sm:max-w-none w-auto object-contain transition-transform duration-200 hover:scale-[1.03]"
+                className="h-10 min-[360px]:h-11 min-[390px]:h-12 sm:h-13 md:h-14 max-w-[170px] min-[360px]:max-w-[195px] min-[390px]:max-w-[225px] sm:max-w-none w-auto object-contain transition-transform duration-200 hover:scale-[1.03]"
               />
             </Link>
           </div>
@@ -787,7 +811,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Mobile Profile / Menu Button (Colored Circular Avatar matching user screenshot) */}
+          {/* Mobile Profile / Menu Button */}
           <div className="flex md:hidden items-center shrink-0 relative z-30 ml-auto">
             <button
               type="button"
@@ -924,6 +948,27 @@ export default function Navbar() {
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </button>
+
+              {/* Emergency Blood Donors Banner */}
+              <Link
+                href="/blood-donation"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full bg-rose-50/70 hover:bg-rose-100/70 rounded-xl p-2.5 sm:p-3 border border-rose-200/90 shadow-2xs transition-all flex items-center justify-between cursor-pointer group text-left"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Droplet className="w-4.5 h-4.5 fill-white text-white" />
+                  </div>
+                  <div>
+                    <span className="text-xs sm:text-[13px] font-black text-rose-950 block leading-tight">Emergency Blood Donors</span>
+                    <span className="text-[10px] text-rose-600 font-semibold">Find by Blood Group (A+, B+, O+, AB+)</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[8.5px] bg-rose-200 text-rose-800 font-black px-1.5 py-0.5 rounded-md">24x7</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-rose-400 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </Link>
 
               {/* 3. For Business & Shop Owners */}
               <div>
