@@ -558,7 +558,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                     {/* Right: Made in India & Tagline */}
                     <div className="text-center lg:text-right text-[11px] sm:text-xs">
                       <p className="font-extrabold text-white tracking-wide">
-                        Born from Innovation in India
+                        Born from Innovation in India • <a href="https://buildlabs.in" target="_blank" rel="noopener noreferrer" className="text-white hover:text-amber-300 underline underline-offset-2 transition-colors font-black">buildlabs.in</a>
                       </p>
                       <p className="text-[10px] sm:text-[11px] text-white/80 mt-0.5 font-medium">
                         © 2026 Majh Boisar. All rights? Yep, they&apos;re ours.

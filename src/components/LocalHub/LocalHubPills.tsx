@@ -115,11 +115,12 @@ export default function LocalHubPills() {
     }
   ];
 
-  // Auto-slide loop when idle (pauses on hover / touch)
+  // Auto-slide loop when idle (pauses on hover / touch / background tab)
   useEffect(() => {
     if (isHovered) return;
 
     const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       if (scrollRef.current) {
         const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
         if (scrollLeft + clientWidth >= scrollWidth - 20) {
@@ -128,7 +129,7 @@ export default function LocalHubPills() {
           scrollRef.current.scrollBy({ left: 180, behavior: 'smooth' });
         }
       }
-    }, 2800);
+    }, 3200);
 
     return () => clearInterval(timer);
   }, [isHovered]);
@@ -183,6 +184,7 @@ export default function LocalHubPills() {
             onMouseLeave={() => setIsHovered(false)}
             onTouchStart={() => setIsHovered(true)}
             onTouchEnd={() => setIsHovered(false)}
+            style={{ contain: 'paint', willChange: 'scroll-position' }}
             className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory scroll-smooth w-full"
           >
             {localCards.map(card => (
@@ -194,7 +196,11 @@ export default function LocalHubPills() {
                 <img
                   src={card.image}
                   alt={card.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                  decoding="async"
+                  width={112}
+                  height={112}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 pointer-events-none"
                 />
               </button>
             ))}

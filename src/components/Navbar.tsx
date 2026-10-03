@@ -10,10 +10,10 @@ import { createPortal } from 'react-dom';
 import LoginModal from './LoginModal';
 const MyHotelPassesModal = dynamic(() => import('./MyHotelPassesModal'), { ssr: false });
 import {
-  Search, MapPin, User, Shield, Briefcase, ChevronDown, Check,
+  Search, MapPin, User, Shield, ChevronDown, Check,
   Menu, X, LogOut, Building, Layers, HelpCircle, MessageSquare, ChevronRight, Smartphone, Download, Ticket, Plus,
   Sparkles, Heart, Utensils, Car, Stethoscope, Building2, ArrowLeft, Receipt, FileText, ShieldCheck, Settings,
-  Home, Wrench, Droplet, Compass, Hotel, PhoneCall
+  Home, Wrench, Compass, Hotel, PhoneCall
 } from 'lucide-react';
 
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
@@ -949,27 +949,6 @@ export default function Navbar() {
                 </div>
               </button>
 
-              {/* Emergency Blood Donors Banner */}
-              <Link
-                href="/blood-donation"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full bg-rose-50/70 hover:bg-rose-100/70 rounded-xl p-2.5 sm:p-3 border border-rose-200/90 shadow-2xs transition-all flex items-center justify-between cursor-pointer group text-left"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-                    <Droplet className="w-4.5 h-4.5 fill-white text-white" />
-                  </div>
-                  <div>
-                    <span className="text-xs sm:text-[13px] font-black text-rose-950 block leading-tight">Emergency Blood Donors</span>
-                    <span className="text-[10px] text-rose-600 font-semibold">Find by Blood Group (A+, B+, O+, AB+)</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[8.5px] bg-rose-200 text-rose-800 font-black px-1.5 py-0.5 rounded-md">24x7</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-rose-400 group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              </Link>
-
               {/* 3. For Business & Shop Owners */}
               <div>
                 <h3 className="text-[10.5px] font-black uppercase tracking-wider text-slate-400 mb-1.5 px-1">For Business &amp; Shop Owners</h3>
@@ -987,23 +966,6 @@ export default function Navbar() {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="text-[8.5px] bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-black px-1.5 py-0.5 rounded-md">FREE</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                    </div>
-                  </Link>
-
-                  <div className="h-px bg-slate-100 mx-3" />
-
-                  <Link
-                    href="/jobs"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-2.5 sm:p-3 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Briefcase className="w-4 h-4 text-indigo-600 stroke-[1.8]" />
-                      <span className="text-xs sm:text-[13px] font-bold text-slate-900">Post a Job Vacancy</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[8.5px] bg-indigo-50 text-indigo-700 border border-indigo-200/80 font-black px-1.5 py-0.5 rounded-md">Hiring</span>
                       <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                     </div>
                   </Link>

@@ -1761,13 +1761,6 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
     setTimeout(() => setIsSlidePlaying(true), 2500);
   };
 
-  useEffect(() => {
-    if (!isSlidePlaying || slides.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
-    }, 5500);
-    return () => clearInterval(timer);
-  }, [isSlidePlaying, slides.length, slideTimerKey]);
 
   // Fetch dynamic ads from backend & localStorage
   useEffect(() => {
@@ -2036,14 +2029,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
     router.push(url);
   };
 
-  // Slide rotation
-  useEffect(() => {
-    if (!isSlidePlaying || slides.length === 0) return;
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [isSlidePlaying, slides.length]);
+
 
   const scrollTrending = (direction: 'left' | 'right') => {
     if (trendingRef.current) {
@@ -2335,197 +2321,186 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           <Link
             href="/properties"
             onClick={() => { setActiveSpecialCategory('properties'); setSelectedProfile(null); }}
-            className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-teal-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
+            className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-emerald-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group"
           >
             <div className="min-h-[26px] sm:min-h-[28px] flex items-center justify-center w-full px-0.5">
-              <h3 className="text-[10px] min-[360px]:text-[11px] sm:text-xs font-bold text-slate-800 group-hover:text-teal-700 transition-colors text-center leading-tight truncate">
+              <h3 className="text-[10px] min-[360px]:text-[11px] sm:text-xs font-bold text-slate-800 group-hover:text-emerald-700 transition-colors text-center leading-tight truncate">
                 Properties
               </h3>
             </div>
-              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#f0fdfa] border border-teal-100/80 mt-1 transition-colors group-hover:bg-[#ccfbf1]/50">
-                <svg className="w-9 h-9 sm:w-11 sm:h-11 transition-transform duration-300 group-hover:scale-110 drop-shadow-xs" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 28L32 10L56 28" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M14 24V52C14 53.1 14.9 54 16 54H48C49.1 54 50 52V24" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M42 18V11H48V23" stroke="#0f172a" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                  <rect x="20" y="27" width="9" height="9" rx="2" fill="#008080" stroke="#0f172a" strokeWidth="2.5"/>
-                  <path d="M24.5 27V36" stroke="white" strokeWidth="1.5"/>
-                  <path d="M20 31.5H29" stroke="white" strokeWidth="1.5"/>
-                  <rect x="35" y="27" width="9" height="9" rx="2" fill="#008080" stroke="#0f172a" strokeWidth="2.5"/>
-                  <path d="M39.5 27V36" stroke="white" strokeWidth="1.5"/>
-                  <path d="M35 31.5H44" stroke="white" strokeWidth="1.5"/>
-                  <path d="M26 54V42C26 40.9 26.9 40 28 40H36C37.1 40 38 40.9 38 42V54" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
-                  <circle cx="35" cy="47" r="1.5" fill="#008080"/>
-                  <circle cx="48" cy="18" r="8" fill="#008080" stroke="#0f172a" strokeWidth="2.5"/>
-                  <path d="M48 14V19H51" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M6 54H58" stroke="#0f172a" strokeWidth="3" strokeLinecap="round"/>
-                </svg>
-              </div>
-            </Link>
-
-            {/* 2. Find a Job */}
-            <Link
-              href="/jobs"
-              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-rose-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
-            >
-              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
-                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#e50914] transition-colors text-center leading-tight line-clamp-1">
-                  Jobs
-                </h3>
-              </div>
-              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#fef2f2] border border-rose-100/80 mt-1 transition-colors group-hover:bg-[#ffe4e6]/50">
-                <svg className="w-9 h-9 sm:w-11 sm:h-11 transition-transform duration-300 group-hover:scale-110 drop-shadow-xs" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="10" y="22" width="44" height="32" rx="6" fill="white" stroke="#0f172a" strokeWidth="3"/>
-                  <path d="M10 33H54" stroke="#0f172a" strokeWidth="2.5"/>
-                  <path d="M24 22V14C24 12.9 24.9 12 26 12H38C39.1 12 40 12.9 40 14V22" stroke="#0f172a" strokeWidth="3" strokeLinecap="round"/>
-                  <rect x="18" y="22" width="5" height="32" fill="#e50914" stroke="#0f172a" strokeWidth="2"/>
-                  <rect x="41" y="22" width="5" height="32" fill="#e50914" stroke="#0f172a" strokeWidth="2"/>
-                  <rect x="28" y="29" width="8" height="8" rx="2" fill="#e50914" stroke="#0f172a" strokeWidth="2.5"/>
-                  <circle cx="32" cy="33" r="1.5" fill="white"/>
-                  <circle cx="48" cy="18" r="8" fill="#e50914" stroke="#0f172a" strokeWidth="2.5"/>
-                  <circle cx="47" cy="17" r="3.5" fill="white"/>
-                  <path d="M53 23L57 27" stroke="#0f172a" strokeWidth="3" strokeLinecap="round"/>
-                </svg>
-              </div>
-            </Link>
-
-            {/* 3. Home Services */}
-            <div
-              onClick={() => router.push('/services')}
-              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-teal-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
-            >
-              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
-                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-teal-700 transition-colors text-center leading-tight line-clamp-1">
-                  Services
-                </h3>
-              </div>
-              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#f0fdfa] border border-teal-100/80 mt-1 transition-colors group-hover:bg-[#ccfbf1]/50">
-                <svg className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="8" y="16" width="32" height="24" rx="4" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
-                  <path d="M8 25H40" stroke="#0f172a" strokeWidth="2"/>
-                  <path d="M18 16V10C18 9.4 18.4 9 19 9H29C29.6 9 30 9.4 30 10V16" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round"/>
-                  <rect x="21" y="22" width="6" height="6" rx="1.5" fill="#008080" stroke="#0f172a" strokeWidth="2"/>
-                  <path d="M15 34L20 29" stroke="#008080" strokeWidth="2.5" strokeLinecap="round"/>
-                  <path d="M33 34L28 29" stroke="#008080" strokeWidth="2.5" strokeLinecap="round"/>
-                </svg>
-              </div>
+            <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
+              <img
+                src="/imagess/home icons/properties.png"
+                alt="Properties"
+                width={88}
+                height={88}
+                decoding="async"
+                className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                loading="eager"
+              />
             </div>
+          </Link>
 
-            {/* 4. Hotel Booking */}
-            <div
-              onClick={() => router.push('/hotels')}
-              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-teal-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
-            >
-              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
-                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-teal-700 transition-colors text-center leading-tight line-clamp-1">
-                  Hotels
-                </h3>
-              </div>
-              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#f0fdfa] border border-teal-100/80 mt-1 transition-colors group-hover:bg-[#ccfbf1]/50">
-                <svg className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 12C14 10.9 14.9 10 16 10H32C33.1 10 34 10.9 34 12V40H14V12Z" fill="#008080" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
-                  <rect x="12" y="8" width="24" height="4" rx="1.5" fill="white" stroke="#0f172a" strokeWidth="2"/>
-                  <rect x="18" y="16" width="3" height="4" rx="0.5" fill="white"/>
-                  <rect x="27" y="16" width="3" height="4" rx="0.5" fill="white"/>
-                  <rect x="18" y="23" width="3" height="4" rx="0.5" fill="white"/>
-                  <rect x="27" y="23" width="3" height="4" rx="0.5" fill="white"/>
-                  <path d="M21 40V33H27V40" fill="white" stroke="#0f172a" strokeWidth="2"/>
-                  <path d="M8 40H40" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round"/>
-                </svg>
-              </div>
+          {/* 2. Find a Job */}
+          <Link
+            href="/jobs"
+            className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-indigo-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group"
+          >
+            <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+              <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-indigo-700 transition-colors text-center leading-tight line-clamp-1">
+                Jobs
+              </h3>
             </div>
+            <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
+              <img
+                src="/imagess/home icons/jobs.png"
+                alt="Jobs"
+                width={88}
+                height={88}
+                decoding="async"
+                className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                loading="eager"
+              />
+            </div>
+          </Link>
 
-            {/* 5. Hospitals */}
-            <div
-              onClick={() => router.push('/search?category=Hospitals')}
-              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-red-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
-            >
-              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
-                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-red-700 transition-colors text-center leading-tight line-clamp-1">
-                  Hospitals
-                </h3>
-              </div>
-              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#fef2f2] border border-red-100/80 mt-1 transition-colors group-hover:bg-[#ffe4e6]/50">
-                <svg className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="10" y="14" width="28" height="26" rx="4" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
-                  <path d="M16 14V10C16 8.9 16.9 8 18 8H30C31.1 8 32 8.9 32 10V14" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round"/>
-                  <rect x="21" y="19" width="6" height="12" rx="1" fill="#e50914"/>
-                  <rect x="18" y="22" width="12" height="6" rx="1" fill="#e50914"/>
-                  <path d="M20 40V34H28V40" stroke="#0f172a" strokeWidth="2"/>
-                  <circle cx="36" cy="14" r="6" fill="#e50914" stroke="#0f172a" strokeWidth="2"/>
-                  <path d="M36 11V17" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                  <path d="M33 14H39" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </div>
+          {/* 3. Home Services */}
+          <div
+            onClick={() => router.push('/services')}
+            className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-amber-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group"
+          >
+            <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+              <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-amber-700 transition-colors text-center leading-tight line-clamp-1">
+                Services
+              </h3>
             </div>
+            <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
+              <img
+                src="/imagess/home icons/servies.png"
+                alt="Services"
+                width={88}
+                height={88}
+                decoding="async"
+                className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                loading="eager"
+              />
+            </div>
+          </div>
 
-            {/* 6. Travels */}
-            <div
-              onClick={() => router.push('/hire-vehicle')}
-              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-teal-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
-            >
-              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
-                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-teal-700 transition-colors text-center leading-tight line-clamp-1">
-                  Travels
-                </h3>
-              </div>
-              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#f0fdfa] border border-teal-100/80 mt-1 transition-colors group-hover:bg-[#ccfbf1]/50">
-                <svg className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="10" y="10" width="28" height="26" rx="5" fill="white" stroke="#0f172a" strokeWidth="2.5"/>
-                  <rect x="14" y="15" width="20" height="11" rx="2" fill="#008080" stroke="#0f172a" strokeWidth="2"/>
-                  <circle cx="16" cy="30" r="2.5" fill="#008080" stroke="#0f172a" strokeWidth="1.5"/>
-                  <circle cx="32" cy="30" r="2.5" fill="#008080" stroke="#0f172a" strokeWidth="1.5"/>
-                  <path d="M21 30H27" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
-                  <rect x="12" y="36" width="6" height="4" rx="1" fill="#0f172a"/>
-                  <rect x="30" y="36" width="6" height="4" rx="1" fill="#0f172a"/>
-                  <path d="M10 20H7V24H10" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M38 20H41V24H38" stroke="#0f172a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
+          {/* 4. Hotel Booking */}
+          <div
+            onClick={() => router.push('/hotels')}
+            className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-yellow-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group"
+          >
+            <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+              <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-yellow-800 transition-colors text-center leading-tight line-clamp-1">
+                Hotels
+              </h3>
             </div>
+            <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
+              <img
+                src="/imagess/home icons/hotels.png"
+                alt="Hotels"
+                width={88}
+                height={88}
+                decoding="async"
+                className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                loading="eager"
+              />
+            </div>
+          </div>
 
-            {/* 7. Resorts */}
-            <div
-              onClick={() => router.push('/resorts')}
-              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-teal-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
-            >
-              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
-                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-teal-700 transition-colors text-center leading-tight line-clamp-1">
-                  Resorts
-                </h3>
-              </div>
-              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#f0fdfa] border border-teal-100/80 mt-1 transition-colors group-hover:bg-[#ccfbf1]/50">
-                <svg className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M33 7C28 7 24 11 24 16H42C42 11 38 7 33 7Z" fill="#008080" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
-                  <path d="M33 7V23" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M30 7C28.5 10 28 13 28 16" stroke="#0f172a" strokeWidth="1.5"/>
-                  <path d="M36 7C37.5 10 38 13 38 16" stroke="#0f172a" strokeWidth="1.5"/>
-                  <path d="M8 31L18 23L34 25L38 31" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 31L12 37" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M34 30L36 37" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M17 24L33 26" stroke="#008080" strokeWidth="3" strokeLinecap="round"/>
-                  <path d="M6 39H42" stroke="#0f172a" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </div>
+          {/* 5. Hospitals */}
+          <div
+            onClick={() => router.push('/search?category=Hospitals')}
+            className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-rose-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group"
+          >
+            <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+              <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-rose-700 transition-colors text-center leading-tight line-clamp-1">
+                Hospitals
+              </h3>
             </div>
+            <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
+              <img
+                src="/imagess/home icons/hosptial.png"
+                alt="Hospitals"
+                width={88}
+                height={88}
+                decoding="async"
+                className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                loading="eager"
+              />
+            </div>
+          </div>
 
-            {/* 8. Blood Donors */}
-            <div
-              onClick={() => router.push('/blood-donation')}
-              className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-rose-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group overflow-hidden"
-            >
-              <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
-                <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#e50914] transition-colors text-center leading-tight line-clamp-1">
-                  Blood Donors
-                </h3>
-              </div>
-              <div className="w-full h-14 sm:h-16 lg:h-18 flex items-center justify-center rounded-xl bg-[#fef2f2] border border-rose-100/80 mt-1 transition-colors group-hover:bg-[#ffe4e6]/50">
-                <svg className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 group-hover:scale-110 drop-shadow-xs" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M24 6C24 6 12 20 12 28C12 34.6 17.4 40 24 40C30.6 40 36 34.6 36 28C36 20 24 6 24 6Z" fill="#e50914" stroke="#0f172a" strokeWidth="2.5" strokeLinejoin="round"/>
-                  <path d="M20 28H28" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                  <path d="M24 24V32" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                </svg>
-              </div>
+          {/* 6. Travels */}
+          <div
+            onClick={() => router.push('/hire-vehicle')}
+            className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-sky-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group"
+          >
+            <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+              <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-sky-700 transition-colors text-center leading-tight line-clamp-1">
+                Travels
+              </h3>
             </div>
+            <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
+              <img
+                src="/imagess/home icons/travels.png"
+                alt="Travels"
+                width={88}
+                height={88}
+                decoding="async"
+                className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                loading="eager"
+              />
+            </div>
+          </div>
+
+          {/* 7. Resorts */}
+          <div
+            onClick={() => router.push('/resorts')}
+            className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-teal-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group"
+          >
+            <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+              <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-teal-700 transition-colors text-center leading-tight line-clamp-1">
+                Resorts
+              </h3>
+            </div>
+            <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
+              <img
+                src="/imagess/home icons/resort.png"
+                alt="Resorts"
+                width={88}
+                height={88}
+                decoding="async"
+                className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                loading="eager"
+              />
+            </div>
+          </div>
+
+          {/* 8. Blood Donors */}
+          <div
+            onClick={() => router.push('/blood-donation')}
+            className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-red-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group"
+          >
+            <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
+              <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#e50914] transition-colors text-center leading-tight line-clamp-1">
+                Blood Donors
+              </h3>
+            </div>
+            <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
+              <img
+                src="/imagess/home icons/blood donor.png"
+                alt="Blood Donors"
+                width={88}
+                height={88}
+                decoding="async"
+                className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
+                loading="eager"
+              />
+            </div>
+          </div>
 
           </div>
       </div>
@@ -2558,6 +2533,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                   src={cat.image}
                   alt={cat.name}
                   loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/imagess/used items.png';
@@ -2624,30 +2600,22 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'home-loan',
                       title: 'Home Loan',
-                      subtitle: 'From 8.4% ROI • Zero Prepay',
-                      rating: '4.8',
-                      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'From 8.4% ROI • Zero Prepay',                      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'personal-loan',
                       title: 'Personal Loan',
-                      subtitle: 'In 24h • Instant Disbursal',
-                      rating: '4.9',
-                      image: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'In 24h • Instant Disbursal',                      image: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'business-loan',
                       title: 'Business Loan',
-                      subtitle: '₹50L Limit • Collateral Free',
-                      rating: '4.8',
-                      image: 'https://images.unsplash.com/photo-1664575602276-acd073f104c1?auto=format&fit=crop&w=600&q=80'
+                      subtitle: '₹50L Limit • Collateral Free',                      image: 'https://images.unsplash.com/photo-1664575602276-acd073f104c1?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'gold-loan',
                       title: 'Gold Loan',
-                      subtitle: 'Instant Cash • Low Interest',
-                      rating: '4.9',
-                      image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Instant Cash • Low Interest',                      image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=600&q=80'
                     }
                   ],
                   // Slide 2 (4 items in 2x2 grid)
@@ -2655,30 +2623,22 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'vehicle-loan',
                       title: 'Vehicle Loan',
-                      subtitle: '100% On-road • Fast Approval',
-                      rating: '4.7',
-                      image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80'
+                      subtitle: '100% On-road • Fast Approval',                      image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'education-loan',
                       title: 'Education Loan',
-                      subtitle: 'Global & India • Low Margin',
-                      rating: '4.8',
-                      image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Global & India • Low Margin',                      image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'property-loan',
                       title: 'Loan Against Property',
-                      subtitle: 'Up to ₹5 Cr • Low Interest',
-                      rating: '4.8',
-                      image: 'https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Up to ₹5 Cr • Low Interest',                      image: 'https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'commercial-loan',
                       title: 'Commercial Loan',
-                      subtitle: 'Tarapur MIDC & Boisar Hub',
-                      rating: '4.9',
-                      image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Tarapur MIDC & Boisar Hub',                      image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80'
                     }
                   ]
                 ].map((slide, slideIdx) => (
@@ -2693,8 +2653,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         className="group relative aspect-[1.15/1] sm:aspect-[1.3/1] md:aspect-[1.4/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200/90 bg-slate-900"
                       >
                         {/* Full-bleed photo */}
-                        <img
-                          src={loan.image}
+                        <img decoding="async" src={loan.image}
                           alt={loan.title}
                           loading="lazy"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
@@ -2703,21 +2662,15 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
 
                         {/* Bottom Content Bar matching user's image */}
-                        <div className="absolute bottom-2.5 sm:bottom-3.5 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 flex items-end justify-between gap-1.5 z-10 pointer-events-none">
-                          <div className="min-w-0 pr-1 text-left">
-                            <h4 className="text-white font-black text-xs sm:text-sm lg:text-base leading-tight drop-shadow-md">
-                              {loan.title}
-                            </h4>
-                            {loan.subtitle && (
-                              <p className="text-white/80 text-[10px] sm:text-xs font-semibold mt-0.5 truncate hidden min-[360px]:block">
-                                {loan.subtitle}
-                              </p>
-                            )}
-                          </div>
-                          <div className="shrink-0 bg-black/60 backdrop-blur-md text-white text-[9.5px] sm:text-xs font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border border-white/20 flex items-center gap-1 shadow-xs">
-                            <span className="text-amber-400">★</span>
-                            <span>{loan.rating}</span>
-                          </div>
+                        <div className="absolute bottom-2.5 sm:bottom-3.5 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 z-10 pointer-events-none text-left">
+                          <h4 className="text-white font-black text-xs sm:text-sm lg:text-base leading-tight drop-shadow-md">
+                            {loan.title}
+                          </h4>
+                          {loan.subtitle && (
+                            <p className="text-white/80 text-[10px] sm:text-xs font-semibold mt-0.5 truncate hidden min-[360px]:block">
+                              {loan.subtitle}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -2772,30 +2725,22 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'health-insurance',
                       title: 'Health Insurance',
-                      subtitle: 'Cashless • 10,000+ Hospitals',
-                      rating: '4.9',
-                      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Cashless • 10,000+ Hospitals',                      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'term-life',
                       title: 'Term Life Cover',
-                      subtitle: '₹1 Cr Cover • From ₹490/mo',
-                      rating: '4.8',
-                      image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=600&q=80'
+                      subtitle: '₹1 Cr Cover • From ₹490/mo',                      image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'vehicle-insurance',
                       title: 'Vehicle Cover',
-                      subtitle: 'In 2 Mins • Zero Dep Included',
-                      rating: '4.9',
-                      image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'In 2 Mins • Zero Dep Included',                      image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'shop-insurance',
                       title: 'Shop & Godown',
-                      subtitle: 'Tarapur MIDC • Fire & Theft',
-                      rating: '4.8',
-                      image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Tarapur MIDC • Fire & Theft',                      image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80'
                     }
                   ],
                   // Slide 2 (4 items in 2x2 grid)
@@ -2803,30 +2748,22 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'home-insurance',
                       title: 'Home & Flat',
-                      subtitle: 'From ₹3/Day • Structure & Assets',
-                      rating: '4.7',
-                      image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'From ₹3/Day • Structure & Assets',                      image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'travel-insurance',
                       title: 'Travel Policy',
-                      subtitle: 'Worldwide • Flight & Medical',
-                      rating: '4.8',
-                      image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Worldwide • Flight & Medical',                      image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'fire-insurance',
                       title: 'Fire & Burglary',
-                      subtitle: 'Factory, Warehouse & Stock',
-                      rating: '4.8',
-                      image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Factory, Warehouse & Stock',                      image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'senior-health',
                       title: 'Senior Citizen Care',
-                      subtitle: 'Pre-existing Illness Covered',
-                      rating: '4.9',
-                      image: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Pre-existing Illness Covered',                      image: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?auto=format&fit=crop&w=600&q=80'
                     }
                   ]
                 ].map((slide, slideIdx) => (
@@ -2841,8 +2778,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         className="group relative aspect-[1.15/1] sm:aspect-[1.3/1] md:aspect-[1.4/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200/90 bg-slate-900"
                       >
                         {/* Full-bleed photo */}
-                        <img
-                          src={plan.image}
+                        <img decoding="async" src={plan.image}
                           alt={plan.title}
                           loading="lazy"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
@@ -2851,21 +2787,15 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
 
                         {/* Bottom Content Bar matching user's image */}
-                        <div className="absolute bottom-2.5 sm:bottom-3.5 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 flex items-end justify-between gap-1.5 z-10 pointer-events-none">
-                          <div className="min-w-0 pr-1 text-left">
-                            <h4 className="text-white font-black text-xs sm:text-sm lg:text-base leading-tight drop-shadow-md">
-                              {plan.title}
-                            </h4>
-                            {plan.subtitle && (
-                              <p className="text-white/80 text-[10px] sm:text-xs font-semibold mt-0.5 truncate hidden min-[360px]:block">
-                                {plan.subtitle}
-                              </p>
-                            )}
-                          </div>
-                          <div className="shrink-0 bg-black/60 backdrop-blur-md text-white text-[9.5px] sm:text-xs font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border border-white/20 flex items-center gap-1 shadow-xs">
-                            <span className="text-amber-400">★</span>
-                            <span>{plan.rating}</span>
-                          </div>
+                        <div className="absolute bottom-2.5 sm:bottom-3.5 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 z-10 pointer-events-none text-left">
+                          <h4 className="text-white font-black text-xs sm:text-sm lg:text-base leading-tight drop-shadow-md">
+                            {plan.title}
+                          </h4>
+                          {plan.subtitle && (
+                            <p className="text-white/80 text-[10px] sm:text-xs font-semibold mt-0.5 truncate hidden min-[360px]:block">
+                              {plan.subtitle}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -2920,30 +2850,22 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'web-dev',
                       title: 'Web Development',
-                      subtitle: 'Modern Websites & Apps',
-                      rating: '4.9',
-                      image: '/marketing/web-dev.jpg'
+                      subtitle: 'Modern Websites & Apps',                      image: '/marketing/web-dev.jpg'
                     },
                     {
                       id: 'ugc-video',
                       title: 'UGC Video Ads',
-                      subtitle: 'High Converting Content',
-                      rating: '4.8',
-                      image: '/marketing/ugc-video.jpg'
+                      subtitle: 'High Converting Content',                      image: '/marketing/ugc-video.jpg'
                     },
                     {
                       id: 'graphic-design',
                       title: 'Graphic Designing',
-                      subtitle: 'Logos, Banners & Branding',
-                      rating: '4.9',
-                      image: '/marketing/graphic-design.jpg'
+                      subtitle: 'Logos, Banners & Branding',                      image: '/marketing/graphic-design.jpg'
                     },
                     {
                       id: 'seo',
                       title: 'SEO & Google Ranking',
-                      subtitle: '#1 Rank & Leads',
-                      rating: '4.8',
-                      image: '/marketing/seo.jpg'
+                      subtitle: '#1 Rank & Leads',                      image: '/marketing/seo.jpg'
                     }
                   ],
                   // Slide 2 (4 items in 2x2 grid)
@@ -2951,30 +2873,22 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'social-media',
                       title: 'Social Media Growth',
-                      subtitle: 'Instagram & Facebook Ads',
-                      rating: '4.9',
-                      image: '/marketing/social-media.jpg'
+                      subtitle: 'Instagram & Facebook Ads',                      image: '/marketing/social-media.jpg'
                     },
                     {
                       id: 'local-pr',
                       title: 'Google My Business',
-                      subtitle: 'Local SEO & Reviews',
-                      rating: '4.8',
-                      image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Local SEO & Reviews',                      image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'performance-ads',
                       title: 'Performance Marketing',
-                      subtitle: 'Meta & WhatsApp Funnels',
-                      rating: '4.9',
-                      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Meta & WhatsApp Funnels',                      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'influencer-marketing',
                       title: 'Creator Collaborations',
-                      subtitle: 'Boisar & Palghar Influencers',
-                      rating: '4.8',
-                      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Boisar & Palghar Influencers',                      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'
                     }
                   ]
                 ].map((slide, slideIdx) => (
@@ -2989,8 +2903,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         className="group relative aspect-[1.15/1] sm:aspect-[1.3/1] md:aspect-[1.4/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200/90 bg-slate-900"
                       >
                         {/* Full-bleed photo */}
-                        <img
-                          src={service.image}
+                        <img decoding="async" src={service.image}
                           alt={service.title}
                           loading="lazy"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
@@ -2999,21 +2912,15 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
 
                         {/* Bottom Content Bar matching user's image */}
-                        <div className="absolute bottom-2.5 sm:bottom-3.5 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 flex items-end justify-between gap-1.5 z-10 pointer-events-none">
-                          <div className="min-w-0 pr-1 text-left">
-                            <h4 className="text-white font-black text-xs sm:text-sm lg:text-base leading-tight drop-shadow-md">
-                              {service.title}
-                            </h4>
-                            {service.subtitle && (
-                              <p className="text-white/80 text-[10px] sm:text-xs font-semibold mt-0.5 truncate hidden min-[360px]:block">
-                                {service.subtitle}
-                              </p>
-                            )}
-                          </div>
-                          <div className="shrink-0 bg-black/60 backdrop-blur-md text-white text-[9.5px] sm:text-xs font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border border-white/20 flex items-center gap-1 shadow-xs">
-                            <span className="text-amber-400">★</span>
-                            <span>{service.rating}</span>
-                          </div>
+                        <div className="absolute bottom-2.5 sm:bottom-3.5 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 z-10 pointer-events-none text-left">
+                          <h4 className="text-white font-black text-xs sm:text-sm lg:text-base leading-tight drop-shadow-md">
+                            {service.title}
+                          </h4>
+                          {service.subtitle && (
+                            <p className="text-white/80 text-[10px] sm:text-xs font-semibold mt-0.5 truncate hidden min-[360px]:block">
+                              {service.subtitle}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -3068,33 +2975,25 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'grocery',
                       title: 'Daily Groceries',
-                      subtitle: 'Express Delivery | Fresh Daily',
-                      rating: '4.8',
-                      searchQuery: 'Grocery',
+                      subtitle: 'Express Delivery | Fresh Daily',                      searchQuery: 'Grocery',
                       image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'jewellery',
                       title: 'Jewellery & Gold',
-                      subtitle: 'Hallmarked & Bridal Sets',
-                      rating: '4.9',
-                      searchQuery: 'Jewellery',
+                      subtitle: 'Hallmarked & Bridal Sets',                      searchQuery: 'Jewellery',
                       image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'appliances',
                       title: 'Home Appliances',
-                      subtitle: 'ACs, TVs & Kitchen Setup',
-                      rating: '4.8',
-                      searchQuery: 'Appliances',
+                      subtitle: 'ACs, TVs & Kitchen Setup',                      searchQuery: 'Appliances',
                       image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'electronics',
                       title: 'Electronics & Mobiles',
-                      subtitle: '0% EMI | Brand Warranty',
-                      rating: '4.9',
-                      searchQuery: 'Electronics',
+                      subtitle: '0% EMI | Brand Warranty',                      searchQuery: 'Electronics',
                       image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80'
                     }
                   ],
@@ -3103,33 +3002,25 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'fashion',
                       title: 'Fashion & Boutiques',
-                      subtitle: 'Ethnic & Western Latest Trends',
-                      rating: '4.8',
-                      searchQuery: 'Clothing',
+                      subtitle: 'Ethnic & Western Latest Trends',                      searchQuery: 'Clothing',
                       image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'furniture',
                       title: 'Furniture & Living',
-                      subtitle: 'Factory Prices | Home Decor',
-                      rating: '4.9',
-                      searchQuery: 'Furniture',
+                      subtitle: 'Factory Prices | Home Decor',                      searchQuery: 'Furniture',
                       image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'books',
                       title: 'Books & Supplies',
-                      subtitle: 'School & College | Office Needs',
-                      rating: '4.7',
-                      searchQuery: 'Stationery',
+                      subtitle: 'School & College | Office Needs',                      searchQuery: 'Stationery',
                       image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'sports',
                       title: 'Fitness & Sports',
-                      subtitle: 'Original Gear | Supplements',
-                      rating: '4.8',
-                      searchQuery: 'Gym',
+                      subtitle: 'Original Gear | Supplements',                      searchQuery: 'Gym',
                       image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80'
                     }
                   ]
@@ -3148,8 +3039,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         className="group relative aspect-[1.15/1] sm:aspect-[1.3/1] md:aspect-[1.4/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200/90 bg-slate-900"
                       >
                         {/* Full-bleed photo */}
-                        <img
-                          src={item.image}
+                        <img decoding="async" src={item.image}
                           alt={item.title}
                           loading="lazy"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
@@ -3158,21 +3048,15 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
 
                         {/* Bottom Content Bar matching user's image */}
-                        <div className="absolute bottom-2.5 sm:bottom-3.5 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 flex items-end justify-between gap-1.5 z-10 pointer-events-none">
-                          <div className="min-w-0 pr-1 text-left">
-                            <h4 className="text-white font-black text-xs sm:text-sm lg:text-base leading-tight drop-shadow-md">
-                              {item.title}
-                            </h4>
-                            {item.subtitle && (
-                              <p className="text-white/80 text-[10px] sm:text-xs font-semibold mt-0.5 truncate hidden min-[360px]:block">
-                                {item.subtitle}
-                              </p>
-                            )}
-                          </div>
-                          <div className="shrink-0 bg-black/60 backdrop-blur-md text-white text-[9.5px] sm:text-xs font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md sm:rounded-lg border border-white/20 flex items-center gap-1 shadow-xs">
-                            <span className="text-amber-400">★</span>
-                            <span>{item.rating}</span>
-                          </div>
+                        <div className="absolute bottom-2.5 sm:bottom-3.5 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 z-10 pointer-events-none text-left">
+                          <h4 className="text-white font-black text-xs sm:text-sm lg:text-base leading-tight drop-shadow-md">
+                            {item.title}
+                          </h4>
+                          {item.subtitle && (
+                            <p className="text-white/80 text-[10px] sm:text-xs font-semibold mt-0.5 truncate hidden min-[360px]:block">
+                              {item.subtitle}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -3355,8 +3239,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
               onClick={() => setSelectedIconicPlace(place)}
               className="w-[170px] min-[400px]:w-[195px] sm:w-[220px] md:w-[240px] aspect-[3.2/4.2] sm:aspect-[3.2/4.4] rounded-2xl sm:rounded-3xl overflow-hidden relative shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group cursor-pointer shrink-0 snap-start border border-slate-100"
             >
-              <img
-                src={place.image}
+              <img decoding="async" src={place.image}
                 alt={place.name}
                 loading="lazy"
                 onError={(e) => {
@@ -4529,8 +4412,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                                                 aria-hidden="true"
                                                 className="absolute inset-0 w-full h-full object-cover blur-lg scale-110 opacity-40 pointer-events-none"
                                               />
-                                              <img
-                                                src={imgUrl}
+                                              <img decoding="async" src={imgUrl}
                                                 alt={`${property.name || property.category} photo ${idx + 1}`}
                                                 className="relative max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-[1.02]"
                                                 loading="lazy"
@@ -5051,8 +4933,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                                         aria-hidden="true"
                                         className="absolute inset-0 w-full h-full object-cover blur-lg scale-110 opacity-40 pointer-events-none"
                                       />
-                                      <img
-                                        src={imgUrl}
+                                      <img decoding="async" src={imgUrl}
                                         alt={`${profile.name || profile.category} photo ${idx + 1}`}
                                         className="relative max-w-full max-h-full w-auto h-auto object-contain transition-transform duration-500 group-hover:scale-[1.02]"
                                         loading="lazy"
