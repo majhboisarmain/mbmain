@@ -395,7 +395,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <link rel="preload" as="image" href="/majh-boisar-mb-logo.png" />
-        <link rel="preload" as="image" href="/imagess/ChatGPT Image Aug 15, 2026, 08_23_55 PM.png" fetchPriority="high" />
+        <link rel="preload" as="image" type="image/webp" href="/imagess/home icons/properties.webp" fetchPriority="high" />
+        <link rel="preload" as="image" type="image/webp" href="/imagess/home icons/jobs.webp" fetchPriority="high" />
+        <link rel="preload" as="image" type="image/webp" href="/imagess/home icons/servies.webp" fetchPriority="high" />
+        <link rel="preload" as="image" type="image/webp" href="/imagess/home icons/hotels.webp" fetchPriority="high" />
       </head>
       <body className="min-h-full bg-white text-slate-800 font-sans antialiased flex flex-col">
         {/* Google Tag Manager (noscript) */}

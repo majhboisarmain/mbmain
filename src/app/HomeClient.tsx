@@ -2313,9 +2313,10 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
         </div>
       </div>
 
-      {/* 2. Quick Services & Hubs — NoBroker 8 Cards Grid Style (Open floating cards, no outer box) */}
-      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 mt-3.5 sm:mt-5">
-        <div className="grid grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3.5 items-stretch">
+      {/* 2. Quick Services & Hubs — NoBroker 8 Cards Grid Style */}
+      <div className="w-full bg-gradient-to-b from-[#f0f7f7] via-[#f5f9f9] to-[#fafbfb] border-b border-slate-200/70 py-3 sm:py-4.5">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3.5 items-stretch">
 
           {/* 1. Properties */}
           <Link
@@ -2330,7 +2331,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
             </div>
             <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
               <img
-                src="/imagess/home icons/properties.png"
+                src="/imagess/home icons/properties.webp"
                 alt="Properties"
                 width={88}
                 height={88}
@@ -2353,7 +2354,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
             </div>
             <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
               <img
-                src="/imagess/home icons/jobs.png"
+                src="/imagess/home icons/jobs.webp"
                 alt="Jobs"
                 width={88}
                 height={88}
@@ -2376,7 +2377,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
             </div>
             <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
               <img
-                src="/imagess/home icons/servies.png"
+                src="/imagess/home icons/servies.webp"
                 alt="Services"
                 width={88}
                 height={88}
@@ -2399,7 +2400,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
             </div>
             <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
               <img
-                src="/imagess/home icons/hotels.png"
+                src="/imagess/home icons/hotels.webp"
                 alt="Hotels"
                 width={88}
                 height={88}
@@ -2422,7 +2423,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
             </div>
             <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
               <img
-                src="/imagess/home icons/hosptial.png"
+                src="/imagess/home icons/hosptial.webp"
                 alt="Hospitals"
                 width={88}
                 height={88}
@@ -2445,7 +2446,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
             </div>
             <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
               <img
-                src="/imagess/home icons/travels.png"
+                src="/imagess/home icons/travels.webp"
                 alt="Travels"
                 width={88}
                 height={88}
@@ -2468,7 +2469,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
             </div>
             <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
               <img
-                src="/imagess/home icons/resort.png"
+                src="/imagess/home icons/resort.webp"
                 alt="Resorts"
                 width={88}
                 height={88}
@@ -2485,13 +2486,13 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
             className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-red-400 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 p-2 sm:p-2.5 flex flex-col items-center justify-between text-center cursor-pointer group"
           >
             <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-center w-full px-0.5">
-              <h3 className="text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#e50914] transition-colors text-center leading-tight line-clamp-1">
+              <h3 className="text-[10px] min-[350px]:text-[11px] sm:text-xs md:text-[13px] font-bold text-slate-800 group-hover:text-[#e50914] transition-colors text-center leading-tight">
                 Blood Donors
               </h3>
             </div>
             <div className="w-full h-16 sm:h-20 lg:h-22 flex items-center justify-center mt-0.5">
               <img
-                src="/imagess/home icons/blood donor.png"
+                src="/imagess/home icons/blood donor.webp"
                 alt="Blood Donors"
                 width={88}
                 height={88}
@@ -2503,52 +2504,64 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           </div>
 
           </div>
+        </div>
       </div>
 
       {/* 3. Grid of Category Blocks (Explore Categories - Popular style compact cards) */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-5 sm:mt-7">
-        <div className="flex items-center justify-between border-b border-slate-200/60 pb-2.5 mb-3.5">
-          <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
-            <span className="h-3.5 w-1 rounded-full bg-[#008080] shrink-0"></span>
-            <span>Explore Categories</span>
-          </h2>
-          <button
-            onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
-            className="text-[11px] sm:text-xs font-black text-[#008080] hover:text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200/80 px-3 py-1 rounded-full shadow-2xs transition-all cursor-pointer"
-          >
-            {isCategoriesExpanded ? 'Less ↑' : `All (${categories.length}) ↓`}
-          </button>
-        </div>
-
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 gap-2.5 sm:gap-3">
-          {displayedCategories.map((cat) => (
-            <div
-              key={cat.name}
-              onClick={() => router.push(`/search?category=${encodeURIComponent(cat.name)}`)}
-              className="group bg-white rounded-[22px_22px_38px_6px] border border-[#ead9d0] p-2 sm:p-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md hover:border-[#dfc4b6] hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center justify-between text-center relative"
-            >
-              {/* Clean Image Box matching 2nd image */}
-              <div className="w-full aspect-square rounded-[14px] sm:rounded-[16px] bg-slate-100 overflow-hidden transition-transform duration-300 group-hover:scale-105 shadow-2xs">
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/imagess/used items.png';
-                  }}
-                />
-              </div>
-
-              {/* Title label matching 2nd image */}
-              <div className="min-h-[2.3rem] sm:min-h-[2.5rem] flex items-center justify-center w-full px-0.5 mt-1.5 sm:mt-2 mb-0.5">
-                <p className="text-[10.5px] sm:text-[12px] font-bold text-slate-700 text-center leading-tight line-clamp-2 group-hover:text-teal-700 transition-colors">
-                  {cat.name}
-                </p>
-              </div>
+      <div className="w-full bg-gradient-to-b from-[#f8fafc] via-[#f1f5f9]/70 to-[#fafbfb] border-b border-slate-200/70 py-4 sm:py-6">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between border-b border-slate-200/60 pb-3 mb-4">
+            <div className="flex items-center gap-2">
+              <span className="h-4 w-1 rounded-full bg-[#008080] shrink-0"></span>
+              <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
+                Explore Categories
+              </h2>
             </div>
-          ))}
+            <button
+              onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
+              className="text-xs sm:text-sm font-bold text-[#008080] hover:text-teal-900 flex items-center gap-1 transition-all duration-200 cursor-pointer group active:scale-95 select-none"
+            >
+              <span className="group-hover:underline underline-offset-4 decoration-teal-400">
+                {isCategoriesExpanded ? 'Show Less' : `View All (${categories.length})`}
+              </span>
+              <ChevronDown 
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#008080] group-hover:text-teal-900 transition-transform duration-300 ${
+                  isCategoriesExpanded ? 'rotate-180' : ''
+                }`} 
+              />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 gap-2.5 sm:gap-3">
+            {displayedCategories.map((cat) => (
+              <div
+                key={cat.name}
+                onClick={() => router.push(`/search?category=${encodeURIComponent(cat.name)}`)}
+                className="group bg-white rounded-[20px_20px_32px_8px] border border-slate-200/90 p-2 sm:p-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-teal-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center justify-between text-center relative"
+              >
+                {/* Clean Image Box */}
+                <div className="w-full aspect-square rounded-[14px] sm:rounded-[16px] bg-slate-100 overflow-hidden transition-transform duration-300 group-hover:scale-105 shadow-2xs">
+                  <img
+                    src={cat.image}
+                    alt={cat.name}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/imagess/used items.png';
+                    }}
+                  />
+                </div>
+
+                {/* Title label */}
+                <div className="min-h-[2.3rem] sm:min-h-[2.5rem] flex items-center justify-center w-full px-0.5 mt-1.5 sm:mt-2 mb-0.5">
+                  <p className="text-[10px] min-[360px]:text-[11px] sm:text-[12px] font-bold text-slate-700 text-center leading-[1.25] line-clamp-2 group-hover:text-teal-700 transition-colors">
+                    {cat.name}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -2600,22 +2613,26 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'home-loan',
                       title: 'Home Loan',
-                      subtitle: 'From 8.4% ROI • Zero Prepay',                      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'From 8.4% ROI • Zero Prepay',
+                      image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'personal-loan',
                       title: 'Personal Loan',
-                      subtitle: 'In 24h • Instant Disbursal',                      image: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'In 24h • Instant Disbursal',
+                      image: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'business-loan',
                       title: 'Business Loan',
-                      subtitle: '₹50L Limit • Collateral Free',                      image: 'https://images.unsplash.com/photo-1664575602276-acd073f104c1?auto=format&fit=crop&w=600&q=80'
+                      subtitle: '₹50L Limit • Collateral Free',
+                      image: 'https://images.unsplash.com/photo-1664575602276-acd073f104c1?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'gold-loan',
                       title: 'Gold Loan',
-                      subtitle: 'Instant Cash • Low Interest',                      image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Instant Cash • Low Interest',
+                      image: 'https://images.unsplash.com/photo-1610375461246-83df859d849d?auto=format&fit=crop&w=600&q=80'
                     }
                   ],
                   // Slide 2 (4 items in 2x2 grid)
@@ -2623,22 +2640,26 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'vehicle-loan',
                       title: 'Vehicle Loan',
-                      subtitle: '100% On-road • Fast Approval',                      image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80'
+                      subtitle: '100% On-road • Fast Approval',
+                      image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'education-loan',
                       title: 'Education Loan',
-                      subtitle: 'Global & India • Low Margin',                      image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Global & India • Low Margin',
+                      image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'property-loan',
                       title: 'Loan Against Property',
-                      subtitle: 'Up to ₹5 Cr • Low Interest',                      image: 'https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Up to ₹5 Cr • Low Interest',
+                      image: 'https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'commercial-loan',
                       title: 'Commercial Loan',
-                      subtitle: 'Tarapur MIDC & Boisar Hub',                      image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Tarapur MIDC & Boisar Hub',
+                      image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80'
                     }
                   ]
                 ].map((slide, slideIdx) => (
@@ -2725,22 +2746,26 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'health-insurance',
                       title: 'Health Insurance',
-                      subtitle: 'Cashless • 10,000+ Hospitals',                      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Cashless • 10,000+ Hospitals',
+                      image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'term-life',
                       title: 'Term Life Cover',
-                      subtitle: '₹1 Cr Cover • From ₹490/mo',                      image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=600&q=80'
+                      subtitle: '₹1 Cr Cover • From ₹490/mo',
+                      image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'vehicle-insurance',
                       title: 'Vehicle Cover',
-                      subtitle: 'In 2 Mins • Zero Dep Included',                      image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'In 2 Mins • Zero Dep Included',
+                      image: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'shop-insurance',
                       title: 'Shop & Godown',
-                      subtitle: 'Tarapur MIDC • Fire & Theft',                      image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Tarapur MIDC • Fire & Theft',
+                      image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80'
                     }
                   ],
                   // Slide 2 (4 items in 2x2 grid)
@@ -2748,22 +2773,26 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'home-insurance',
                       title: 'Home & Flat',
-                      subtitle: 'From ₹3/Day • Structure & Assets',                      image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'From ₹3/Day • Structure & Assets',
+                      image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'travel-insurance',
                       title: 'Travel Policy',
-                      subtitle: 'Worldwide • Flight & Medical',                      image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Worldwide • Flight & Medical',
+                      image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'fire-insurance',
                       title: 'Fire & Burglary',
-                      subtitle: 'Factory, Warehouse & Stock',                      image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Factory, Warehouse & Stock',
+                      image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'senior-health',
                       title: 'Senior Citizen Care',
-                      subtitle: 'Pre-existing Illness Covered',                      image: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Pre-existing Illness Covered',
+                      image: 'https://images.unsplash.com/photo-1581579438747-1dc8d17bbce4?auto=format&fit=crop&w=600&q=80'
                     }
                   ]
                 ].map((slide, slideIdx) => (
@@ -2845,27 +2874,32 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth py-1 px-0.5 snap-x snap-mandatory"
               >
                 {[
-                  // Slide 1 (4 items in 2x2 grid)
+                  // Slide 1 (4 items in 2x2 grid - Front Slide)
                   [
+                    {
+                      id: 'influencer-marketing',
+                      title: 'Creator Collaborations',
+                      subtitle: 'Boisar & Palghar Influencers',
+                      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
+                      targetUrl: '/creators'
+                    },
                     {
                       id: 'web-dev',
                       title: 'Web Development',
-                      subtitle: 'Modern Websites & Apps',                      image: '/marketing/web-dev.jpg'
+                      subtitle: 'Modern Websites & Apps',
+                      image: '/marketing/web-dev.jpg'
                     },
                     {
                       id: 'ugc-video',
                       title: 'UGC Video Ads',
-                      subtitle: 'High Converting Content',                      image: '/marketing/ugc-video.jpg'
+                      subtitle: 'High Converting Content',
+                      image: '/marketing/ugc-video.jpg'
                     },
                     {
                       id: 'graphic-design',
                       title: 'Graphic Designing',
-                      subtitle: 'Logos, Banners & Branding',                      image: '/marketing/graphic-design.jpg'
-                    },
-                    {
-                      id: 'seo',
-                      title: 'SEO & Google Ranking',
-                      subtitle: '#1 Rank & Leads',                      image: '/marketing/seo.jpg'
+                      subtitle: 'Logos, Banners & Branding',
+                      image: '/marketing/graphic-design.jpg'
                     }
                   ],
                   // Slide 2 (4 items in 2x2 grid)
@@ -2873,22 +2907,26 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'social-media',
                       title: 'Social Media Growth',
-                      subtitle: 'Instagram & Facebook Ads',                      image: '/marketing/social-media.jpg'
+                      subtitle: 'Instagram & Facebook Ads',
+                      image: '/marketing/social-media.jpg'
                     },
                     {
                       id: 'local-pr',
                       title: 'Google My Business',
-                      subtitle: 'Local SEO & Reviews',                      image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Local SEO & Reviews',
+                      image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'performance-ads',
                       title: 'Performance Marketing',
-                      subtitle: 'Meta & WhatsApp Funnels',                      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80'
+                      subtitle: 'Meta & WhatsApp Funnels',
+                      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80'
                     },
                     {
-                      id: 'influencer-marketing',
-                      title: 'Creator Collaborations',
-                      subtitle: 'Boisar & Palghar Influencers',                      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80'
+                      id: 'seo',
+                      title: 'SEO & Google Ranking',
+                      subtitle: '#1 Rank & Leads',
+                      image: '/marketing/seo.jpg'
                     }
                   ]
                 ].map((slide, slideIdx) => (
@@ -2899,7 +2937,15 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {slide.map((service) => (
                       <div
                         key={service.id}
-                        onClick={() => router.push(`/search?query=${encodeURIComponent(service.title)}`)}
+                        onClick={() => {
+                          if (service.targetUrl) {
+                            router.push(service.targetUrl);
+                          } else if (service.id === 'influencer-marketing') {
+                            router.push('/creators');
+                          } else {
+                            router.push(`/search?query=${encodeURIComponent(service.title)}`);
+                          }
+                        }}
                         className="group relative aspect-[1.15/1] sm:aspect-[1.3/1] md:aspect-[1.4/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200/90 bg-slate-900"
                       >
                         {/* Full-bleed photo */}
@@ -2975,25 +3021,29 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'grocery',
                       title: 'Daily Groceries',
-                      subtitle: 'Express Delivery | Fresh Daily',                      searchQuery: 'Grocery',
+                      subtitle: 'Express Delivery | Fresh Daily',
+                      searchQuery: 'Grocery',
                       image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'jewellery',
                       title: 'Jewellery & Gold',
-                      subtitle: 'Hallmarked & Bridal Sets',                      searchQuery: 'Jewellery',
+                      subtitle: 'Hallmarked & Bridal Sets',
+                      searchQuery: 'Jewellery',
                       image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'appliances',
                       title: 'Home Appliances',
-                      subtitle: 'ACs, TVs & Kitchen Setup',                      searchQuery: 'Appliances',
+                      subtitle: 'ACs, TVs & Kitchen Setup',
+                      searchQuery: 'Appliances',
                       image: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'electronics',
                       title: 'Electronics & Mobiles',
-                      subtitle: '0% EMI | Brand Warranty',                      searchQuery: 'Electronics',
+                      subtitle: '0% EMI | Brand Warranty',
+                      searchQuery: 'Electronics',
                       image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=600&q=80'
                     }
                   ],
@@ -3002,25 +3052,29 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {
                       id: 'fashion',
                       title: 'Fashion & Boutiques',
-                      subtitle: 'Ethnic & Western Latest Trends',                      searchQuery: 'Clothing',
+                      subtitle: 'Ethnic & Western Latest Trends',
+                      searchQuery: 'Clothing',
                       image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'furniture',
                       title: 'Furniture & Living',
-                      subtitle: 'Factory Prices | Home Decor',                      searchQuery: 'Furniture',
+                      subtitle: 'Factory Prices | Home Decor',
+                      searchQuery: 'Furniture',
                       image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'books',
                       title: 'Books & Supplies',
-                      subtitle: 'School & College | Office Needs',                      searchQuery: 'Stationery',
+                      subtitle: 'School & College | Office Needs',
+                      searchQuery: 'Stationery',
                       image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80'
                     },
                     {
                       id: 'sports',
                       title: 'Fitness & Sports',
-                      subtitle: 'Original Gear | Supplements',                      searchQuery: 'Gym',
+                      subtitle: 'Original Gear | Supplements',
+                      searchQuery: 'Gym',
                       image: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=600&q=80'
                     }
                   ]
