@@ -72,7 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category } = await params;
   const categoryTitle = formatCategoryTitle(category);
 
-  const title = `Best ${categoryTitle} in Boisar — Phone, Address & Ratings`;
+  const title = `${categoryTitle} in Boisar — Phone, Address & Ratings`;
   const description = `Find verified ${categoryTitle.toLowerCase()} in Boisar, Palghar. Direct phone numbers, shop addresses, WhatsApp enquiry, and authentic customer details on Majh Boisar.`;
   const canonicalUrl = `https://majhboisar.in/boisar/${category.toLowerCase()}`;
 
