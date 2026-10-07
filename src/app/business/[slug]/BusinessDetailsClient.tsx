@@ -79,16 +79,21 @@ interface Business {
   faqs: FAQ[];
 }
 
-export default function BusinessDetailsPage() {
+interface BusinessDetailsProps {
+  initialBusiness?: Business | null;
+  businessSlug?: string;
+}
+
+export default function BusinessDetailsPage({ initialBusiness, businessSlug }: BusinessDetailsProps) {
   const params = useParams();
   const router = useRouter();
   const { currentRole, isLoggedIn, loggedInUser, setLoginModalOpen, showToast } = useApp();
 
-  const idStr = params.id as string;
-  const businessId = parseInt(idStr);
+  const slugParam = (businessSlug || params.slug || params.id) as string;
+  const businessId = parseInt(slugParam);
 
-  const [business, setBusiness] = useState<Business | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [business, setBusiness] = useState<Business | null>(initialBusiness || null);
+  const [loading, setLoading] = useState(initialBusiness ? false : true);
   const [activeTab, setActiveTab] = useState<'marketplace' | 'gallery' | 'reviews' | 'faqs'>('marketplace');
 
   // Filter within marketplace (all, products, services)
@@ -308,13 +313,13 @@ _Please confirm order acceptance & delivery time._`;
     try {
       let trackParam = '';
       if (typeof window !== 'undefined') {
-        const sessionKey = `mb_viewed_${businessId}`;
+        const sessionKey = `mb_viewed_${slugParam}`;
         if (!sessionStorage.getItem(sessionKey)) {
           sessionStorage.setItem(sessionKey, '1');
           trackParam = '?trackView=true';
         }
       }
-      const res = await fetch(`/api/businesses/${businessId}${trackParam}`);
+      const res = await fetch(`/api/businesses/${slugParam}${trackParam}`);
       if (res.ok) {
         const data = await res.json();
         setBusiness(data);

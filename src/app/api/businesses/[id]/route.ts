@@ -11,14 +11,10 @@ export async function GET(
     const { id } = await params;
     const businessId = parseInt(id);
 
-    if (isNaN(businessId)) {
-      return NextResponse.json({ error: 'Invalid business ID' }, { status: 400 });
-    }
-
-    // 1. First try finding in Prisma Database
+    // 1. First try finding in Prisma Database (by ID or by Slug)
     try {
-      const business = await prisma.business.findUnique({
-        where: { id: businessId },
+      const business = await prisma.business.findFirst({
+        where: !isNaN(businessId) ? { id: businessId } : { slug: id },
         include: {
           reviews: { orderBy: { createdAt: 'desc' } },
           services: true,
@@ -33,7 +29,7 @@ export async function GET(
         if (shouldTrackView) {
           // Increment view count asynchronously only on actual user profile visit
           prisma.business.update({
-            where: { id: businessId },
+            where: { id: business.id },
             data: { views: { increment: 1 } }
           }).catch(() => {});
         }
@@ -125,12 +121,17 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const businessId = parseInt(id);
+    let targetId = parseInt(id);
+    if (isNaN(targetId)) {
+      const b = await prisma.business.findUnique({ where: { slug: id }, select: { id: true } });
+      if (b) targetId = b.id;
+    }
     const body = await request.json();
 
-    if (isNaN(businessId)) {
+    if (!targetId || isNaN(targetId)) {
       return NextResponse.json({ error: 'Invalid business ID' }, { status: 400 });
     }
+    const businessId = targetId;
 
     const {
       name,
@@ -305,11 +306,16 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const businessId = parseInt(id);
+    let targetId = parseInt(id);
+    if (isNaN(targetId)) {
+      const b = await prisma.business.findUnique({ where: { slug: id }, select: { id: true } });
+      if (b) targetId = b.id;
+    }
 
-    if (isNaN(businessId)) {
+    if (!targetId || isNaN(targetId)) {
       return NextResponse.json({ error: 'Invalid business ID' }, { status: 400 });
     }
+    const businessId = targetId;
 
     // Delete related records safely
     await prisma.jobApplication.deleteMany({ where: { job: { businessId } } }).catch(() => {});

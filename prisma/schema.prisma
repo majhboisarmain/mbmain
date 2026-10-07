@@ -12,10 +12,15 @@ datasource db {
 
 model Business {
   id              Int       @id @default(autoincrement())
+  slug            String?   @unique
   name            String
   category        String    // e.g., Restaurants, Doctors, Salons, Plumbers
+  subcategory     String?
   description     String
   address         String
+  locality        String?   // specific neighborhood/locality
+  pincode         String?   @default("401501")
+  state           String?   @default("Maharashtra")
   phone           String
   whatsapp        String
   website         String?
@@ -41,6 +46,11 @@ model Business {
   websiteClicks   Int       @default(0)
   createdBy       String?   // Stores the login phone of the user who registered this business
   hasHomeDelivery Boolean   @default(false) // Whether store provides home delivery in Boisar
+  claimed         Boolean   @default(false)
+  claimedBy       String?
+  seoTitle        String?
+  seoDescription  String?
+  isIndexable     Boolean   @default(true)
   createdAt       DateTime  @default(now())
   
   leads           Lead[]
@@ -49,7 +59,25 @@ model Business {
   services        Service[]
   faqs            FAQ[]
   jobs            Job[]
+
+  @@index([slug])
+  @@index([category])
+  @@index([location])
 }
+
+model BusinessClaim {
+  id              Int      @id @default(autoincrement())
+  businessId      Int
+  businessName    String
+  claimantName    String
+  claimantPhone   String
+  claimantEmail   String?
+  proofDocument   String?
+  message         String?
+  status          String   @default("Pending") // Pending, Approved, Rejected
+  createdAt       DateTime @default(now())
+}
+
 
 model Lead {
   id            Int       @id @default(autoincrement())

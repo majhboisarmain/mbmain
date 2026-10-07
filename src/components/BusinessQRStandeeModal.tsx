@@ -126,9 +126,10 @@ export default function BusinessQRStandeeModal({ isOpen, onClose, business }: Pr
 
   if (!isOpen) return null;
 
+  const activeSlug = (business as any).slug || business.id;
   const baseTargetUrl = business.customUrl || (typeof window !== 'undefined' 
-    ? `${window.location.origin}/business/${business.id}?review=true#reviews`
-    : `https://majhboisar.in/business/${business.id}?review=true#reviews`);
+    ? `${window.location.origin}/business/${activeSlug}?review=true#reviews`
+    : `https://majhboisar.in/business/${activeSlug}?review=true#reviews`);
 
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(baseTargetUrl)}&margin=10&format=png&color=0f172a`;
 

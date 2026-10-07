@@ -335,7 +335,8 @@ export default function AdminPanelPage() {
   const [propPlan4999Price, setPropPlan4999Price] = useState('₹4,999');
 
   const [loading, setLoading] = useState(true);
-  const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'queue' | 'payouts' | 'home_restaurants' | 'hotel_management' | 'resort_management' | 'listings' | 'users' | 'leads' | 'reviews' | 'ad_orders' | 'ad_pricing' | 'categories' | 'logs' | 'deletion_requests' | 'jobs_management' | 'property_management' | 'spam_reports' | 'system_storage'>('queue');
+  const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'queue' | 'payouts' | 'home_restaurants' | 'hotel_management' | 'resort_management' | 'listings' | 'users' | 'leads' | 'reviews' | 'ad_orders' | 'ad_pricing' | 'categories' | 'logs' | 'deletion_requests' | 'jobs_management' | 'property_management' | 'spam_reports' | 'system_storage' | 'claims'>('queue');
+  const [adminClaimsList, setAdminClaimsList] = useState<any[]>([]);
   const [systemStats, setSystemStats] = useState<any>(null);
   const [loadingStats, setLoadingStats] = useState<boolean>(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -1951,6 +1952,18 @@ export default function AdminPanelPage() {
         console.error("Error fetching db blood donors for admin:", err);
       }
 
+      try {
+        const claimsRes = await fetch('/api/claims', { cache: 'no-store' });
+        if (claimsRes.ok) {
+          const dataClaims = await claimsRes.json();
+          if (Array.isArray(dataClaims)) {
+            setAdminClaimsList(dataClaims);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching db claims for admin:", err);
+      }
+
       if (typeof window !== 'undefined') {
         const saved = localStorage.getItem('majh_boisar_special_profiles');
         if (saved) {
@@ -2407,6 +2420,42 @@ export default function AdminPanelPage() {
     } catch (err) {
       console.error(err);
       fetchAdminData();
+    }
+  };
+
+  const handleUpdateClaimStatus = async (id: number, status: 'Approved' | 'Rejected' | 'Resolved') => {
+    try {
+      const res = await fetch('/api/claims', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+      });
+      if (res.ok) {
+        setAdminClaimsList(prev => prev.map(c => c.id === id ? { ...c, status } : c));
+        logEvent(`Updated Claim #${id} status to ${status}`);
+        showToast(`🎉 Claim #${id} marked as ${status}!`, 'success');
+      } else {
+        alert('Failed to update claim status');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error updating claim');
+    }
+  };
+
+  const handleDeleteClaim = async (id: number) => {
+    if (!confirm(`Are you sure you want to delete claim request #${id}?`)) return;
+    try {
+      const res = await fetch(`/api/claims?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setAdminClaimsList(prev => prev.filter(c => c.id !== id));
+        logEvent(`Deleted Claim ID ${id}`);
+        showToast(`Claim #${id} deleted`, 'info');
+      } else {
+        alert('Failed to delete claim');
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -3572,6 +3621,7 @@ export default function AdminPanelPage() {
                 { val: 'users', label: 'Users', fullLabel: `Users (${registeredUsers.length})`, icon: <Users className="w-3.5 h-3.5 text-teal-600" /> },
                 { val: 'deletion_requests', label: 'Deletions', fullLabel: `Deletions (${deletionRequests.filter(r => r.status === 'Pending').length})`, icon: <Trash2 className="w-3.5 h-3.5 text-rose-500" />, highlight: deletionRequests.filter(r => r.status === 'Pending').length > 0 },
                 { val: 'spam_reports', label: 'Spam', fullLabel: `Spam (${reportsList.length})`, icon: <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />, highlight: reportsList.length > 0 },
+                { val: 'claims', label: 'Claims', fullLabel: `Claims (${adminClaimsList.filter(c => c.status === 'Pending').length})`, icon: <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />, highlight: adminClaimsList.filter(c => c.status === 'Pending').length > 0 },
                 { val: 'ad_orders', label: 'Ads', fullLabel: `Ad Orders (${adOrders.length})`, icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" /> },
                 { val: 'leads', label: 'Leads', fullLabel: `Leads (${leads.length})`, icon: <ClipboardCheck className="w-3.5 h-3.5" /> },
                 { val: 'reviews', label: 'Reviews', fullLabel: `Reviews (${reviews.length})`, icon: <MessageSquare className="w-3.5 h-3.5" /> },
@@ -7441,6 +7491,165 @@ export default function AdminPanelPage() {
                             </td>
                           </tr>
                         ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab Content: Business Ownership Claims */}
+            {activeAdminTab === 'claims' && (
+              <div className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl space-y-4 shadow-xs text-left">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-teal-700" />
+                      <span>Business Ownership Claim Requests ({adminClaimsList.length})</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      Review business owner claims. Verify their identity (visiting card, GST, or shop photo) and approve to transfer management rights.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={fetchAdminData}
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 cursor-pointer self-start sm:self-auto shrink-0 transition-colors"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-teal-700" />
+                    <span>Refresh</span>
+                  </button>
+                </div>
+
+                {adminClaimsList.length === 0 ? (
+                  <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-10 text-center my-4 space-y-2">
+                    <ShieldCheck className="w-10 h-10 text-teal-600 mx-auto" />
+                    <h4 className="text-sm font-black text-slate-800">No Business Claims Pending</h4>
+                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                      When shop owners click &quot;Claim Business&quot; on their profile, their requests will appear here for verification.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto border border-slate-200 rounded-2xl shadow-2xs">
+                    <table className="w-full text-left text-xs font-medium text-slate-700 divide-y divide-slate-100">
+                      <thead className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500 font-black">
+                        <tr>
+                          <th className="px-4 py-3">Claim ID</th>
+                          <th className="px-4 py-3">Business</th>
+                          <th className="px-4 py-3">Claimant Details</th>
+                          <th className="px-4 py-3">Proof / Note</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                        {adminClaimsList.map((claim) => {
+                          const cleanPhone = (claim.claimantPhone || '').replace(/\D/g, '');
+                          const waText = encodeURIComponent(`Hello ${claim.claimantName}, regarding your ownership claim for "${claim.businessName}" on Majh Boisar directory:`);
+
+                          return (
+                            <tr key={claim.id} className="hover:bg-slate-50/70 transition-colors">
+                              <td className="px-4 py-3 font-mono text-[11px] font-bold text-slate-500">
+                                #{claim.id}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="font-black text-slate-900 text-xs sm:text-sm">
+                                  {claim.businessName || 'Business'}
+                                </div>
+                                {claim.businessId > 0 && (
+                                  <Link
+                                    href={`/business/${claim.businessId}`}
+                                    target="_blank"
+                                    className="text-[10px] text-teal-700 hover:underline font-bold inline-flex items-center gap-0.5 mt-0.5"
+                                  >
+                                    <span>View Listing #{claim.businessId}</span>
+                                    <span>↗</span>
+                                  </Link>
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="font-bold text-slate-800">{claim.claimantName}</div>
+                                <div className="flex items-center gap-2 mt-1">
+                                  {cleanPhone && (
+                                    <a
+                                      href={`tel:${cleanPhone}`}
+                                      className="inline-flex items-center gap-1 text-[11px] text-teal-800 font-bold hover:underline"
+                                    >
+                                      <Phone className="w-3 h-3 text-teal-600" />
+                                      <span>{claim.claimantPhone}</span>
+                                    </a>
+                                  )}
+                                  {cleanPhone && (
+                                    <a
+                                      href={`https://wa.me/91${cleanPhone}?text=${waText}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 hover:bg-emerald-100"
+                                    >
+                                      <span>💬 WhatsApp</span>
+                                    </a>
+                                  )}
+                                </div>
+                                {claim.claimantEmail && (
+                                  <div className="text-[10px] text-slate-400 mt-0.5">{claim.claimantEmail}</div>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 max-w-xs">
+                                <p className="text-[11px] text-slate-600 line-clamp-3 leading-relaxed">
+                                  {claim.message || 'No additional note provided.'}
+                                </p>
+                                <span className="text-[9px] text-slate-400 block mt-1">
+                                  Submitted: {new Date(claim.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <span
+                                  className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                    claim.status === 'Approved'
+                                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                      : claim.status === 'Rejected'
+                                      ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                      : 'bg-amber-100 text-amber-900 border border-amber-200'
+                                  }`}
+                                >
+                                  {claim.status || 'Pending'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  {claim.status !== 'Approved' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateClaimStatus(claim.id, 'Approved')}
+                                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer shadow-2xs"
+                                      title="Approve ownership claim"
+                                    >
+                                      Approve
+                                    </button>
+                                  )}
+                                  {claim.status !== 'Rejected' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateClaimStatus(claim.id, 'Rejected')}
+                                      className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
+                                      title="Reject claim"
+                                    >
+                                      Reject
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteClaim(claim.id)}
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                    title="Delete record"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

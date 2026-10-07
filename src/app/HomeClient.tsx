@@ -31,6 +31,7 @@ import HotelBookingModal from '@/components/LocalHub/HotelBookingModal';
 import ResortVillaModal from '@/components/LocalHub/ResortVillaModal';
 import ReportModal from '@/components/ReportModal';
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
+import { getCategorySlug } from '@/lib/categories';
 
 const toTitleCase = (str: string) => {
   return str
@@ -2221,7 +2222,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                       {matchingBusinesses.map((biz) => (
                         <Link
                           key={biz.id}
-                          href={`/business/${biz.id}`}
+                          href={`/business/${(biz as any).slug || biz.id}`}
                           onClick={() => setIsSearchFocused(false)}
                           className="px-3.5 py-2 hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors group"
                         >
@@ -2534,9 +2535,9 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 gap-2.5 sm:gap-3">
             {displayedCategories.map((cat) => (
-              <div
+              <Link
                 key={cat.name}
-                onClick={() => router.push(`/search?category=${encodeURIComponent(cat.name)}`)}
+                href={`/category/${getCategorySlug(cat.name)}`}
                 className="group bg-white rounded-[20px_20px_32px_8px] border border-slate-200/90 p-2 sm:p-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-teal-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center justify-between text-center relative"
               >
                 {/* Clean Image Box */}
@@ -2559,7 +2560,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {cat.name}
                   </p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -2670,7 +2671,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {slide.map((loan) => (
                       <div
                         key={loan.id}
-                        onClick={() => router.push(`/search?query=${encodeURIComponent(loan.title)}`)}
+                        onClick={() => router.push(`/category/${getCategorySlug(loan.title)}`)}
                         className="group relative aspect-[1.15/1] sm:aspect-[1.3/1] md:aspect-[1.4/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200/90 bg-slate-900"
                       >
                         {/* Full-bleed photo */}
@@ -2803,7 +2804,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {slide.map((plan) => (
                       <div
                         key={plan.id}
-                        onClick={() => router.push(`/search?query=${encodeURIComponent(plan.title)}`)}
+                        onClick={() => router.push(`/category/${getCategorySlug(plan.title)}`)}
                         className="group relative aspect-[1.15/1] sm:aspect-[1.3/1] md:aspect-[1.4/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200/90 bg-slate-900"
                       >
                         {/* Full-bleed photo */}
@@ -2943,7 +2944,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           } else if (service.id === 'influencer-marketing') {
                             router.push('/creators');
                           } else {
-                            router.push(`/search?query=${encodeURIComponent(service.title)}`);
+                            router.push(`/category/${getCategorySlug(service.title)}`);
                           }
                         }}
                         className="group relative aspect-[1.15/1] sm:aspect-[1.3/1] md:aspect-[1.4/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200/90 bg-slate-900"
@@ -3088,7 +3089,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         key={item.id}
                         onClick={() => {
                           const query = item.searchQuery || item.title;
-                          router.push(`/search?query=${encodeURIComponent(query)}`);
+                          router.push(`/category/${getCategorySlug(query)}`);
                         }}
                         className="group relative aspect-[1.15/1] sm:aspect-[1.3/1] md:aspect-[1.4/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer border border-slate-200/90 bg-slate-900"
                       >

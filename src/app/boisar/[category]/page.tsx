@@ -3,14 +3,14 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { 
   MapPin, Phone, MessageSquare, Star, ShieldCheck, 
-  CheckCircle, Mail, HelpCircle, Truck, ShoppingBag
+  CheckCircle, Mail, HelpCircle, Truck, ShoppingBag 
 } from 'lucide-react';
-import { formatCategoryTitle, buildCategoryPrismaFilter } from '@/lib/categories';
 
 interface Props {
-  params: Promise<{ cat: string }>;
-  searchParams: Promise<{ area?: string }>;
+  params: Promise<{ category: string }>;
 }
+
+import { formatCategoryTitle, buildCategoryPrismaFilter } from '@/lib/categories';
 
 const CATEGORY_STOCK_GALLERY: Record<string, string[]> = {
   gym: [
@@ -28,60 +28,10 @@ const CATEGORY_STOCK_GALLERY: Record<string, string[]> = {
     'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=700&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1580618672591-eb180b1a973f?w=700&auto=format&fit=crop&q=80',
   ],
-  cloth: [
-    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?w=700&auto=format&fit=crop&q=80',
-  ],
-  fashion: [
-    'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?w=700&auto=format&fit=crop&q=80',
-  ],
   restaurant: [
     'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=700&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=700&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=700&auto=format&fit=crop&q=80',
-  ],
-  food: [
-    'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=700&auto=format&fit=crop&q=80',
-  ],
-  doctor: [
-    'https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1559000357-f6b52ddfbe37?w=700&auto=format&fit=crop&q=80',
-  ],
-  hospital: [
-    'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1512678080530-7760d81faba6?w=700&auto=format&fit=crop&q=80',
-  ],
-  school: [
-    'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=700&auto=format&fit=crop&q=80',
-  ],
-  electronics: [
-    'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1588508065123-287b28e013da?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=700&auto=format&fit=crop&q=80',
-  ],
-  furniture: [
-    'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=700&auto=format&fit=crop&q=80',
-  ],
-  automobile: [
-    'https://images.unsplash.com/photo-1486006920555-c77dce18193b?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=700&auto=format&fit=crop&q=80',
-  ],
-  hotel: [
-    'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=700&auto=format&fit=crop&q=80',
-    'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=700&auto=format&fit=crop&q=80',
   ],
   default: [
     'https://images.unsplash.com/photo-1497366216548-37526070297c?w=700&auto=format&fit=crop&q=80',
@@ -89,6 +39,7 @@ const CATEGORY_STOCK_GALLERY: Record<string, string[]> = {
     'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=700&auto=format&fit=crop&q=80',
   ]
 };
+
 
 function getEnrichedPhotos(category: string, image?: string, gallery?: string[]): string[] {
   const rawImage = image || '';
@@ -118,119 +69,75 @@ function getEnrichedPhotos(category: string, image?: string, gallery?: string[])
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const resolvedParams = await params;
-  const rawCat = resolvedParams.cat;
-  const categoryName = formatCategoryTitle(rawCat);
-  const slugKeyword = rawCat.replace(/-/g, ' ');
+  const { category } = await params;
+  const categoryTitle = formatCategoryTitle(category);
 
-  // Front-load the exact keyword for Google ranking
-  const title = `${categoryName} in Boisar — Contact Number, Address & Reviews`;
-  const description = `Find verified ${slugKeyword} and ${categoryName.toLowerCase()} in Boisar, Palghar. Direct phone numbers, addresses, customer ratings, and WhatsApp enquiry on Majh Boisar directory.`;
+  const title = `Best ${categoryTitle} in Boisar — Phone, Address & Ratings`;
+  const description = `Find verified ${categoryTitle.toLowerCase()} in Boisar, Palghar. Direct phone numbers, shop addresses, WhatsApp enquiry, and authentic customer details on Majh Boisar.`;
+  const canonicalUrl = `https://majhboisar.in/boisar/${category.toLowerCase()}`;
 
   return {
     title,
     description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     robots: {
       index: true,
       follow: true,
-      googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-image-preview': 'large',
+      },
     },
-    keywords: [
-      `${slugKeyword} in boisar`,
-      `${slugKeyword} boisar`,
-      `best ${slugKeyword} in boisar`,
-      `top ${slugKeyword} in boisar`,
-      `${categoryName.toLowerCase()} in boisar`,
-      `best ${categoryName.toLowerCase()} in boisar`,
-      `top ${categoryName.toLowerCase()} in boisar`,
-      `${slugKeyword} near me boisar`,
-      `${categoryName.toLowerCase()} near boisar station`,
-      `${categoryName.toLowerCase()} in ostwal empire boisar`,
-      `${categoryName.toLowerCase()} in tarapur midc`,
-      `boisar ${slugKeyword} contact number`,
-      `${categoryName.toLowerCase()} palghar`,
-      'majh boisar directory',
-    ],
     openGraph: {
       title,
       description,
-      url: `https://majhboisar.in/category/${encodeURIComponent(resolvedParams.cat)}`,
-      siteName: 'Majh Boisar Local Directory',
+      url: canonicalUrl,
+      siteName: 'Majh Boisar Directory',
+      type: 'website',
       images: [
         {
           url: 'https://majhboisar.in/majh-boisar-mb-logo.png',
           width: 800,
           height: 600,
-          alt: `Best ${categoryName} in Boisar`,
+          alt: `${categoryTitle} in Boisar`,
         },
       ],
       locale: 'en_IN',
-      type: 'website',
     },
-    alternates: {
-      canonical: `https://majhboisar.in/category/${encodeURIComponent(resolvedParams.cat)}`,
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
     },
+    keywords: [
+      `${categoryTitle.toLowerCase()} in boisar`,
+      `best ${categoryTitle.toLowerCase()} in boisar`,
+      `${categoryTitle.toLowerCase()} contact number`,
+      'boisar directory',
+      'majh boisar',
+    ],
   };
 }
 
-export default async function CategorySEOPage({ params, searchParams }: Props) {
-  const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
-  const categoryName = formatCategoryTitle(resolvedParams.cat);
-  const searchKeyword = resolvedParams.cat.replace(/-/g, ' ');
-  const selectedArea = resolvedSearchParams.area || 'All';
+export default async function BoisarCategoryPage({ params }: Props) {
+  const { category } = await params;
+  const categoryTitle = formatCategoryTitle(category);
 
-  // Fetch matching businesses from DB using comprehensive synonyms
-  let businesses: any[] = [];
-  try {
-    const filterConditions = buildCategoryPrismaFilter(resolvedParams.cat, selectedArea);
+  // Fetch verified businesses matching this category in Boisar using comprehensive synonyms
+  const businesses = await prisma.business.findMany({
+    where: buildCategoryPrismaFilter(category),
+    orderBy: [
+      { rating: 'desc' },
+      { views: 'desc' },
+      { id: 'asc' }
+    ],
+    take: 50
+  });
 
-    businesses = await prisma.business.findMany({
-      where: filterConditions,
-      orderBy: [
-        { verified: 'desc' },
-        { rating: 'desc' },
-        { views: 'desc' }
-      ],
-      take: 50
-    });
-  } catch (e) {
-    console.error('Error loading businesses for category:', e);
-  }
-
-  // Schema.org Structured Data
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    'itemListElement': businesses.slice(0, 10).map((b, index) => ({
-      '@type': 'ListItem',
-      'position': index + 1,
-      'item': {
-        '@type': 'LocalBusiness',
-        'name': b.name,
-        'image': b.image || 'https://majhboisar.in/majh-boisar-mb-logo.png',
-        'telephone': b.phone || '+91-9876543210',
-        'address': {
-          '@type': 'PostalAddress',
-          'streetAddress': b.address,
-          'addressLocality': 'Boisar',
-          'addressRegion': 'Maharashtra',
-          'postalCode': '401501',
-          'addressCountry': 'IN'
-        },
-        ...(b.rating && b.rating > 0 ? {
-          'aggregateRating': {
-            '@type': 'AggregateRating',
-            'ratingValue': b.rating.toString(),
-            'reviewCount': (b.reviewCount && b.reviewCount > 0 ? b.reviewCount : 1).toString()
-          }
-        } : {}),
-        'url': `https://majhboisar.in/business/${b.slug || b.id}`
-      }
-    }))
-  };
-
-  const breadcrumbLd = {
+  const breadcrumbSchema = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     'itemListElement': [
@@ -244,54 +151,37 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
         '@type': 'ListItem',
         'position': 2,
         'name': 'Boisar Directory',
-        'item': 'https://majhboisar.in/search'
+        'item': 'https://majhboisar.in/location/boisar'
       },
       {
         '@type': 'ListItem',
         'position': 3,
-        'name': `${categoryName} in Boisar`,
-        'item': `https://majhboisar.in/category/${encodeURIComponent(resolvedParams.cat)}`
+        'name': categoryTitle,
+        'item': `https://majhboisar.in/boisar/${category.toLowerCase()}`
       }
     ]
   };
 
-  const faqLd = {
+  const itemListSchema = {
     '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    'mainEntity': [
-      {
-        '@type': 'Question',
-        'name': `How to find the best verified ${categoryName.toLowerCase()} in Boisar?`,
-        'acceptedAnswer': {
-          '@type': 'Answer',
-          'text': `You can browse the curated list of verified ${categoryName.toLowerCase()} on Majh Boisar directory with direct phone numbers, customer reviews, photo galleries, and instant WhatsApp chat.`
-        }
-      },
-      {
-        '@type': 'Question',
-        'name': `Which are the top rated ${categoryName.toLowerCase()} in Boisar West and Station area?`,
-        'acceptedAnswer': {
-          '@type': 'Answer',
-          'text': `Top rated options in Boisar include verified local service providers located around Ostwal Empire, Station Road, and Navapur Road listed with authentic 4.5+ star customer ratings on Majh Boisar.`
-        }
-      }
-    ]
+    '@type': 'ItemList',
+    'itemListElement': businesses.slice(0, 10).map((b, idx) => ({
+      '@type': 'ListItem',
+      'position': idx + 1,
+      'name': b.name,
+      'url': `https://majhboisar.in/business/${b.slug || b.id}`
+    }))
   };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-16">
-      {/* Schema.org Structured Data */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
       />
 
       {/* Main Body - EXACT Search Layout */}
@@ -301,10 +191,10 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">
-              Palghar &gt; Boisar &gt; {categoryName}
+              Palghar &gt; Boisar &gt; {categoryTitle}
             </p>
             <h1 className="text-xs sm:text-sm md:text-base font-black text-slate-800 tracking-tight truncate leading-snug">
-              {categoryName} in Boisar
+              {categoryTitle} in Boisar
             </h1>
           </div>
           <div className="shrink-0">
@@ -349,12 +239,12 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
           <div className="lg:col-span-8 space-y-4">
             {businesses.length > 0 ? (
               businesses.map((business) => {
-                const allPhotos = getEnrichedPhotos(business.category, business.image, business.gallery);
+                const allPhotos = getEnrichedPhotos(business.category, business.image, (business as any).gallery);
                 const coverImage = allPhotos[0] || '/majh-boisar-mb-logo.png';
                 const displayAddress = business.address.toLowerCase().includes((business.location || '').toLowerCase())
                   ? business.address
                   : `${business.address}${business.location ? `, ${business.location}` : ''}`;
-                const hasHomeDelivery = Boolean(business.subscription && business.subscription !== 'Free' && business.hasHomeDelivery !== false);
+                const hasHomeDelivery = Boolean(business.subscription && business.subscription !== 'Free' && (business as any).hasHomeDelivery !== false);
                 const cleanPhone = (business.phone || '').replace(/\D/g, '');
                 const cleanWa = (business.whatsapp || business.phone || '').replace(/\D/g, '');
                 const bizHref = `/business/${business.slug || business.id}`;
@@ -521,7 +411,7 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
                 </div>
                 <div>
                   <h3 className="font-black text-slate-900 text-sm">
-                    No {categoryName} Found in Boisar
+                    No {categoryTitle} Found in Boisar
                   </h3>
                 </div>
                 <div className="pt-1">
@@ -590,45 +480,6 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
           </div>
 
         </div>
-
-        {/* FAQ Section */}
-        <section className="mt-12 bg-white rounded-3xl border border-slate-200 p-5 sm:p-7 shadow-2xs text-left space-y-4">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-            <HelpCircle className="w-5 h-5 text-teal-700" />
-            <h2 className="text-sm sm:text-base font-black text-slate-900">
-              Frequently Asked Questions: {categoryName} in Boisar
-            </h2>
-          </div>
-
-          <div className="space-y-3 divide-y divide-slate-100">
-            <div className="pt-2">
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-                1. How can I contact the top verified {categoryName.toLowerCase()} in Boisar?
-              </h3>
-              <p className="text-xs text-slate-600 mt-1 font-medium leading-relaxed">
-                You can directly connect with verified local business owners in Boisar by clicking the <strong>Call Now</strong> or <strong>WhatsApp</strong> buttons listed on each profile on Majh Boisar.
-              </p>
-            </div>
-
-            <div className="pt-3">
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-                2. Are businesses in Boisar West and Ostwal Empire covered?
-              </h3>
-              <p className="text-xs text-slate-600 mt-1 font-medium leading-relaxed">
-                Yes! Majh Boisar covers all key residential and commercial areas including Boisar West, Ostwal Empire, Station Road, Tarapur MIDC, Navapur Road, and Betegaon.
-              </p>
-            </div>
-
-            <div className="pt-3">
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900">
-                3. How do I list my own {categoryName.toLowerCase()} business on Majh Boisar?
-              </h3>
-              <p className="text-xs text-slate-600 mt-1 font-medium leading-relaxed">
-                Listing is 100% free! Click the <strong>Register Your Business</strong> button on the header, fill your contact details and photos, and your business will start appearing in Google search results.
-              </p>
-            </div>
-          </div>
-        </section>
 
       </div>
     </div>

@@ -11,6 +11,7 @@ import {
 import AdModal from '@/components/AdModal';
 import SportsTurfModal from '@/components/LocalHub/SportsTurfModal';
 import { useApp } from '@/context/AppContext';
+import { formatCategoryTitle } from '@/lib/categories';
 
 interface Business {
   id: number;
@@ -104,6 +105,31 @@ const CATEGORY_STOCK_GALLERY: Record<string, string[]> = {
     'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=700&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=700&auto=format&fit=crop&q=80',
     'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=700&auto=format&fit=crop&q=80',
+  ],
+  loan: [
+    'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1664575602276-acd073f104c1?w=700&auto=format&fit=crop&q=80',
+  ],
+  finance: [
+    'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1664575602276-acd073f104c1?w=700&auto=format&fit=crop&q=80',
+  ],
+  insurance: [
+    'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=700&auto=format&fit=crop&q=80',
+  ],
+  marketing: [
+    'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1557838923-2985c318be48?w=700&auto=format&fit=crop&q=80',
+  ],
+  digital: [
+    'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=700&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1557838923-2985c318be48?w=700&auto=format&fit=crop&q=80',
   ],
   default: [
     'https://images.unsplash.com/photo-1497366216548-37526070297c?w=700&auto=format&fit=crop&q=80',
@@ -402,14 +428,24 @@ export default function SearchClient() {
 
         {/* Search Metadata & Header */}
         <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">
-              Palghar &gt; Boisar &gt; {urlCategory || 'Local Services'}
-            </p>
-            <h1 className="text-xs sm:text-sm md:text-base font-black text-slate-800 tracking-tight truncate leading-snug">
-              {urlCategory || 'Local Services'} in Boisar
-            </h1>
-          </div>
+          {(() => {
+            const displayTitle = urlCategory 
+              ? formatCategoryTitle(urlCategory)
+              : urlQuery 
+                ? formatCategoryTitle(urlQuery)
+                : 'Local Services';
+
+            return (
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">
+                  Palghar &gt; Boisar &gt; {displayTitle}
+                </p>
+                <h1 className="text-xs sm:text-sm md:text-base font-black text-slate-800 tracking-tight truncate leading-snug">
+                  {displayTitle} in Boisar
+                </h1>
+              </div>
+            );
+          })()}
           {!loading && (
             <div className="shrink-0">
               <span className="text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs whitespace-nowrap">
@@ -543,10 +579,12 @@ export default function SearchClient() {
                   : `${business.address}${business.location ? `, ${business.location}` : ''}`;
                 const hasHomeDelivery = Boolean(business.subscription && business.subscription !== 'Free' && (business as any).hasHomeDelivery !== false);
 
+                const bizSlugOrId = (business as any).slug || business.id;
+
                 return (
                   <div
                     key={business.id}
-                    onClick={() => router.push(`/business/${business.id}`)}
+                    onClick={() => router.push(`/business/${bizSlugOrId}`)}
                     className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md hover:border-teal-500/40 transition-all duration-200 relative group cursor-pointer flex flex-col text-left"
                   >
                     {/* Top Section: Clean Photo Grid (Direct Side-by-Side Photos) */}
@@ -556,7 +594,7 @@ export default function SearchClient() {
                     >
                       {allPhotos.length <= 1 ? (
                         <div 
-                          onClick={() => router.push(`/business/${business.id}`)}
+                          onClick={() => router.push(`/business/${bizSlugOrId}`)}
                           className="w-full h-44 sm:h-52 relative cursor-pointer overflow-hidden group/photo bg-slate-900 flex items-center justify-center"
                         >
                           <img
@@ -577,7 +615,7 @@ export default function SearchClient() {
                           {allPhotos.slice(0, 2).map((imgUrl, pIdx) => (
                             <div
                               key={pIdx}
-                              onClick={() => router.push(`/business/${business.id}`)}
+                              onClick={() => router.push(`/business/${bizSlugOrId}`)}
                               className="w-full h-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs relative bg-slate-900 cursor-pointer group/photo flex items-center justify-center"
                             >
                               <img
@@ -594,7 +632,7 @@ export default function SearchClient() {
                           {allPhotos.slice(0, 3).map((imgUrl, pIdx) => (
                             <div
                               key={pIdx}
-                              onClick={() => router.push(`/business/${business.id}`)}
+                              onClick={() => router.push(`/business/${bizSlugOrId}`)}
                               className="w-full h-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs relative bg-slate-900 cursor-pointer group/photo flex items-center justify-center"
                             >
                               <img
@@ -647,7 +685,7 @@ export default function SearchClient() {
                       {/* Business Name Header */}
                       <div>
                         <h3 className="font-black text-sm sm:text-base text-slate-900 leading-snug hover:text-teal-700 transition-colors line-clamp-2">
-                          <Link href={`/business/${business.id}`} onClick={(e) => e.stopPropagation()}>
+                          <Link href={`/business/${bizSlugOrId}`} onClick={(e) => e.stopPropagation()}>
                             {business.name}
                           </Link>
                         </h3>
@@ -730,7 +768,7 @@ export default function SearchClient() {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (hasHomeDelivery) {
-                            router.push(`/business/${business.id}?tab=catalog`);
+                            router.push(`/business/${bizSlugOrId}?tab=catalog`);
                             return;
                           }
                           if (!isLoggedIn) {

@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { formatCategoryTitle } from '@/lib/categories';
 
 interface Props {
   params: Promise<{ cat: string }>;
@@ -7,7 +8,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { cat: rawCat } = await params;
-  const category = decodeURIComponent(rawCat || '');
+  const category = formatCategoryTitle(rawCat || '');
 
   if (!category) {
     return {
@@ -16,8 +17,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const title = `Top 10 Best ${category} in Boisar & Tarapur MIDC | Verified Listings - Majh Boisar`;
-  const description = `Looking for ${category} in Boisar? Find verified contact numbers, office addresses, user ratings, services offered & direct WhatsApp connect for top ${category} in Boisar & Tarapur MIDC.`;
+  const title = `${category} in Boisar | Verified Contacts & Reviews — Majh Boisar`;
+  const description = `Find verified ${category.toLowerCase()} in Boisar, Palghar. Browse verified contact numbers, shop addresses, customer ratings, and direct WhatsApp enquiry on Majh Boisar directory.`;
   const canonicalUrl = `https://majhboisar.in/category/${encodeURIComponent(category)}`;
 
   return {
@@ -62,7 +63,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CategoryLayout({ children, params }: Props) {
   const { cat: rawCat } = await params;
-  const category = decodeURIComponent(rawCat || '');
+  const category = formatCategoryTitle(rawCat || '');
 
   const breadcrumbSchema = {
     '@context': 'https://schema.org',

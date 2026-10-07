@@ -437,7 +437,7 @@ export default function Navbar() {
                       {navMatchingBusinesses.map((biz) => (
                         <Link
                           key={biz.id}
-                          href={`/business/${biz.id}`}
+                          href={`/business/${(biz as any).slug || biz.id}`}
                           onClick={() => setIsNavSearchFocused(false)}
                           className="px-2.5 py-1 sm:py-1.5 rounded-xl hover:bg-teal-50/80 cursor-pointer flex items-center justify-between transition-colors group"
                         >

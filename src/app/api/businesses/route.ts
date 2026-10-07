@@ -8,6 +8,7 @@ import { specialProfiles } from '@/lib/mockProfiles'; // Clean HMR
 import { businessSchema } from '@/lib/validations';
 import { badRequestResponse, internalServerErrorResponse } from '@/lib/authGuard';
 import { expandCategorySearchTerms } from '@/lib/categoryMapping';
+import { generateBusinessSlug } from '@/lib/slugify';
 
 function getHaversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth's radius in km
@@ -407,12 +408,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Auto-generate clean unique slug for Local SEO
+    let baseSlug = generateBusinessSlug(name, location || 'Boisar');
+    let candidateSlug = baseSlug;
+    let counter = 2;
+    try {
+      while (await prisma.business.findUnique({ where: { slug: candidateSlug }, select: { id: true } })) {
+        candidateSlug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+    } catch {
+      candidateSlug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
+    }
+
     let business: any;
     try {
       business = await prisma.business.create({
         data: {
+          slug: candidateSlug,
           name,
           category: finalCategory,
+          subcategory: body.subcategory || null,
+          locality: body.locality || location || 'Boisar',
+          pincode: body.pincode || '401501',
+          state: body.state || 'Maharashtra',
           description: cleanDesc,
           address: address || '',
           phone,
@@ -442,8 +461,13 @@ export async function POST(request: NextRequest) {
       console.warn('Prisma create with createdBy failed, retrying without createdBy:', createErr?.message);
       business = await prisma.business.create({
         data: {
+          slug: candidateSlug,
           name,
           category,
+          subcategory: body.subcategory || null,
+          locality: body.locality || location || 'Boisar',
+          pincode: body.pincode || '401501',
+          state: body.state || 'Maharashtra',
           description: cleanDesc,
           address: address || '',
           phone,
