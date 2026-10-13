@@ -23,12 +23,12 @@ export const metadata: Metadata = {
     'justdial boisar home services'
   ],
   alternates: {
-    canonical: 'https://majhboisar.in/services',
+    canonical: 'https://www.majhboisar.in/services',
   },
   openGraph: {
     title: 'RO Purifier Repair & Home Services in Boisar — Majh Boisar',
     description: 'Find & call verified RO water purifier technicians and home service providers in Boisar with upfront rates and 1-tap direct WhatsApp/Phone booking.',
-    url: 'https://majhboisar.in/services',
+    url: 'https://www.majhboisar.in/services',
     siteName: 'Majh Boisar Home Services',
     locale: 'en_IN',
     type: 'website',
@@ -46,7 +46,7 @@ const servicesJsonLd = {
   '@type': 'LocalBusiness',
   'name': 'Majh Boisar Home Services & RO Water Purifier Repair',
   'description': '1-Tap verified booking for RO water purifier repair, filter replacement, AC repair, electricians, plumbers, carpenters, and domestic helpers in Boisar & Tarapur MIDC.',
-  'url': 'https://majhboisar.in/services',
+  'url': 'https://www.majhboisar.in/services',
   'telephone': '+917769947217',
   'priceRange': '₹199 - ₹2,500',
   'areaServed': [
@@ -87,13 +87,13 @@ const breadcrumbsJsonLd = {
       '@type': 'ListItem',
       'position': 1,
       'name': 'Home',
-      'item': 'https://majhboisar.in/'
+      'item': 'https://www.majhboisar.in/'
     },
     {
       '@type': 'ListItem',
       'position': 2,
       'name': 'Home Services & RO Repair in Boisar',
-      'item': 'https://majhboisar.in/services'
+      'item': 'https://www.majhboisar.in/services'
     }
   ]
 };

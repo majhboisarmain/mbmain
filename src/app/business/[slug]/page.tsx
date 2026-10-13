@@ -87,9 +87,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const coverImage = business.image?.split('||gallery_sep||')[0];
   const imageUrl = coverImage?.startsWith('http')
     ? coverImage
-    : 'https://majhboisar.in/majh-boisar-mb-logo.png';
+    : 'https://www.majhboisar.in/majh-boisar-mb-logo.png';
 
-  const canonicalUrl = `https://majhboisar.in/business/${activeSlug}`;
+  const canonicalUrl = `https://www.majhboisar.in/business/${activeSlug}`;
 
   return {
     title: pageTitle,
@@ -199,7 +199,7 @@ export default async function BusinessProfilePage({ params }: Props) {
   // Prepare images
   const rawParts = (business.image || '').split('||gallery_sep||').filter(Boolean);
   const coverImage = rawParts[0] || '/majh-boisar-mb-logo.png';
-  const fullCoverUrl = coverImage.startsWith('http') ? coverImage : `https://majhboisar.in${coverImage}`;
+  const fullCoverUrl = coverImage.startsWith('http') ? coverImage : `https://www.majhboisar.in${coverImage}`;
 
   // Structured Data (JSON-LD)
   const schemaType = SCHEMA_TYPE_MAP[business.category] || 'LocalBusiness';
@@ -213,9 +213,9 @@ export default async function BusinessProfilePage({ params }: Props) {
   const localBusinessSchema: Record<string, any> = {
     '@context': 'https://schema.org',
     '@type': schemaType,
-    '@id': `https://majhboisar.in/business/${business.slug}`,
+    '@id': `https://www.majhboisar.in/business/${business.slug}`,
     'name': business.name,
-    'url': `https://majhboisar.in/business/${business.slug}`,
+    'url': `https://www.majhboisar.in/business/${business.slug}`,
     'telephone': business.phone || undefined,
     'description': business.description || `${business.name} — verified ${business.category} in Boisar, Maharashtra.`,
     'image': fullCoverUrl,
@@ -257,25 +257,25 @@ export default async function BusinessProfilePage({ params }: Props) {
         '@type': 'ListItem',
         'position': 1,
         'name': 'Home',
-        'item': 'https://majhboisar.in'
+        'item': 'https://www.majhboisar.in'
       },
       {
         '@type': 'ListItem',
         'position': 2,
         'name': 'Boisar Directory',
-        'item': 'https://majhboisar.in/location/boisar'
+        'item': 'https://www.majhboisar.in/location/boisar'
       },
       {
         '@type': 'ListItem',
         'position': 3,
         'name': business.category,
-        'item': `https://majhboisar.in/category/${encodeURIComponent(business.category.toLowerCase())}`
+        'item': `https://www.majhboisar.in/category/${encodeURIComponent(business.category.toLowerCase())}`
       },
       {
         '@type': 'ListItem',
         'position': 4,
         'name': business.name,
-        'item': `https://majhboisar.in/business/${business.slug}`
+        'item': `https://www.majhboisar.in/business/${business.slug}`
       }
     ]
   };

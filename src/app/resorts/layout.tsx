@@ -19,12 +19,12 @@ export const metadata: Metadata = {
     'resorts in dahanu'
   ],
   alternates: {
-    canonical: 'https://majhboisar.in/resorts',
+    canonical: 'https://www.majhboisar.in/resorts',
   },
   openGraph: {
     title: 'Resorts & Pool Villas in Boisar & Kelwa Beach — Majh Boisar',
     description: 'Find verified day-picnic resorts, private pool villas & beachside farmhouses in Boisar, Kelwa Beach & Palghar.',
-    url: 'https://majhboisar.in/resorts',
+    url: 'https://www.majhboisar.in/resorts',
     siteName: 'Majh Boisar Resorts',
     locale: 'en_IN',
     type: 'website',

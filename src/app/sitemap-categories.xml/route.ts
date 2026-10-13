@@ -72,7 +72,7 @@ const BOISAR_CATEGORY_SLUGS = [
 ];
 
 export async function GET() {
-  const baseUrl = 'https://majhboisar.in';
+  const baseUrl = 'https://www.majhboisar.in';
   const now = new Date().toISOString();
 
   const categoryUrls = CANONICAL_CATEGORY_SLUGS.map((slug) => `  <url>

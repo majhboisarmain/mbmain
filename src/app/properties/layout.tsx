@@ -37,12 +37,12 @@ export const metadata: Metadata = {
     'rera registered projects boisar'
   ],
   alternates: {
-    canonical: 'https://majhboisar.in/properties',
+    canonical: 'https://www.majhboisar.in/properties',
   },
   openGraph: {
     title: 'Properties in Boisar — Flats, Apartments & Plots For Sale / Rent',
     description: 'Explore verified flats, builder projects, row houses, plots, and commercial spaces in Boisar. Contact genuine owners and trusted builders directly with 0% commission.',
-    url: 'https://majhboisar.in/properties',
+    url: 'https://www.majhboisar.in/properties',
     siteName: 'Majh Boisar Real Estate',
     locale: 'en_IN',
     type: 'website',
@@ -68,7 +68,7 @@ const propertiesJsonLd = {
   '@type': 'RealEstateAgent',
   'name': 'Majh Boisar Real Estate & Property Portal',
   'description': 'Direct owner & verified builder real estate portal for Boisar, Palghar. Buy, sell, and rent 1 BHK, 2 BHK flats, luxury villas, commercial shops, and Tarapur MIDC industrial plots.',
-  'url': 'https://majhboisar.in/properties',
+  'url': 'https://www.majhboisar.in/properties',
   'image': 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&auto=format&fit=crop&q=80',
   'telephone': '+918007412345',
   'priceRange': '₹12 Lakh - ₹2.5 Crore',
@@ -106,13 +106,13 @@ const breadcrumbJsonLd = {
       '@type': 'ListItem',
       'position': 1,
       'name': 'Home',
-      'item': 'https://majhboisar.in/'
+      'item': 'https://www.majhboisar.in/'
     },
     {
       '@type': 'ListItem',
       'position': 2,
       'name': 'Boisar Real Estate',
-      'item': 'https://majhboisar.in/properties'
+      'item': 'https://www.majhboisar.in/properties'
     }
   ]
 };

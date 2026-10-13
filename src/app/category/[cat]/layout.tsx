@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = `${category} in Boisar | Verified Contacts & Reviews — Majh Boisar`;
   const description = `Find verified ${category.toLowerCase()} in Boisar, Palghar. Browse verified contact numbers, shop addresses, customer ratings, and direct WhatsApp enquiry on Majh Boisar directory.`;
-  const canonicalUrl = `https://majhboisar.in/category/${encodeURIComponent(category)}`;
+  const canonicalUrl = `https://www.majhboisar.in/category/${encodeURIComponent(category)}`;
 
   return {
     title,
@@ -73,19 +73,19 @@ export default async function CategoryLayout({ children, params }: Props) {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://majhboisar.in',
+        item: 'https://www.majhboisar.in',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Categories',
-        item: 'https://majhboisar.in/search',
+        item: 'https://www.majhboisar.in/search',
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: category || 'Category',
-        item: `https://majhboisar.in/category/${encodeURIComponent(category)}`,
+        item: `https://www.majhboisar.in/category/${encodeURIComponent(category)}`,
       },
     ],
   };
@@ -95,11 +95,11 @@ export default async function CategoryLayout({ children, params }: Props) {
     '@type': 'CollectionPage',
     name: `Best ${category} in Boisar`,
     description: `Find top verified ${category} in Boisar, Tarapur MIDC, and Palghar area with phone numbers and addresses.`,
-    url: `https://majhboisar.in/category/${encodeURIComponent(category)}`,
+    url: `https://www.majhboisar.in/category/${encodeURIComponent(category)}`,
     isPartOf: {
       '@type': 'WebSite',
       name: 'Majh Boisar',
-      url: 'https://majhboisar.in',
+      url: 'https://www.majhboisar.in',
     },
   };
 

@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Jobs in Boisar & Tarapur MIDC — Direct Company Hiring | Majh Boisar',
     description: 'Find direct hiring jobs and part-time work vacancies in Boisar, Tarapur MIDC, and Palghar with direct HR contact.',
-    url: 'https://majhboisar.in/jobs',
+    url: 'https://www.majhboisar.in/jobs',
     siteName: 'Majh Boisar Job Portal',
     locale: 'en_IN',
     type: 'website',
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     images: ['https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1200&auto=format&fit=crop&q=80'],
   },
   alternates: {
-    canonical: 'https://majhboisar.in/jobs',
+    canonical: 'https://www.majhboisar.in/jobs',
   }
 };
 
@@ -60,7 +60,7 @@ const jobsJsonLd = {
   '@type': 'CollectionPage',
   'name': 'Jobs in Boisar & Tarapur MIDC — Majh Boisar Direct Employment Portal',
   'description': 'Hyperlocal job portal for Tarapur MIDC & Boisar industrial area connecting job seekers with direct chemical plants, pharma factories, and local business employers with zero agent commission.',
-  'url': 'https://majhboisar.in/jobs',
+  'url': 'https://www.majhboisar.in/jobs',
   'areaServed': {
     '@type': 'AdministrativeArea',
     'name': 'Boisar & Tarapur MIDC, Palghar, Maharashtra',

@@ -49,12 +49,12 @@ export const metadata: Metadata = {
     "justdial boisar", "justdial alternative boisar", "housing boisar", "agoda boisar", "oyo hotels in boisar"
   ],
   authors: [
-    { name: "Ganesh Bhadane", url: "https://majhboisar.in" },
+    { name: "Ganesh Bhadane", url: "https://www.majhboisar.in" },
     { name: "Majh Boisar" }
   ],
   creator: "Ganesh Bhadane (B.Tech Computer Engineer)",
   publisher: "Ganesh Bhadane — Founder & Lead Engineer, Majh Boisar",
-  metadataBase: new URL("https://majhboisar.in"),
+  metadataBase: new URL("https://www.majhboisar.in"),
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -77,7 +77,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Majh Boisar (माझं बोईसर / Majha Boisar) — #1 City Directory & Search Engine",
     description: "Boisar's #1 All-in-One City Portal (माझं बोईसर) — Yahan sab milega! 1000+ verified local shops, budget & hourly hotels, flats on rent/sale, home services, doctors, Tarapur MIDC jobs, resorts & transport in Boisar.",
-    url: "https://majhboisar.in",
+    url: "https://www.majhboisar.in",
     siteName: "Majh Boisar (माझं बोईसर / Majha Boisar)",
     locale: "en_IN",
     type: "website",
@@ -140,10 +140,10 @@ const websiteJsonLd = {
     "Boisar Local Search",
     "Boisar Portal"
   ],
-  "url": "https://majhboisar.in",
+  "url": "https://www.majhboisar.in",
   "potentialAction": {
     "@type": "SearchAction",
-    "target": "https://majhboisar.in/search?query={search_term_string}",
+    "target": "https://www.majhboisar.in/search?query={search_term_string}",
     "query-input": "required name=search_term_string"
   },
   "description": "Boisar's #1 All-in-One City Portal & Local Search Engine (माझं बोईसर). Boisar me sab kuch milega — 1000+ verified shops, hotels, flats on rent/sale, home services, doctors, Tarapur MIDC jobs, cabs & blood donors in Boisar, Palghar."
@@ -167,7 +167,7 @@ const ganeshBhadanePersonJsonLd = {
     "Next.js & Web Development",
     "Local Commerce & City Tech"
   ],
-  "url": "https://majhboisar.in",
+  "url": "https://www.majhboisar.in",
   "sameAs": [
     "https://instagram.com/majhboisar"
   ]
@@ -178,8 +178,8 @@ const organizationJsonLd = {
   "@type": "Organization",
   "name": "Majh Boisar",
   "alternateName": ["Majha Boisar", "Maza Boisar", "माझं बोईसर"],
-  "url": "https://majhboisar.in",
-  "logo": "https://majhboisar.in/majh-boisar-mb-logo.png",
+  "url": "https://www.majhboisar.in",
+  "logo": "https://www.majhboisar.in/majh-boisar-mb-logo.png",
   "founder": {
     "@type": "Person",
     "name": "Ganesh Bhadane",
@@ -207,55 +207,49 @@ const siteNavigationJsonLd = {
       "@type": "SiteNavigationElement",
       "position": 1,
       "name": "Properties in Boisar — Flats, Plots & 1/2 BHK",
-      "url": "https://majhboisar.in/properties"
+      "url": "https://www.majhboisar.in/properties"
     },
     {
       "@type": "SiteNavigationElement",
       "position": 2,
       "name": "Hotels & Hourly Day-Stay in Boisar",
-      "url": "https://majhboisar.in/hotels"
+      "url": "https://www.majhboisar.in/hotels"
     },
     {
       "@type": "SiteNavigationElement",
       "position": 3,
-      "name": "Register Your Business — Free Listing on Majh Boisar",
-      "url": "https://majhboisar.in/register-business"
+      "name": "Travels in Boisar — Tour & Travels, Cabs & Transport",
+      "url": "https://www.majhboisar.in/hire-vehicle"
     },
     {
       "@type": "SiteNavigationElement",
       "position": 4,
-      "name": "Travels in Boisar — Tour & Travels, Cabs & Transport",
-      "url": "https://majhboisar.in/hire-vehicle"
+      "name": "Home Services & Repairs in Boisar",
+      "url": "https://www.majhboisar.in/services"
     },
     {
       "@type": "SiteNavigationElement",
       "position": 5,
-      "name": "Home Services & Repairs in Boisar",
-      "url": "https://majhboisar.in/services"
+      "name": "Find Jobs in Boisar & Tarapur MIDC",
+      "url": "https://www.majhboisar.in/jobs"
     },
     {
       "@type": "SiteNavigationElement",
       "position": 6,
-      "name": "Find Jobs in Boisar & Tarapur MIDC",
-      "url": "https://majhboisar.in/jobs"
+      "name": "Resorts & Pool Villas in Boisar & Kelwa Beach",
+      "url": "https://www.majhboisar.in/resorts"
     },
     {
       "@type": "SiteNavigationElement",
       "position": 7,
-      "name": "Resorts & Pool Villas in Boisar & Kelwa Beach",
-      "url": "https://majhboisar.in/resorts"
+      "name": "Emergency Blood Donors in Boisar",
+      "url": "https://www.majhboisar.in/blood-donation"
     },
     {
       "@type": "SiteNavigationElement",
       "position": 8,
-      "name": "Emergency Blood Donors in Boisar",
-      "url": "https://majhboisar.in/blood-donation"
-    },
-    {
-      "@type": "SiteNavigationElement",
-      "position": 9,
       "name": "Advertise & Promote Business in Boisar",
-      "url": "https://majhboisar.in/advertise"
+      "url": "https://www.majhboisar.in/advertise"
     }
   ]
 };
@@ -264,9 +258,9 @@ const localBusinessDirectoryJsonLd = {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
   "name": "Majh Boisar — Boisar Local Search Engine & City Directory",
-  "image": "https://majhboisar.in/majh-boisar-mb-logo.png",
-  "@id": "https://majhboisar.in",
-  "url": "https://majhboisar.in",
+  "image": "https://www.majhboisar.in/majh-boisar-mb-logo.png",
+  "@id": "https://www.majhboisar.in",
+  "url": "https://www.majhboisar.in",
   "telephone": "+919022388123",
   "priceRange": "₹ - ₹₹₹",
   "address": {

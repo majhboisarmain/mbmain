@@ -33,10 +33,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       'hotels in boisar',
       'couple friendly hotels in boisar'
     ],
+    alternates: {
+      canonical: `https://www.majhboisar.in/hotels/${hotel.slug || hotel.id}`,
+    },
     openGraph: {
       title: `${hotel.name} Boisar — Rooms from ₹${startingPrice} | Majh Boisar`,
       description: `Book ${hotel.name} in Boisar. Verified AC rooms, couple friendly, hourly & night stays near ${hotel.landmark || 'Boisar'}.`,
-      url: `https://majhboisar.in/hotels/${hotel.slug || hotel.id}`,
+      url: `https://www.majhboisar.in/hotels/${hotel.slug || hotel.id}`,
       images: hotel.gallery && hotel.gallery[0] ? [{ url: hotel.gallery[0] }] : undefined,
     },
   };

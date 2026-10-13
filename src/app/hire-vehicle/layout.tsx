@@ -28,13 +28,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Travels in Boisar — Tour & Travels, Cabs & Transport | Majh Boisar',
     description: 'Top Travels in Boisar & Tarapur MIDC. Find verified Tour & Travels, local & outstation cabs, and tempo transport with direct contact numbers.',
-    url: 'https://majhboisar.in/hire-vehicle',
+    url: 'https://www.majhboisar.in/hire-vehicle',
     siteName: 'Majh Boisar Travels & Vehicle Rentals',
     locale: 'en_IN',
     type: 'website'
   },
   alternates: {
-    canonical: 'https://majhboisar.in/hire-vehicle',
+    canonical: 'https://www.majhboisar.in/hire-vehicle',
   }
 };
 
@@ -43,7 +43,7 @@ const vehicleJsonLd = {
   '@type': ['AutoRental', 'TravelAgency'],
   'name': 'Majh Boisar Travels & Vehicle Rentals',
   'description': 'Direct local tour and travels, transport and vehicle rental directory for Boisar & Tarapur MIDC including cabs, taxis, commercial tempos, and rental vehicles.',
-  'url': 'https://majhboisar.in/hire-vehicle',
+  'url': 'https://www.majhboisar.in/hire-vehicle',
   'areaServed': {
     '@type': 'AdministrativeArea',
     'name': 'Boisar, Tarapur MIDC, Palghar, Maharashtra',

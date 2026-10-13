@@ -24,12 +24,12 @@ export const metadata: Metadata = {
     'day stay hotel boisar'
   ],
   alternates: {
-    canonical: 'https://majhboisar.in/hotels',
+    canonical: 'https://www.majhboisar.in/hotels',
   },
   openGraph: {
     title: 'Hotels in Boisar from ₹349 — Hourly & Night Stay | Majh Boisar',
     description: 'Book verified couple-friendly hotels in Boisar from ₹349. 3h/6h hourly slots & night stays near Railway Station & Tarapur MIDC with Pay at Hotel Desk.',
-    url: 'https://majhboisar.in/hotels',
+    url: 'https://www.majhboisar.in/hotels',
     siteName: 'Majh Boisar Hotels',
     locale: 'en_IN',
     type: 'website',

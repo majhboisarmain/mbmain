@@ -22,12 +22,12 @@ export const metadata: Metadata = {
     'real estate agent in boisar'
   ],
   alternates: {
-    canonical: 'https://majhboisar.in/properties'
+    canonical: 'https://www.majhboisar.in/properties'
   },
   openGraph: {
     title: 'Flats & Properties for Sale & Rent in Boisar | Majh Boisar Real Estate',
     description: 'Find 1 BHK, 2 BHK, 3 BHK flats for sale & rent, independent houses, and commercial properties in Boisar.',
-    url: 'https://majhboisar.in/properties',
+    url: 'https://www.majhboisar.in/properties',
     siteName: 'Majh Boisar',
     locale: 'en_IN',
     type: 'website'
@@ -38,7 +38,7 @@ const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'RealEstateListing',
   name: 'Properties in Boisar - Majh Boisar',
-  url: 'https://majhboisar.in/properties',
+  url: 'https://www.majhboisar.in/properties',
   description: 'Verified residential flats, apartments, and commercial properties for sale and rent in Boisar and Tarapur MIDC.',
   address: {
     '@type': 'PostalAddress',

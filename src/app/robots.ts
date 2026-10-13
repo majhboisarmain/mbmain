@@ -72,11 +72,11 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: [
-      'https://majhboisar.in/sitemap.xml',
-      'https://majhboisar.in/sitemap-businesses.xml',
-      'https://majhboisar.in/sitemap-categories.xml',
-      'https://majhboisar.in/sitemap-locations.xml',
+      'https://www.majhboisar.in/sitemap.xml',
+      'https://www.majhboisar.in/sitemap-businesses.xml',
+      'https://www.majhboisar.in/sitemap-categories.xml',
+      'https://www.majhboisar.in/sitemap-locations.xml',
     ],
-    host: 'https://majhboisar.in',
+    host: 'https://www.majhboisar.in',
   };
 }

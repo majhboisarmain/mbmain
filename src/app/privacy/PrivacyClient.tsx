@@ -125,7 +125,7 @@ export default function PrivacyClient() {
               <p className="text-slate-900 font-black">🏢 Majh Boisar Media &amp; City Directory</p>
               <p>📍 <strong>Registered Address:</strong> Boisar, Palghar District, Maharashtra, India - 401501</p>
               <p>✉️ <strong>Official Email:</strong> majhboisar@gmail.com</p>
-              <p>🌐 <strong>Website:</strong> https://majhboisar.in</p>
+              <p>🌐 <strong>Website:</strong> https://www.majhboisar.in</p>
             </div>
           </div>
 

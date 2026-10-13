@@ -1348,7 +1348,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
   const handleShareProperty = async () => {
     if (!selectedProfile) return;
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://majhboisar.in';
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.majhboisar.in';
     const shareUrl = `${origin}/properties?id=${selectedProfile.id}`;
     const propTitle = selectedProfile.category || selectedProfile.name || selectedProfile.title || 'Property in Boisar';
     const propPrice = formatPrice(selectedProfile.price);

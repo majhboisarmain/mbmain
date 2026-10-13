@@ -376,8 +376,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           {step === 'phone' && (
             <form onSubmit={handleSendOtp} className="space-y-5">
               <div className="text-center">
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Enter your mobile number</h2>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">If you don&apos;t have an account yet, we&apos;ll create one for you</p>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Register Your Business</h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">Enter your mobile number to get started with your free listing</p>
               </div>
 
               {/* Phone Input with Flag */}

@@ -124,7 +124,7 @@ export default function TermsClient() {
               <p className="text-slate-900 font-black">🏢 Majh Boisar Support &amp; Legal Desk</p>
               <p>📍 <strong>Address:</strong> Boisar, Palghar, Maharashtra, India - 401501</p>
               <p>✉️ <strong>Email:</strong> majhboisar@gmail.com</p>
-              <p>🌐 <strong>Website:</strong> https://majhboisar.in</p>
+              <p>🌐 <strong>Website:</strong> https://www.majhboisar.in</p>
             </div>
           </div>
 

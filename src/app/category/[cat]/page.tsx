@@ -154,11 +154,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      url: `https://majhboisar.in/category/${encodeURIComponent(resolvedParams.cat)}`,
+      url: `https://www.majhboisar.in/category/${encodeURIComponent(resolvedParams.cat)}`,
       siteName: 'Majh Boisar Local Directory',
       images: [
         {
-          url: 'https://majhboisar.in/majh-boisar-mb-logo.png',
+          url: 'https://www.majhboisar.in/majh-boisar-mb-logo.png',
           width: 800,
           height: 600,
           alt: `Best ${categoryName} in Boisar`,
@@ -168,7 +168,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'website',
     },
     alternates: {
-      canonical: `https://majhboisar.in/category/${encodeURIComponent(resolvedParams.cat)}`,
+      canonical: `https://www.majhboisar.in/category/${encodeURIComponent(resolvedParams.cat)}`,
     },
   };
 }
@@ -208,7 +208,7 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
       'item': {
         '@type': 'LocalBusiness',
         'name': b.name,
-        'image': b.image || 'https://majhboisar.in/majh-boisar-mb-logo.png',
+        'image': b.image || 'https://www.majhboisar.in/majh-boisar-mb-logo.png',
         'telephone': b.phone || '+91-9876543210',
         'address': {
           '@type': 'PostalAddress',
@@ -225,7 +225,7 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
             'reviewCount': (b.reviewCount && b.reviewCount > 0 ? b.reviewCount : 1).toString()
           }
         } : {}),
-        'url': `https://majhboisar.in/business/${b.slug || b.id}`
+        'url': `https://www.majhboisar.in/business/${b.slug || b.id}`
       }
     }))
   };
@@ -238,19 +238,19 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
         '@type': 'ListItem',
         'position': 1,
         'name': 'Home',
-        'item': 'https://majhboisar.in'
+        'item': 'https://www.majhboisar.in'
       },
       {
         '@type': 'ListItem',
         'position': 2,
         'name': 'Boisar Directory',
-        'item': 'https://majhboisar.in/search'
+        'item': 'https://www.majhboisar.in/search'
       },
       {
         '@type': 'ListItem',
         'position': 3,
         'name': `${categoryName} in Boisar`,
-        'item': `https://majhboisar.in/category/${encodeURIComponent(resolvedParams.cat)}`
+        'item': `https://www.majhboisar.in/category/${encodeURIComponent(resolvedParams.cat)}`
       }
     ]
   };

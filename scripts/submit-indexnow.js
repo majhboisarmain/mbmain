@@ -1,7 +1,7 @@
 const https = require('https');
 
 const API_KEY = '1b5f69bb309f4e00a1ece5c05337ef60';
-const HOST = 'majhboisar.in';
+const HOST = 'www.majhboisar.in';
 const KEY_LOCATION = `https://${HOST}/${API_KEY}.txt`;
 
 // Comprehensive list of all high-value pages, categories, and verified businesses
@@ -12,7 +12,6 @@ const URLS_TO_INDEX = [
   `https://${HOST}/claim-business`,
   `https://${HOST}/properties`,
   `https://${HOST}/hotels`,
-  `https://${HOST}/register-business`,
   `https://${HOST}/services`,
   `https://${HOST}/food`,
   `https://${HOST}/resorts`,

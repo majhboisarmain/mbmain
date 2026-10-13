@@ -96,7 +96,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const title = `Top Businesses & Services in ${locationInfo.title}`;
   const description = locationInfo.desc;
-  const canonicalUrl = `https://majhboisar.in/location/${locLower}`;
+  const canonicalUrl = `https://www.majhboisar.in/location/${locLower}`;
 
   return {
     title,
@@ -121,7 +121,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'website',
       images: [
         {
-          url: 'https://majhboisar.in/majh-boisar-mb-logo.png',
+          url: 'https://www.majhboisar.in/majh-boisar-mb-logo.png',
           width: 800,
           height: 600,
           alt: `Businesses in ${locationInfo.title}`,
@@ -183,19 +183,19 @@ export default async function LocationPage({ params }: Props) {
         '@type': 'ListItem',
         'position': 1,
         'name': 'Home',
-        'item': 'https://majhboisar.in'
+        'item': 'https://www.majhboisar.in'
       },
       {
         '@type': 'ListItem',
         'position': 2,
         'name': 'Locations',
-        'item': 'https://majhboisar.in/location/boisar'
+        'item': 'https://www.majhboisar.in/location/boisar'
       },
       {
         '@type': 'ListItem',
         'position': 3,
         'name': locationInfo.title,
-        'item': `https://majhboisar.in/location/${locLower}`
+        'item': `https://www.majhboisar.in/location/${locLower}`
       }
     ]
   };
@@ -207,7 +207,7 @@ export default async function LocationPage({ params }: Props) {
       '@type': 'ListItem',
       'position': idx + 1,
       'name': b.name,
-      'url': `https://majhboisar.in/business/${b.slug || b.id}`
+      'url': `https://www.majhboisar.in/business/${b.slug || b.id}`
     }))
   };
 

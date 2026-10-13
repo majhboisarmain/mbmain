@@ -24,12 +24,12 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Hi Foodie, Dine in Boisar! Top Restaurants, Cafes & Thalis | Majh Boisar",
     description: "Discover top cafes, family restaurants, pure veg thalis & party lounges in Boisar with menus & 1-tap WhatsApp booking.",
-    url: "https://majhboisar.in/food",
+    url: "https://www.majhboisar.in/food",
     siteName: "Majh Boisar (माझं बोईसर)",
     type: "website"
   },
   alternates: {
-    canonical: "https://majhboisar.in/food"
+    canonical: "https://www.majhboisar.in/food"
   }
 };
 
@@ -38,7 +38,7 @@ const foodJsonLd = {
   '@type': 'FoodEstablishment',
   'name': 'Dining & Food Delivery Directory Boisar — Majh Boisar',
   'description': 'Comprehensive food & dining guide for Boisar with menus, table reservations, home delivery and pure veg options.',
-  'url': 'https://majhboisar.in/food',
+  'url': 'https://www.majhboisar.in/food',
   'areaServed': {
     '@type': 'AdministrativeArea',
     'name': 'Boisar & Tarapur MIDC, Maharashtra',

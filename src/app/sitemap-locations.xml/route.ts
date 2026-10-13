@@ -13,7 +13,7 @@ const LOCATIONS = [
 ];
 
 export async function GET() {
-  const baseUrl = 'https://majhboisar.in';
+  const baseUrl = 'https://www.majhboisar.in';
   const now = new Date().toISOString();
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

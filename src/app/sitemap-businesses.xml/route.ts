@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db';
 export const revalidate = 3600; // 1 hour
 
 export async function GET() {
-  const baseUrl = 'https://majhboisar.in';
+  const baseUrl = 'https://www.majhboisar.in';
   const now = new Date().toISOString();
 
   let businesses: any[] = [];

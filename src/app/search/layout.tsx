@@ -11,12 +11,12 @@ export const metadata: Metadata = {
     'services near me boisar',
   ],
   alternates: {
-    canonical: 'https://majhboisar.in/search',
+    canonical: 'https://www.majhboisar.in/search',
   },
   openGraph: {
     title: 'Search Businesses & Services in Boisar | Majh Boisar',
     description: 'Find top verified local businesses, phone numbers & location maps in Boisar.',
-    url: 'https://majhboisar.in/search',
+    url: 'https://www.majhboisar.in/search',
     siteName: 'Majh Boisar',
     type: 'website',
   },

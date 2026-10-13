@@ -14,12 +14,12 @@ export const metadata: Metadata = {
     'tarapur midc blood donation'
   ],
   alternates: {
-    canonical: 'https://majhboisar.in/blood-donation',
+    canonical: 'https://www.majhboisar.in/blood-donation',
   },
   openGraph: {
     title: 'Emergency Blood Donors in Boisar — Majh Boisar',
     description: 'Find verified voluntary blood donors across Boisar & Palghar.',
-    url: 'https://majhboisar.in/blood-donation',
+    url: 'https://www.majhboisar.in/blood-donation',
     siteName: 'Majh Boisar Blood Bank',
     locale: 'en_IN',
     type: 'website',

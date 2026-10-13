@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Contact Majh Boisar | Directory Support & Business Helpline',
   description: 'Get in touch with the Majh Boisar directory team. Report incorrect business details, request profile corrections, or speak with our local business support desk.',
   alternates: {
-    canonical: 'https://majhboisar.in/contact',
+    canonical: 'https://www.majhboisar.in/contact',
   },
 };
 

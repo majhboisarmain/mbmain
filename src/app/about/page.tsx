@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'About Majh Boisar | Local Business & Community Directory',
   description: 'Learn about Majh Boisar — the official digital marketplace & local business directory connecting residents and business owners across Boisar, Palghar, and Tarapur MIDC.',
   alternates: {
-    canonical: 'https://majhboisar.in/about',
+    canonical: 'https://www.majhboisar.in/about',
   },
 };
 

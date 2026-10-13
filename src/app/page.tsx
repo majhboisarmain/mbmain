@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Majh Boisar — Boisar's #1 All-in-One City Portal & Local Search",
     description: "Boisar's #1 All-in-One City Portal — Yahan sab milega! Find 1000+ verified shops, hotels, flats on rent/sale, doctors, Tarapur MIDC jobs & home services in Boisar.",
-    url: 'https://majhboisar.in',
+    url: 'https://www.majhboisar.in',
     siteName: 'MajhBoisar',
     locale: 'en_IN',
     type: 'website',
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     description: 'Boisar me sab kuch milega — 1000+ verified shops, hotels, flats, doctors, MIDC jobs & home services.',
   },
   alternates: {
-    canonical: 'https://majhboisar.in',
+    canonical: 'https://www.majhboisar.in',
   },
   robots: {
     index: true,
