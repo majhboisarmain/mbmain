@@ -99,21 +99,11 @@ function getEnrichedPhotos(category: string, image?: string, gallery?: string[])
     : imageParts.slice(1);
   let all = Array.from(new Set([coverImage, ...galleryPhotos])).filter(Boolean) as string[];
 
-  const catLower = (category || '').toLowerCase();
-  const matchedKey = Object.keys(CATEGORY_STOCK_GALLERY).find(k => catLower.includes(k)) || 'default';
-  const stock = CATEGORY_STOCK_GALLERY[matchedKey] || CATEGORY_STOCK_GALLERY['default'];
-
   if (all.length === 0 || (all.length === 1 && (all[0] === '/majh-boisar-mb-logo.png' || all[0].includes('mb-logo')))) {
-    return stock;
+    return ['/majh-boisar-mb-logo.png'];
   }
 
-  if (all.length === 1) {
-    return [all[0], stock[1], stock[2]].filter(Boolean);
-  }
-  if (all.length === 2) {
-    return [all[0], all[1], stock[2]].filter(Boolean);
-  }
-
+  // Strictly return ONLY real photos uploaded by the business (Zero fake demo/stock photos)
   return all;
 }
 
@@ -382,6 +372,11 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
                             alt={business.name}
                             className="relative z-10 w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
                           />
+                          {business.views != null && business.views > 0 && (
+                            <div className="absolute bottom-2 right-2 bg-slate-950/85 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none backdrop-blur-xs z-20">
+                              <span>👁️ {business.views.toLocaleString()} visits</span>
+                            </div>
+                          )}
                         </Link>
                       ) : allPhotos.length === 2 ? (
                         <div className="grid grid-cols-2 gap-1.5 w-full h-44 sm:h-50 p-1.5 bg-slate-50">
@@ -396,6 +391,11 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
                                 alt={`${business.name} photo ${pIdx + 1}`}
                                 className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
                               />
+                              {pIdx === 1 && business.views != null && business.views > 0 && (
+                                <div className="absolute bottom-1.5 right-1.5 bg-slate-950/85 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none backdrop-blur-xs">
+                                  <span>👁️ {business.views.toLocaleString()} visits</span>
+                                </div>
+                              )}
                             </Link>
                           ))}
                         </div>

@@ -53,6 +53,7 @@ export interface HotelItem {
   isNightAvailable: boolean;
   isCoupleFriendly: boolean;
   acceptsLocalId: boolean;
+  isPayAtHotelAvailable?: boolean;
   nearStation: boolean;
   nearMidc: boolean;
   gallery: string[];
@@ -176,6 +177,26 @@ export function getAllHotels(): HotelItem[] {
         };
       }
       return h;
+    });
+  } catch (e) {
+    console.error(e);
+  }
+
+  // Sync Pay at Hotel availability status from local storage
+  try {
+    const globalPayAtHotel = typeof window !== 'undefined' ? localStorage.getItem('majh_boisar_hotel_pay_at_hotel_enabled') : null;
+    list = list.map(h => {
+      if (typeof window === 'undefined') return { ...h, isPayAtHotelAvailable: h.isPayAtHotelAvailable !== false };
+      const specificPay = localStorage.getItem(`majh_boisar_hotel_pay_at_hotel_${h.slug}`) ||
+        localStorage.getItem(`majh_boisar_hotel_pay_at_hotel_${h.id}`);
+      const isPayOff = specificPay === 'false' ||
+        (h.isPayAtHotelAvailable === false) ||
+        (specificPay === null && globalPayAtHotel === 'false');
+
+      return {
+        ...h,
+        isPayAtHotelAvailable: !isPayOff
+      };
     });
   } catch (e) {
     console.error(e);

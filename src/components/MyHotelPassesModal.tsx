@@ -19,6 +19,8 @@ interface HotelBookingPass {
   date?: string;
   totalAmount: number;
   status?: string;
+  paymentMode?: string;
+  paymentStatus?: string;
   createdAt?: string;
 }
 
@@ -72,6 +74,8 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
             date: b.checkInDate,
             totalAmount: Number(b.totalAmount) || 0,
             status: b.status,
+            paymentMode: b.paymentMode || 'Pay at Hotel',
+            paymentStatus: b.paymentStatus || 'Pending',
             createdAt: b.createdAt
           }));
 
@@ -238,7 +242,11 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
                           📅 Date: <strong className="text-slate-800 font-bold">{pass.date}</strong>
                         </p>
                         <p className="text-slate-500 font-medium">
-                          💰 Payable at Desk: <strong className="text-base text-slate-900 font-black">₹{pass.totalAmount}</strong>
+                          {pass.paymentMode === 'Online' ? (
+                            <>💳 Payment: <strong className="text-base text-indigo-700 font-black">₹{pass.totalAmount} (Paid Online)</strong></>
+                          ) : (
+                            <>💰 Payable at Desk: <strong className="text-base text-slate-900 font-black">₹{pass.totalAmount}</strong></>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -246,7 +254,9 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
                     {/* Notice */}
                     <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex items-center justify-between text-[11px] text-slate-700 font-medium">
                       <span>🚪 Show this pass &amp; Govt ID at reception to collect room key</span>
-                      <span className="font-extrabold text-emerald-700">✓ Pay on Arrival</span>
+                      <span className={`font-extrabold ${pass.paymentMode === 'Online' ? 'text-indigo-700' : 'text-emerald-700'}`}>
+                        {pass.paymentMode === 'Online' ? '✓ Paid Online' : '✓ Pay at Hotel Desk'}
+                      </span>
                     </div>
 
                     {/* Action Buttons */}

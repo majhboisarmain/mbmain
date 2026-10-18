@@ -31,7 +31,7 @@ import HotelBookingModal from '@/components/LocalHub/HotelBookingModal';
 import ResortVillaModal from '@/components/LocalHub/ResortVillaModal';
 import ReportModal from '@/components/ReportModal';
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
-import { getCategorySlug } from '@/lib/categories';
+import { getCategorySlug, formatCategoryTitle, getCategorySearchTerms } from '@/lib/categories';
 
 const toTitleCase = (str: string) => {
   return str
@@ -61,6 +61,7 @@ interface Business {
   id: number;
   name: string;
   category: string;
+  subcategory?: string;
   description: string;
   address: string;
   phone: string;
@@ -93,16 +94,14 @@ interface AdCampaign {
 }
 
 const rawCategories = [
-  "Protein & Supplements", "Gyms & Fitness Centers", "Pathology & Diagnostic Labs", "Salon & Beauty Parlour", "Clothing & Fashion",
-  "Photographers & Videographers", "Dance & Music Classes", "Travel Agencies & Tours", "Medical Stores & Pharmacy", "CA & Tax Consultants",
-  "Doctors & Specialists", "Baby & Mother Care", "Eye Care & Opticians", "Restaurants & Dining", "Cafes & Bakeries", "Street Food & Snacks",
-  "Grocery & Supermarkets", "Dairy & Milk Products", "Meat & Poultry", "Fruits & Vegetables", "Real Estate & Properties",
-  "Hotels & Lodging", "Resorts & Villas", "PG & Hostels", "Home Services & Repairs", "Electricians & Wiring",
-  "Plumbers & Sanitation", "Carpenters & Furniture", "Painters & Waterproofing", "AC Service & Cooling", "Pest Control Services",
-  "Beauty Parlours & Salons", "Spa & Wellness", "Yoga & Martial Arts", "Schools & Colleges", "Coaching & Tuitions",
-  "Jewellery & Ornaments", "Footwear & Shoes", "Electronics & Home Appliances", "Mobile Shops & Repair", "Computer & Laptop Services",
-  "Hardware & Building Material", "Interior Designers & Decor", "Steel & Aluminium Fabrication", "Automobile Garages & Repair", "Car & Bike Rentals",
-  "Packers & Movers", "Event Organisers & Decor", "Catering & Tiffin Services", "Digital Marketing & IT", "Hospitals & Emergency"
+  "Protein", "Loans", "Gyms", "Eye Opticians", "Water Purifier", "Schools", "Digital Printing", "Jobs",
+  "Dance Classes", "Music Classes", "Salons", "Clothing", "Photographers", "Travel Agencies", "Medical Stores",
+  "CA Consultants", "Doctors", "Hospitals", "Dentists", "Pathology Labs", "Restaurants", "Cafes", "Bakeries",
+  "Street Food", "Grocery", "Real Estate", "Hotels", "Resorts", "Hostels", "Electricians", "Plumbers",
+  "Carpenters", "Painters", "AC Service", "Pest Control", "Yoga Classes", "Coaching Classes", "Jewellery",
+  "Footwear", "Electronics", "Mobile Shops", "Computer Repair", "Hardware", "Interior Designers", "Fabrication",
+  "Auto Garages", "Car Rentals", "Packers Movers", "Event Organisers", "Catering", "Digital Marketing",
+  "Insurance", "Lawyers", "Pet Clinics", "Baby Care", "Spa Wellness", "Dairy Products", "Meat Poultry", "Fruits Vegetables"
 ];
 
 export interface HomeFeaturedRestaurant {
@@ -481,63 +480,66 @@ function getCategoryBgClass(name: string) {
 }
 
 const CATEGORY_IMAGE_MAP: Record<string, string> = {
-  "Protein & Supplements": "https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?auto=format&fit=crop&w=360&q=80",
-  "Gyms & Fitness Centers": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=260&q=80",
-  "Pathology & Diagnostic Labs": "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=260&q=80",
-  "Salon & Beauty Parlour": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=260&q=80",
-  "Medical Stores & Pharmacy": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=260&q=80",
-  "Doctors & Specialists": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=260&q=80",
-  "Hospitals & Emergency": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=260&q=80",
-  "Baby & Mother Care": "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=260&q=80",
-  "Eye Care & Opticians": "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?auto=format&fit=crop&w=260&q=80",
-  "Restaurants & Dining": "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=260&q=80",
-  "Cafes & Bakeries": "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=260&q=80",
-  "Street Food & Snacks": "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=260&q=80",
-  "Dentists & Dental Clinics": "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=260&q=80",
-  "Grocery & Supermarkets": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=260&q=80",
-  "Dairy & Milk Products": "https://images.unsplash.com/photo-1528750997573-59b89d56f4f7?auto=format&fit=crop&w=260&q=80",
-  "Meat & Poultry": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=260&q=80",
-  "Fruits & Vegetables": "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=260&q=80",
-  "Real Estate & Properties": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=260&q=80",
-  "Hotels & Lodging": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=260&q=80",
-  "Resorts & Villas": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=260&q=80",
-  "PG & Hostels": "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=260&q=80",
-  "Home Services & Repairs": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=260&q=80",
-  "Electricians & Wiring": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=260&q=80",
-  "Plumbers & Sanitation": "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=260&q=80",
-  "Carpenters & Furniture": "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=260&q=80",
-  "Painters & Waterproofing": "https://images.unsplash.com/photo-1562259949-e8e7689d7828?auto=format&fit=crop&w=260&q=80",
-  "AC Service & Cooling": "https://images.unsplash.com/photo-1614633833026-06204c66e2c3?auto=format&fit=crop&w=260&q=80",
-  "Pest Control Services": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=260&q=80",
-  "Beauty Parlours & Salons": "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=260&q=80",
-  "Spa & Wellness": "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=260&q=80",
-  "Gyms & Fitness": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=260&q=80",
-  "Yoga & Martial Arts": "https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=260&q=80",
-  "Schools & Colleges": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=260&q=80",
-  "Dance & Music Classes": "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&w=360&q=80",
-  "Dance Classes & Music": "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&w=360&q=80",
+  // Canonical Categories
+  "Protein": "https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?auto=format&fit=crop&w=360&q=80",
+  "Loans": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=360&q=80",
+  "Gyms": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=360&q=80",
+  "Eye Opticians": "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?auto=format&fit=crop&w=360&q=80",
+  "Water Purifier": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=360&q=80",
+  "Schools": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=360&q=80",
+  "Digital Printing": "https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?auto=format&fit=crop&w=360&q=80",
+  "Jobs": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=360&q=80",
   "Dance Classes": "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&w=360&q=80",
-  "Music & Dance Classes": "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&w=360&q=80",
-  "Jewellery & Ornaments": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=260&q=80",
-  "Clothing & Fashion": "https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=260&q=80",
-  "Footwear & Shoes": "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=260&q=80",
-  "Electronics & Home Appliances": "https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=260&q=80",
-  "Mobile Shops & Repair": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=260&q=80",
-  "Computer & Laptop Services": "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=260&q=80",
-  "Hardware & Building Material": "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=260&q=80",
-  "Interior Designers & Decor": "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=260&q=80",
-  "Steel & Aluminium Fabrication": "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=260&q=80",
-  "Automobile Garages & Repair": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=260&q=80",
-  "Car & Bike Rentals": "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=260&q=80",
-  "Travel Agencies & Tours": "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=260&q=80",
-  "Packers & Movers": "https://images.unsplash.com/photo-1600518464441-9154a4dea21b?auto=format&fit=crop&w=260&q=80",
-  "Event Organisers & Decor": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=260&q=80",
-  "Photographers & Videographers": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=260&q=80",
-  "Catering & Tiffin Services": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=260&q=80",
-  "Digital Marketing & IT": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=260&q=80",
-  "CA & Tax Consultants": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=260&q=80",
-  "Lawyers & Legal Advisors": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=260&q=80",
-  "Pet Shops & Vet Clinics": "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=260&q=80"
+  "Music Classes": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=360&q=80",
+  "Salons": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=360&q=80",
+  "Restaurants": "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=360&q=80",
+  "Clothing": "https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=360&q=80",
+  "Photographers": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=360&q=80",
+  "Travel Agencies": "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=360&q=80",
+  "Medical Stores": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=360&q=80",
+  "CA Consultants": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=360&q=80",
+  "Doctors": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=360&q=80",
+  "Hospitals": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=360&q=80",
+  "Dentists": "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=360&q=80",
+  "Pathology Labs": "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=360&q=80",
+  "Cafes": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=360&q=80",
+  "Bakeries": "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=360&q=80",
+  "Street Food": "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=360&q=80",
+  "Grocery": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=360&q=80",
+  "Real Estate": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=360&q=80",
+  "Hotels": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=360&q=80",
+  "Resorts": "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=360&q=80",
+  "Hostels": "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=360&q=80",
+  "Electricians": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&w=360&q=80",
+  "Plumbers": "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=360&q=80",
+  "Carpenters": "https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=360&q=80",
+  "Painters": "https://images.unsplash.com/photo-1562259949-e8e7689d7828?auto=format&fit=crop&w=360&q=80",
+  "AC Service": "https://images.unsplash.com/photo-1614633833026-06204c66e2c3?auto=format&fit=crop&w=360&q=80",
+  "Pest Control": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=360&q=80",
+  "Yoga Classes": "https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=360&q=80",
+  "Coaching Classes": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=360&q=80",
+  "Jewellery": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=360&q=80",
+  "Footwear": "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=360&q=80",
+  "Electronics": "https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=360&q=80",
+  "Mobile Shops": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=360&q=80",
+  "Computer Repair": "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=360&q=80",
+  "Hardware": "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=360&q=80",
+  "Interior Designers": "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=360&q=80",
+  "Fabrication": "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=360&q=80",
+  "Auto Garages": "https://images.unsplash.com/photo-1486006920555-c77dce18193b?auto=format&fit=crop&w=360&q=80",
+  "Car Rentals": "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=360&q=80",
+  "Packers Movers": "https://images.unsplash.com/photo-1600518464441-9154a4dea21b?auto=format&fit=crop&w=360&q=80",
+  "Event Organisers": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=360&q=80",
+  "Catering": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=360&q=80",
+  "Digital Marketing": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=360&q=80",
+  "Insurance": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=360&q=80",
+  "Lawyers": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=360&q=80",
+  "Pet Clinics": "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=360&q=80",
+  "Baby Care": "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=360&q=80",
+  "Spa Wellness": "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=360&q=80",
+  "Dairy Products": "https://images.unsplash.com/photo-1528750997573-59b89d56f4f7?auto=format&fit=crop&w=360&q=80",
+  "Meat Poultry": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=360&q=80",
+  "Fruits Vegetables": "https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=360&q=80"
 };
 
 function getCategoryImage(name: string): string {
@@ -979,11 +981,14 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
               .sort((a: any, b: any) => (b.rating || 0) - (a.rating || 0));
             setBusinesses(sorted);
 
-            // Extract custom categories that are verified
+            // Extract custom categories that are verified using canonical mapping (prevent duplicates)
             const customCats: string[] = [];
             data.forEach((b: any) => {
-              if (b.verified && b.category && !rawCategories.includes(b.category) && !customCats.includes(b.category)) {
-                customCats.push(b.category);
+              if (b.verified && b.category) {
+                const canonical = formatCategoryTitle(b.category);
+                if (!rawCategories.includes(canonical) && !customCats.includes(canonical)) {
+                  customCats.push(canonical);
+                }
               }
             });
             setDynamicCategories(customCats);
@@ -1965,12 +1970,65 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
     setAdTargetCategory('All');
   };
 
-  const categories = [...rawCategories, ...dynamicCategories].map(name => ({
-    name,
-    icon: getCategoryIcon(name),
-    bgClass: getCategoryBgClass(name),
-    image: getCategoryImage(name)
-  }));
+  const getCategoryBusinessCount = (catName: string, bizList: Business[]): number => {
+    const canonicalTarget = formatCategoryTitle(catName).toLowerCase();
+    const slug = getCategorySlug(catName);
+    const searchTerms = getCategorySearchTerms(catName).map(t => t.toLowerCase());
+
+    return bizList.filter(b => {
+      if (!b || !b.verified) return false;
+      const bCatCanonical = formatCategoryTitle(b.category || '').toLowerCase();
+      const bCat = (b.category || '').toLowerCase().trim();
+      const bSub = (b.subcategory || '').toLowerCase().trim();
+      const bSlug = getCategorySlug(b.category || '');
+
+      // 1. Direct canonical match (e.g. Protein Shop -> Protein, Loan Consultants -> Loans)
+      if (bCatCanonical === canonicalTarget) return true;
+
+      // 2. Direct Slug match
+      if (bSlug === slug) return true;
+
+      // 3. Synonym Match
+      return searchTerms.some(term => term.length >= 4 && (bCat.includes(term) || bSub.includes(term)));
+    }).length;
+  };
+
+  // Dynamically sort categories by verified business count:
+  // Categories with the most businesses added appear 1st, then 2nd, 3rd, etc.
+  const categories = useMemo(() => {
+    // Strictly deduplicate by canonical title to ensure single category per industry
+    const seen = new Set<string>();
+    const canonicalList: string[] = [];
+
+    [...rawCategories, ...dynamicCategories].forEach(rawName => {
+      const canonical = formatCategoryTitle(rawName);
+      const lower = canonical.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        canonicalList.push(canonical);
+      }
+    });
+
+    const mapped = canonicalList.map(name => {
+      const count = getCategoryBusinessCount(name, businesses);
+      return {
+        name,
+        count,
+        icon: getCategoryIcon(name),
+        bgClass: getCategoryBgClass(name),
+        image: getCategoryImage(name)
+      };
+    });
+
+    mapped.sort((a, b) => {
+      if (b.count !== a.count) {
+        return b.count - a.count; // Higher business count appears first
+      }
+      return 0;
+    });
+
+    return mapped;
+  }, [businesses, dynamicCategories]);
 
   // Sub-category Promo Blocks (Expanded with rich local daily utility services)
   const promoSections = [
@@ -2541,7 +2599,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 className="group bg-white rounded-[20px_20px_32px_8px] border border-slate-200/90 p-2 sm:p-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-teal-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center justify-between text-center relative"
               >
                 {/* Clean Image Box */}
-                <div className="w-full aspect-square rounded-[14px] sm:rounded-[16px] bg-slate-100 overflow-hidden transition-transform duration-300 group-hover:scale-105 shadow-2xs">
+                <div className="w-full aspect-square rounded-[14px] sm:rounded-[16px] bg-slate-100 overflow-hidden transition-transform duration-300 group-hover:scale-105 shadow-2xs relative">
                   <img
                     src={cat.image}
                     alt={cat.name}
@@ -2552,13 +2610,23 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                       (e.target as HTMLImageElement).src = '/imagess/used items.png';
                     }}
                   />
+                  {cat.count > 0 && (
+                    <span className="absolute top-1 right-1 bg-teal-800 text-white text-[8.5px] font-black px-1.5 py-0.5 rounded-md shadow-xs pointer-events-none">
+                      {cat.count}
+                    </span>
+                  )}
                 </div>
 
                 {/* Title label */}
-                <div className="min-h-[2.3rem] sm:min-h-[2.5rem] flex items-center justify-center w-full px-0.5 mt-1.5 sm:mt-2 mb-0.5">
+                <div className="min-h-[2.3rem] sm:min-h-[2.5rem] flex flex-col items-center justify-center w-full px-0.5 mt-1.5 sm:mt-2 mb-0.5">
                   <p className="text-[10px] min-[360px]:text-[11px] sm:text-[12px] font-bold text-slate-700 text-center leading-[1.25] line-clamp-2 group-hover:text-teal-700 transition-colors">
                     {cat.name}
                   </p>
+                  {cat.count > 0 && (
+                    <span className="text-[8.5px] sm:text-[9px] font-black text-teal-700 leading-none mt-0.5">
+                      {cat.count} {cat.count === 1 ? 'Listing' : 'Listings'}
+                    </span>
+                  )}
                 </div>
               </Link>
             ))}

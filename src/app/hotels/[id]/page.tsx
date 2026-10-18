@@ -163,6 +163,17 @@ export default function HotelDetailPage() {
   const [idProofType, setIdProofType] = useState('Aadhaar Card (Local / Outstation Accepted)');
   const [specialRequest, setSpecialRequest] = useState('');
 
+  // Payment Mode: 'Pay at Hotel' | 'Online'
+  const isPayAtHotelAvailable = (hotel as any)?.isPayAtHotelAvailable !== false;
+  const [paymentMode, setPaymentMode] = useState<'Pay at Hotel' | 'Online'>('Pay at Hotel');
+
+  // Auto-switch to Online if Pay at Hotel is disabled by hotelier
+  useEffect(() => {
+    if (!isPayAtHotelAvailable && paymentMode === 'Pay at Hotel') {
+      setPaymentMode('Online');
+    }
+  }, [isPayAtHotelAvailable, paymentMode]);
+
   // Confirmation & Digital Pass
   const [bookingSuccessPass, setBookingSuccessPass] = useState<any>(null);
   const [isMyPassesModalOpen, setIsMyPassesModalOpen] = useState(false);
@@ -413,6 +424,9 @@ export default function HotelDetailPage() {
       guestPhone,
       idProofType,
       specialRequest,
+      paymentMode,
+      paymentStatus: paymentMode === 'Pay at Hotel' ? 'Pending (Pay at Check-in)' : 'Paid Online',
+      status: paymentMode === 'Pay at Hotel' ? 'Reserved (Pay at Hotel)' : 'Confirmed',
       totalAmount: finalPayableTariff,
       originalAmount: totalTariff,
       couponCode: appliedCoupon?.code || null,
@@ -444,7 +458,10 @@ export default function HotelDetailPage() {
           timeSlot: calculatedWindow,
           checkInDate,
           totalAmount: finalPayableTariff,
-          notes: `Pass Ref: ${ref} · ID: ${idProofType}`
+          paymentMode,
+          paymentStatus: paymentMode === 'Pay at Hotel' ? 'Pending' : 'Paid',
+          status: paymentMode === 'Pay at Hotel' ? 'Reserved (Pay at Hotel)' : 'Confirmed',
+          notes: `Pass Ref: ${ref} · Payment: ${paymentMode} · ID: ${idProofType}`
         })
       }).catch(e => console.error('[Hotel [id] DB Booking Error]:', e));
 
@@ -457,10 +474,10 @@ export default function HotelDetailPage() {
         customerName: guestName,
         customerPhone: guestPhone,
         customerEmail: '',
-        query: `🏨 New Room Booking: ${roomLabel} (${stayMode === 'hourly' ? `Hourly ${hourlySlot} [${calculatedWindow}]` : 'Night Stay'}) on ${checkInDate}. Tariff: ₹${finalPayableTariff} (Pay at Reception). Pass Ref: ${ref}`,
+        query: `🏨 New Room Booking: ${roomLabel} (${stayMode === 'hourly' ? `Hourly ${hourlySlot} [${calculatedWindow}]` : 'Night Stay'}) on ${checkInDate}. Tariff: ₹${finalPayableTariff} (${paymentMode}). Pass Ref: ${ref}`,
         status: 'New Hotel Booking',
         createdAt: new Date().toISOString(),
-        notes: `Pass Ref: ${ref} · Stay: ${stayMode === 'hourly' ? `${hourlySlot}` : 'Night Stay'} · Guests: ${guestsCount} · Rooms: ${roomsCount}`
+        notes: `Pass Ref: ${ref} · Stay: ${stayMode === 'hourly' ? `${hourlySlot}` : 'Night Stay'} · Payment: ${paymentMode} · Guests: ${guestsCount} · Rooms: ${roomsCount}`
       };
 
       const existingLeads = JSON.parse(localStorage.getItem('majh_boisar_leads') || '[]');
@@ -470,7 +487,7 @@ export default function HotelDetailPage() {
       const newNotif = {
         id: `notif_${Date.now()}`,
         title: '🔔 New Hotel Room Booking Received!',
-        message: `${guestName} (${guestPhone}) booked ${roomLabel} for ₹${finalPayableTariff}. Time: ${stayMode === 'hourly' ? `${hourlySlot} (${calculatedWindow})` : 'Night Stay'}.`,
+        message: `${guestName} (${guestPhone}) booked ${roomLabel} for ₹${finalPayableTariff} (${paymentMode}). Time: ${stayMode === 'hourly' ? `${hourlySlot} (${calculatedWindow})` : 'Night Stay'}.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         read: false,
         link: '/dashboard?tab=hotel_bookings'
@@ -1302,13 +1319,88 @@ export default function HotelDetailPage() {
                         </div>
                       </div>
 
+                      {/* Payment Mode Selector */}
+                      <div className="pt-2 border-t border-slate-100">
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                          <span>Payment Mode:</span>
+                          <span className="text-[10px] text-slate-400 font-normal">Choose how you wish to pay</span>
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {/* Option 1: Pay at Hotel */}
+                          <button
+                            type="button"
+                            disabled={!isPayAtHotelAvailable}
+                            onClick={() => setPaymentMode('Pay at Hotel')}
+                            className={`p-2.5 rounded-xl border text-left transition-all relative ${
+                              !isPayAtHotelAvailable
+                                ? 'opacity-40 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400'
+                                : paymentMode === 'Pay at Hotel'
+                                ? 'bg-amber-50 text-amber-950 border-amber-400 ring-2 ring-amber-300/60 shadow-xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 cursor-pointer'
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm">🏨</span>
+                              <span className="text-xs font-black">Pay at Hotel</span>
+                            </div>
+                            <span className="text-[9.5px] block mt-0.5 font-semibold leading-tight text-slate-500">
+                              {isPayAtHotelAvailable ? 'Pay at reception upon arrival' : 'Disabled by hotel owner'}
+                            </span>
+                            {paymentMode === 'Pay at Hotel' && isPayAtHotelAvailable && (
+                              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-500" />
+                            )}
+                          </button>
+
+                          {/* Option 2: Pay Online */}
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMode('Online')}
+                            className={`p-2.5 rounded-xl border text-left transition-all relative ${
+                              paymentMode === 'Online'
+                                ? 'bg-purple-50 text-purple-950 border-purple-500 ring-2 ring-purple-300/60 shadow-xs'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 cursor-pointer'
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm">💳</span>
+                              <span className="text-xs font-black">Pay Online / UPI</span>
+                            </div>
+                            <span className="text-[9.5px] block mt-0.5 font-semibold leading-tight text-slate-500">
+                              Instant confirmed digital pass
+                            </span>
+                            {paymentMode === 'Online' && (
+                              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-purple-600" />
+                            )}
+                          </button>
+                        </div>
+
+                        {!isPayAtHotelAvailable && (
+                          <p className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200/90 rounded-lg p-2 mt-1.5 font-medium leading-relaxed">
+                            ⚠️ Hotel management has disabled "Pay at Hotel". Please select <strong>Pay Online / UPI</strong> to complete your room booking.
+                          </p>
+                        )}
+                      </div>
+
                       {/* Primary Confirm Booking Button */}
                       <button
                         type="submit"
-                        className="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs py-3 px-4 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider active:scale-98"
+                        className={`w-full font-black text-xs py-3 px-4 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider active:scale-98 ${
+                          paymentMode === 'Pay at Hotel'
+                            ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-amber-200'
+                            : 'bg-purple-900 hover:bg-purple-800 text-white shadow-purple-200'
+                        }`}
                       >
-                        <CheckCircle2 className="w-4 h-4 text-slate-950" />
-                        <span>Confirm Booking (Pay at Hotel)</span>
+                        {paymentMode === 'Pay at Hotel' ? (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 text-slate-950" />
+                            <span>Reserve Room (Pay ₹{finalPayableTariff} at Hotel)</span>
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-4 h-4 text-amber-300" />
+                            <span>Pay ₹{finalPayableTariff} Online &amp; Confirm</span>
+                          </>
+                        )}
                       </button>
                     </>
                   )}
@@ -1343,7 +1435,7 @@ export default function HotelDetailPage() {
 
                   <div>
                     <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      BOOKING GENERATED
+                      {bookingSuccessPass.paymentMode === 'Pay at Hotel' ? 'RESERVATION CONFIRMED' : 'BOOKING PAID & CONFIRMED'}
                     </span>
                     <h3 className="text-base font-black text-slate-900 mt-1">Digital Room Pass</h3>
                   </div>
@@ -1358,7 +1450,7 @@ export default function HotelDetailPage() {
                         <strong className="text-sm font-mono text-white font-black">{bookingSuccessPass.id}</strong>
                       </div>
                       <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                        ✓ Confirmed
+                        {bookingSuccessPass.paymentMode === 'Pay at Hotel' ? '✓ Reserved' : '✓ Confirmed'}
                       </span>
                     </div>
 
@@ -1379,16 +1471,29 @@ export default function HotelDetailPage() {
                         <span className="text-purple-200/90 font-semibold shrink-0">👤 Guest:</span>
                         <span className="text-white font-bold">{bookingSuccessPass.guestName} ({bookingSuccessPass.guestPhone})</span>
                       </div>
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-purple-200/90 font-semibold shrink-0">💳 Payment Mode:</span>
+                        <span className={`font-black text-right ${bookingSuccessPass.paymentMode === 'Pay at Hotel' ? 'text-amber-300' : 'text-emerald-300'}`}>
+                          {bookingSuccessPass.paymentMode === 'Pay at Hotel' ? '🏨 Pay at Hotel (Cash / UPI)' : '💳 Paid Online'}
+                        </span>
+                      </div>
                       <div className="flex justify-between items-center gap-2 pt-2 border-t border-purple-800/60">
-                        <span className="text-emerald-300 font-bold text-xs">💰 Pay at Desk:</span>
-                        <span className="text-lg font-black text-amber-300">₹{bookingSuccessPass.totalAmount}</span>
+                        <span className="text-emerald-300 font-bold text-xs">
+                          {bookingSuccessPass.paymentMode === 'Pay at Hotel' ? '💰 Pay at Reception:' : '💰 Total Paid:'}
+                        </span>
+                        <div className="text-right">
+                          <span className="text-lg font-black text-amber-300 block">₹{bookingSuccessPass.totalAmount}</span>
+                          <span className="text-[9px] text-purple-200 block">
+                            {bookingSuccessPass.paymentMode === 'Pay at Hotel' ? 'Pay upon check-in' : 'Payment Completed ✓'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   <a
                     href={`https://wa.me/${hotel.whatsapp}?text=${encodeURIComponent(
-                      `Hello ${hotel.name},\nI have confirmed booking on Majh Boisar.\n\n📋 Ref: ${bookingSuccessPass.id}\n👤 Guest: ${bookingSuccessPass.guestName}\n📱 Phone: ${bookingSuccessPass.guestPhone}\n⏰ Stay: ${bookingSuccessPass.stayType} - ${bookingSuccessPass.timeSlot}\n💰 Amount: ₹${bookingSuccessPass.totalAmount}\n\nPlease confirm availability and check-in.`
+                      `Hello ${hotel.name},\nI have confirmed room booking on Majh Boisar.\n\n📋 Ref: ${bookingSuccessPass.id}\n👤 Guest: ${bookingSuccessPass.guestName}\n📱 Phone: ${bookingSuccessPass.guestPhone}\n⏰ Stay: ${bookingSuccessPass.stayType} - ${bookingSuccessPass.timeSlot}\n💳 Payment Mode: ${bookingSuccessPass.paymentMode} (₹${bookingSuccessPass.totalAmount})\n\nPlease confirm availability and room check-in.`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"

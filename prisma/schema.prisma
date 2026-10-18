@@ -324,6 +324,7 @@ model Hotel {
   nearStation      Boolean        @default(false)
   nearMidc         Boolean        @default(false)
   isComingSoon     Boolean        @default(false)
+  isPayAtHotelAvailable Boolean        @default(true)
   gallery          String?        // JSON string of image URLs
   amenities        String?        // JSON string of amenities
   description      String?
@@ -351,6 +352,8 @@ model HotelBooking {
   checkInDate  String?
   checkOutDate String?
   totalAmount  Float     @default(0)
+  paymentMode  String?   @default("Pay at Hotel") // "Pay at Hotel", "Online"
+  paymentStatus String?  @default("Pending")      // "Pending", "Paid"
   status       String    @default("Confirmed") // Confirmed, Cancelled, Completed
   notes        String?
   createdAt    DateTime  @default(now())

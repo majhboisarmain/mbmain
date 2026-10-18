@@ -308,12 +308,8 @@ export default async function LocationPage({ params }: Props) {
                 const rawGallery = parseGalleryImages(biz.image);
                 const coverImage = rawGallery[0] || '/majh-boisar-mb-logo.png';
                 
-                // Ensure all cards display 3 distinct showcase images
-                const allPhotos = rawGallery.length >= 3 ? rawGallery : [
-                  coverImage,
-                  rawGallery[1] || FALLBACK_SHOWCASE_PHOTOS[0],
-                  rawGallery[2] || FALLBACK_SHOWCASE_PHOTOS[1]
-                ];
+                // Clean real photos only (Zero fake stock demo photos)
+                const allPhotos = rawGallery.length > 0 ? rawGallery : [coverImage];
 
                 const cleanPhone = (biz.phone || '').replace(/\D/g, '');
                 const cleanWa = (biz.whatsapp || biz.phone || '').replace(/\D/g, '');
@@ -327,30 +323,75 @@ export default async function LocationPage({ params }: Props) {
                     className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group hover:border-teal-500/50"
                   >
                     <div>
-                      {/* Top 3-Photo Grid */}
+                      {/* Top Photo Grid */}
                       <div className="relative">
-                        <div className="grid grid-cols-3 gap-1.5 w-full h-36 sm:h-44 p-1.5 bg-slate-50 border-b border-slate-100">
-                          {allPhotos.slice(0, 3).map((imgUrl, pIdx) => (
-                            <Link
-                              key={pIdx}
-                              href={bizHref}
-                              className="w-full h-full rounded-xl overflow-hidden border border-slate-200/80 shadow-2xs relative bg-slate-900 group/photo flex items-center justify-center block"
-                            >
-                              <img
-                                src={imgUrl}
-                                alt={`${biz.name} photo ${pIdx + 1}`}
-                                loading="lazy"
-                                className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
-                              />
-                              {/* Visits badge on 3rd photo */}
-                              {pIdx === 2 && biz.views != null && biz.views > 0 && (
-                                <div className="absolute bottom-1.5 right-1.5 bg-slate-950/85 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none backdrop-blur-xs">
-                                  <span>👁️ {biz.views.toLocaleString()} visits</span>
-                                </div>
-                              )}
-                            </Link>
-                          ))}
-                        </div>
+                        {allPhotos.length <= 1 ? (
+                          <Link 
+                            href={bizHref}
+                            className="w-full h-44 sm:h-52 relative overflow-hidden group/photo bg-slate-900 flex items-center justify-center block"
+                          >
+                            <img
+                              src={coverImage}
+                              alt=""
+                              aria-hidden="true"
+                              className="absolute inset-0 w-full h-full object-cover blur-sm opacity-25 scale-110 pointer-events-none"
+                            />
+                            <img
+                              src={coverImage}
+                              alt={biz.name}
+                              className="relative z-10 w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
+                            />
+                            {biz.views != null && biz.views > 0 && (
+                              <div className="absolute bottom-2 right-2 bg-slate-950/85 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none backdrop-blur-xs z-20">
+                                <span>👁️ {biz.views.toLocaleString()} visits</span>
+                              </div>
+                            )}
+                          </Link>
+                        ) : allPhotos.length === 2 ? (
+                          <div className="grid grid-cols-2 gap-1.5 w-full h-44 sm:h-50 p-1.5 bg-slate-50 border-b border-slate-100">
+                            {allPhotos.slice(0, 2).map((imgUrl, pIdx) => (
+                              <Link
+                                key={pIdx}
+                                href={bizHref}
+                                className="w-full h-full rounded-xl overflow-hidden border border-slate-200/80 shadow-2xs relative bg-slate-900 group/photo flex items-center justify-center block"
+                              >
+                                <img
+                                  src={imgUrl}
+                                  alt={`${biz.name} photo ${pIdx + 1}`}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
+                                />
+                                {pIdx === 1 && biz.views != null && biz.views > 0 && (
+                                  <div className="absolute bottom-1.5 right-1.5 bg-slate-950/85 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none backdrop-blur-xs">
+                                    <span>👁️ {biz.views.toLocaleString()} visits</span>
+                                  </div>
+                                )}
+                              </Link>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-3 gap-1.5 w-full h-36 sm:h-44 p-1.5 bg-slate-50 border-b border-slate-100">
+                            {allPhotos.slice(0, 3).map((imgUrl, pIdx) => (
+                              <Link
+                                key={pIdx}
+                                href={bizHref}
+                                className="w-full h-full rounded-xl overflow-hidden border border-slate-200/80 shadow-2xs relative bg-slate-900 group/photo flex items-center justify-center block"
+                              >
+                                <img
+                                  src={imgUrl}
+                                  alt={`${biz.name} photo ${pIdx + 1}`}
+                                  loading="lazy"
+                                  className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
+                                />
+                                {pIdx === 2 && biz.views != null && biz.views > 0 && (
+                                  <div className="absolute bottom-1.5 right-1.5 bg-slate-950/85 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none backdrop-blur-xs">
+                                    <span>👁️ {biz.views.toLocaleString()} visits</span>
+                                  </div>
+                                )}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
 
                         {/* Top Badges Overlay */}
                         <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-1.5 pointer-events-none">

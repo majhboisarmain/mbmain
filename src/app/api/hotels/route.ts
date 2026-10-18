@@ -39,6 +39,7 @@ async function ensureHotelTableExists() {
         "nearStation" BOOLEAN DEFAULT false,
         "nearMidc" BOOLEAN DEFAULT false,
         "isComingSoon" BOOLEAN DEFAULT false,
+        "isPayAtHotelAvailable" BOOLEAN DEFAULT true,
         "gallery" TEXT,
         "amenities" TEXT,
         "description" TEXT,
@@ -48,6 +49,7 @@ async function ensureHotelTableExists() {
         "createdBy" TEXT,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE "Hotel" ADD COLUMN IF NOT EXISTS "isPayAtHotelAvailable" BOOLEAN DEFAULT true;
     `);
 
     // Auto-seed BOISAR_HOTELS into PostgreSQL if database table is empty
@@ -277,5 +279,54 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('[API POST /api/hotels Error]:', error);
     return NextResponse.json({ error: error.message || 'Failed to create hotel' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    await ensureHotelTableExists();
+    const body = await request.json().catch(() => ({}));
+    const { id, slug, isPayAtHotelAvailable, offersHourly } = body;
+
+    if (!id && !slug) {
+      return NextResponse.json({ error: 'Hotel id or slug required' }, { status: 400 });
+    }
+
+    const updates: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+
+    if (typeof isPayAtHotelAvailable === 'boolean') {
+      updates.push(`"isPayAtHotelAvailable" = $${idx++}`);
+      values.push(isPayAtHotelAvailable);
+    }
+    if (typeof offersHourly === 'boolean') {
+      updates.push(`"is3hAvailable" = $${idx++}`);
+      values.push(offersHourly);
+      updates.push(`"is6hAvailable" = $${idx++}`);
+      values.push(offersHourly);
+      updates.push(`"is12hAvailable" = $${idx++}`);
+      values.push(offersHourly);
+    }
+
+    if (updates.length === 0) {
+      return NextResponse.json({ success: true, message: 'No updates provided' });
+    }
+
+    let query = `UPDATE "Hotel" SET ${updates.join(', ')} WHERE `;
+    if (id) {
+      query += `"id" = $${idx}`;
+      values.push(Number(id));
+    } else {
+      query += `"slug" = $${idx}`;
+      values.push(slug);
+    }
+    query += ' RETURNING *;';
+
+    const result = await pool.query(query, values);
+    return NextResponse.json({ success: true, hotel: result.rows[0] });
+  } catch (error: any) {
+    console.error('[API PATCH /api/hotels Error]:', error);
+    return NextResponse.json({ error: error.message || 'Failed to update hotel' }, { status: 500 });
   }
 }

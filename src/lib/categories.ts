@@ -1,235 +1,246 @@
 /**
- * Centralized Category Configuration & Slug Normalization for Majh Boisar
- * Synchronized with Home "Explore Categories" (all 59 categories)
+ * Centralized Category Configuration & Canonical Normalization for Majh Boisar
+ * Clean, Single-Category Names without '&' (Zero duplicate sub-categories)
  */
 
 export const EXPLORE_CATEGORIES = [
-  "Protein & Supplements",
-  "Gyms & Fitness Centers",
-  "Pathology & Diagnostic Labs",
-  "Salon & Beauty Parlour",
-  "Clothing & Fashion",
-  "Photographers & Videographers",
-  "Dance & Music Classes",
-  "Travel Agencies & Tours",
-  "Medical Stores & Pharmacy",
-  "CA & Tax Consultants",
-  "Doctors & Specialists",
-  "Baby & Mother Care",
-  "Eye Care & Opticians",
-  "Restaurants & Dining",
-  "Cafes & Bakeries",
-  "Street Food & Snacks",
-  "Dentists & Dental Clinics",
-  "Grocery & Supermarkets",
-  "Dairy & Milk Products",
-  "Meat & Poultry",
-  "Fruits & Vegetables",
-  "Real Estate & Properties",
-  "Hotels & Lodging",
-  "Resorts & Villas",
-  "PG & Hostels",
-  "Home Services & Repairs",
-  "Electricians & Wiring",
-  "Plumbers & Sanitation",
-  "Carpenters & Furniture",
-  "Painters & Waterproofing",
-  "AC Service & Cooling",
-  "Pest Control Services",
-  "Beauty Parlours & Salons",
-  "Spa & Wellness",
-  "Yoga & Martial Arts",
-  "Schools & Colleges",
-  "Coaching & Tuitions",
-  "Jewellery & Ornaments",
-  "Footwear & Shoes",
-  "Electronics & Home Appliances",
-  "Mobile Shops & Repair",
-  "Computer & Laptop Services",
-  "Hardware & Building Material",
-  "Interior Designers & Decor",
-  "Steel & Aluminium Fabrication",
-  "Automobile Garages & Repair",
-  "Car & Bike Rentals",
-  "Packers & Movers",
-  "Event Organisers & Decor",
-  "Catering & Tiffin Services",
-  "Digital Marketing & IT",
-  "Hospitals & Emergency",
-  "Lawyers & Legal Advisors",
-  "Pet Shops & Vet Clinics",
-  "Water Purifier & RO Service",
-  "Loan Consultants & Finance",
-  "Insurance & Financial Services",
-  "Digital Printing & Arts"
+  "Protein",
+  "Loans",
+  "Gyms",
+  "Eye Opticians",
+  "Water Purifier",
+  "Schools",
+  "Digital Printing",
+  "Jobs",
+  "Dance Classes",
+  "Music Classes",
+  "Salons",
+  "Clothing",
+  "Photographers",
+  "Travel Agencies",
+  "Medical Stores",
+  "CA Consultants",
+  "Doctors",
+  "Hospitals",
+  "Dentists",
+  "Pathology Labs",
+  "Restaurants",
+  "Cafes",
+  "Bakeries",
+  "Street Food",
+  "Grocery",
+  "Real Estate",
+  "Hotels",
+  "Resorts",
+  "Hostels",
+  "Electricians",
+  "Plumbers",
+  "Carpenters",
+  "Painters",
+  "AC Service",
+  "Pest Control",
+  "Yoga Classes",
+  "Coaching Classes",
+  "Jewellery",
+  "Footwear",
+  "Electronics",
+  "Mobile Shops",
+  "Computer Repair",
+  "Hardware",
+  "Interior Designers",
+  "Fabrication",
+  "Auto Garages",
+  "Car Rentals",
+  "Packers Movers",
+  "Event Organisers",
+  "Catering",
+  "Digital Marketing",
+  "Insurance",
+  "Lawyers",
+  "Pet Clinics",
+  "Baby Care",
+  "Spa Wellness",
+  "Dairy Products",
+  "Meat Poultry",
+  "Fruits Vegetables"
 ];
 
-// Normalized Slug to Official Title Mapping
+// Normalized Slug to Official Title Mapping (Canonical single names - no duplicates)
 export const CATEGORY_SLUG_MAP: Record<string, string> = {
-  // Protein & Gym
-  'protein-shop': 'Protein & Supplements',
-  'protein-supplements': 'Protein & Supplements',
-  'protein': 'Protein & Supplements',
-  'gyms': 'Gyms & Fitness Centers',
-  'fitness': 'Gyms & Fitness Centers',
-  'gyms-fitness-centers': 'Gyms & Fitness Centers',
-  'gym': 'Gyms & Fitness Centers',
+  // Protein (Single canonical category)
+  'protein': 'Protein',
+  'protein-shop': 'Protein',
+  'protein-supplements': 'Protein',
 
-  // Medical & Labs
-  'pathology': 'Pathology & Diagnostic Labs',
-  'pathology-diagnostic-labs': 'Pathology & Diagnostic Labs',
-  'doctors': 'Doctors & Specialists',
-  'doctors-specialists': 'Doctors & Specialists',
-  'dentists': 'Dentists & Dental Clinics',
-  'dentists-dental-clinics': 'Dentists & Dental Clinics',
-  'hospitals': 'Hospitals & Emergency',
-  'hospitals-emergency': 'Hospitals & Emergency',
-  'medical-stores': 'Medical Stores & Pharmacy',
-  'medical-stores-pharmacy': 'Medical Stores & Pharmacy',
-  'pharmacy': 'Medical Stores & Pharmacy',
-  'baby-mother-care': 'Baby & Mother Care',
-  'eye-care-opticians': 'Eye Care & Opticians',
-  'opticians': 'Eye Care & Opticians',
+  // Loans (Single canonical category)
+  'loans': 'Loans',
+  'loan': 'Loans',
+  'loan-consultants': 'Loans',
+  'loan-consultants-finance': 'Loans',
+  'finance': 'Loans',
 
-  // Salons & Fashion
-  'salons': 'Salon & Beauty Parlour',
-  'salon': 'Salon & Beauty Parlour',
-  'salon-beauty-parlour': 'Salon & Beauty Parlour',
-  'beauty-parlours-salons': 'Beauty Parlours & Salons',
-  'spa-wellness': 'Spa & Wellness',
-  'spa': 'Spa & Wellness',
-  'clothing-fashion': 'Clothing & Fashion',
-  'clothing': 'Clothing & Fashion',
-  'fashion': 'Clothing & Fashion',
-  'jewellery-ornaments': 'Jewellery & Ornaments',
-  'jewellery': 'Jewellery & Ornaments',
-  'footwear-shoes': 'Footwear & Shoes',
-  'footwear': 'Footwear & Shoes',
+  // Gyms & Fitness (Single canonical category)
+  'gyms': 'Gyms',
+  'gym': 'Gyms',
+  'gyms-fitness-centers': 'Gyms',
+  'fitness-centers': 'Gyms',
+  'fitness': 'Gyms',
+
+  // Salons & Beauty (Single canonical category)
+  'salons': 'Salons',
+  'salon': 'Salons',
+  'salon-beauty-parlour': 'Salons',
+  'beauty-parlours': 'Salons',
+  'beauty-parlour': 'Salons',
+  'beauty-parlours-salons': 'Salons',
+
+  // Clothing & Fashion (Single canonical category)
+  'clothing': 'Clothing',
+  'clothing-stores': 'Clothing',
+  'clothing-fashion': 'Clothing',
+  'fashion': 'Clothing',
+  'fashion-boutiques': 'Clothing',
+
+  // Photographers & Videographers (Single canonical category)
+  'photographers': 'Photographers',
+  'photography': 'Photographers',
+  'photographers-videographers': 'Photographers',
+  'videographers': 'Photographers',
+
+  // Medical Stores & Pharmacies (Single canonical category)
+  'medical-stores': 'Medical Stores',
+  'medical-stores-pharmacy': 'Medical Stores',
+  'pharmacy': 'Medical Stores',
+  'pharmacies': 'Medical Stores',
+
+  // CA & Tax Consultants (Single canonical category)
+  'ca': 'CA Consultants',
+  'ca-consultants': 'CA Consultants',
+  'ca-tax-consultants': 'CA Consultants',
+  'tax-consultants': 'CA Consultants',
+
+  // Doctors & Clinics
+  'doctors': 'Doctors',
+  'doctors-specialists': 'Doctors',
+
+  // Hospitals
+  'hospitals': 'Hospitals',
+  'hospitals-emergency': 'Hospitals',
+
+  // Dentists
+  'dentists': 'Dentists',
+  'dentists-dental-clinics': 'Dentists',
+
+  // Pathology Labs
+  'pathology': 'Pathology Labs',
+  'pathology-labs': 'Pathology Labs',
+  'pathology-diagnostic-labs': 'Pathology Labs',
+
+  // Eye Opticians
+  'eye-opticians': 'Eye Opticians',
+  'opticians': 'Eye Opticians',
+  'eye-care-opticians': 'Eye Opticians',
+
+  // Water Purifier
+  'water-purifier': 'Water Purifier',
+  'water-purifier-ro-service': 'Water Purifier',
+
+  // Schools & Education
+  'schools': 'Schools',
+  'schools-colleges': 'Schools',
+  'colleges': 'Schools',
+
+  // Jobs
+  'jobs': 'Jobs',
+  'jobs-placement': 'Jobs',
+
+  // Digital Printing
+  'digital-printing': 'Digital Printing',
+  'digital-printing-arts': 'Digital Printing',
+
+  // Dance & Music
+  'dance-classes': 'Dance Classes',
+  'dance': 'Dance Classes',
+  'dance-class': 'Dance Classes',
+  'dance-music-classes': 'Dance Classes',
+  'music-classes': 'Music Classes',
+  'music': 'Music Classes',
 
   // Food & Dining
-  'restaurants': 'Restaurants & Dining',
-  'restaurants-dining': 'Restaurants & Dining',
-  'food': 'Restaurants & Dining',
-  'cafes-bakeries': 'Cafes & Bakeries',
-  'cafes': 'Cafes & Bakeries',
-  'street-food-snacks': 'Street Food & Snacks',
-  'street-food': 'Street Food & Snacks',
-  'grocery-supermarkets': 'Grocery & Supermarkets',
-  'grocery': 'Grocery & Supermarkets',
-  'dairy-milk-products': 'Dairy & Milk Products',
-  'dairy': 'Dairy & Milk Products',
-  'meat-poultry': 'Meat & Poultry',
-  'fruits-vegetables': 'Fruits & Vegetables',
+  'restaurants': 'Restaurants',
+  'restaurants-dining': 'Restaurants',
+  'food': 'Restaurants',
+  'cafes': 'Cafes',
+  'bakeries': 'Bakeries',
+  'street-food': 'Street Food',
+  'street-food-snacks': 'Street Food',
+
+  // Grocery
+  'grocery': 'Grocery',
+  'grocery-stores': 'Grocery',
+  'grocery-supermarkets': 'Grocery',
+  'supermarkets': 'Grocery',
 
   // Real Estate & Stays
-  'real-estate-properties': 'Real Estate & Properties',
-  'real-estate': 'Real Estate & Properties',
-  'properties': 'Real Estate & Properties',
-  'hotels-lodging': 'Hotels & Lodging',
-  'hotels': 'Hotels & Lodging',
-  'resorts-villas': 'Resorts & Villas',
-  'resorts': 'Resorts & Villas',
-  'pg-hostels': 'PG & Hostels',
-  'pg': 'PG & Hostels',
+  'real-estate': 'Real Estate',
+  'real-estate-properties': 'Real Estate',
+  'properties': 'Real Estate',
+  'hotels': 'Hotels',
+  'hotels-lodging': 'Hotels',
+  'resorts': 'Resorts',
+  'resorts-villas': 'Resorts',
+  'hostels': 'Hostels',
+  'hostels-pg': 'Hostels',
+  'pg-hostels': 'Hostels',
+  'pg': 'Hostels',
 
-  // Home Services & Repairs
-  'home-services-repairs': 'Home Services & Repairs',
-  'home-services': 'Home Services & Repairs',
-  'electricians-wiring': 'Electricians & Wiring',
-  'electricians': 'Electricians & Wiring',
-  'plumbers-sanitation': 'Plumbers & Sanitation',
-  'plumbers': 'Plumbers & Sanitation',
-  'carpenters-furniture': 'Carpenters & Furniture',
-  'carpenters': 'Carpenters & Furniture',
-  'painters-waterproofing': 'Painters & Waterproofing',
-  'painters': 'Painters & Waterproofing',
-  'ac-service-cooling': 'AC Service & Cooling',
-  'ac-service': 'AC Service & Cooling',
-  'pest-control-services': 'Pest Control Services',
-  'pest-control': 'Pest Control Services',
-  'water-purifier': 'Water Purifier & RO Service',
-  'water-purifier-ro-service': 'Water Purifier & RO Service',
+  // Home Services
+  'electricians': 'Electricians',
+  'electricians-wiring': 'Electricians',
+  'plumbers': 'Plumbers',
+  'plumbers-sanitation': 'Plumbers',
+  'carpenters': 'Carpenters',
+  'carpenters-furniture': 'Carpenters',
+  'painters': 'Painters',
+  'painters-waterproofing': 'Painters',
+  'ac-service': 'AC Service',
+  'ac-service-cooling': 'AC Service',
+  'pest-control': 'Pest Control',
+  'pest-control-services': 'Pest Control',
 
-  // Education & Fitness
-  'schools-colleges': 'Schools & Colleges',
-  'schools': 'Schools & Colleges',
-  'coaching-tuitions': 'Coaching & Tuitions',
-  'coaching': 'Coaching & Tuitions',
-  'yoga-martial-arts': 'Yoga & Martial Arts',
-  'yoga': 'Yoga & Martial Arts',
-  'dance-music-classes': 'Dance & Music Classes',
-  'dance-classes': 'Dance & Music Classes',
-
-  // Electronics & Hardware
-  'electronics-home-appliances': 'Electronics & Home Appliances',
-  'electronics': 'Electronics & Home Appliances',
-  'mobile-shops-repair': 'Mobile Shops & Repair',
-  'mobile-shops': 'Mobile Shops & Repair',
-  'computer-laptop-services': 'Computer & Laptop Services',
-  'hardware-building-material': 'Hardware & Building Material',
-  'hardware': 'Hardware & Building Material',
-  'interior-designers-decor': 'Interior Designers & Decor',
-  'steel-aluminium-fabrication': 'Steel & Aluminium Fabrication',
-  'fabrication': 'Steel & Aluminium Fabrication',
-
-  // Auto & Travel
-  'automobile-garages-repair': 'Automobile Garages & Repair',
-  'garages': 'Automobile Garages & Repair',
-  'car-bike-rentals': 'Car & Bike Rentals',
-  'travel-agencies-tours': 'Travel Agencies & Tours',
-  'travel-agencies': 'Travel Agencies & Tours',
-  'packers-movers': 'Packers & Movers',
-
-  // Professional Services
-  'ca-tax-consultants': 'CA & Tax Consultants',
-  'ca': 'CA & Tax Consultants',
-  'photographers-videographers': 'Photographers & Videographers',
-  'photography': 'Photographers & Videographers',
-  'event-organisers-decor': 'Event Organisers & Decor',
-  'catering-tiffin-services': 'Catering & Tiffin Services',
-  'digital-marketing-it': 'Digital Marketing & IT',
-  'digital-marketing': 'Digital Marketing & IT',
-  'seo': 'Digital Marketing & IT',
-  'seo-google-ranking': 'Digital Marketing & IT',
-  'performance-marketing': 'Digital Marketing & IT',
-  'performance-ads': 'Digital Marketing & IT',
-  'website-development': 'Digital Marketing & IT',
-  'social-media-marketing': 'Digital Marketing & IT',
-  'loan-consultants': 'Loan Consultants & Finance',
-  'loan-consultants-finance': 'Loan Consultants & Finance',
-  'loans': 'Loan Consultants & Finance',
-  'loan': 'Loan Consultants & Finance',
-  'business-loan': 'Loan Consultants & Finance',
-  'home-loan': 'Loan Consultants & Finance',
-  'personal-loan': 'Loan Consultants & Finance',
-  'gold-loan': 'Loan Consultants & Finance',
-  'vehicle-loan': 'Loan Consultants & Finance',
-  'education-loan': 'Loan Consultants & Finance',
-  'property-loan': 'Loan Consultants & Finance',
-  'commercial-loan': 'Loan Consultants & Finance',
-  'loan-against-property': 'Loan Consultants & Finance',
-  'insurance': 'Insurance & Financial Services',
-  'insurance-financial-services': 'Insurance & Financial Services',
-  'health-insurance': 'Insurance & Financial Services',
-  'term-life': 'Insurance & Financial Services',
-  'term-life-cover': 'Insurance & Financial Services',
-  'vehicle-insurance': 'Insurance & Financial Services',
-  'vehicle-cover': 'Insurance & Financial Services',
-  'shop-insurance': 'Insurance & Financial Services',
-  'home-insurance': 'Insurance & Financial Services',
-  'travel-insurance': 'Insurance & Financial Services',
-  'fire-insurance': 'Insurance & Financial Services',
-  'senior-health': 'Insurance & Financial Services',
-  'digital-printing': 'Digital Printing & Arts',
-  'printing': 'Digital Printing & Arts',
-  'lawyers-legal-advisors': 'Lawyers & Legal Advisors',
-  'lawyers': 'Lawyers & Legal Advisors',
-  'pet-shops-vet-clinics': 'Pet Shops & Vet Clinics',
-  'pet-shops': 'Pet Shops & Vet Clinics',
+  // Others
+  'yoga': 'Yoga Classes',
+  'yoga-classes': 'Yoga Classes',
+  'coaching': 'Coaching Classes',
+  'coaching-classes': 'Coaching Classes',
+  'jewellery': 'Jewellery',
+  'footwear': 'Footwear',
+  'electronics': 'Electronics',
+  'mobile-shops': 'Mobile Shops',
+  'computer-repair': 'Computer Repair',
+  'hardware': 'Hardware',
+  'interior-designers': 'Interior Designers',
+  'fabrication': 'Fabrication',
+  'automobile-garages': 'Auto Garages',
+  'garages': 'Auto Garages',
+  'car-rentals': 'Car Rentals',
+  'packers-movers': 'Packers Movers',
+  'event-organisers': 'Event Organisers',
+  'catering': 'Catering',
+  'digital-marketing': 'Digital Marketing',
+  'insurance': 'Insurance',
+  'lawyers': 'Lawyers',
+  'pet-clinics': 'Pet Clinics',
+  'baby-care': 'Baby Care',
+  'spa': 'Spa Wellness',
+  'dairy': 'Dairy Products',
+  'dairy-products': 'Dairy Products',
+  'meat-poultry': 'Meat Poultry',
+  'fruits-vegetables': 'Fruits Vegetables'
 };
 
 /**
- * Generates a clean URL slug for a category name (e.g. "Protein & Supplements" -> "protein-supplements")
+ * Generates a clean URL slug for a category name
  */
 export function getCategorySlug(categoryName: string): string {
   if (!categoryName) return 'all';
@@ -248,112 +259,125 @@ export function getCategorySlug(categoryName: string): string {
  * Returns the official display title for any category slug or name.
  */
 export function formatCategoryTitle(raw: string): string {
-  if (!raw) return 'Local Directory';
-  const clean = decodeURIComponent(raw).toLowerCase().trim();
-
-  // 1. Direct slug match
-  if (CATEGORY_SLUG_MAP[clean]) {
-    return CATEGORY_SLUG_MAP[clean];
+  if (!raw) return 'Local Businesses';
+  const clean = raw.trim();
+  const slug = getCategorySlug(clean);
+  if (CATEGORY_SLUG_MAP[slug]) {
+    return CATEGORY_SLUG_MAP[slug];
   }
 
-  // 2. Slugified match
-  const slugified = clean.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  if (CATEGORY_SLUG_MAP[slugified]) {
-    return CATEGORY_SLUG_MAP[slugified];
-  }
-
-  // 2b. Match without "-and-" if slug had "-and-"
-  const withoutAnd = slugified.replace(/-and-/g, '-');
+  const withoutAnd = slug.replace(/-and-/g, '-');
   if (CATEGORY_SLUG_MAP[withoutAnd]) {
     return CATEGORY_SLUG_MAP[withoutAnd];
   }
 
-  // 3. Exact match against official categories
-  const official = EXPLORE_CATEGORIES.find(
-    cat => {
-      const catClean = cat.toLowerCase();
-      const catSlug = getCategorySlug(cat);
-      return catClean === clean || catSlug === slugified || catSlug === withoutAnd;
-    }
-  );
-  if (official) return official;
-
-  // 4. Fallback: Title case
-  return raw
-    .replace(/-/g, ' ')
-    .replace(/\b\w/g, l => l.toUpperCase());
+  return clean
+    .replace(/&/g, '')
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 }
 
 /**
- * Common search synonyms to ensure all variants (e.g. Protein, Protein Shop, Protein & Supplements) match together.
+ * High-precision category synonyms for targeted search without bleed across categories.
  */
 export const CATEGORY_SEARCH_SYNONYMS: Record<string, string[]> = {
-  'protein-supplements': ['protein', 'supplement', 'supplements', 'protein shop'],
-  'protein-shop': ['protein', 'supplement', 'supplements', 'protein shop'],
-  'protein': ['protein', 'supplement', 'supplements', 'protein shop'],
-  'gyms-fitness-centers': ['gym', 'gyms', 'fitness', 'workout'],
-  'gyms': ['gym', 'gyms', 'fitness', 'workout'],
-  'fitness': ['gym', 'gyms', 'fitness', 'workout'],
-  'doctors-specialists': ['doctor', 'doctors', 'clinic', 'clinics', 'specialist', 'physician'],
-  'doctors': ['doctor', 'doctors', 'clinic', 'clinics'],
-  'hospitals-emergency': ['hospital', 'hospitals', 'emergency'],
-  'hospitals': ['hospital', 'hospitals'],
-  'dentists-dental-clinics': ['dentist', 'dentists', 'dental'],
-  'pathology-diagnostic-labs': ['pathology', 'diagnostic', 'lab', 'labs', 'blood test'],
-  'medical-stores-pharmacy': ['medical', 'pharmacy', 'chemist', 'medicine', 'drug store'],
-  'eye-care-opticians': ['optician', 'opticians', 'eye', 'spectacles', 'glasses', 'optical'],
-  'opticians': ['optician', 'opticians', 'eye', 'spectacles', 'optical'],
-  'salon-beauty-parlour': ['salon', 'salons', 'parlour', 'parlor', 'beauty', 'haircut'],
-  'beauty-parlours-salons': ['salon', 'salons', 'parlour', 'parlor', 'beauty'],
-  'restaurants-dining': ['restaurant', 'restaurants', 'dining', 'food', 'dhaba'],
-  'cafes-bakeries': ['cafe', 'cafes', 'bakery', 'bakeries', 'coffee'],
-  'street-food-snacks': ['snacks', 'farsan', 'fast food', 'chaat', 'sweets'],
-  'grocery-supermarkets': ['grocery', 'supermarket', 'kirana', 'mart'],
-  'real-estate-properties': ['real estate', 'property', 'properties', 'builder', 'realty', 'flat'],
-  'hotels-lodging': ['hotel', 'hotels', 'lodging', 'lodge'],
-  'resorts-villas': ['resort', 'resorts', 'villa', 'villas'],
-  'pg-hostels': ['pg', 'hostel', 'hostels'],
-  'water-purifier-ro-service': ['water purifier', 'purifier', 'ro service', 'ro'],
-  'water-purifier': ['water purifier', 'purifier', 'ro service', 'ro'],
-  'loan-consultants-finance': ['loan', 'loans', 'finance', 'consultant', 'home loan', 'personal loan', 'business loan'],
-  'loan-consultants': ['loan', 'loans', 'finance', 'consultant', 'business loan'],
-  'loans': ['loan', 'loans', 'finance', 'consultant', 'business loan'],
-  'loan': ['loan', 'loans', 'finance', 'consultant', 'business loan'],
-  'business-loan': ['loan', 'loans', 'finance', 'consultant', 'business loan'],
-  'home-loan': ['loan', 'loans', 'finance', 'consultant', 'home loan'],
-  'personal-loan': ['loan', 'loans', 'finance', 'consultant', 'personal loan'],
-  'gold-loan': ['loan', 'loans', 'finance', 'consultant', 'gold loan'],
-  'vehicle-loan': ['loan', 'loans', 'finance', 'consultant', 'vehicle loan'],
-  'education-loan': ['loan', 'loans', 'finance', 'consultant', 'education loan'],
-  'property-loan': ['loan', 'loans', 'finance', 'consultant', 'property loan'],
-  'commercial-loan': ['loan', 'loans', 'finance', 'consultant', 'commercial loan'],
-  'loan-against-property': ['loan', 'loans', 'finance', 'consultant'],
-  'insurance-financial-services': ['insurance', 'policy', 'health insurance', 'life insurance', 'vehicle insurance', 'term life', 'lic'],
-  'insurance': ['insurance', 'policy', 'health insurance', 'life insurance', 'vehicle insurance', 'term life', 'lic'],
-  'health-insurance': ['insurance', 'policy', 'health insurance', 'mediclaim', 'hospital'],
-  'term-life': ['insurance', 'policy', 'life insurance', 'term life'],
-  'vehicle-insurance': ['insurance', 'policy', 'vehicle insurance', 'motor insurance'],
-  'digital-marketing-it': ['digital marketing', 'marketing', 'seo', 'website', 'web development', 'social media', 'google ads', 'software', 'it'],
-  'digital-marketing': ['digital marketing', 'marketing', 'seo', 'website', 'web development', 'social media', 'google ads', 'software', 'it'],
-  'seo': ['digital marketing', 'marketing', 'seo', 'website'],
-  'performance-marketing': ['digital marketing', 'marketing', 'seo', 'google ads'],
-  'schools-colleges': ['school', 'schools', 'college', 'colleges', 'vidyalaya'],
-  'schools': ['school', 'schools'],
-  'coaching-tuitions': ['coaching', 'tuition', 'classes'],
-  'mobile-shops-repair': ['mobile', 'mobile repair', 'cell phone', 'smartphone'],
-  'mobile-shops': ['mobile', 'mobile repair'],
-  'digital-printing-arts': ['printing', 'digital printing', 'xerox', 'banner'],
-  'digital-printing': ['printing', 'digital printing'],
-  'ca-tax-consultants': ['ca', 'tax', 'gst', 'chartered accountant', 'audit'],
-  'electricians-wiring': ['electrician', 'electricians', 'electrical', 'wiring'],
-  'plumbers-sanitation': ['plumber', 'plumbers', 'sanitary'],
-  'ac-service-cooling': ['ac service', 'ac repair', 'air conditioner'],
-  'car-bike-rentals': ['car rental', 'bike rental', 'cab', 'taxi'],
-  'packers-movers': ['packers', 'movers', 'transport']
+  // Protein (combines Protein, Protein Shop, Protein Supplements)
+  'protein': ['protein', 'protein shop', 'protein supplements', 'nutrition', 'whey protein', 'supplements'],
+  'protein-shop': ['protein', 'protein shop', 'protein supplements', 'nutrition'],
+  'protein-supplements': ['protein', 'protein shop', 'protein supplements', 'nutrition'],
+
+  // Loans (combines Loans, Loan Consultants, Finance)
+  'loans': ['loan', 'loans', 'loan consultant', 'loan consultants', 'finance', 'financial advisor', 'home loan', 'personal loan', 'business loan'],
+  'loan': ['loan', 'loans', 'loan consultant', 'finance'],
+  'loan-consultants': ['loan', 'loans', 'loan consultant', 'finance'],
+
+  // Gyms & Fitness (combines Gyms, Fitness Centers)
+  'gyms': ['gym', 'gyms', 'fitness', 'fitness center', 'fitness centers', 'workout', 'weight training', 'crossfit'],
+  'fitness-centers': ['gym', 'gyms', 'fitness', 'fitness center', 'fitness centers'],
+
+  // Salons & Beauty (combines Salons, Beauty Parlours)
+  'salons': ['salon', 'salons', 'beauty parlour', 'hair salon', 'haircut'],
+  'beauty-parlours': ['beauty parlour', 'salon', 'haircut'],
+
+  // Clothing
+  'clothing': ['clothing', 'fashion', 'garment', 'apparel', 'boutique', 'menswear', 'womenswear'],
+  'fashion': ['clothing', 'fashion', 'boutique'],
+
+  // Medical Stores & Pharmacies
+  'medical-stores': ['medical store', 'medical stores', 'pharmacy', 'pharmacies', 'chemist', 'medicine'],
+  'pharmacy': ['medical store', 'pharmacy', 'chemist'],
+
+  // Eye Opticians
+  'eye-opticians': ['eye opticians', 'optician', 'opticians', 'optical', 'spectacles', 'care eyes'],
+
+  // Water Purifier
+  'water-purifier': ['water purifier', 'ro filter', 'ro service', 'filter service', 'sales in boisar'],
+
+  // Schools
+  'schools': ['school', 'schools', 'vidyalaya', 'english medium school', 'ctes'],
+
+  // Digital Printing
+  'digital-printing': ['digital printing', 'radium art', 'banner printing', 'flex printing', 'boisar radium art'],
+
+  // Jobs
+  'jobs': ['jobs', 'placement', 'recruitment', 'job consultancy', 'jobs & placement', 'musclefactoryhub'],
+
+  // Dance & Music
+  'dance-classes': ['dance', 'dance class', 'dance classes', 'dance academy', 'dance studio'],
+  'dance': ['dance', 'dance class', 'dance classes', 'dance academy'],
+  'music-classes': ['music', 'music class', 'music classes', 'music academy', 'singing class', 'guitar class'],
+
+  // Healthcare
+  'doctors': ['doctor', 'clinic', 'physician', 'specialist doctor'],
+  'hospitals': ['hospital', 'nursing home', 'emergency hospital'],
+  'dentists': ['dentist', 'dental clinic'],
+  'pathology-labs': ['pathology', 'blood test', 'diagnostic lab'],
+
+  // Food
+  'restaurants': ['restaurant', 'dining', 'family restaurant', 'pure veg', 'non veg'],
+  'cafes': ['cafe', 'coffee', 'pasta'],
+  'bakeries': ['bakery', 'cake shop'],
+  'street-food': ['street food', 'chaat', 'fast food'],
+  'grocery': ['grocery', 'kirana', 'general store', 'supermarket'],
+
+  // Stays & Services
+  'real-estate': ['real estate', 'flats', 'properties', 'builder', 'broker'],
+  'hotels': ['hotel', 'room booking', 'lodge'],
+  'resorts': ['resort', 'villa'],
+  'hostels': ['hostel', 'pg', 'paying guest'],
+  'electricians': ['electrician', 'wiring', 'electrical repair'],
+  'plumbers': ['plumber', 'drainage', 'pipe fitting'],
+  'carpenters': ['carpenter', 'furniture repair', 'woodwork'],
+  'painters': ['painter', 'waterproofing', 'wall painting'],
+  'ac-service': ['ac service', 'ac repair'],
+  'pest-control': ['pest control', 'termite control'],
+  'yoga-classes': ['yoga', 'yoga class', 'meditation'],
+  'coaching-classes': ['coaching', 'tuition', 'coaching classes'],
+  'jewellery': ['jewellery', 'jewelry', 'gold'],
+  'footwear': ['footwear', 'shoes'],
+  'electronics': ['electronics', 'home appliances'],
+  'mobile-shops': ['mobile shop', 'smartphones', 'mobile repair'],
+  'computer-repair': ['computer repair', 'laptop repair'],
+  'hardware': ['hardware', 'building material'],
+  'interior-designers': ['interior designer', 'home decor'],
+  'fabrication': ['fabrication', 'aluminium fabrication'],
+  'automobile-garages': ['garage', 'car repair', 'bike repair'],
+  'car-rentals': ['car rental', 'bike rental', 'taxi service'],
+  'packers-movers': ['packers movers', 'shifting service'],
+  'event-organisers': ['event organiser', 'event decorator'],
+  'catering': ['catering', 'tiffin service'],
+  'digital-marketing': ['digital marketing', 'web development', 'seo'],
+  'insurance': ['insurance', 'lic', 'life insurance'],
+  'lawyers': ['lawyer', 'advocate', 'legal advisor'],
+  'pet-clinics': ['pet clinic', 'veterinary'],
+  'baby-care': ['baby care', 'pediatric'],
+  'spa-wellness': ['spa', 'massage', 'wellness center']
 };
 
 /**
- * Returns broad search keywords for a category to capture all variants in the database.
+ * Returns broad search keywords for a category to capture variants in the database.
  */
 export function getCategorySearchTerms(rawSlugOrTitle: string): string[] {
   const slug = getCategorySlug(rawSlugOrTitle);
@@ -368,10 +392,9 @@ export function getCategorySearchTerms(rawSlugOrTitle: string): string[] {
     ]));
   }
 
-  // Automatic term extraction from words
   const words = slug
     .split('-')
-    .filter(w => !['and', 'or', 'in', 'the', 'of', 'services', 'service', 'centers', 'center', 'shops', 'shop'].includes(w))
+    .filter(w => !['and', 'or', 'in', 'the', 'of', 'services', 'service', 'centers', 'center', 'shops', 'shop', 'care', 'classes', 'agencies', 'tours', 'consultants'].includes(w))
     .filter(w => w.length > 2);
 
   return Array.from(new Set([
@@ -381,28 +404,61 @@ export function getCategorySearchTerms(rawSlugOrTitle: string): string[] {
 }
 
 /**
- * Builds Prisma where filter conditions for a category page
+ * Builds Prisma where filter conditions for a category page.
+ * Strictly checks category & subcategory, plus distinctive name conditions.
+ * Enforces category isolation so unrelated categories never cross.
  */
 export function buildCategoryPrismaFilter(categorySlugOrTitle: string, selectedArea?: string) {
   const title = formatCategoryTitle(categorySlugOrTitle);
   const terms = getCategorySearchTerms(categorySlugOrTitle);
 
-  const orConditions: any[] = [
+  // Exact or containment conditions strictly on category and subcategory
+  const categoryConditions: any[] = [
+    { category: { equals: title, mode: 'insensitive' } },
     { category: { contains: title, mode: 'insensitive' } },
+    { subcategory: { contains: title, mode: 'insensitive' } },
   ];
 
   terms.forEach(term => {
-    if (!term) return;
-    orConditions.push({ category: { contains: term, mode: 'insensitive' } });
-    orConditions.push({ name: { contains: term, mode: 'insensitive' } });
-    orConditions.push({ description: { contains: term, mode: 'insensitive' } });
-    orConditions.push({ subcategory: { contains: term, mode: 'insensitive' } });
+    if (!term || term.length < 3) return;
+    categoryConditions.push({ category: { contains: term, mode: 'insensitive' } });
+    categoryConditions.push({ subcategory: { contains: term, mode: 'insensitive' } });
   });
+
+  const genericExclusions = [
+    'centers', 'services', 'stores', 'shops', 'market', 'classes', 'agencies', 
+    'consultants', 'repairs', 'repair', 'care', 'tours', 'point', 'hub', 'dealers', 'class', 'agency', 'store', 'shop'
+  ];
+  const distinctTerms = terms.filter(t => t.length >= 4 && !genericExclusions.includes(t.toLowerCase()));
+  const nameConditions = distinctTerms.map(t => ({
+    name: { contains: t, mode: 'insensitive' }
+  }));
+
+  const orConditions: any[] = [
+    ...categoryConditions,
+    ...nameConditions
+  ];
 
   const whereClause: any = {
     verified: true,
     OR: orConditions
   };
+
+  // CATEGORY ISOLATION RULES
+  const lowerSlug = getCategorySlug(categorySlugOrTitle);
+  if (lowerSlug.includes('dance') || lowerSlug.includes('music')) {
+    whereClause.NOT = [
+      { category: { in: ['Loans', 'Loan Consultants', 'Finance', 'Insurance', 'Real Estate', 'Properties', 'Hardware', 'Protein', 'Protein Shop'] } }
+    ];
+  } else if (lowerSlug.includes('loan') || lowerSlug.includes('finance')) {
+    whereClause.NOT = [
+      { category: { in: ['Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop'] } }
+    ];
+  } else if (lowerSlug.includes('protein')) {
+    whereClause.NOT = [
+      { category: { in: ['Loans', 'Loan Consultants', 'Dance Classes', 'Music Classes'] } }
+    ];
+  }
 
   if (selectedArea && selectedArea !== 'All') {
     whereClause.AND = [

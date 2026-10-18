@@ -22,10 +22,14 @@ async function ensureBookingsTableExists() {
         "checkInDate" TEXT,
         "checkOutDate" TEXT,
         "totalAmount" DOUBLE PRECISION DEFAULT 0,
+        "paymentMode" TEXT DEFAULT 'Pay at Hotel',
+        "paymentStatus" TEXT DEFAULT 'Pending',
         "status" TEXT DEFAULT 'Confirmed',
         "notes" TEXT,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE "HotelBooking" ADD COLUMN IF NOT EXISTS "paymentMode" TEXT DEFAULT 'Pay at Hotel';
+      ALTER TABLE "HotelBooking" ADD COLUMN IF NOT EXISTS "paymentStatus" TEXT DEFAULT 'Pending';
     `);
   } catch (e) {
     console.error('[HotelBooking DB ensureTable Error]:', e);
@@ -89,6 +93,9 @@ export async function POST(request: NextRequest) {
       checkInDate,
       checkOutDate,
       totalAmount = 0,
+      paymentMode = 'Pay at Hotel',
+      paymentStatus = 'Pending',
+      status = 'Confirmed',
       notes
     } = body;
 
@@ -103,11 +110,11 @@ export async function POST(request: NextRequest) {
       INSERT INTO "HotelBooking" (
         "id", "hotelId", "hotelSlug", "hotelName", "hotelPhone", "hotelAddress",
         "guestName", "guestPhone", "roomCategory", "stayType", "timeSlot",
-        "checkInDate", "checkOutDate", "totalAmount", "status", "notes"
+        "checkInDate", "checkOutDate", "totalAmount", "paymentMode", "paymentStatus", "status", "notes"
       ) VALUES (
         $1, $2, $3, $4, $5, $6,
         $7, $8, $9, $10, $11,
-        $12, $13, $14, $15, $16
+        $12, $13, $14, $15, $16, $17, $18
       ) RETURNING *;
     `;
 
@@ -126,7 +133,9 @@ export async function POST(request: NextRequest) {
       checkInDate || '',
       checkOutDate || '',
       Number(totalAmount) || 0,
-      'Confirmed',
+      paymentMode,
+      paymentStatus,
+      status || 'Confirmed',
       notes || ''
     ];
 
@@ -135,7 +144,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Booking confirmed!',
+      message: paymentMode === 'Pay at Hotel' ? 'Room reserved! Pay at hotel on arrival.' : 'Booking confirmed!',
       booking: createdBooking
     });
   } catch (error: any) {

@@ -8,6 +8,7 @@ import { specialProfiles } from '@/lib/mockProfiles'; // Clean HMR
 import { businessSchema } from '@/lib/validations';
 import { badRequestResponse, internalServerErrorResponse } from '@/lib/authGuard';
 import { expandCategorySearchTerms } from '@/lib/categoryMapping';
+import { formatCategoryTitle, getCategorySearchTerms } from '@/lib/categories';
 import { generateBusinessSlug } from '@/lib/slugify';
 
 function getHaversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -49,42 +50,47 @@ export async function GET(request: NextRequest) {
     const andClauses: any[] = [];
 
     if (category && category !== 'All') {
-      const categoryTerms = expandCategorySearchTerms(category);
       const cleanCat = category.trim();
-      
-      // Tokenize compound category names (e.g., "Gyms & Fitness Centers" -> ["gyms", "fitness", "centers"])
-      const subTokens = cleanCat
-        .split(/[\s&/,\-+]+/)
-        .map(t => t.trim())
-        .filter(t => t.length >= 3 && !['and', 'the', 'for', 'all', 'near', 'centers', 'stores', 'shops', 'services'].includes(t.toLowerCase()));
+      const formattedTitle = formatCategoryTitle(cleanCat);
+      const categoryTerms = getCategorySearchTerms(cleanCat);
 
-      const tokenVariants: string[] = [];
-      [cleanCat, ...subTokens].forEach(t => {
-        tokenVariants.push(t);
-        if (t.endsWith('s') || t.endsWith('S')) {
-          tokenVariants.push(t.slice(0, -1));
-        } else {
-          tokenVariants.push(t + 's');
-        }
-      });
-
-      const allCategoryCandidates = Array.from(new Set([
+      const candidateTerms = Array.from(new Set([
         cleanCat,
-        ...tokenVariants,
-        ...categoryTerms,
-        ...categoryTerms.map(t => t.endsWith('s') ? t.slice(0, -1) : t + 's')
+        formattedTitle,
+        ...categoryTerms
       ])).filter(Boolean);
 
       const categoryOrConditions: any[] = [
-        { category: { in: allCategoryCandidates } },
-        { category: { contains: cleanCat, mode: 'insensitive' } },
-        ...tokenVariants.map(token => ({ category: { contains: token, mode: 'insensitive' } })),
-        ...tokenVariants.map(token => ({ name: { contains: token, mode: 'insensitive' } })),
-        { services: { some: { name: { contains: cleanCat, mode: 'insensitive' } } } },
-        ...tokenVariants.map(token => ({ services: { some: { name: { contains: token, mode: 'insensitive' } } } }))
+        { category: { equals: formattedTitle, mode: 'insensitive' } },
+        { category: { contains: formattedTitle, mode: 'insensitive' } },
+        { subcategory: { contains: formattedTitle, mode: 'insensitive' } },
+        ...candidateTerms.map(t => ({ category: { contains: t, mode: 'insensitive' } })),
+        ...candidateTerms.map(t => ({ subcategory: { contains: t, mode: 'insensitive' } })),
+        { services: { some: { name: { contains: formattedTitle, mode: 'insensitive' } } } }
       ];
 
+      const genericExclusions = [
+        'centers', 'services', 'stores', 'shops', 'market', 'classes', 'agencies', 
+        'consultants', 'repairs', 'repair', 'care', 'tours', 'point', 'hub', 'dealers', 'class', 'agency', 'store', 'shop'
+      ];
+      const distinctTerms = candidateTerms.filter(t => t.length >= 4 && !genericExclusions.includes(t.toLowerCase()));
+      distinctTerms.forEach(t => {
+        categoryOrConditions.push({ name: { contains: t, mode: 'insensitive' } });
+      });
+
       andClauses.push({ OR: categoryOrConditions });
+
+      // Category Isolation: Prevent cross-category bleed
+      const lowerCat = cleanCat.toLowerCase();
+      if (lowerCat.includes('dance') || lowerCat.includes('music')) {
+        andClauses.push({
+          category: { notIn: ['Loans', 'Loan Consultants', 'Finance', 'Insurance', 'Real Estate', 'Properties', 'Hardware'] }
+        });
+      } else if (lowerCat.includes('loan') || lowerCat.includes('finance')) {
+        andClauses.push({
+          category: { notIn: ['Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants'] }
+        });
+      }
     }
 
     if (premium) {

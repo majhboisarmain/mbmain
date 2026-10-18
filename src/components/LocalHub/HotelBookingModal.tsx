@@ -55,6 +55,7 @@ export interface HotelListing {
   nearStation: boolean;
   nearMidc: boolean;
   description: string;
+  isPayAtHotelAvailable?: boolean;
 }
 
 // All demo hotels removed — real hotels loaded dynamically
@@ -104,6 +105,7 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
   const [idProofType, setIdProofType] = useState('Aadhaar Card');
   const [specialRequest, setSpecialRequest] = useState('');
   const [confirmedBookingRef, setConfirmedBookingRef] = useState('');
+  const [paymentMode, setPaymentMode] = useState<'Pay at Hotel' | 'Online'>('Pay at Hotel');
 
   // Hoteliers: Add Hotel Form
   const [newHotelName, setNewHotelName] = useState('');
@@ -143,7 +145,8 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
         isHourlyFriendly: h.offersHourly !== false,
         nearStation: Boolean(h.nearStation),
         nearMidc: Boolean(h.nearMidc),
-        description: h.description || h.tagline || ''
+        description: h.description || h.tagline || '',
+        isPayAtHotelAvailable: (h as any).isPayAtHotelAvailable !== false
       }));
 
       const liveNames = new Set(mappedLive.map(h => h.name.toLowerCase().trim()));
@@ -204,7 +207,8 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
               isHourlyFriendly: h.offersHourly !== false,
               nearStation: Boolean(h.nearStation),
               nearMidc: Boolean(h.nearMidc),
-              description: h.description || h.tagline || ''
+              description: h.description || h.tagline || '',
+              isPayAtHotelAvailable: h.isPayAtHotelAvailable !== false
             }));
             setHotelList(mapped);
 
@@ -312,6 +316,11 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
       return;
     }
 
+    const isHotelPayAllowed = selectedHotel.isPayAtHotelAvailable !== false;
+    const finalPaymentMode = (paymentMode === 'Pay at Hotel' && isHotelPayAllowed) ? 'Pay at Hotel' : 'Online';
+    const finalPaymentStatus = finalPaymentMode === 'Pay at Hotel' ? 'Pending (Pay at Check-in)' : 'Paid Online';
+    const finalStatus = finalPaymentMode === 'Pay at Hotel' ? 'Reserved (Pay at Hotel)' : 'Confirmed & Sent to Hotel';
+
     const calculatedWindow = calculateStayWindow(checkInTime, hourlyDuration).fullWindowStr;
     const ref = `MB-HTL-${Math.floor(100000 + Math.random() * 900000)}`;
     const newBooking = {
@@ -332,8 +341,10 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
       roomCount,
       roomCategory,
       totalAmount: calculatedPrice,
+      paymentMode: finalPaymentMode,
+      paymentStatus: finalPaymentStatus,
       specialRequest,
-      status: 'Confirmed & Sent to Hotel',
+      status: finalStatus,
       createdAt: new Date().toLocaleString()
     };
 
@@ -359,6 +370,9 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
           checkInDate,
           checkOutDate,
           totalAmount: calculatedPrice,
+          paymentMode: finalPaymentMode,
+          paymentStatus: finalPaymentStatus,
+          status: finalStatus,
           notes: specialRequest
         })
       }).catch(e => console.error('[Hotel Booking DB Save Error]:', e));
@@ -978,6 +992,84 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
                 </div>
               </div>
 
+              {/* Step 3: Payment Mode Selection */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                    3. Choose Payment Method *
+                  </label>
+                  {selectedHotel.isPayAtHotelAvailable === false && (
+                    <span className="text-[9.5px] font-extrabold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">
+                      ⚠️ Pay at Hotel Currently Disabled by Hotelier
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {/* Option A: Pay at Hotel */}
+                  <div
+                    onClick={() => {
+                      if (selectedHotel.isPayAtHotelAvailable !== false) {
+                        setPaymentMode('Pay at Hotel');
+                      }
+                    }}
+                    className={`p-3 rounded-xl border-2 transition-all flex flex-col justify-between ${
+                      selectedHotel.isPayAtHotelAvailable === false
+                        ? 'opacity-50 cursor-not-allowed bg-slate-100 border-slate-200'
+                        : paymentMode === 'Pay at Hotel'
+                        ? 'border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-500/20 cursor-pointer'
+                        : 'border-slate-200 hover:border-slate-300 bg-white cursor-pointer'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">🏨</span>
+                        <span className="text-xs font-black text-slate-900">Pay at Hotel</span>
+                      </div>
+                      <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
+                        selectedHotel.isPayAtHotelAvailable === false
+                          ? 'bg-slate-200 text-slate-600'
+                          : 'bg-emerald-100 text-emerald-800 font-black'
+                      }`}>
+                        {selectedHotel.isPayAtHotelAvailable === false ? 'Disabled' : 'Zero Advance'}
+                      </span>
+                    </div>
+                    <p className="text-[10.5px] text-slate-500 font-medium">
+                      Reserve room instantly now. Pay total amount upon check-in at hotel reception desk.
+                    </p>
+                    <span className="text-[11px] font-black text-emerald-700 mt-2">
+                      {selectedHotel.isPayAtHotelAvailable === false ? 'Not available for this hotel' : '✓ Pay at Reception'}
+                    </span>
+                  </div>
+
+                  {/* Option B: Pay Online / UPI */}
+                  <div
+                    onClick={() => setPaymentMode('Online')}
+                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                      paymentMode === 'Online'
+                        ? 'border-purple-900 bg-purple-50/70 ring-2 ring-purple-900/20'
+                        : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">💳</span>
+                        <span className="text-xs font-black text-slate-900">Pay Online / UPI</span>
+                      </div>
+                      <span className="text-[9px] font-extrabold bg-purple-100 text-purple-900 px-1.5 py-0.5 rounded font-black">
+                        Instant Confirmed
+                      </span>
+                    </div>
+                    <p className="text-[10.5px] text-slate-500 font-medium">
+                      Pay advance online via UPI, Google Pay, PhonePe, or Card for confirmed priority check-in.
+                    </p>
+                    <span className="text-[11px] font-black text-purple-900 mt-2">
+                      ✓ Instant Online Payment
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               {/* Price Breakdown & Instant Checkout */}
               <div className="bg-gradient-to-r from-purple-950 via-[#1c0836] to-indigo-950 text-white rounded-2xl p-4 sm:p-5 shadow-md space-y-3">
                 <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
@@ -989,7 +1081,11 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
                   </div>
                   <div className="text-right">
                     <span className="text-xl font-black text-amber-400">₹{calculatedPrice}</span>
-                    <span className="block text-[9px] text-slate-300 font-bold">Pay Directly at Hotel Desk</span>
+                    <span className="block text-[9px] text-slate-300 font-bold">
+                      {paymentMode === 'Pay at Hotel' && selectedHotel.isPayAtHotelAvailable !== false
+                        ? 'Pay on Arrival at Hotel Desk'
+                        : 'Pay Online & Confirm'}
+                    </span>
                   </div>
                 </div>
 
@@ -999,7 +1095,11 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
                     className="w-full sm:flex-1 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs py-3 rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 uppercase tracking-wider"
                   >
                     <CheckCircle2 className="w-4 h-4 text-slate-950" />
-                    <span>Confirm Booking &amp; Generate Pass</span>
+                    <span>
+                      {paymentMode === 'Pay at Hotel' && selectedHotel.isPayAtHotelAvailable !== false
+                        ? 'Reserve Room (Pay at Hotel)'
+                        : 'Pay Online & Confirm Booking'}
+                    </span>
                   </button>
 
                   <button
@@ -1030,10 +1130,10 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
 
               <div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                  BOOKING CONFIRMED &amp; SENT
+                  {paymentMode === 'Pay at Hotel' && selectedHotel.isPayAtHotelAvailable !== false ? 'ROOM RESERVED (PAY AT HOTEL)' : 'BOOKING CONFIRMED & SENT'}
                 </span>
                 <h3 className="text-lg font-black text-slate-900 mt-2">
-                  Your Room Booking is Ready!
+                  {paymentMode === 'Pay at Hotel' && selectedHotel.isPayAtHotelAvailable !== false ? 'Your Room is Reserved!' : 'Your Room Booking is Ready!'}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Show this digital pass or booking reference at the hotel reception upon arrival.
@@ -1048,7 +1148,7 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
                     <strong className="text-sm font-mono text-white font-black tracking-widest">{confirmedBookingRef}</strong>
                   </div>
                   <span className="bg-emerald-500 text-white font-black text-[9px] px-2 py-0.5 rounded uppercase">
-                    Active
+                    {paymentMode === 'Pay at Hotel' && selectedHotel.isPayAtHotelAvailable !== false ? 'Reserved' : 'Confirmed'}
                   </span>
                 </div>
 
@@ -1058,7 +1158,8 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
                   <p><strong className="text-slate-300">Stay Type:</strong> {stayType === 'hourly' ? `Hourly (${hourlyDuration})` : 'Night Stay'}</p>
                   {stayType === 'hourly' && <p><strong className="text-slate-300">Slot:</strong> {checkInTime} ({hourlyDuration})</p>}
                   <p><strong className="text-slate-300">Guest:</strong> {guestName} ({guestPhone})</p>
-                  <p><strong className="text-slate-300">Total Payable at Desk:</strong> <span className="text-amber-400 font-black">₹{calculatedPrice}</span></p>
+                  <p><strong className="text-slate-300">Payment Mode:</strong> <span className="text-emerald-300 font-black">{paymentMode === 'Pay at Hotel' && selectedHotel.isPayAtHotelAvailable !== false ? '🏨 Pay at Hotel (Desk)' : '💳 Paid Online / UPI'}</span></p>
+                  <p><strong className="text-slate-300">{paymentMode === 'Pay at Hotel' && selectedHotel.isPayAtHotelAvailable !== false ? 'Total Payable at Desk:' : 'Amount Paid:'}</strong> <span className="text-amber-400 font-black">₹{calculatedPrice}</span></p>
                 </div>
               </div>
 
@@ -1066,7 +1167,7 @@ export default function HotelBookingModal({ isOpen, onClose, initialHotelId }: H
               <div className="space-y-2 pt-2">
                 <a
                   href={`https://wa.me/${selectedHotel.whatsapp || selectedHotel.phone}?text=${encodeURIComponent(
-                    `Hello ${selectedHotel.name},\nI have booked a stay on Majh Boisar!\n\n📋 Ref ID: ${confirmedBookingRef}\n👤 Guest Name: ${guestName}\n📱 Phone: ${guestPhone}\n🏨 Stay Type: ${stayType === 'hourly' ? `Hourly (${hourlyDuration}) - ${checkInTime}` : 'Night Stay'}\n💰 Amount: ₹${calculatedPrice}\n\nPlease keep the room ready.`
+                    `Hello ${selectedHotel.name},\nI have booked a stay on Majh Boisar!\n\n📋 Ref ID: ${confirmedBookingRef}\n👤 Guest Name: ${guestName}\n📱 Phone: ${guestPhone}\n🏨 Stay Type: ${stayType === 'hourly' ? `Hourly (${hourlyDuration}) - ${checkInTime}` : 'Night Stay'}\n💳 Payment Mode: ${paymentMode === 'Pay at Hotel' && selectedHotel.isPayAtHotelAvailable !== false ? 'Pay at Hotel (Collect on check-in)' : 'Paid Online'}\n💰 Amount: ₹${calculatedPrice}\n\nPlease keep the room ready.`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"

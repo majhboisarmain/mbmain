@@ -819,6 +819,8 @@ function DashboardContent() {
             checkInDate: b.checkInDate || 'Today',
             totalAmount: b.totalAmount,
             status: b.status,
+            paymentMode: b.paymentMode || 'Pay at Hotel',
+            paymentStatus: b.paymentStatus || 'Pending',
             createdAt: b.createdAt
           }));
           const seen = new Set(dbBookings.map((b: any) => b.id));
@@ -1203,6 +1205,14 @@ function DashboardContent() {
           setHourlyBookingsEnabled(Boolean(h.offersHourly));
         }
 
+        const specificPayAtHotel = localStorage.getItem(`majh_boisar_hotel_pay_at_hotel_${h.slug}`) ||
+                                   localStorage.getItem(`majh_boisar_hotel_pay_at_hotel_${h.id}`);
+        if (specificPayAtHotel !== null) {
+          setPayAtHotelEnabled(specificPayAtHotel === 'true');
+        } else if ((h as any).isPayAtHotelAvailable !== undefined) {
+          setPayAtHotelEnabled(Boolean((h as any).isPayAtHotelAvailable));
+        }
+
         const specDayTiming = localStorage.getItem(`majh_boisar_hotel_day_stay_timing_${h.slug}`) || (h as any).dayStayTimingWindow;
         if (specDayTiming) setDayStayTimingWindow(specDayTiming);
         const specNightIn = localStorage.getItem(`majh_boisar_hotel_night_checkin_${h.slug}`) || (h as any).nightStayCheckIn;
@@ -1389,6 +1399,58 @@ function DashboardContent() {
       window.dispatchEvent(new Event('storage'));
     }
     showToast(next ? '🟢 Hourly (3h/6h/12h) Stays ENABLED' : '🔴 Hourly Stays OFF — Day & Night Stays Only', next ? 'success' : 'info');
+  };
+
+  // 🏨 Pay at Hotel Control State & Live Sync
+  const [payAtHotelEnabled, setPayAtHotelEnabled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('majh_boisar_hotel_pay_at_hotel_enabled');
+      if (saved !== null) return saved === 'true';
+    }
+    return true;
+  });
+
+  const handleTogglePayAtHotel = async () => {
+    const next = !payAtHotelEnabled;
+    setPayAtHotelEnabled(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('majh_boisar_hotel_pay_at_hotel_enabled', String(next));
+
+      const allH = getAllHotels();
+      const activeHotelIndex = selectedId >= 99000 ? (selectedId - 99000) : 0;
+      const currentH = allH[activeHotelIndex] || allH[0] || {};
+      const hotelId = (currentH as any)?.id;
+      const hotelSlug = (currentH as any)?.slug || hotelProfileName.toLowerCase().replace(/\s+/g, '-');
+
+      if (hotelSlug) localStorage.setItem(`majh_boisar_hotel_pay_at_hotel_${hotelSlug}`, String(next));
+      if (hotelId) localStorage.setItem(`majh_boisar_hotel_pay_at_hotel_${hotelId}`, String(next));
+
+      try {
+        const customHotels = JSON.parse(localStorage.getItem('majh_boisar_custom_hotels_v2') || '[]');
+        const updatedList = customHotels.map((h: any) => {
+          if (h.id === hotelId || h.slug === hotelSlug || h.name === hotelProfileName) {
+            return { ...h, isPayAtHotelAvailable: next };
+          }
+          return h;
+        });
+        localStorage.setItem('majh_boisar_custom_hotels_v2', JSON.stringify(updatedList));
+
+        // Sync with central PostgreSQL DB live via PATCH /api/hotels
+        fetch('/api/hotels', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: typeof hotelId === 'number' || (typeof hotelId === 'string' && /^\d+$/.test(hotelId)) ? Number(hotelId) : undefined,
+            slug: hotelSlug,
+            isPayAtHotelAvailable: next
+          })
+        }).catch(err => console.error('[Hotel PayAtHotel Sync Error]:', err));
+      } catch (e) {}
+
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('majh_boisar_hotel_updated'));
+    }
+    showToast(next ? '🟢 Pay at Hotel ALLOWED (Guests can reserve without paying advance)' : '🔴 Pay at Hotel DISABLED (Guests must pay online/UPI)', next ? 'success' : 'info');
   };
 
   // ⏱️ Day-Stay vs Night-Stay Slot Timings State
@@ -6560,9 +6622,25 @@ _Powered by Majh Boisar (majhboisar.com)_`
                               }`}
                               title="Click to toggle Hourly Stays (3h/6h/12h)"
                             >
-                              <span>⏱️ Hourly (3h/6h)</span>
+                              <span>⏱️ Hourly</span>
                               <span className={`w-2 h-2 rounded-full ${hourlyBookingsEnabled ? 'bg-emerald-400' : 'bg-slate-400'}`} />
                               <span className="text-[11px]">{hourlyBookingsEnabled ? 'Active' : 'Off'}</span>
+                            </button>
+
+                            {/* Pay at Hotel Toggle */}
+                            <button
+                              type="button"
+                              onClick={handleTogglePayAtHotel}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                payAtHotelEnabled
+                                  ? 'bg-emerald-800 text-white shadow-2xs hover:bg-emerald-900'
+                                  : 'bg-rose-50 text-rose-700 border border-rose-300 hover:bg-rose-100'
+                              }`}
+                              title="Click to toggle Pay at Hotel (Cash / UPI at Reception)"
+                            >
+                              <span>🏨 Pay at Hotel</span>
+                              <span className={`w-2 h-2 rounded-full ${payAtHotelEnabled ? 'bg-emerald-300' : 'bg-rose-500'}`} />
+                              <span className="text-[11px]">{payAtHotelEnabled ? 'Allowed' : 'Online Only'}</span>
                             </button>
                           </div>
 
@@ -6759,7 +6837,9 @@ _Powered by Majh Boisar (majhboisar.com)_`
                                       </div>
 
                                       <div className="text-right">
-                                        <span className="text-[9px] text-slate-400 block font-medium">Pay on Arrival</span>
+                                        <span className={`text-[9px] block font-extrabold uppercase ${booking.paymentMode === 'Online' ? 'text-indigo-600' : 'text-emerald-700'}`}>
+                                          {booking.paymentMode === 'Online' ? '💳 Paid Online' : '🏨 Pay at Hotel'}
+                                        </span>
                                         <span className="text-sm font-black text-slate-900">₹{booking.totalAmount}</span>
                                       </div>
                                     </div>
@@ -6937,19 +7017,36 @@ _Powered by Majh Boisar (majhboisar.com)_`
                             <span>⚡</span> Configure AC &amp; Non-AC Room Tariffs
                           </h4>
 
-                          <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl">
-                            <span className="text-[11px] font-bold text-slate-700">Hourly (3h/6h) Stays:</span>
-                            <button
-                              type="button"
-                              onClick={handleToggleHourlyBookings}
-                              className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                                hourlyBookingsEnabled
-                                  ? 'bg-emerald-600 text-white shadow-2xs'
-                                  : 'bg-rose-600 text-white shadow-2xs'
-                              }`}
-                            >
-                              {hourlyBookingsEnabled ? '🟢 ON (Hourly Enabled)' : '🔴 OFF (Day & Night Only)'}
-                            </button>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl">
+                              <span className="text-[11px] font-bold text-slate-700">Hourly Stays:</span>
+                              <button
+                                type="button"
+                                onClick={handleToggleHourlyBookings}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                  hourlyBookingsEnabled
+                                    ? 'bg-emerald-600 text-white shadow-2xs'
+                                    : 'bg-rose-600 text-white shadow-2xs'
+                                }`}
+                              >
+                                {hourlyBookingsEnabled ? '🟢 ON' : '🔴 OFF'}
+                              </button>
+                            </div>
+
+                            <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl">
+                              <span className="text-[11px] font-bold text-slate-700">Pay at Hotel:</span>
+                              <button
+                                type="button"
+                                onClick={handleTogglePayAtHotel}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                  payAtHotelEnabled
+                                    ? 'bg-emerald-600 text-white shadow-2xs'
+                                    : 'bg-rose-600 text-white shadow-2xs'
+                                }`}
+                              >
+                                {payAtHotelEnabled ? '🟢 Allowed' : '🔴 Online Only'}
+                              </button>
+                            </div>
                           </div>
                         </div>
 

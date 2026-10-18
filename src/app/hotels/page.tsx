@@ -96,6 +96,7 @@ export default function HotelsPage() {
   const [guestPhone, setGuestPhone] = useState('');
   const [idProof, setIdProof] = useState('Aadhaar Card (Local / Outstation Accepted)');
   const [confirmedPass, setConfirmedPass] = useState<any>(null);
+  const [paymentMode, setPaymentMode] = useState<'Pay at Hotel' | 'Online'>('Pay at Hotel');
 
   // Add Hotel Modal State (Multi-room, Photo Gallery Upload, Amenities)
   const [isAddHotelOpen, setIsAddHotelOpen] = useState(false);
@@ -380,6 +381,11 @@ export default function HotelsPage() {
       ? 'Full Day Stay'
       : calculateStayWindow(checkInTime, selectedSlotDuration as any).fullWindowStr;
 
+    const isHotelPayAllowed = (quickBookHotel as any).isPayAtHotelAvailable !== false;
+    const finalPaymentMode = (paymentMode === 'Pay at Hotel' && isHotelPayAllowed) ? 'Pay at Hotel' : 'Online';
+    const finalPaymentStatus = finalPaymentMode === 'Pay at Hotel' ? 'Pending (Pay at Check-in)' : 'Paid Online';
+    const finalStatus = finalPaymentMode === 'Pay at Hotel' ? 'Reserved (Pay at Hotel)' : 'Confirmed';
+
     const ref = `MB-HTL-${Math.floor(100000 + Math.random() * 900000)}`;
     const newBooking = {
       id: ref,
@@ -395,6 +401,9 @@ export default function HotelsPage() {
       timeSlot: calculatedWindow,
       date: bookingDate,
       totalAmount: price,
+      paymentMode: finalPaymentMode,
+      paymentStatus: finalPaymentStatus,
+      status: finalStatus,
       createdAt: new Date().toLocaleString()
     };
 
@@ -421,6 +430,9 @@ export default function HotelsPage() {
           timeSlot: calculatedWindow,
           checkInDate: bookingDate,
           totalAmount: price,
+          paymentMode: finalPaymentMode,
+          paymentStatus: finalPaymentStatus,
+          status: finalStatus,
           notes: `Pass Ref: ${ref} · ID: ${idProof}`
         })
       }).catch(e => console.error('[Hotel Booking DB Error]:', e));
@@ -1156,10 +1168,78 @@ export default function HotelsPage() {
                   </div>
                 </div>
 
+                {/* Payment Method Selection */}
+                <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[10px] font-black text-slate-600 uppercase tracking-wider">
+                      Payment Mode *
+                    </label>
+                    {(quickBookHotel as any).isPayAtHotelAvailable === false && (
+                      <span className="text-[9px] font-black text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
+                        ⚠️ Pay at Hotel Disabled by Hotelier
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Pay at Hotel */}
+                    <div
+                      onClick={() => {
+                        if ((quickBookHotel as any).isPayAtHotelAvailable !== false) {
+                          setPaymentMode('Pay at Hotel');
+                        }
+                      }}
+                      className={`p-2.5 rounded-xl border-2 transition-all flex flex-col justify-between ${
+                        (quickBookHotel as any).isPayAtHotelAvailable === false
+                          ? 'opacity-40 cursor-not-allowed bg-slate-100 border-slate-200'
+                          : paymentMode === 'Pay at Hotel'
+                          ? 'border-emerald-600 bg-emerald-50/80 ring-2 ring-emerald-500/20 cursor-pointer'
+                          : 'border-slate-200 hover:border-slate-300 bg-white cursor-pointer'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-black text-slate-900 flex items-center gap-1">
+                          <span>🏨</span> Pay at Hotel
+                        </span>
+                        <span className="text-[8.5px] font-black bg-emerald-100 text-emerald-800 px-1 py-0.2 rounded">
+                          0 Advance
+                        </span>
+                      </div>
+                      <p className="text-[9.5px] text-slate-500 font-medium">
+                        Reserve now, pay at check-in desk
+                      </p>
+                    </div>
+
+                    {/* Pay Online */}
+                    <div
+                      onClick={() => setPaymentMode('Online')}
+                      className={`p-2.5 rounded-xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                        paymentMode === 'Online'
+                          ? 'border-purple-900 bg-purple-50/80 ring-2 ring-purple-900/20'
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-black text-slate-900 flex items-center gap-1">
+                          <span>💳</span> Online / UPI
+                        </span>
+                        <span className="text-[8.5px] font-black bg-purple-100 text-purple-900 px-1 py-0.2 rounded">
+                          Confirmed
+                        </span>
+                      </div>
+                      <p className="text-[9.5px] text-slate-500 font-medium">
+                        Instant advance via UPI/GPay
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Price Bar & Buttons */}
                 <div className="bg-gradient-to-r from-purple-950 to-indigo-950 text-white rounded-2xl p-4 flex items-center justify-between shadow-md">
                   <div>
-                    <span className="text-[10px] text-amber-300 font-black uppercase tracking-widest block">Total Payable at Desk</span>
+                    <span className="text-[10px] text-amber-300 font-black uppercase tracking-widest block">
+                      {paymentMode === 'Pay at Hotel' && (quickBookHotel as any).isPayAtHotelAvailable !== false ? 'Total Payable at Desk' : 'Pay Online Now'}
+                    </span>
                     <span className="text-xl font-black text-white">
                       ₹{selectedSlotDuration === '3h' ? quickBookHotel.hourlyRate3h
                         : selectedSlotDuration === '6h' ? quickBookHotel.hourlyRate6h
@@ -1172,7 +1252,9 @@ export default function HotelsPage() {
                     type="submit"
                     className="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl shadow-md transition-all cursor-pointer uppercase tracking-wider active:scale-95"
                   >
-                    Confirm Booking
+                    {paymentMode === 'Pay at Hotel' && (quickBookHotel as any).isPayAtHotelAvailable !== false
+                      ? 'Reserve Room (Pay at Hotel)'
+                      : 'Pay Online & Confirm'}
                   </button>
                 </div>
 
@@ -1183,7 +1265,9 @@ export default function HotelsPage() {
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-900">Booking Confirmed!</h3>
+                  <h3 className="text-base font-black text-slate-900">
+                    {confirmedPass.paymentMode === 'Pay at Hotel' ? 'Room Reserved (Pay at Hotel)' : 'Booking Confirmed!'}
+                  </h3>
                   <p className="text-xs text-slate-500 mt-0.5">Show this pass at reception upon arrival.</p>
                 </div>
 
@@ -1197,7 +1281,7 @@ export default function HotelsPage() {
                       <strong className="text-sm font-mono text-white font-black">{confirmedPass.id}</strong>
                     </div>
                     <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                      ✓ Confirmed
+                      {confirmedPass.paymentMode === 'Pay at Hotel' ? '✓ Reserved' : '✓ Confirmed'}
                     </span>
                   </div>
 
@@ -1218,8 +1302,14 @@ export default function HotelsPage() {
                       <span className="text-purple-200/90 font-semibold shrink-0">👤 Guest:</span>
                       <span className="text-white font-bold">{confirmedPass.guestName} ({confirmedPass.guestPhone})</span>
                     </div>
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-purple-200/90 font-semibold shrink-0">💳 Mode:</span>
+                      <span className="text-emerald-300 font-black">{confirmedPass.paymentMode === 'Pay at Hotel' ? '🏨 Pay at Hotel Desk' : '💳 Paid Online / UPI'}</span>
+                    </div>
                     <div className="flex justify-between items-center gap-2 pt-2 border-t border-purple-800/60">
-                      <span className="text-emerald-300 font-bold text-xs">💰 Pay at Desk:</span>
+                      <span className="text-emerald-300 font-bold text-xs">
+                        {confirmedPass.paymentMode === 'Pay at Hotel' ? '💰 Payable at Desk:' : '💰 Total Paid:'}
+                      </span>
                       <span className="text-lg font-black text-amber-300">₹{confirmedPass.totalAmount}</span>
                     </div>
                   </div>
@@ -1227,7 +1317,7 @@ export default function HotelsPage() {
 
                 <a
                   href={`https://wa.me/${quickBookHotel.whatsapp}?text=${encodeURIComponent(
-                    `Hello ${quickBookHotel.name},\nI have confirmed booking on Majh Boisar.\n\n📋 Ref: ${confirmedPass.id}\n👤 Guest: ${confirmedPass.guestName}\n📱 Phone: ${confirmedPass.guestPhone}\n⏰ Stay: ${confirmedPass.stayType}\n💰 Amount: ₹${confirmedPass.totalAmount}\n\nPlease keep room ready.`
+                    `Hello ${quickBookHotel.name},\nI have booked a room on Majh Boisar.\n\n📋 Ref: ${confirmedPass.id}\n👤 Guest: ${confirmedPass.guestName}\n📱 Phone: ${confirmedPass.guestPhone}\n⏰ Stay: ${confirmedPass.stayType}\n💳 Payment Mode: ${confirmedPass.paymentMode || 'Pay at Hotel'}\n💰 Amount: ₹${confirmedPass.totalAmount}\n\nPlease keep room ready.`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
