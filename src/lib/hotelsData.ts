@@ -90,7 +90,7 @@ export function getHotelAssignedOwnerPhone(hotel: any): string {
       if (clean.length === 10) return clean;
     }
   }
-  const createdBy = (hotel.createdBy || hotel.assignedOwnerPhone || '').toString().replace(/\D/g, '').slice(-10);
+  const createdBy = (hotel.createdBy || hotel.assignedOwnerPhone || hotel.phone || hotel.whatsapp || '').toString().replace(/\D/g, '').slice(-10);
   if (createdBy && createdBy.length === 10) return createdBy;
   return '';
 }

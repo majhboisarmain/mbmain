@@ -177,6 +177,8 @@ function DashboardContent() {
             (typeof window !== 'undefined' ? (localStorage.getItem(`majh_boisar_hotel_owner_${candidate.id}`) || localStorage.getItem(`majh_boisar_hotel_owner_${candidate.slug}`)) : '') ||
             (candidate as any).createdBy ||
             (candidate as any).assignedOwnerPhone ||
+            candidate.phone ||
+            candidate.whatsapp ||
             ''
           ).toString().replace(/\D/g, '').slice(-10);
 
@@ -188,13 +190,15 @@ function DashboardContent() {
       }
     }
 
-    // 2. Auto-detect by user phone number: ONLY matches if hotel has been assigned to this user by Admin!
+    // 2. Auto-detect by user phone number: matches hotel by owner, phone or whatsapp
     if (!match && userPhoneClean && !isAdminAuth) {
       matchIndex = allH.findIndex(h => {
         const assignedOwner = (
           (typeof window !== 'undefined' ? (localStorage.getItem(`majh_boisar_hotel_owner_${h.id}`) || localStorage.getItem(`majh_boisar_hotel_owner_${h.slug}`)) : '') ||
           (h as any).createdBy ||
           (h as any).assignedOwnerPhone ||
+          h.phone ||
+          h.whatsapp ||
           ''
         ).toString().replace(/\D/g, '').slice(-10);
 
@@ -2990,7 +2994,9 @@ _Powered by Majh Boisar (majhboisar.com)_`
   // Helper to strictly verify business ownership:
   // If createdBy has an assigned 10-digit phone number, ONLY that phone number is authorized!
   // If business was assigned to B, then user A cannot open it under any condition.
-  const isBusinessOwnedByUser = (b: any, userPhoneDigits: string): boolean => {
+  const isBusinessOwnedByUser = (b: any, userPhoneDigits: string, savedIds: number[] = []): boolean => {
+    if (!b) return false;
+    if (savedIds && savedIds.includes(b.id)) return true;
     if (!userPhoneDigits) return false;
     const user10 = userPhoneDigits.replace(/\D/g, '').slice(-10);
     if (!user10 || user10.length !== 10) return false;
@@ -2999,15 +3005,10 @@ _Powered by Majh Boisar (majhboisar.com)_`
     const bizPhoneDigits = (b.phone || '').toString().replace(/\D/g, '').slice(-10);
     const bizWhatsappDigits = (b.whatsapp || '').toString().replace(/\D/g, '').slice(-10);
 
-    // If explicitly assigned to a 10-digit owner phone, ONLY that owner matches!
-    if (bizCreatedByDigits && bizCreatedByDigits.length === 10) {
-      return bizCreatedByDigits === user10;
-    }
-
-    // Fallback: match contact phone or whatsapp
     return (
-      (bizPhoneDigits.length === 10 && bizPhoneDigits === user10) ||
-      (bizWhatsappDigits.length === 10 && bizWhatsappDigits === user10)
+      (bizCreatedByDigits && (bizCreatedByDigits === user10 || bizCreatedByDigits.endsWith(user10) || user10.endsWith(bizCreatedByDigits))) ||
+      (bizPhoneDigits && (bizPhoneDigits === user10 || bizPhoneDigits.endsWith(user10) || user10.endsWith(bizPhoneDigits))) ||
+      (bizWhatsappDigits && (bizWhatsappDigits === user10 || bizWhatsappDigits.endsWith(user10) || user10.endsWith(bizWhatsappDigits)))
     );
   };
 
@@ -3015,7 +3016,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
   const fetchBusinessesList = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/businesses?showAll=true');
+      const res = await fetch(`/api/businesses?showAll=true&_t=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       if (!Array.isArray(data)) {
         setLoading(false);
@@ -3092,7 +3093,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
 
           const myOwnBiz = combined.find((b: any) => {
             if (!userPhoneDigits) return false;
-            return isBusinessOwnedByUser(b, userPhoneDigits);
+            return isBusinessOwnedByUser(b, userPhoneDigits, savedBizIds);
           });
 
           // Default target: user's owned business > first non-hotel business > first item
@@ -3123,6 +3124,8 @@ _Powered by Majh Boisar (majhboisar.com)_`
             (typeof window !== 'undefined' ? (localStorage.getItem(`majh_boisar_hotel_owner_${h.id}`) || localStorage.getItem(`majh_boisar_hotel_owner_${h.slug}`)) : '') ||
             (h as any).createdBy ||
             (h as any).assignedOwnerPhone ||
+            h.phone ||
+            h.whatsapp ||
             ''
           ).toString().replace(/\D/g, '').slice(-10);
 
@@ -3137,15 +3140,22 @@ _Powered by Majh Boisar (majhboisar.com)_`
           hotelSlug: h.slug
         }));
 
-        const myBizList = data.filter((b: any) => isBusinessOwnedByUser(b, userPhoneDigits));
+        let savedIds: number[] = [];
+        if (typeof window !== 'undefined' && userPhoneDigits) {
+          try {
+            const raw = localStorage.getItem(`majh_boisar_my_biz_ids_${userPhoneDigits}`) || localStorage.getItem('majh_boisar_my_biz_ids');
+            if (raw) savedIds = JSON.parse(raw);
+          } catch (e) { }
+        }
 
-        // Sync & sanitize localStorage: remove any business IDs that were reassigned or no longer owned
+        const myBizList = data.filter((b: any) => isBusinessOwnedByUser(b, userPhoneDigits, savedIds));
+
+        // Keep localStorage synced with owned IDs
         if (typeof window !== 'undefined' && userPhoneDigits) {
           try {
             const key = `majh_boisar_my_biz_ids_${userPhoneDigits}`;
-            const validOwnedIds = myBizList.map((b: any) => b.id);
+            const validOwnedIds = Array.from(new Set([...savedIds, ...myBizList.map((b: any) => b.id)]));
             localStorage.setItem(key, JSON.stringify(validOwnedIds));
-            localStorage.removeItem('majh_boisar_my_biz_ids');
           } catch (e) { }
         }
 
@@ -3309,7 +3319,14 @@ _Powered by Majh Boisar (majhboisar.com)_`
       // Strict security: If not admin, ensure the fetched business is strictly owned by this logged in user
       if (!isAdminAuth) {
         const userPhoneDigits = loggedInUser?.phone ? loggedInUser.phone.replace(/\D/g, '').slice(-10) : '';
-        if (!isBusinessOwnedByUser(data, userPhoneDigits)) {
+        let savedIds: number[] = [];
+        if (typeof window !== 'undefined' && userPhoneDigits) {
+          try {
+            const raw = localStorage.getItem(`majh_boisar_my_biz_ids_${userPhoneDigits}`) || localStorage.getItem('majh_boisar_my_biz_ids');
+            if (raw) savedIds = JSON.parse(raw);
+          } catch (e) { }
+        }
+        if (!isBusinessOwnedByUser(data, userPhoneDigits, savedIds)) {
           setBusiness(null);
           setLoading(false);
           return;
@@ -3778,7 +3795,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
           subscription: tierToSet,
           premium: isPaidPlan,
           // Save the login phone of the user so we can reliably find their businesses later
-          ownerPhone: loggedInUser?.phone || undefined
+          ownerPhone: (loggedInUser?.phone || newBizPhone || newBizWhatsapp || '').replace(/\D/g, '').slice(-10) || undefined
         })
       });
 
@@ -3881,10 +3898,15 @@ _Powered by Majh Boisar (majhboisar.com)_`
         services: Array.isArray(createdObj.services) ? createdObj.services : [],
         faqs: Array.isArray(createdObj.faqs) ? createdObj.faqs : []
       };
+      setBusinessesList(prev => {
+        const item = { id: createdObj.id, name: createdObj.name, category: createdObj.category };
+        return [item, ...prev.filter(b => b.id !== createdObj.id)];
+      });
       setSelectedId(createdObj.id);
       setBusiness(safeCreatedObj);
       setHasRegisteredBusiness(true);
       setRole('BusinessOwner');
+      setDashboardMode('shop');
       fetchBusinessesList();
 
       // Reset Modal Form states & close
@@ -4022,70 +4044,10 @@ _Powered by Majh Boisar (majhboisar.com)_`
     );
   }
 
-  // 2. If logged in but Admin has NOT assigned any business or hotel to this phone number
-  if (!shouldShowRegistrationWizard && isLoggedIn && !isAdminAuth && businessesList.length === 0 && !specialProfile) {
-    const cleanPhone = (loggedInUser?.phone || '').replace(/\D/g, '').slice(-10);
-    return (
-      <div className="min-h-[85vh] bg-[#f8fafc] py-16 px-4 flex items-center justify-center text-slate-800">
-        <div className="max-w-md w-full bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xl text-center space-y-6 animate-in fade-in duration-200">
-          <div className="w-16 h-16 rounded-3xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center text-3xl mx-auto shadow-xs font-black">
-            🔒
-          </div>
-
-          <div className="space-y-2">
-            <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider">
-              Portal Inactive · Number Not Assigned
-            </span>
-            <h2 className="text-xl font-black text-slate-900">Portal Access Pending</h2>
-            <p className="text-xs text-slate-500 font-medium leading-relaxed">
-              Aap <strong className="text-slate-900 font-mono">+91 {cleanPhone}</strong> se logged in hain. Majh Boisar Admin ne abhi tak koi Hotel ya Business portal aapke number par assign nahi kiya hai.
-            </p>
-          </div>
-
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs text-slate-700 space-y-2 text-left">
-            <p className="font-bold flex items-center gap-1.5 text-slate-900">
-              <span>💡 Portal Kaise Open Hoga?</span>
-            </p>
-            <p className="text-[11px] text-slate-600 leading-relaxed">
-              Admin jab aapka mobile number hotel ya business listing ke sath assign karega, tab sirf aur sirf aapke iss mobile number se aapka dashboard portal open ho jayega.
-            </p>
-          </div>
-
-          <div className="space-y-2.5 pt-2">
-            <a
-              href={`https://wa.me/917769947217?text=${encodeURIComponent(`Hello Admin, maine Majh Boisar partner portal par login kiya hai (+91 ${cleanPhone}). Kripya mera hotel / business portal access activate/assign karein.`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-3.5 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>📲 WhatsApp Admin to Activate Portal</span>
-            </a>
-
-            <Link
-              href="/dashboard?register=true"
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-3 rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>➕ List a New Business / Hotel</span>
-            </Link>
-
-            <button
-              type="button"
-              onClick={() => setLoginModalOpen(true)}
-              className="w-full text-slate-500 hover:text-slate-800 font-bold text-xs py-2 cursor-pointer transition-colors"
-            >
-              🔄 Switch to Another Mobile Number
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 3. Business Registration Wizard:
+  // 2. Business Registration Wizard:
   //    Triggered whenever user clicks "List Your Business" (registerParam === true)
   //    OR when user has NO registered business yet.
-  if (shouldShowRegistrationWizard) {
+  if (shouldShowRegistrationWizard || (isLoggedIn && !isAdminAuth && businessesList.length === 0 && !specialProfile)) {
     return (
       <div className="min-h-screen bg-slate-50/70 py-5 sm:py-8 text-slate-800 font-sans">
         <div className="max-w-2xl mx-auto px-4">

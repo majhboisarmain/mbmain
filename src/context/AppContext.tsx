@@ -96,30 +96,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!Array.isArray(data)) return;
 
       const user10 = phoneDigits.slice(-10);
+
+      // Support locally stored business IDs for instant ownership
+      let savedBizIds: number[] = [];
+      if (typeof window !== 'undefined') {
+        try {
+          const raw = localStorage.getItem(`majh_boisar_my_biz_ids_${user10}`) || localStorage.getItem('majh_boisar_my_biz_ids');
+          if (raw) savedBizIds = JSON.parse(raw);
+        } catch (e) {}
+      }
+
       const myBiz = data.filter((b: any) => {
+        if (savedBizIds.includes(b.id)) return true;
         if (!user10 || user10.length !== 10) return false;
         const bizCreatedByDigits = (b.createdBy || '').toString().replace(/\D/g, '').slice(-10);
         const bizPhoneDigits = (b.phone || '').toString().replace(/\D/g, '').slice(-10);
         const bizWhatsappDigits = (b.whatsapp || '').toString().replace(/\D/g, '').slice(-10);
 
-        // If explicitly assigned to a 10-digit owner phone, ONLY that owner matches!
-        if (bizCreatedByDigits && bizCreatedByDigits.length === 10) {
-          return bizCreatedByDigits === user10;
-        }
-
-        // Fallback: match contact phone or whatsapp
         return (
-          (bizPhoneDigits.length === 10 && bizPhoneDigits === user10) ||
-          (bizWhatsappDigits.length === 10 && bizWhatsappDigits === user10)
+          (bizCreatedByDigits && (bizCreatedByDigits === user10 || bizCreatedByDigits.endsWith(user10) || user10.endsWith(bizCreatedByDigits))) ||
+          (bizPhoneDigits && (bizPhoneDigits === user10 || bizPhoneDigits.endsWith(user10) || user10.endsWith(bizPhoneDigits))) ||
+          (bizWhatsappDigits && (bizWhatsappDigits === user10 || bizWhatsappDigits.endsWith(user10) || user10.endsWith(bizWhatsappDigits)))
         );
       });
 
-      // Sanitize localStorage to purge any businesses transferred to another number
+      // Keep localStorage synced with owned IDs
       if (typeof window !== 'undefined' && user10) {
         try {
           const key = `majh_boisar_my_biz_ids_${user10}`;
-          localStorage.setItem(key, JSON.stringify(myBiz.map((b: any) => b.id)));
-          localStorage.removeItem('majh_boisar_my_biz_ids');
+          const allOwned = Array.from(new Set([...savedBizIds, ...myBiz.map((b: any) => b.id)]));
+          localStorage.setItem(key, JSON.stringify(allOwned));
         } catch(e){}
       }
 

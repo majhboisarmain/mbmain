@@ -153,14 +153,22 @@ export default function BusinessDetailsPage({ initialBusiness, businessSlug }: B
     if (!cleanUserPhone || cleanUserPhone.length !== 10) return false;
 
     const cleanCreatedBy = (((business as any)?.createdBy) || '').toString().replace(/\D/g, '').slice(-10);
-    // If explicitly assigned to a 10-digit owner phone, ONLY that owner matches!
-    if (cleanCreatedBy && cleanCreatedBy.length === 10) {
-      return cleanUserPhone === cleanCreatedBy;
-    }
-
     const cleanBizPhone = (business?.phone || '').toString().replace(/\D/g, '').slice(-10);
     const cleanWaPhone = (business?.whatsapp || '').toString().replace(/\D/g, '').slice(-10);
-    return cleanUserPhone === cleanBizPhone || cleanUserPhone === cleanWaPhone;
+
+    // Check saved IDs in browser
+    if (typeof window !== 'undefined' && business?.id) {
+      try {
+        const raw = localStorage.getItem(`majh_boisar_my_biz_ids_${cleanUserPhone}`) || localStorage.getItem('majh_boisar_my_biz_ids');
+        if (raw && JSON.parse(raw).includes(business.id)) return true;
+      } catch (e) {}
+    }
+
+    return (
+      (cleanCreatedBy && cleanUserPhone === cleanCreatedBy) ||
+      (cleanBizPhone && cleanUserPhone === cleanBizPhone) ||
+      (cleanWaPhone && cleanUserPhone === cleanWaPhone)
+    );
   }, [isLoggedIn, currentRole, loggedInUser, business]);
 
   const rawImageParts = business?.image ? business.image.split('||gallery_sep||').filter(Boolean) : [];

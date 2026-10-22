@@ -339,9 +339,13 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    const cacheControlHeader = showAll 
+      ? 'no-store, no-cache, must-revalidate, proxy-revalidate'
+      : 'public, s-maxage=30, stale-while-revalidate=120';
+
     return NextResponse.json(result, {
       headers: {
-        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+        'Cache-Control': cacheControlHeader,
       },
     });
   } catch (error: any) {
@@ -460,7 +464,7 @@ export async function POST(request: NextRequest) {
             : (category?.toLowerCase().includes('maid') || category?.toLowerCase().includes('helper') ? false : true),
           premium: body.premium !== undefined ? body.premium : (body.createdBy === 'Admin' ? true : false),
           rating: body.rating !== undefined ? parseFloat(body.rating) : 5.0,
-          createdBy: body.ownerPhone || body.createdBy || (body.createdBy === 'Admin' ? 'Admin' : null)
+          createdBy: (body.ownerPhone || body.phone || body.whatsapp || body.createdBy || '').toString().replace(/\D/g, '').slice(-10) || (body.createdBy === 'Admin' ? 'Admin' : null)
         }
       });
     } catch (createErr: any) {
