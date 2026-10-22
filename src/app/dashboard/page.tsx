@@ -1226,8 +1226,8 @@ function DashboardContent() {
   const [hotelProfileAddress, setHotelProfileAddress] = useState('Navapur Road, Near Boisar Railway Station, Boisar West, Palghar - 401501');
   const [hotelProfileLandmark, setHotelProfileLandmark] = useState('Opposite Old Market, 3 Mins from Station');
   const [hotelProfileMapsUrl, setHotelProfileMapsUrl] = useState('https://maps.google.com/?q=Boisar+West');
-  const [hotelProfilePhone, setHotelProfilePhone] = useState('9307294733');
-  const [hotelProfileWhatsapp, setHotelProfileWhatsapp] = useState('9307294733');
+  const [hotelProfilePhone, setHotelProfilePhone] = useState('7020285460');
+  const [hotelProfileWhatsapp, setHotelProfileWhatsapp] = useState('7020285460');
   const [hotelProfileEmail, setHotelProfileEmail] = useState('');
   const [hotelProfileCoupleFriendly, setHotelProfileCoupleFriendly] = useState(true);
   const [hotelProfileLocalId, setHotelProfileLocalId] = useState(true);
@@ -3803,7 +3803,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
         let errMessage = 'Failed to create business listing. Please try again.';
         try {
           const errObj = await res.json();
-          errMessage = errObj.error || errMessage;
+          errMessage = errObj.message || errObj.error || errMessage;
         } catch {
           try {
             const text = await res.text();

@@ -139,7 +139,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     const matchedHotel = allHotels.find(h => {
       const hp = (h.phone || '').replace(/\D/g, '').slice(-10);
       const hw = (h.whatsapp || '').replace(/\D/g, '').slice(-10);
-      return clean10 === hp || clean10 === hw;
+      const ho = ((h as any).assignedOwnerPhone || (h as any).createdBy || '').toString().replace(/\D/g, '').slice(-10);
+      return clean10 === hp || clean10 === hw || (ho && clean10 === ho);
     });
 
     if (matchedHotel) {

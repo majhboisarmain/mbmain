@@ -368,46 +368,39 @@ export async function POST(request: NextRequest) {
 
     const { name, category, description, address, phone, whatsapp, website, email, instagram, facebook, youtube, googleMaps, image, location, workingHours } = body;
 
-    // 1-business limit per mobile number for Free plan check (Admin exempt)
-    const ownerPhoneDigits = (body.ownerPhone || body.createdBy || phone || '').replace(/\D/g, '');
-    if (ownerPhoneDigits && body.createdBy !== 'Admin') {
-      const last7 = ownerPhoneDigits.slice(-7);
-      try {
-        const existingBusinesses = await prisma.business.findMany({
-          where: {
-            OR: [
-              { createdBy: body.ownerPhone || body.createdBy || phone },
-              { phone: { contains: last7 } },
-              { whatsapp: { contains: last7 } }
-            ]
-          }
-        });
+    // Resilient image processing - never fail listing if photo upload fails
+    let uploadedLogo: string | null = null;
+    let uploadedCover: string | null = null;
+    let uploadedGallery: string[] = [];
 
-        if (existingBusinesses.length >= 1 && (!body.subscription || body.subscription === 'Free')) {
-          return NextResponse.json(
-            { error: 'Free plan allows only 1 business listing per mobile number. To register a 2nd business/outlet, please upgrade to our Starter Plan (₹149/month).' },
-            { status: 400 }
-          );
-        }
-      } catch (checkErr) {
-        console.warn('Error checking existing business count:', checkErr);
-      }
+    try {
+      uploadedLogo = await uploadImage(image);
+    } catch (e) {
+      console.warn('Logo upload warning:', e);
     }
 
-    const uploadedLogo = await uploadImage(image);
-    const uploadedCover = body.coverImage ? await uploadImage(body.coverImage) : null;
-    const uploadedGallery = await uploadGallery(body.gallery);
+    try {
+      uploadedCover = body.coverImage ? await uploadImage(body.coverImage) : null;
+    } catch (e) {
+      console.warn('Cover upload warning:', e);
+    }
+
+    try {
+      uploadedGallery = await uploadGallery(body.gallery);
+    } catch (e) {
+      console.warn('Gallery upload warning:', e);
+    }
 
     const assembledImages = [uploadedLogo || '/majh-boisar-mb-logo.png'];
     if (uploadedCover) assembledImages.push(uploadedCover);
     if (uploadedGallery.length > 0) {
       assembledImages.push(...uploadedGallery.filter((g: string) => g !== uploadedLogo && g !== uploadedCover));
     }
-    const finalImage = assembledImages.join('||gallery_sep||');
+    const finalImage = assembledImages.join('||gallery_sep||') || '/majh-boisar-mb-logo.png';
 
-    const cleanDesc = (description || '').replace(/\[Created by Admin\]\s*/gi, '').trim();
+    const cleanDesc = (description || '').replace(/\[Created by Admin\]\s*/gi, '').trim() || `${name} in Boisar`;
 
-    let finalCategory = category;
+    let finalCategory = category || 'Other';
     if (body.createdBy !== 'Admin') {
       const protectedLoans = ['home loan', 'personal loan', 'business loan', 'gold loan', 'vehicle loan', 'education loan'];
       const protectedIns = ['health insurance', 'life insurance', 'vehicle insurance', 'home insurance', 'travel insurance', 'shop & commercial insurance'];
@@ -431,21 +424,28 @@ export async function POST(request: NextRequest) {
       candidateSlug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
     }
 
+    const cleanPhone = (phone || whatsapp || '9307294733').toString().trim();
+    const cleanWhatsapp = (whatsapp || phone || '9307294733').toString().trim();
+    const cleanAddress = (address || location || 'Boisar, Maharashtra').toString().trim();
+    const cleanOwnerPhone = (body.ownerPhone || body.phone || body.whatsapp || body.createdBy || '').toString().replace(/\D/g, '').slice(-10);
+    const parsedLat = (body.latitude != null && !isNaN(parseFloat(body.latitude))) ? parseFloat(body.latitude) : null;
+    const parsedLng = (body.longitude != null && !isNaN(parseFloat(body.longitude))) ? parseFloat(body.longitude) : null;
+
     let business: any;
     try {
       business = await prisma.business.create({
         data: {
           slug: candidateSlug,
-          name,
+          name: name.trim(),
           category: finalCategory,
           subcategory: body.subcategory || null,
           locality: body.locality || location || 'Boisar',
           pincode: body.pincode || '401501',
           state: body.state || 'Maharashtra',
           description: cleanDesc,
-          address: address || '',
-          phone,
-          whatsapp: whatsapp || phone,
+          address: cleanAddress,
+          phone: cleanPhone,
+          whatsapp: cleanWhatsapp,
           website: website || null,
           email: email || null,
           instagram: instagram || null,
@@ -454,8 +454,8 @@ export async function POST(request: NextRequest) {
           googleMaps: googleMaps || null,
           image: finalImage,
           location: location || 'Boisar',
-          latitude: body.latitude != null ? parseFloat(body.latitude) : null,
-          longitude: body.longitude != null ? parseFloat(body.longitude) : null,
+          latitude: parsedLat,
+          longitude: parsedLng,
           workingHours: workingHours || '9:00 AM - 9:00 PM',
           subscription: body.subscription || (body.createdBy === 'Admin' ? 'Admin Created' : 'Free'),
           hasHomeDelivery: body.hasHomeDelivery === true || body.hasHomeDelivery === 'true',
@@ -464,7 +464,7 @@ export async function POST(request: NextRequest) {
             : (category?.toLowerCase().includes('maid') || category?.toLowerCase().includes('helper') ? false : true),
           premium: body.premium !== undefined ? body.premium : (body.createdBy === 'Admin' ? true : false),
           rating: body.rating !== undefined ? parseFloat(body.rating) : 5.0,
-          createdBy: (body.ownerPhone || body.phone || body.whatsapp || body.createdBy || '').toString().replace(/\D/g, '').slice(-10) || (body.createdBy === 'Admin' ? 'Admin' : null)
+          createdBy: cleanOwnerPhone || (body.createdBy === 'Admin' ? 'Admin' : null)
         }
       });
     } catch (createErr: any) {
@@ -472,16 +472,16 @@ export async function POST(request: NextRequest) {
       business = await prisma.business.create({
         data: {
           slug: candidateSlug,
-          name,
-          category,
+          name: name.trim(),
+          category: finalCategory,
           subcategory: body.subcategory || null,
           locality: body.locality || location || 'Boisar',
           pincode: body.pincode || '401501',
           state: body.state || 'Maharashtra',
           description: cleanDesc,
-          address: address || '',
-          phone,
-          whatsapp: whatsapp || phone,
+          address: cleanAddress,
+          phone: cleanPhone,
+          whatsapp: cleanWhatsapp,
           website: website || null,
           email: email || null,
           instagram: instagram || null,
@@ -490,6 +490,8 @@ export async function POST(request: NextRequest) {
           googleMaps: googleMaps || null,
           image: finalImage,
           location: location || 'Boisar',
+          latitude: parsedLat,
+          longitude: parsedLng,
           workingHours: workingHours || '9:00 AM - 9:00 PM',
           subscription: body.subscription || (body.createdBy === 'Admin' ? 'Admin Created' : 'Free'),
           verified: body.verified !== undefined 
