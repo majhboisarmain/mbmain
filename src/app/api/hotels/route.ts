@@ -286,7 +286,7 @@ export async function PATCH(request: NextRequest) {
   try {
     await ensureHotelTableExists();
     const body = await request.json().catch(() => ({}));
-    const { id, slug, isPayAtHotelAvailable, offersHourly } = body;
+    const { id, slug, isPayAtHotelAvailable, offersHourly, createdBy, phone, whatsapp, status } = body;
 
     if (!id && !slug) {
       return NextResponse.json({ error: 'Hotel id or slug required' }, { status: 400 });
@@ -307,6 +307,23 @@ export async function PATCH(request: NextRequest) {
       values.push(offersHourly);
       updates.push(`"is12hAvailable" = $${idx++}`);
       values.push(offersHourly);
+    }
+    if (createdBy !== undefined) {
+      const cleanOwner = createdBy ? String(createdBy).replace(/\D/g, '').slice(-10) : null;
+      updates.push(`"createdBy" = $${idx++}`);
+      values.push(cleanOwner);
+    }
+    if (phone !== undefined) {
+      updates.push(`"phone" = $${idx++}`);
+      values.push(phone);
+    }
+    if (whatsapp !== undefined) {
+      updates.push(`"whatsapp" = $${idx++}`);
+      values.push(whatsapp);
+    }
+    if (status !== undefined) {
+      updates.push(`"status" = $${idx++}`);
+      values.push(status);
     }
 
     if (updates.length === 0) {

@@ -212,6 +212,8 @@ interface Business {
   gallery?: string[];
   googleMaps?: string | null;
   services?: any[];
+  createdBy?: string | null;
+  assignedOwnerPhone?: string | null;
 }
 
 const defaultUsersList: any[] = [];
@@ -1450,11 +1452,35 @@ export default function AdminPanelPage() {
         });
       }
 
+      // Sync Assigned Owner Phone Number
+      all = all.map(h => {
+        const localOwner = (
+          (typeof window !== 'undefined' ? (localStorage.getItem(`majh_boisar_hotel_owner_${h.id}`) || (h.slug ? localStorage.getItem(`majh_boisar_hotel_owner_${h.slug}`) : '')) : '') ||
+          h.createdBy ||
+          (h as any).assignedOwnerPhone ||
+          ''
+        ).toString().replace(/\D/g, '').slice(-10);
+
+        return {
+          ...h,
+          createdBy: localOwner
+        };
+      });
+
       setAdminHotelsList(all);
     } catch (e) {
       setAdminHotelsList(BOISAR_HOTELS);
     }
   };
+
+  // Hotel & Business Portal Owner Assignment State
+  const [assignHotelModalOpen, setAssignHotelModalOpen] = useState(false);
+  const [assigningHotel, setAssigningHotel] = useState<any | null>(null);
+  const [assignHotelOwnerPhoneInput, setAssignHotelOwnerPhoneInput] = useState('');
+
+  const [assignBizModalOpen, setAssignBizModalOpen] = useState(false);
+  const [assigningBiz, setAssigningBiz] = useState<any | null>(null);
+  const [assignBizOwnerPhoneInput, setAssignBizOwnerPhoneInput] = useState('');
 
   // Admin Resort Management State
   const [adminResortsList, setAdminResortsList] = useState<ResortVilla[]>([]);
@@ -1988,6 +2014,114 @@ export default function AdminPanelPage() {
       fetchAdminData();
     }
   }, [currentRole, isAdminPageUnlocked]);
+
+  const handleOpenAssignHotel = (hotel: any) => {
+    setAssigningHotel(hotel);
+    const currentOwner = (
+      (typeof window !== 'undefined' ? (localStorage.getItem(`majh_boisar_hotel_owner_${hotel.id}`) || (hotel.slug ? localStorage.getItem(`majh_boisar_hotel_owner_${hotel.slug}`) : '')) : '') ||
+      hotel.createdBy ||
+      ''
+    ).toString().replace(/\D/g, '').slice(-10);
+    setAssignHotelOwnerPhoneInput(currentOwner);
+    setAssignHotelModalOpen(true);
+  };
+
+  const handleSaveAssignHotel = async () => {
+    if (!assigningHotel) return;
+    const cleanPhone = assignHotelOwnerPhoneInput.replace(/\D/g, '').slice(-10);
+    if (cleanPhone && cleanPhone.length !== 10) {
+      alert('Please enter a valid 10-digit mobile number, or leave empty to unassign.');
+      return;
+    }
+
+    if (cleanPhone) {
+      localStorage.setItem(`majh_boisar_hotel_owner_${assigningHotel.id}`, cleanPhone);
+      if (assigningHotel.slug) {
+        localStorage.setItem(`majh_boisar_hotel_owner_${assigningHotel.slug}`, cleanPhone);
+      }
+    } else {
+      localStorage.removeItem(`majh_boisar_hotel_owner_${assigningHotel.id}`);
+      if (assigningHotel.slug) {
+        localStorage.removeItem(`majh_boisar_hotel_owner_${assigningHotel.slug}`);
+      }
+    }
+
+    try {
+      const customV2 = JSON.parse(localStorage.getItem('majh_boisar_custom_hotels_v2') || '[]');
+      const updatedCustom = customV2.map((h: any) => {
+        if (h.id === assigningHotel.id || (h.slug && h.slug === assigningHotel.slug)) {
+          return { ...h, createdBy: cleanPhone || null };
+        }
+        return h;
+      });
+      localStorage.setItem('majh_boisar_custom_hotels_v2', JSON.stringify(updatedCustom));
+    } catch (e) {}
+
+    try {
+      await fetch('/api/hotels', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: assigningHotel.id,
+          slug: assigningHotel.slug,
+          createdBy: cleanPhone || null
+        })
+      });
+    } catch (e) {
+      console.error('API hotel assign error:', e);
+    }
+
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('majh_boisar_hotel_updated'));
+    loadAdminHotels();
+    setAssignHotelModalOpen(false);
+    alert(cleanPhone 
+      ? `✅ Hotel "${assigningHotel.name}" has been successfully assigned to owner number +91 ${cleanPhone}!\n\nWhen +91 ${cleanPhone} logs in to Majh Boisar, only this hotel's reception portal will open.`
+      : `✅ Hotel "${assigningHotel.name}" owner unassigned.`
+    );
+  };
+
+  const handleOpenAssignBiz = (biz: any) => {
+    setAssigningBiz(biz);
+    const currentOwner = (biz.createdBy || biz.phone || '').toString().replace(/\D/g, '').slice(-10);
+    setAssignBizOwnerPhoneInput(currentOwner);
+    setAssignBizModalOpen(true);
+  };
+
+  const handleSaveAssignBiz = async () => {
+    if (!assigningBiz) return;
+    const cleanPhone = assignBizOwnerPhoneInput.replace(/\D/g, '').slice(-10);
+    if (cleanPhone && cleanPhone.length !== 10) {
+      alert('Please enter a valid 10-digit mobile number, or leave empty to unassign.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/businesses/${assigningBiz.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...assigningBiz,
+          createdBy: cleanPhone || null,
+          isAdmin: true
+        })
+      });
+      if (res.ok) {
+        logEvent(`Assigned Business "${assigningBiz.name}" to owner number: +91 ${cleanPhone}`);
+        fetchAdminData();
+        setAssignBizModalOpen(false);
+        alert(cleanPhone
+          ? `✅ Business "${assigningBiz.name}" successfully assigned to owner number +91 ${cleanPhone}!\n\nWhen +91 ${cleanPhone} logs in, only this business portal will open.`
+          : `✅ Business "${assigningBiz.name}" owner unassigned.`
+        );
+      } else {
+        alert('Failed to assign business owner phone.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error saving business owner assignment.');
+    }
+  };
 
   const handleUpdateAdStatus = async (id: number, status: 'Approved' | 'Rejected') => {
     try {
@@ -4496,6 +4630,39 @@ export default function AdminPanelPage() {
                               <span className="font-black text-slate-900">3h: ₹{h.rooms?.[1]?.hourly3h || 499} | Night: ₹{h.rooms?.[1]?.nightRate || 1399}</span>
                             </div>
                           </div>
+                          {/* Owner Phone Assignment Status & Action */}
+                          <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-purple-50/70 border border-purple-200/80">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="text-xs">🔑</span>
+                              <div className="min-w-0">
+                                <span className="text-[9px] text-purple-900/80 font-bold block uppercase tracking-wider">Assigned Portal Owner</span>
+                                {(() => {
+                                  const owner = (
+                                    (typeof window !== 'undefined' ? (localStorage.getItem(`majh_boisar_hotel_owner_${h.id}`) || (h.slug ? localStorage.getItem(`majh_boisar_hotel_owner_${h.slug}`) : '')) : '') ||
+                                    h.createdBy ||
+                                    ''
+                                  ).toString().replace(/\D/g, '').slice(-10);
+                                  return owner ? (
+                                    <span className="text-xs font-black text-emerald-800 font-mono">
+                                      +91 {owner}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] font-bold text-amber-700">
+                                      ⚠️ No Owner Assigned (Portal Locked)
+                                    </span>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenAssignHotel(h)}
+                              className="bg-purple-900 hover:bg-purple-950 text-white font-black text-[10px] px-2.5 py-1.5 rounded-lg shadow-2xs transition-all cursor-pointer shrink-0 active:scale-95 flex items-center gap-1"
+                            >
+                              <KeyRound className="w-3 h-3" />
+                              <span>Assign / Change Phone</span>
+                            </button>
+                          </div>
 
                           {/* Contact Info & Action Buttons */}
                           <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
@@ -5712,6 +5879,13 @@ export default function AdminPanelPage() {
                                       <Edit className="w-3.5 h-3.5" />
                                     </button>
                                   </div>
+                                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                                    Owner: {b.createdBy ? (
+                                      <span className="font-bold text-emerald-700 font-mono">+91 {b.createdBy.replace(/\D/g, '').slice(-10)}</span>
+                                    ) : (
+                                      <span className="text-amber-600 font-medium">⚠️ No Owner Assigned</span>
+                                    )}
+                                  </div>
                                 </td>
                                 <td className="py-2.5 px-3 text-slate-500">
                                   <div className="flex flex-wrap gap-1 max-w-[240px]">
@@ -5771,6 +5945,14 @@ export default function AdminPanelPage() {
                                 </td>
                                 <td className="py-2.5 px-3 text-center">
                                   <div className="flex items-center justify-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenAssignBiz(b)}
+                                      className="text-purple-600 hover:text-purple-900 transition-all cursor-pointer p-1 rounded hover:bg-purple-50"
+                                      title="Assign / Change Owner Phone"
+                                    >
+                                      <KeyRound className="w-4 h-4" />
+                                    </button>
                                     <button
                                       onClick={async () => {
                                         await handleClearBusinessAds(b.id, b.name);
@@ -12624,6 +12806,148 @@ export default function AdminPanelPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 4. ASSIGN HOTEL OWNER MODAL */}
+      {assignHotelModalOpen && assigningHotel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-purple-800 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-full">
+                  🏨 Hotel Portal Assignment
+                </span>
+                <h3 className="text-base font-black text-slate-900 mt-1.5">{assigningHotel.name}</h3>
+                <p className="text-xs text-slate-500 font-medium">{assigningHotel.location || 'Boisar'} • Boisar</p>
+              </div>
+              <button
+                onClick={() => setAssignHotelModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 space-y-1">
+              <p className="font-bold flex items-center gap-1.5">
+                <span>🔒 Strict Owner Access Rule:</span>
+              </p>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                Jab aap yahan mobile number assign karenge, tab sirf aur sirf uss number se login karne par is hotel ka reception portal open hoga. Kisi dusre user ke liye ye hotel portal open nahi hoga.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                Owner 10-Digit Mobile Number *
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  maxLength={10}
+                  value={assignHotelOwnerPhoneInput}
+                  onChange={e => setAssignHotelOwnerPhoneInput(e.target.value.replace(/\D/g, ''))}
+                  placeholder="e.g. 9823456789"
+                  className="w-full bg-slate-50 border border-slate-300 focus:border-purple-600 rounded-xl pl-12 pr-3 py-2.5 text-sm font-black text-slate-900 font-mono outline-none"
+                />
+              </div>
+              <span className="text-[10px] text-slate-400 block">
+                Enter 10-digit number. Leave empty and click Save to unassign.
+              </span>
+            </div>
+
+            <div className="flex gap-2.5 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setAssignHotelModalOpen(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAssignHotel}
+                className="flex-1 py-2.5 rounded-xl bg-purple-900 hover:bg-purple-950 text-white font-black text-xs shadow-xs cursor-pointer active:scale-98"
+              >
+                💾 Save &amp; Activate Portal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. ASSIGN BUSINESS OWNER MODAL */}
+      {assignBizModalOpen && assigningBiz && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-0.5 rounded-full">
+                  🏪 Business Portal Assignment
+                </span>
+                <h3 className="text-base font-black text-slate-900 mt-1.5">{assigningBiz.name}</h3>
+                <p className="text-xs text-slate-500 font-medium">{assigningBiz.category} • Boisar</p>
+              </div>
+              <button
+                onClick={() => setAssignBizModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 space-y-1">
+              <p className="font-bold flex items-center gap-1.5">
+                <span>🔒 Strict Owner Access Rule:</span>
+              </p>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                Jab aap yahan mobile number assign karenge, tab sirf aur sirf uss number se login karne par is business ka dashboard portal open hoga.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                Owner 10-Digit Mobile Number *
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  maxLength={10}
+                  value={assignBizOwnerPhoneInput}
+                  onChange={e => setAssignBizOwnerPhoneInput(e.target.value.replace(/\D/g, ''))}
+                  placeholder="e.g. 9823456789"
+                  className="w-full bg-slate-50 border border-slate-300 focus:border-teal-600 rounded-xl pl-12 pr-3 py-2.5 text-sm font-black text-slate-900 font-mono outline-none"
+                />
+              </div>
+              <span className="text-[10px] text-slate-400 block">
+                Enter 10-digit number. Leave empty and click Save to unassign.
+              </span>
+            </div>
+
+            <div className="flex gap-2.5 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setAssignBizModalOpen(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAssignBiz}
+                className="flex-1 py-2.5 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-black text-xs shadow-xs cursor-pointer active:scale-98"
+              >
+                💾 Save &amp; Activate Portal
+              </button>
+            </div>
           </div>
         </div>
       )}

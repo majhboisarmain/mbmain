@@ -157,6 +157,17 @@ export default function HotelsPage() {
   ];
 
   const [uploadedGalleryPhotos, setUploadedGalleryPhotos] = useState<string[]>([]);
+  const [newRegisterPhotoUrl, setNewRegisterPhotoUrl] = useState('');
+
+  const handleAddRegisterPhotoUrl = () => {
+    const trimmed = newRegisterPhotoUrl.trim();
+    if (!trimmed) {
+      alert('Please enter a valid Image URL.');
+      return;
+    }
+    setUploadedGalleryPhotos(prev => [...prev, trimmed]);
+    setNewRegisterPhotoUrl('');
+  };
 
   const [hotelAmenitiesToAdd, setHotelAmenitiesToAdd] = useState<string[]>([
     'Air Conditioning', 'Free Wi-Fi', 'Hot Shower', 'Clean Linen', '24/7 Front Desk'
@@ -1370,7 +1381,7 @@ export default function HotelsPage() {
                   return;
                 }
 
-                const gallery = uploadedGalleryPhotos;
+                const gallery = uploadedGalleryPhotos.length > 0 ? uploadedGalleryPhotos : PRESET_HOTEL_PHOTOS;
 
                 const lowest3h = offersHourly ? Math.min(Number(newHotelNonAc3h) || 499, Number(newHotelAc3h) || 699) : 0;
                 const lowest6h = offersHourly ? Math.min(Number(newHotelNonAc6h) || 799, Number(newHotelAc6h) || 1099) : 0;
@@ -1577,8 +1588,13 @@ export default function HotelsPage() {
                     localStorage.setItem(`majh_boisar_hotel_rules_${newHotelItem.slug}`, JSON.stringify(newHotelItem.rules || []));
                     localStorage.setItem(`majh_boisar_hotel_rules_tag_${newHotelItem.slug}`, newHotelItem.houseRulesTag || 'Easy 2-Min Check-in');
                     localStorage.setItem(`majh_boisar_hotel_hourly_${newHotelItem.slug}`, String(offersHourly));
+                    localStorage.setItem(`majh_boisar_hotel_gallery_${newHotelItem.slug}`, JSON.stringify(gallery));
+                    localStorage.setItem(`majh_boisar_hotel_gallery_${newHotelItem.id}`, JSON.stringify(gallery));
+                    localStorage.setItem(`majh_boisar_hotel_rooms_${newHotelItem.slug}`, JSON.stringify(newHotelItem.rooms || []));
+                    localStorage.setItem(`majh_boisar_hotel_rooms_${newHotelItem.id}`, JSON.stringify(newHotelItem.rooms || []));
 
                     window.dispatchEvent(new Event('storage'));
+                    window.dispatchEvent(new Event('majh_boisar_hotel_updated'));
                     window.dispatchEvent(new CustomEvent('boisar_hotel_created', { detail: newHotelItem }));
                   }
 
@@ -1747,6 +1763,30 @@ export default function HotelsPage() {
                     className="hidden"
                   />
                 </label>
+
+                {/* Paste Photo URL Input */}
+                <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                  <input
+                    type="url"
+                    value={newRegisterPhotoUrl}
+                    onChange={(e) => setNewRegisterPhotoUrl(e.target.value)}
+                    placeholder="Or paste image URL (e.g. https://images.unsplash.com/...)"
+                    className="flex-1 bg-white border border-purple-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddRegisterPhotoUrl();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddRegisterPhotoUrl}
+                    className="bg-purple-900 hover:bg-purple-800 text-white font-bold text-xs px-4 py-2 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shrink-0 shadow-xs active:scale-95"
+                  >
+                    <span>+ Add Photo URL</span>
+                  </button>
+                </div>
 
                 {/* Uploaded Photos Grid Preview */}
                 {uploadedGalleryPhotos.length > 0 && (

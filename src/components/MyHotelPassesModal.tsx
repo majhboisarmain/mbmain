@@ -2,7 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Building, Phone, MessageSquare, X, CheckCircle2, Calendar, Clock, Ticket, LogIn, Receipt } from 'lucide-react';
+import { 
+  Building, 
+  Building2, 
+  Phone, 
+  MessageSquare, 
+  X, 
+  CheckCircle2, 
+  Calendar, 
+  Clock, 
+  Ticket, 
+  LogIn, 
+  Receipt,
+  User,
+  BedDouble,
+  ShieldCheck
+} from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 
 interface HotelBookingPass {
@@ -130,18 +145,18 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
     <div className="fixed inset-0 z-[600] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fade-in text-left">
       <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
         
-        {/* Header (Cohesive Clean Theme) */}
+        {/* Header (Website Matching Hotel Theme) */}
         <div className="bg-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-[#E0D7FE] text-[#6C47FF] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
-              <Receipt className="w-5 h-5 stroke-[2]" />
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0 shadow-2xs">
+              <Ticket className="w-5 h-5 text-blue-600 stroke-[2]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">My Bookings &amp; Passes</h3>
-                <span className="text-[10px] font-extrabold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">{passes.length} Saved</span>
+                <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">{passes.length} Saved</span>
               </div>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">Hotel room booking passes in Boisar</p>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">Hotel room reservation passes in Boisar</p>
             </div>
           </div>
 
@@ -157,8 +172,8 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
         <div className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
           {!isLoggedIn ? (
             <div className="text-center py-12 space-y-3">
-              <div className="w-14 h-14 rounded-2xl bg-[#E0D7FE] text-[#6C47FF] flex items-center justify-center text-2xl mx-auto shadow-2xs font-bold">
-                🔒
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center mx-auto shadow-2xs">
+                <Building2 className="w-6 h-6 text-blue-600" />
               </div>
               <h4 className="text-sm sm:text-base font-extrabold text-slate-900">Sign In to View Your Hotel Passes</h4>
               <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
@@ -170,7 +185,7 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
                   onClose();
                   setLoginModalOpen(true);
                 }}
-                className="inline-flex items-center gap-2 bg-slate-900 hover:bg-black text-white font-extrabold text-xs px-6 py-2.5 rounded-xl shadow-xs cursor-pointer transition-all active:scale-95"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-extrabold text-xs px-6 py-2.5 rounded-xl shadow-xs cursor-pointer transition-all"
               >
                 <LogIn className="w-4 h-4" />
                 <span>Sign In with Mobile OTP</span>
@@ -178,15 +193,17 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
             </div>
           ) : passes.length === 0 ? (
             <div className="text-center py-12 space-y-3">
-              <Building className="w-12 h-12 text-slate-300 mx-auto" />
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                <Building2 className="w-6 h-6 text-slate-400" />
+              </div>
               <h4 className="text-sm font-extrabold text-slate-900">No Booking Passes Found</h4>
               <p className="text-xs text-slate-500 max-w-sm mx-auto font-medium">
-                You haven&apos;t generated any hotel room passes yet. Browse verified hotels in Boisar and book instantly with pay-at-desk.
+                You haven&apos;t generated any hotel room passes yet. Browse verified hotels in Boisar and reserve instantly with pay-at-desk.
               </p>
               <Link
                 href="/hotels"
                 onClick={onClose}
-                className="inline-block bg-slate-900 hover:bg-black text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-xs cursor-pointer transition-all"
+                className="inline-block bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-xs cursor-pointer transition-all"
               >
                 Browse Hotels in Boisar →
               </Link>
@@ -211,50 +228,62 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
 
                       <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
                         isCancelled
-                          ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
                           : isCheckedIn
-                          ? 'bg-blue-100 text-blue-900 border border-blue-200'
-                          : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                          : 'bg-blue-50 text-blue-700 border border-blue-200'
                       }`}>
                         {pass.status || 'Confirmed Pass'}
                       </span>
                     </div>
 
                     {/* Pass Details */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      <div className="space-y-1">
-                        <p className="text-slate-500 font-bold">
-                          🏨 <span className="text-slate-900 font-black">{pass.hotelName}</span>
-                        </p>
-                        <p className="text-slate-500 font-medium">
-                          👤 Guest: <strong className="text-slate-800 font-bold">{pass.guestName} ({pass.guestPhone})</strong>
-                        </p>
-                        <p className="text-slate-500 font-medium">
-                          ❄️ Room: <strong className="text-slate-900 font-bold">{pass.roomCategory || 'AC Room'}</strong>
-                        </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-slate-900 font-extrabold">
+                          <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span className="truncate">{pass.hotelName}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-600 font-medium">
+                          <User className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span>Guest: <strong className="text-slate-800 font-bold">{pass.guestName} ({pass.guestPhone})</strong></span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-600 font-medium">
+                          <BedDouble className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span>Room: <strong className="text-blue-700 font-bold">{pass.roomCategory || 'AC Room'}</strong></span>
+                        </div>
                       </div>
 
-                      <div className="space-y-1 sm:text-right">
-                        <p className="text-slate-500 font-medium">
-                          ⏰ Slot: <strong className="text-slate-900 font-extrabold">{pass.timeSlot || pass.stayType}</strong>
-                        </p>
-                        <p className="text-slate-500 font-medium">
-                          📅 Date: <strong className="text-slate-800 font-bold">{pass.date}</strong>
-                        </p>
-                        <p className="text-slate-500 font-medium">
+                      <div className="space-y-1.5 sm:text-right">
+                        <div className="flex items-center sm:justify-end gap-1.5 text-slate-600 font-medium">
+                          <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span>Slot: <strong className="text-slate-900 font-extrabold">{pass.timeSlot || pass.stayType}</strong></span>
+                        </div>
+                        <div className="flex items-center sm:justify-end gap-1.5 text-slate-600 font-medium">
+                          <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span>Date: <strong className="text-slate-800 font-bold">{pass.date}</strong></span>
+                        </div>
+                        <div className="pt-0.5">
                           {pass.paymentMode === 'Online' ? (
-                            <>💳 Payment: <strong className="text-base text-indigo-700 font-black">₹{pass.totalAmount} (Paid Online)</strong></>
+                            <span className="text-xs text-slate-500 font-medium">
+                              Payment: <strong className="text-sm text-blue-700 font-black">₹{pass.totalAmount} (Paid Online)</strong>
+                            </span>
                           ) : (
-                            <>💰 Payable at Desk: <strong className="text-base text-slate-900 font-black">₹{pass.totalAmount}</strong></>
+                            <span className="text-xs text-slate-500 font-medium">
+                              Payable at Desk: <strong className="text-sm text-slate-900 font-black">₹{pass.totalAmount}</strong>
+                            </span>
                           )}
-                        </p>
+                        </div>
                       </div>
                     </div>
 
                     {/* Notice */}
-                    <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex items-center justify-between text-[11px] text-slate-700 font-medium">
-                      <span>🚪 Show this pass &amp; Govt ID at reception to collect room key</span>
-                      <span className={`font-extrabold ${pass.paymentMode === 'Online' ? 'text-indigo-700' : 'text-emerald-700'}`}>
+                    <div className="bg-blue-50/60 border border-blue-100 rounded-xl px-3 py-2 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-700 font-medium">
+                      <span className="flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span>Show this pass &amp; Govt ID at reception to collect room key</span>
+                      </span>
+                      <span className="font-extrabold text-blue-700">
                         {pass.paymentMode === 'Online' ? '✓ Paid Online' : '✓ Pay at Hotel Desk'}
                       </span>
                     </div>
@@ -268,10 +297,10 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="bg-[#25D366] hover:bg-[#20bd5a] text-white font-extrabold text-xs py-1.5 px-3 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                          className="bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-xs py-1.5 px-3 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
-                          <span>Share / WhatsApp</span>
+                          <span>Share WhatsApp</span>
                         </a>
 
                         {pass.hotelPhone && (
@@ -279,7 +308,7 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
                             href={`tel:${pass.hotelPhone}`}
                             className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-1.5 px-3 rounded-xl transition-all flex items-center gap-1 border border-slate-200 cursor-pointer"
                           >
-                            <Phone className="w-3 h-3" />
+                            <Phone className="w-3 h-3 text-slate-600" />
                             <span>Call Reception</span>
                           </a>
                         )}
@@ -313,11 +342,11 @@ export default function MyHotelPassesModal({ isOpen, onClose }: MyHotelPassesMod
         </div>
 
         {/* Footer */}
-        <div className="p-3.5 bg-slate-50 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold text-slate-600 shrink-0">
-          <span>Need help with your stay? Call hotel reception directly</span>
+        <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-600 shrink-0">
+          <span className="text-[11px] text-slate-500">Need help with your stay? Call hotel reception directly</span>
           <button
             onClick={onClose}
-            className="bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold px-4 py-2 rounded-xl transition-all cursor-pointer shadow-2xs"
+            className="bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold px-5 py-2 rounded-xl transition-all cursor-pointer shadow-xs"
           >
             Close
           </button>

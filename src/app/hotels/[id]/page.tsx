@@ -12,6 +12,7 @@ import {
   ChevronRight, 
   ShieldCheck, 
   Users, 
+  User,
   CheckCircle2, 
   Phone, 
   MessageSquare, 
@@ -46,9 +47,12 @@ import {
   Tv,
   Zap,
   CheckSquare,
-  QrCode
+  QrCode,
+  Heart,
+  Plus,
+  ChevronDown
 } from 'lucide-react';
-import { BOISAR_HOTELS, HotelItem, getHotelBySlugOrId, recordHotelClick, calculateStayWindow, normalizeHotelAmenity, deduplicateRules } from '@/lib/hotelsData';
+import { BOISAR_HOTELS, HotelItem, HotelRoom, getHotelBySlugOrId, recordHotelClick, calculateStayWindow, normalizeHotelAmenity, deduplicateRules } from '@/lib/hotelsData';
 import { useApp } from '@/context/AppContext';
 import HotelTimePicker from '@/components/HotelTimePicker';
 import MyHotelPassesModal from '@/components/MyHotelPassesModal';
@@ -57,7 +61,7 @@ export default function HotelDetailPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { loggedInUser, isLoggedIn, setLoginModalOpen } = useApp();
+  const { loggedInUser, isLoggedIn, setLoginModalOpen, showToast } = useApp();
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -65,7 +69,20 @@ export default function HotelDetailPage() {
   }, []);
 
   const id = params?.id as string;
-  const [hotel, setHotel] = useState<HotelItem | null>(null);
+  const [hotel, setHotel] = useState<HotelItem | null>(() => {
+    if (!id) return null;
+    return getHotelBySlugOrId(id) || null;
+  });
+
+  // Active section tab ('overview' | 'rooms' | 'location' | 'reviews' | 'facilities' | 'policies')
+  const [activeTab, setActiveTab] = useState<'overview' | 'rooms' | 'location' | 'reviews' | 'facilities' | 'policies'>('overview');
+
+  // Sub-tabs for the About section (as per 2nd reference image)
+  const [aboutSubTab, setAboutSubTab] = useState<'Overview' | 'Food & Dining' | 'Rooms' | 'Facilities & Activities' | 'Location & Nearby Areas'>('Overview');
+  const [isAboutExpanded, setIsAboutExpanded] = useState(false);
+
+  // Save / Bookmark state
+  const [isSaved, setIsSaved] = useState(false);
 
   // Gallery Active Index & Touch Swipe
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
@@ -74,9 +91,21 @@ export default function HotelDetailPage() {
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [touchEndX, setTouchEndX] = useState<number | null>(null);
 
-  // Lock background body scroll when gallery modal is open
+  // Reserve Room Modal State ("hum hotel m sirf reserved krnge same has resort")
+  const [isReserveModalOpen, setIsReserveModalOpen] = useState(false);
+  const [selectedRoomName, setSelectedRoomName] = useState('Value Queen Room');
+  const [selectedRoomRate, setSelectedRoomRate] = useState<number>(0);
+
+  // Filter for room selection (Breakfast Included - Exact Reference 3)
+  const [filterBreakfastOnly, setFilterBreakfastOnly] = useState(false);
+
+  // Room Details Preview Modal
+  const [viewingRoom, setViewingRoom] = useState<any | null>(null);
+  const [viewingRoomPhotoIdx, setViewingRoomPhotoIdx] = useState(0);
+
+  // Lock background body scroll when modals are open
   useEffect(() => {
-    if (isGalleryModalOpen) {
+    if (isGalleryModalOpen || isReserveModalOpen || viewingRoom) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -84,9 +113,40 @@ export default function HotelDetailPage() {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isGalleryModalOpen]);
+  }, [isGalleryModalOpen, isReserveModalOpen, viewingRoom]);
 
-  // All photos combined (gallery + room photos)
+  // Load saved bookmark state
+  useEffect(() => {
+    if (!id) return;
+    try {
+      const savedList = JSON.parse(localStorage.getItem('majh_boisar_saved_hotels') || '[]');
+      if (Array.isArray(savedList)) {
+        setIsSaved(savedList.includes(id));
+      }
+    } catch (e) {}
+  }, [id]);
+
+  const handleToggleSave = () => {
+    if (!hotel) return;
+    try {
+      const savedList: string[] = JSON.parse(localStorage.getItem('majh_boisar_saved_hotels') || '[]');
+      let updated: string[];
+      if (savedList.includes(hotel.id) || (hotel.slug && savedList.includes(hotel.slug))) {
+        updated = savedList.filter(item => item !== hotel.id && item !== hotel.slug);
+        setIsSaved(false);
+        showToast('Removed from Saved Hotels', 'info');
+      } else {
+        updated = [...savedList, hotel.id];
+        setIsSaved(true);
+        showToast('❤️ Saved to your Favorites!', 'success');
+      }
+      localStorage.setItem('majh_boisar_saved_hotels', JSON.stringify(updated));
+    } catch (e) {
+      setIsSaved(!isSaved);
+    }
+  };
+
+  // Combine all photos (gallery + room photos)
   const allPhotos = useMemo(() => {
     if (!hotel) return [];
     const list = [...hotel.gallery];
@@ -94,6 +154,11 @@ export default function HotelDetailPage() {
       hotel.rooms.forEach(r => {
         if (r.image && !list.includes(r.image)) {
           list.push(r.image);
+        }
+        if ((r as any).gallery && Array.isArray((r as any).gallery)) {
+          (r as any).gallery.forEach((g: string) => {
+            if (g && !list.includes(g)) list.push(g);
+          });
         }
       });
     }
@@ -132,10 +197,8 @@ export default function HotelDetailPage() {
     if (!touchStartX || !touchEndX || !hotel) return;
     const distance = touchStartX - touchEndX;
     if (distance > 45) {
-      // Swiped Left -> Next Photo
       setActivePhotoIdx((prev) => (prev + 1) % hotel.gallery.length);
     } else if (distance < -45) {
-      // Swiped Right -> Previous Photo
       setActivePhotoIdx((prev) => (prev - 1 + hotel.gallery.length) % hotel.gallery.length);
     }
     setTouchStartX(null);
@@ -143,7 +206,7 @@ export default function HotelDetailPage() {
   };
 
   // Booking Form States
-  const [stayMode, setStayMode] = useState<'hourly' | 'day' | 'night'>('night');
+  const [stayMode, setStayMode] = useState<'night' | 'day' | 'hourly'>('night');
   const [hourlySlot, setHourlySlot] = useState<'3h' | '6h' | '12h'>('3h');
   const [checkInTime, setCheckInTime] = useState('11:00 AM');
   const [checkInDate, setCheckInDate] = useState(() => new Date().toISOString().split('T')[0]);
@@ -152,8 +215,6 @@ export default function HotelDetailPage() {
     d.setDate(d.getDate() + 1);
     return d.toISOString().split('T')[0];
   });
-  const [selectedRoomId, setSelectedRoomId] = useState('r1');
-  const [roomTypePreference, setRoomTypePreference] = useState<'ac' | 'non_ac'>('ac');
   const [roomsCount, setRoomsCount] = useState(1);
   const [guestsCount, setGuestsCount] = useState(2);
 
@@ -163,38 +224,17 @@ export default function HotelDetailPage() {
   const [idProofType, setIdProofType] = useState('Aadhaar Card (Local / Outstation Accepted)');
   const [specialRequest, setSpecialRequest] = useState('');
 
-  // Payment Mode: 'Pay at Hotel' | 'Online'
-  const isPayAtHotelAvailable = (hotel as any)?.isPayAtHotelAvailable !== false;
-  const [paymentMode, setPaymentMode] = useState<'Pay at Hotel' | 'Online'>('Pay at Hotel');
-
-  // Auto-switch to Online if Pay at Hotel is disabled by hotelier
-  useEffect(() => {
-    if (!isPayAtHotelAvailable && paymentMode === 'Pay at Hotel') {
-      setPaymentMode('Online');
-    }
-  }, [isPayAtHotelAvailable, paymentMode]);
-
   // Confirmation & Digital Pass
   const [bookingSuccessPass, setBookingSuccessPass] = useState<any>(null);
   const [isMyPassesModalOpen, setIsMyPassesModalOpen] = useState(false);
   const [userPassCount, setUserPassCount] = useState(0);
 
-  // Real-time Click & View stats
-  const [analyticsData, setAnalyticsData] = useState<{ views: number; clicks: number; whatsapp: number; call: number; book: number } | null>(null);
-
   // Reviews list
   const [reviewsList, setReviewsList] = useState<any[]>([]);
   const [newReviewAuthor, setNewReviewAuthor] = useState('');
   const [newReviewCity, setNewReviewCity] = useState('');
-  const [newReviewTitle, setNewReviewTitle] = useState('');
   const [newReviewRating, setNewReviewRating] = useState(5);
   const [newReviewComment, setNewReviewComment] = useState('');
-
-  // Coupon state
-  const [couponInput, setCouponInput] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; label: string } | null>(null);
-  const [couponError, setCouponError] = useState('');
-  const [showCouponBox, setShowCouponBox] = useState(false);
 
   const refreshUserPasses = () => {
     try {
@@ -216,9 +256,6 @@ export default function HotelDetailPage() {
   useEffect(() => {
     refreshUserPasses();
   }, [id, loggedInUser]);
-
-  // Live Room Availability from Hotelier Desk
-  const [roomAvailability, setRoomAvailability] = useState<{ ac: boolean; non_ac: boolean }>({ ac: true, non_ac: true });
 
   // Load hotel details
   useEffect(() => {
@@ -246,6 +283,8 @@ export default function HotelDetailPage() {
         } catch (e) {}
 
         setHotel(found);
+        setSelectedRoomRate(found.nightRate);
+
         const stayQuery = searchParams?.get('stay');
         if (stayQuery === 'day') {
           if (found.offersHourly !== false) {
@@ -259,21 +298,7 @@ export default function HotelDetailPage() {
         } else if (stayQuery === 'hourly') {
           setStayMode('hourly');
           setHourlySlot('3h');
-        } else if (found.offersHourly === false) {
-          setStayMode('day');
         }
-
-        // Load Room Availability for this Hotel
-        try {
-          const savedAvail = localStorage.getItem(`majh_boisar_hotel_availability_${found.id}`);
-          if (savedAvail) {
-            const parsed = JSON.parse(savedAvail);
-            setRoomAvailability(parsed);
-            if (!parsed.ac && parsed.non_ac) {
-              setRoomTypePreference('non_ac');
-            }
-          }
-        } catch (e) {}
 
         try {
           const saved = JSON.parse(localStorage.getItem(`majh_boisar_hotel_reviews_${found.id}`) || '[]');
@@ -282,19 +307,6 @@ export default function HotelDetailPage() {
           setReviewsList(found.reviews || []);
         }
         recordHotelClick(found.id, 'view');
-        
-        // Load Analytics
-        try {
-          const stored = JSON.parse(localStorage.getItem('majh_boisar_hotel_analytics') || '{}');
-          const hotelStats = stored[found.id] || { 
-            views: found.viewsCount || 342, 
-            clicks: found.clicksCount || 89, 
-            whatsapp: 42, 
-            call: 28, 
-            book: found.bookingsCount || 19 
-          };
-          setAnalyticsData(hotelStats);
-        } catch (e) {}
       }
     };
 
@@ -317,92 +329,139 @@ export default function HotelDetailPage() {
     };
   }, [id, loggedInUser]);
 
-  // Price Calculation with AC / Non-AC
+  // Derived available room types
+  const displayRooms = useMemo(() => {
+    if (!hotel) return [];
+    if (hotel.rooms && hotel.rooms.length > 0) {
+      return hotel.rooms.map(r => ({
+        ...r,
+        size: r.size || '9 sq. mt.',
+        view: (r as any).view || 'City view',
+        bedType: r.bedType || '1 queen bed',
+        maxGuests: r.maxGuests || 2,
+        amenities: r.amenities && r.amenities.length > 0 
+          ? r.amenities 
+          : ['Extra toilet', 'Attached bathroom', 'Toiletries', 'Towels', 'Walk-in shower', 'Free Wi-Fi', 'Satellite channels']
+      }));
+    }
+    // Fallback standard room catalog for hotel
+    return [
+      {
+        id: 'r1',
+        name: 'Value Queen Room',
+        type: 'Queen Bed · AC Room',
+        bedType: '1 queen bed',
+        maxGuests: 2,
+        size: '9 sq. mt.',
+        view: 'City view',
+        hourly3h: hotel.hourlyRate3h,
+        hourly6h: hotel.hourlyRate6h,
+        hourly12h: hotel.hourlyRate12h,
+        nightRate: hotel.nightRate,
+        image: hotel.gallery[0] || 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop&q=80',
+        amenities: ['Extra toilet', 'Attached bathroom', 'Toiletries', 'Towels', 'Walk-in shower', 'Free Wi-Fi', 'Satellite channels']
+      },
+      {
+        id: 'r2',
+        name: 'Deluxe AC Room',
+        type: 'King Bed · Deluxe AC',
+        bedType: '1 king bed',
+        maxGuests: 3,
+        size: '14 sq. mt.',
+        view: 'Garden view',
+        hourly3h: Math.round(hotel.hourlyRate3h * 1.2),
+        hourly6h: Math.round(hotel.hourlyRate6h * 1.2),
+        hourly12h: Math.round(hotel.hourlyRate12h * 1.2),
+        nightRate: Math.round(hotel.nightRate * 1.25),
+        image: hotel.gallery[1] || hotel.gallery[0] || 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&auto=format&fit=crop&q=80',
+        amenities: ['Extra toilet', 'Attached bathroom', 'Toiletries', 'Towels', 'Walk-in shower', 'Free Wi-Fi', 'Satellite channels']
+      },
+      {
+        id: 'r3',
+        name: 'Executive Suite',
+        type: 'Suite · Living Area',
+        bedType: '1 king bed + sofa',
+        maxGuests: 4,
+        size: '22 sq. mt.',
+        view: 'City & Station view',
+        hourly3h: Math.round(hotel.hourlyRate3h * 1.5),
+        hourly6h: Math.round(hotel.hourlyRate6h * 1.5),
+        hourly12h: Math.round(hotel.hourlyRate12h * 1.5),
+        nightRate: Math.round(hotel.nightRate * 1.6),
+        image: hotel.gallery[2] || hotel.gallery[0] || 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80',
+        amenities: ['Extra toilet', 'Attached bathroom', 'Toiletries', 'Towels', 'Walk-in shower', 'Free Wi-Fi', 'Satellite channels', 'Tea/Coffee Maker']
+      }
+    ];
+  }, [hotel]);
+
+  // Primary recommended deal room
+  const recommendedRoom = useMemo(() => {
+    return displayRooms[0] || {
+      name: 'Value Queen Room',
+      nightRate: hotel?.nightRate || 1499,
+      image: hotel?.gallery[0] || ''
+    };
+  }, [displayRooms, hotel]);
+
+  // Smooth scroll handler for tabs
+  const handleTabClick = (sectionId: 'overview' | 'rooms' | 'location' | 'reviews' | 'facilities' | 'policies') => {
+    setActiveTab(sectionId);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const yOffset = -85;
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  };
+
+  // Price Calculation
   const totalTariff = useMemo(() => {
     if (!hotel) return 0;
-    const isAc = roomTypePreference === 'ac';
-    const rate3h = isAc ? hotel.hourlyRate3h : Math.max(399, hotel.hourlyRate3h - 200);
-    const rate6h = isAc ? hotel.hourlyRate6h : Math.max(599, hotel.hourlyRate6h - 300);
-    const rate12h = isAc ? hotel.hourlyRate12h : Math.max(899, hotel.hourlyRate12h - 400);
-    const dayRate = isAc ? ((hotel as any).dayRate || hotel.hourlyRate12h || Math.max(799, Math.round(hotel.nightRate * 0.75))) : Math.max(599, Math.round(((hotel as any).dayRate || hotel.hourlyRate12h || hotel.nightRate * 0.75) - 200));
-    const nightRate = isAc ? hotel.nightRate : Math.max(999, hotel.nightRate - 500);
+    const baseNight = selectedRoomRate || hotel.nightRate;
+    const baseDay = (hotel as any).dayRate || hotel.hourlyRate12h || Math.round(baseNight * 0.75);
+    const rate3h = hotel.hourlyRate3h || Math.round(baseNight * 0.45);
+    const rate6h = hotel.hourlyRate6h || Math.round(baseNight * 0.65);
+    const rate12h = hotel.hourlyRate12h || Math.round(baseNight * 0.85);
 
     if (stayMode === 'hourly') {
       const base = hourlySlot === '3h' ? rate3h : hourlySlot === '6h' ? rate6h : rate12h;
       return base * roomsCount;
     } else if (stayMode === 'day') {
-      return dayRate * roomsCount;
+      return baseDay * roomsCount;
     } else {
       try {
         const d1 = new Date(checkInDate);
         const d2 = new Date(checkOutDate);
         const diffTime = Math.max(d2.getTime() - d1.getTime(), 86400000);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return nightRate * diffDays * roomsCount;
+        return baseNight * diffDays * roomsCount;
       } catch (e) {
-        return nightRate * roomsCount;
+        return baseNight * roomsCount;
       }
     }
-  }, [hotel, roomTypePreference, stayMode, hourlySlot, checkInDate, checkOutDate, roomsCount]);
+  }, [hotel, selectedRoomRate, stayMode, hourlySlot, checkInDate, checkOutDate, roomsCount]);
 
-  // Handle Coupon Apply
-  const handleApplyCoupon = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCouponError('');
-    const code = couponInput.trim().toUpperCase();
-    if (!code) return;
-
-    if (code === 'BOISAR100') {
-      const discount = Math.min(100, Math.floor(totalTariff * 0.4));
-      setAppliedCoupon({ code, discount, label: '₹100 City Pass Discount' });
-      setCouponInput('');
-    } else if (code === 'WELCOME50' || code === 'FIRSTSTAY') {
-      setAppliedCoupon({ code, discount: 50, label: '₹50 Welcome Guest Discount' });
-      setCouponInput('');
-    } else if (code === 'MAJHBOISAR') {
-      const discount = Math.round(totalTariff * 0.1);
-      setAppliedCoupon({ code, discount, label: '10% Platform Special Discount' });
-      setCouponInput('');
-    } else {
-      setCouponError('Invalid code. Try "BOISAR100", "WELCOME50" or "MAJHBOISAR"');
-    }
+  // Open reservation modal for a specific room
+  const handleOpenReserveModal = (roomName?: string, roomRate?: number) => {
+    if (roomName) setSelectedRoomName(roomName);
+    if (roomRate) setSelectedRoomRate(roomRate);
+    setIsReserveModalOpen(true);
   };
 
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
-    setCouponError('');
-  };
-
-  const finalPayableTariff = useMemo(() => {
-    if (!appliedCoupon) return totalTariff;
-    return Math.max(1, totalTariff - appliedCoupon.discount);
-  }, [totalTariff, appliedCoupon]);
-
-  if (!hotel) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-        <Building2 className="w-12 h-12 text-slate-300 animate-bounce mb-3" />
-        <h2 className="text-lg font-black text-slate-800">Finding Hotel Details...</h2>
-        <p className="text-xs text-slate-500 mt-1">If page doesn't load, please return to hotel listings.</p>
-        <Link href="/hotels" className="mt-4 text-xs font-black text-white bg-purple-900 px-4 py-2 rounded-xl">
-          ← Back to All Hotels
-        </Link>
-      </div>
-    );
-  }
-
-  // Handle Booking Submit
+  // Handle Booking Submit (Reservation Only — "hum hotel m sirf reserved krnge same has resort")
   const handleBookingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoggedIn) {
-      setLoginModalOpen(true);
-      alert('🔒 Please sign in first with your mobile number to confirm your booking and generate your digital pass.');
+    if (!guestName.trim()) {
+      showToast('Please enter your full name', 'error');
       return;
     }
-    if (!guestName.trim() || !guestPhone.trim()) {
-      alert('Please provide your full name and 10-digit mobile number.');
+    const cleanPhone = guestPhone.replace(/\D/g, '');
+    if (cleanPhone.length !== 10) {
+      showToast('Please enter a valid 10-digit mobile number', 'error');
       return;
     }
+
+    if (!hotel) return;
 
     const calculatedWindow = calculateStayWindow(checkInTime, hourlySlot).fullWindowStr;
     const ref = `MB-HTL-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -416,21 +475,19 @@ export default function HotelDetailPage() {
       timeSlot: stayMode === 'hourly' ? calculatedWindow : stayMode === 'day' ? ((hotel as any).dayStayTimingWindow || '09:00 AM – 07:00 PM') : `Overnight (${(hotel as any).nightStayCheckIn || '12:00 PM'} to ${(hotel as any).nightStayCheckOut || '11:00 AM'})`,
       date: checkInDate,
       checkOutDate: stayMode === 'night' ? checkOutDate : checkInDate,
-      roomCategory: roomTypePreference === 'ac' ? '❄️ AC Room' : '🌀 Non-AC Room',
+      roomCategory: selectedRoomName,
       assignedRoom: 'Allotted at Front Desk',
       roomsCount,
       guestsCount,
       guestName,
-      guestPhone,
+      guestPhone: cleanPhone,
       idProofType,
       specialRequest,
-      paymentMode,
-      paymentStatus: paymentMode === 'Pay at Hotel' ? 'Pending (Pay at Check-in)' : 'Paid Online',
-      status: paymentMode === 'Pay at Hotel' ? 'Reserved (Pay at Hotel)' : 'Confirmed',
-      totalAmount: finalPayableTariff,
-      originalAmount: totalTariff,
-      couponCode: appliedCoupon?.code || null,
-      discountAmount: appliedCoupon?.discount || 0,
+      paymentMode: 'Pay at Hotel (Book with ₹0)',
+      paymentStatus: 'Pending (Pay at Check-in)',
+      status: 'Reserved (Pay at Hotel)',
+      totalAmount: totalTariff,
+      originalAmount: Math.round(totalTariff * 1.25),
       createdAt: new Date().toLocaleString()
     };
 
@@ -441,7 +498,7 @@ export default function HotelDetailPage() {
       const existing = JSON.parse(localStorage.getItem('majh_boisar_hotel_bookings') || '[]');
       localStorage.setItem('majh_boisar_hotel_bookings', JSON.stringify([passObj, ...existing]));
 
-      // Save to central PostgreSQL DB
+      // 2. Save to central PostgreSQL DB
       fetch('/api/hotel-bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -452,42 +509,41 @@ export default function HotelDetailPage() {
           hotelPhone: hotel.phone,
           hotelAddress: hotel.address,
           guestName,
-          guestPhone,
+          guestPhone: cleanPhone,
           roomCategory: passObj.roomCategory,
           stayType: passObj.stayType,
           timeSlot: calculatedWindow,
           checkInDate,
-          totalAmount: finalPayableTariff,
-          paymentMode,
-          paymentStatus: paymentMode === 'Pay at Hotel' ? 'Pending' : 'Paid',
-          status: paymentMode === 'Pay at Hotel' ? 'Reserved (Pay at Hotel)' : 'Confirmed',
-          notes: `Pass Ref: ${ref} · Payment: ${paymentMode} · ID: ${idProofType}`
+          totalAmount: totalTariff,
+          paymentMode: 'Pay at Hotel',
+          paymentStatus: 'Pending',
+          status: 'Reserved (Pay at Hotel)',
+          notes: `Pass Ref: ${ref} · Pay upon arrival (₹0 Advance) · ID: ${idProofType}`
         })
       }).catch(e => console.error('[Hotel [id] DB Booking Error]:', e));
 
-      // 2. Create Instant Enquiry / Lead in Dashboard Leads Inbox
-      const roomLabel = roomTypePreference === 'ac' ? 'Deluxe AC Room' : 'Standard Non-AC Room';
+      // 3. Create Instant Enquiry / Lead in Dashboard Leads Inbox
       const newLead = {
         id: `lead_htl_${Date.now()}`,
         businessId: Number(hotel.id.replace(/\D/g, '')) || 0,
         hotelId: hotel.id,
         customerName: guestName,
-        customerPhone: guestPhone,
+        customerPhone: cleanPhone,
         customerEmail: '',
-        query: `🏨 New Room Booking: ${roomLabel} (${stayMode === 'hourly' ? `Hourly ${hourlySlot} [${calculatedWindow}]` : 'Night Stay'}) on ${checkInDate}. Tariff: ₹${finalPayableTariff} (${paymentMode}). Pass Ref: ${ref}`,
-        status: 'New Hotel Booking',
+        query: `🏨 Room Reservation: ${selectedRoomName} (${stayMode === 'hourly' ? `Hourly ${hourlySlot}` : 'Night Stay'}) on ${checkInDate}. Tariff: ₹${totalTariff} (Pay on Arrival). Pass Ref: ${ref}`,
+        status: 'New Hotel Reservation',
         createdAt: new Date().toISOString(),
-        notes: `Pass Ref: ${ref} · Stay: ${stayMode === 'hourly' ? `${hourlySlot}` : 'Night Stay'} · Payment: ${paymentMode} · Guests: ${guestsCount} · Rooms: ${roomsCount}`
+        notes: `Pass Ref: ${ref} · Stay: ${stayMode === 'hourly' ? `${hourlySlot}` : 'Night Stay'} · Guests: ${guestsCount} · Rooms: ${roomsCount}`
       };
 
       const existingLeads = JSON.parse(localStorage.getItem('majh_boisar_leads') || '[]');
       localStorage.setItem('majh_boisar_leads', JSON.stringify([newLead, ...existingLeads]));
 
-      // 3. Create Real-Time Push Notification for Hotelier
+      // 4. Create Real-Time Push Notification for Hotelier
       const newNotif = {
         id: `notif_${Date.now()}`,
-        title: '🔔 New Hotel Room Booking Received!',
-        message: `${guestName} (${guestPhone}) booked ${roomLabel} for ₹${finalPayableTariff} (${paymentMode}). Time: ${stayMode === 'hourly' ? `${hourlySlot} (${calculatedWindow})` : 'Night Stay'}.`,
+        title: '🔔 New Hotel Room Reservation Received!',
+        message: `${guestName} (${cleanPhone}) reserved ${selectedRoomName} for ₹${totalTariff} (Pay at hotel). Check-in: ${checkInDate}.`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         read: false,
         link: '/dashboard?tab=hotel_bookings'
@@ -496,7 +552,6 @@ export default function HotelDetailPage() {
       const existingNotifs = JSON.parse(localStorage.getItem('majh_boisar_notifications') || '[]');
       localStorage.setItem('majh_boisar_notifications', JSON.stringify([newNotif, ...existingNotifs]));
 
-      // Dispatch global events for instant dashboard & notification bell sync
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('storage'));
         window.dispatchEvent(new CustomEvent('boisar_new_hotel_booking', { detail: passObj }));
@@ -504,1022 +559,1595 @@ export default function HotelDetailPage() {
     } catch (e) {}
 
     setBookingSuccessPass(passObj);
+    refreshUserPasses();
+    // Pass modal displays directly in view without conflicting top banner toast
   };
 
-  // WhatsApp Instant Booking
+  // WhatsApp Instant Booking message
   const openWhatsApp = () => {
+    if (!hotel) return;
     recordHotelClick(hotel.id, 'whatsapp');
     const calculatedWindow = calculateStayWindow(checkInTime, hourlySlot).fullWindowStr;
     const msg = encodeURIComponent(
-      `Hello ${hotel.name},\nI am booking a room on Majh Boisar.\n\n🏨 Hotel: ${hotel.name}\n📍 Location: ${hotel.location}\n⏰ Stay: ${stayMode === 'hourly' ? `Hourly (${hourlySlot}) - ${calculatedWindow}` : 'Night Stay'}\n📅 Date: ${checkInDate}\n👤 Guest: ${guestName || 'Customer'}\n💰 Amount: ₹${totalTariff}\n\nPlease confirm room booking.`
+      `Hello ${hotel.name},\nI would like to reserve a room on Majh Boisar.\n\n🏨 Hotel: ${hotel.name}\n📍 Location: ${hotel.location}\n🛏️ Room: ${selectedRoomName}\n⏰ Stay: ${stayMode === 'hourly' ? `Hourly (${hourlySlot}) - ${calculatedWindow}` : 'Night Stay'}\n📅 Check-in Date: ${checkInDate}\n👤 Guest: ${guestName || 'Customer'} (${guestPhone || 'Phone'})\n💰 Tariff: ₹${totalTariff} (Book with ₹0 / Pay at Hotel)\n\nPlease confirm room reservation.`
     );
     window.open(`https://wa.me/${hotel.whatsapp}?text=${msg}`, '_blank');
   };
 
   // Share Hotel Link
   const handleShare = () => {
-    if (navigator.clipboard) {
+    if (navigator.share) {
+      navigator.share({
+        title: `${hotel?.name} - Majh Boisar`,
+        text: `Reserve rooms at ${hotel?.name} with ₹0 advance!`,
+        url: window.location.href
+      }).catch(() => {});
+    } else if (navigator.clipboard) {
       navigator.clipboard.writeText(window.location.href);
-      alert('Hotel booking link copied to clipboard!');
+      showToast('🔗 Hotel reservation link copied!', 'success');
     }
   };
 
+  if (!hotel) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+        <Building2 className="w-12 h-12 text-slate-300 animate-bounce mb-3" />
+        <h2 className="text-lg font-black text-slate-800">Finding Hotel Details...</h2>
+        <p className="text-xs text-slate-500 mt-1">If page doesn't load, please return to hotel listings.</p>
+        <Link href="/hotels" className="mt-4 text-xs font-black text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl transition-colors">
+          ← Back to All Hotels
+        </Link>
+      </div>
+    );
+  }
+
+  // Render Star Icons
+  const starCount = Math.max(3, Math.min(5, Math.round(hotel.rating || 4)));
+
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-24 text-left">
+    <div className="min-h-screen bg-[#f8f9fb] text-slate-800 font-sans pb-28 sm:pb-20 text-left">
       
-      {/* Top Header & Breadcrumbs (Non-sticky to prevent navbar collision) */}
-      <div className="bg-white border-b border-slate-200 py-2.5 px-4 sm:px-6 lg:px-8 shadow-2xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs truncate">
-            <Link href="/" className="text-slate-500 hover:text-purple-900 font-bold transition-colors">Home</Link>
-            <span className="text-slate-300">/</span>
-            <Link href="/hotels" className="text-slate-500 hover:text-purple-900 font-bold transition-colors">Hotels in Boisar</Link>
-            <span className="text-slate-300">/</span>
-            <span className="text-purple-900 font-black truncate">{hotel.name}</span>
-          </div>
+      {/* 1. TOP STICKY TAB NAVIGATION (MakeMyTrip / Agoda style reference) */}
+      <div className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-2xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-4 overflow-x-auto scrollbar-none">
+            <nav className="flex items-center gap-6 sm:gap-8 whitespace-nowrap text-xs sm:text-sm font-bold text-slate-600">
+              {[
+                { id: 'overview', label: 'Overview' },
+                { id: 'rooms', label: 'Rooms' },
+                { id: 'location', label: 'Location' },
+                { id: 'reviews', label: 'Reviews' },
+                { id: 'facilities', label: 'Facilities' },
+                { id: 'policies', label: 'Policies' },
+              ].map((tab) => (
+                <button
+                  type="button"
+                  key={tab.id}
+                  onClick={() => handleTabClick(tab.id as any)}
+                  className={`py-3.5 transition-all cursor-pointer relative font-bold ${
+                    activeTab === tab.id
+                      ? 'text-blue-600 font-extrabold'
+                      : 'hover:text-slate-900 text-slate-600'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  {activeTab === tab.id && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-blue-600 rounded-t-full" />
+                  )}
+                </button>
+              ))}
+            </nav>
 
-          <div className="flex items-center gap-2 shrink-0">
-            {isLoggedIn && userPassCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setIsMyPassesModalOpen(true)}
-                className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black transition-all flex items-center gap-1.5 shadow-xs cursor-pointer active:scale-95"
+            {/* Quick Actions (My Passes & Back Link & Owner Dashboard) */}
+            <div className="flex items-center gap-2 shrink-0 py-2">
+              <Link
+                href={`/dashboard?hotelId=${hotel.slug || hotel.id}`}
+                className="hidden sm:inline-flex px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
               >
-                <Ticket className="w-3.5 h-3.5 text-slate-950" />
-                <span>My Passes ({userPassCount})</span>
-              </button>
-            )}
-
-            <button
-              onClick={handleShare}
-              className="p-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1 text-xs font-extrabold cursor-pointer"
-              title="Share Hotel Link"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Share</span>
-            </button>
-            <Link
-              href="/hotels"
-              className="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-900 text-xs font-black transition-colors"
-            >
-              ← Back to Hotels
-            </Link>
+                <span>⚙️ Owner Dashboard</span>
+              </Link>
+              {userPassCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsMyPassesModalOpen(true)}
+                  className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
+                >
+                  <Ticket className="w-3.5 h-3.5 text-slate-950" />
+                  <span>My Passes ({userPassCount})</span>
+                </button>
+              )}
+              <Link
+                href="/hotels"
+                className="hidden sm:inline-flex px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
+              >
+                ← All Hotels
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Coming Soon Notice Banner */}
-      {hotel.isComingSoon && (
-        <div className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-slate-950 font-black py-2.5 px-4 text-center text-xs sm:text-sm border-b border-amber-300 shadow-xs flex items-center justify-center gap-2">
-          <Sparkles className="w-4 h-4 fill-slate-950" />
-          <span>🚀 COMING SOON: Direct room bookings for {hotel.name} are opening soon on Majh Boisar!</span>
-        </div>
-      )}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-5">
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-        
-
-
-        {/* Top Section: Photo Gallery Grid + Hotel Info & Booking Card */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* 2. HOTEL TITLE & META HEADER (Reference Matching) */}
+        <div id="overview" className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs space-y-2">
           
-          {/* Left Column (8 cols): Photo Gallery & Hotel Information */}
-          <div className="lg:col-span-8 space-y-4">
-            
-            {/* Multi-Photo Showcase Box (Mosaic with Touch Swipe & Click to Open Full Gallery) */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-3 sm:p-3.5 shadow-2xs">
-              
-              <div className="flex flex-col sm:flex-row gap-2.5 h-[240px] sm:h-[290px] w-full">
-                
-                {/* Left: Main Photo (Touch Swipeable & In-place Click to Open Modal) */}
-                <div 
-                  onClick={() => {
-                    setGalleryModalIdx(activePhotoIdx);
-                    setIsGalleryModalOpen(true);
-                  }}
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                  className="flex-1 h-full rounded-2xl overflow-hidden bg-slate-950 cursor-pointer group shadow-inner relative select-none touch-pan-y"
-                  title="Click to view all full size photos"
-                >
-                  <img 
-                    src={allPhotos[activePhotoIdx] || hotel.gallery[0]} 
-                    alt={hotel.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 pointer-events-none" 
-                  />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* Title, Stars, & Best Price Guarantee */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+                {hotel.name}
+              </h1>
 
-                  {/* Nav Arrows */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActivePhotoIdx((activePhotoIdx - 1 + hotel.gallery.length) % hotel.gallery.length);
-                    }}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center cursor-pointer transition-all z-20"
-                    title="Previous Photo"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActivePhotoIdx((activePhotoIdx + 1) % hotel.gallery.length);
-                    }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center cursor-pointer transition-all z-20"
-                    title="Next Photo"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-
-                  {/* Photo Counter & Full View CTA */}
-                  <div 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setGalleryModalIdx(activePhotoIdx);
-                      setIsGalleryModalOpen(true);
-                    }}
-                    className="absolute bottom-2.5 right-2.5 bg-slate-950/85 hover:bg-purple-900 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-lg border border-white/20 z-10 flex items-center gap-1.5 cursor-pointer transition-colors shadow-md"
-                  >
-                    <Camera className="w-3.5 h-3.5 text-white shrink-0" />
-                    <span>{activePhotoIdx + 1}/{allPhotos.length}</span>
-                    <span className="text-amber-300 font-extrabold ml-0.5">· View All</span>
-                  </div>
-                </div>
-
-                {/* Right: Stacked Side Photos (Only if hotel has multiple distinct photos) */}
-                {allPhotos.length > 1 && (
-                  <div style={{ width: '230px', minWidth: '230px' }} className="hidden sm:flex flex-col gap-2 h-full shrink-0">
-                    {/* Side Photo 1 */}
-                    <div 
-                      onClick={() => {
-                        setGalleryModalIdx(1 % allPhotos.length);
-                        setIsGalleryModalOpen(true);
-                      }}
-                      className={`flex-1 rounded-2xl overflow-hidden relative cursor-pointer border-2 transition-all bg-slate-900 ${
-                        activePhotoIdx === 1 ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200 hover:opacity-90'
-                      }`}
-                      title="Click to view photo"
-                    >
-                      <img 
-                        src={allPhotos[1]} 
-                        alt="Room View 2" 
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" 
-                      />
-                    </div>
-
-                    {/* Side Photo 2 with +Count (if 3 or more photos) */}
-                    {allPhotos.length > 2 && (
-                      <div 
-                        onClick={() => {
-                          setGalleryModalIdx(2 % allPhotos.length);
-                          setIsGalleryModalOpen(true);
-                        }}
-                        className={`flex-1 rounded-2xl overflow-hidden relative cursor-pointer border-2 transition-all bg-slate-900 group ${
-                          activePhotoIdx === 2 ? 'border-purple-600 ring-2 ring-purple-600/30' : 'border-slate-200'
-                        }`}
-                        title="Click to open all photos"
-                      >
-                        <img 
-                          src={allPhotos[2]} 
-                          alt="Room View 3" 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                        />
-                        <div className="absolute inset-0 bg-slate-950/65 group-hover:bg-slate-950/45 backdrop-blur-[1px] transition-colors flex flex-col items-center justify-center text-white cursor-pointer">
-                          <span className="text-2xl font-black tracking-tight text-white drop-shadow-md">
-                            +{Math.max(1, allPhotos.length - 2)}
-                          </span>
-                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-300">
-                            View All Photos
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-              </div>
-
-            </div>
-
-            {/* Section 1: Hotel Title & Core Details (Perfect Mobile & Desktop Grid Alignment) */}
-            <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-3.5 sm:p-5 shadow-2xs space-y-3.5 text-left">
-              
-              {/* Top Meta Bar: 100% Aligned on Mobile */}
-              <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="bg-slate-900 text-white text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-2xs">
-                    {hotel.badge?.replace(/[♦★⭐⚡]/g, '').trim() || 'FEATURED'}
-                  </span>
-                  <span className="bg-emerald-600 text-white text-[11px] font-black px-2 py-1 rounded-lg flex items-center gap-1 shadow-2xs">
-                    <Star className="w-3.5 h-3.5 fill-white text-white" />
-                    <span>{hotel.rating}</span>
-                    <span className="text-emerald-100 font-medium text-[10px]">({hotel.reviewsCount})</span>
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${hotel.name} ${hotel.address} Boisar`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1 text-xs font-bold border border-slate-200"
-                    title="Open in Google Maps"
-                  >
-                    <Navigation className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Map</span>
-                  </a>
-
-                  <a
-                    href={`tel:${hotel.phone}`}
-                    onClick={() => recordHotelClick(hotel.id, 'call')}
-                    className="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-900 transition-colors flex items-center gap-1 text-xs font-black border border-purple-200 shrink-0"
-                  >
-                    <Phone className="w-3.5 h-3.5 text-purple-900" />
-                    <span>Call Hotel</span>
-                  </a>
-                </div>
-              </div>
-
-              {/* Title & Address */}
-              <div className="space-y-1">
-                <h1 className="text-lg sm:text-2xl font-black text-slate-900 leading-tight">
-                  {hotel.name}
-                </h1>
-                {hotel.tagline && (
-                  <p className="text-xs text-purple-900 font-bold">{hotel.tagline}</p>
-                )}
-                <p className="text-xs text-slate-600 font-medium flex items-start gap-1.5 pt-0.5 leading-relaxed">
-                  <MapPin className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-                  <span>{hotel.address}</span>
-                </p>
-              </div>
-
-              {/* Station & MIDC Proximity: Compact auto-width pills without stretched empty space */}
-              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-700">
-                <div className="inline-flex items-center gap-1.5 bg-slate-50/90 px-3 py-1.5 rounded-xl border border-slate-200/90 w-fit">
-                  <Train className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-                  <span>{(hotel as any).stationDistance || (hotel.nearStation ? '3 mins to Boisar Station' : '8 mins to Station')}</span>
-                </div>
-                <div className="inline-flex items-center gap-1.5 bg-slate-50/90 px-3 py-1.5 rounded-xl border border-slate-200/90 w-fit">
-                  <Building2 className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-                  <span>{(hotel as any).midcDistance || (hotel.nearMidc ? '5 mins to Tarapur MIDC' : '5 mins to MIDC')}</span>
-                </div>
-              </div>
-
-              {/* 3 Core Value Highlights: Compact auto-width pills */}
-              <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 text-xs font-semibold">
-                <div className="inline-flex items-center gap-1.5 bg-slate-50/80 text-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200/90 w-fit">
-                  <Users className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-                  <span>{(hotel as any).coupleBadgeText || 'Couples 18+'}</span>
-                </div>
-                <div className="inline-flex items-center gap-1.5 bg-slate-50/80 text-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200/90 w-fit">
-                  <ShieldCheck className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-                  <span>{(hotel as any).safetyBadgeText || '100% Safe'}</span>
-                </div>
-                <div className="inline-flex items-center gap-1.5 bg-slate-50/80 text-slate-800 px-2.5 py-1.5 rounded-xl border border-slate-200/90 w-fit">
-                  <Clock className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-                  <span>{(hotel as any).checkinBadgeText || '24/7 Check-in'}</span>
-                </div>
-              </div>
-
-              {/* What is in the room & Hotel: Dynamic Amenities (Clean Without Background) */}
-              <div className="pt-2 border-t border-slate-100 space-y-2">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
-                  What is in the room &amp; Hotel:
-                </span>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-700 pt-0.5">
-                  {(() => {
-                    const rawList = hotel.amenities && hotel.amenities.length > 0
-                      ? hotel.amenities
-                      : ['Wi-Fi', 'AC', 'Parking', 'TV', 'Hot Water', 'Clean Linens'];
-
-                    return rawList.map((am: any, i: number) => {
-                      const rawName = typeof am === 'string' ? am : am.name;
-                      const name = normalizeHotelAmenity(rawName);
-                      const lower = name.toLowerCase();
-
-                      let iconNode = <Sparkles className="w-3.5 h-3.5 text-slate-500 shrink-0" />;
-                      if (lower.includes('wi-fi') || lower.includes('wifi') || lower.includes('internet')) {
-                        iconNode = <Wifi className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
-                      } else if (lower === 'ac' || lower.includes('air condition') || lower.includes('airvent')) {
-                        iconNode = <Wind className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
-                      } else if (lower.includes('parking') || lower.includes('car')) {
-                        iconNode = <Car className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
-                      } else if (lower.includes('tv') || lower.includes('television')) {
-                        iconNode = <Tv className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
-                      } else if (lower.includes('water') || lower.includes('shower') || lower.includes('geyser') || lower.includes('bath')) {
-                        iconNode = <Bath className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
-                      } else if (lower.includes('linens') || lower.includes('bed')) {
-                        iconNode = <Sparkles className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
-                      } else if (lower.includes('power') || lower.includes('backup') || lower.includes('generator')) {
-                        iconNode = <Zap className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
-                      } else if (lower.includes('service') || lower.includes('desk') || lower.includes('reception')) {
-                        iconNode = <Coffee className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
-                      } else if (lower.includes('lift') || lower.includes('elevator')) {
-                        iconNode = <Building2 className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
-                      } else if (lower.includes('security') || lower.includes('cctv') || lower.includes('safe')) {
-                        iconNode = <ShieldCheck className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
-                      } else if (lower.includes('restaurant') || lower.includes('dining') || lower.includes('food')) {
-                        iconNode = <Utensils className="w-3.5 h-3.5 text-slate-600 shrink-0" />;
-                      }
-
-                      return (
-                        <div key={i} className="flex items-center gap-1.5 font-medium text-slate-700">
-                          {iconNode}
-                          <span className="text-slate-800 font-semibold">{name}</span>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-              </div>
-
-            </div>
-
-            {/* Section 3: Simple House Rules (Balanced & Clean) */}
-            <div className="bg-slate-50/70 rounded-2xl border border-slate-200 p-3.5 sm:p-4 shadow-2xs space-y-2.5 text-left">
-              <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                <h3 className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Simple House Rules</span>
-                </h3>
-                <span className="text-[10px] font-extrabold text-slate-700 bg-slate-200/80 px-2 py-0.5 rounded-md">
-                  {(hotel as any).houseRulesTag || 'Easy 2-Min Check-in'}
-                </span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700 font-medium">
-                {deduplicateRules(hotel.rules && hotel.rules.length > 0 ? hotel.rules : [
-                  '18+ Valid Govt ID Required (Aadhaar / DL / DigiLocker)',
-                  'Couples & Local Boisar IDs Warmly Welcome',
-                  '24/7 Flexible Check-in & Standard Check-out',
-                  'Check-out timings strictly observed for room sanitization',
-                  'Visitors allowed in Reception Lobby only'
-                ]).map((rule, rIdx) => (
-                  <div key={rIdx} className="flex items-center gap-2">
-                    <span className="text-emerald-700 font-black text-sm">✓</span>
-                    <span>{rule.replace(/^✓\s*/, '')}</span>
-                  </div>
+              {/* Star Rating Icons (Orange) */}
+              <div className="flex items-center text-amber-500 gap-0.5">
+                {[...Array(starCount)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
                 ))}
               </div>
-            </div>
 
-            {/* Section 4: Stay Timings & Check-in / Check-out Windows */}
-            <div className="bg-slate-50/70 rounded-2xl border border-slate-200 p-3.5 sm:p-4 shadow-2xs space-y-2.5 text-left">
-              <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
-                <h3 className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-purple-700 shrink-0" />
-                  <span>Check-in &amp; Check-out Timings</span>
-                </h3>
-                <span className="text-[10px] font-extrabold text-purple-800 bg-purple-100 px-2 py-0.5 rounded-md">
-                  Official Timing Window
+              {/* Best Price Guarantee Badge (Dark Green Reference) */}
+              <span className="inline-flex items-center gap-1 bg-[#055b2e] text-white text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-2xs">
+                <span>₹</span>
+                <span>Best Price Guarantee</span>
+              </span>
+
+              {hotel.badge && (
+                <span className="bg-slate-900 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
+                  {hotel.badge.replace(/[♦★⭐⚡]/g, '').trim()}
                 </span>
-              </div>
+              )}
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                {/* Day Stay Window */}
-                <div className="bg-white border border-slate-200/80 rounded-xl p-3 flex items-start gap-2.5">
-                  <span className="text-xl">☀️</span>
-                  <div>
-                    <span className="text-xs font-black text-slate-900 block">Day Stay (Same-Day Rest)</span>
-                    <span className="text-xs font-bold text-amber-700 block mt-0.5">
-                      {(hotel as any).dayStayTimingWindow || '09:00 AM – 07:00 PM'}
-                    </span>
-                    <span className="text-[10.5px] text-slate-500 font-medium block mt-0.5">
-                      Check-out on the same day by 07:00 PM
-                    </span>
-                  </div>
-                </div>
+            {/* Right Side: Save & Share Buttons (Reference Matching) */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleToggleSave}
+                className={`px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer ${
+                  isSaved
+                    ? 'bg-rose-50 border-rose-200 text-rose-600'
+                    : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700'
+                }`}
+                title={isSaved ? 'Saved in favorites' : 'Save Hotel'}
+              >
+                <Heart className={`w-3.5 h-3.5 ${isSaved ? 'fill-rose-500 text-rose-500' : 'text-slate-600'}`} />
+                <span>{isSaved ? 'Saved' : 'Save'}</span>
+              </button>
 
-                {/* Night Stay Window */}
-                <div className="bg-white border border-slate-200/80 rounded-xl p-3 flex items-start gap-2.5">
-                  <span className="text-xl">🌙</span>
-                  <div>
-                    <span className="text-xs font-black text-slate-900 block">Night Stay (Overnight)</span>
-                    <span className="text-xs font-bold text-indigo-700 block mt-0.5">
-                      In: {(hotel as any).nightStayCheckIn || '12:00 PM'} · Out: {(hotel as any).nightStayCheckOut || '11:00 AM'}
-                    </span>
-                    <span className="text-[10.5px] text-slate-500 font-medium block mt-0.5">
-                      Standard overnight stay with next-day morning check-out
-                    </span>
-                  </div>
-                </div>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 transition-colors flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+                title="Share Hotel Link"
+              >
+                <Share2 className="w-3.5 h-3.5 text-slate-600" />
+                <span>Share</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Location row with View on map link (Reference Matching) */}
+          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-600 font-medium pt-0.5">
+            <span className="p-1 rounded-lg bg-amber-50 text-amber-600">
+              <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            </span>
+            <span className="text-slate-700 font-semibold">{hotel.address}</span>
+            <span className="text-slate-300">·</span>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${hotel.name} ${hotel.address} Boisar`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 font-bold hover:underline inline-flex items-center gap-1"
+            >
+              <span>View on map</span>
+              <ArrowRight className="w-3 h-3" />
+            </a>
+          </div>
+
+        </div>
+
+        {/* 3. PHOTO SHOWCASE + RECOMMENDED DEAL CARD (Exact Visual Architecture from Reference Image) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+          
+          {/* Photos Area (8 Cols on Desktop): Large Left Photo + 2 Stacked Center Photos */}
+          <div className="lg:col-span-8 flex flex-col sm:flex-row gap-2.5 h-[280px] sm:h-[340px] md:h-[360px]">
+            
+            {/* Left Box: Large Main Photo */}
+            <div 
+              onClick={() => {
+                setGalleryModalIdx(activePhotoIdx);
+                setIsGalleryModalOpen(true);
+              }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              className="flex-1 h-full rounded-2xl overflow-hidden bg-slate-900 cursor-pointer group relative shadow-inner select-none"
+              title="Click to view full photo gallery"
+            >
+              <img 
+                src={allPhotos[activePhotoIdx] || hotel.gallery[0]} 
+                alt={hotel.name} 
+                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" 
+              />
+
+              {/* Prev / Next Arrows */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActivePhotoIdx((activePhotoIdx - 1 + allPhotos.length) % allPhotos.length);
+                }}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center cursor-pointer transition-all z-10"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActivePhotoIdx((activePhotoIdx + 1) % allPhotos.length);
+                }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center cursor-pointer transition-all z-10"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {/* Photo Count badge on mobile */}
+              <div className="sm:hidden absolute bottom-3 right-3 bg-black/75 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg">
+                {activePhotoIdx + 1} / {allPhotos.length} Photos
               </div>
             </div>
 
-            {/* Section 5: Guest Reviews (Simple, Clean & Understandable) */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4 shadow-2xs space-y-3 text-left">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                <div>
-                  <h3 className="text-sm font-black text-slate-900">
-                    Guest Reviews
-                  </h3>
-                  <p className="text-[11px] text-slate-500 font-medium">
-                    Verified ratings from guests who stayed at this hotel
-                  </p>
+            {/* Center Box: Two Stacked Photos (Visible on sm & up) with "See All Property & Guest Photos >" */}
+            {allPhotos.length > 1 && (
+              <div className="hidden sm:flex flex-col gap-2.5 w-[210px] md:w-[240px] shrink-0 h-full">
+                
+                {/* Top Stacked Photo */}
+                <div 
+                  onClick={() => {
+                    setGalleryModalIdx(1 % allPhotos.length);
+                    setIsGalleryModalOpen(true);
+                  }}
+                  className="flex-1 rounded-2xl overflow-hidden bg-slate-900 relative cursor-pointer group shadow-inner"
+                >
+                  <img 
+                    src={allPhotos[1] || allPhotos[0]} 
+                    alt="Property Exterior" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                 </div>
-                <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-lg text-xs font-black border border-emerald-200">
-                  <Star className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
-                  <span>{hotel.rating} / 5</span>
-                </div>
-              </div>
 
-              {/* Genuine Verified Reviews List */}
-              <div className="space-y-2.5">
-                {reviewsList
-                  .filter((r) => r && r.userName && r.userName.length > 2 && r.comment && r.comment.length > 8 && !/^(.)\1+$/.test(r.comment))
-                  .slice(0, 4)
-                  .map((rev) => (
-                    <div key={rev.id} className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 space-y-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-black text-slate-900">
-                            {rev.userName}
-                          </span>
-                          {rev.userCity && (
-                            <span className="text-[11px] text-slate-500 font-medium">
-                              ({rev.userCity})
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center text-amber-500 text-[10px] shrink-0">
-                          {[...Array(Number(rev.rating) || 5)].map((_, i) => (
-                            <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
-                          ))}
-                        </div>
-                      </div>
-                      <p className="text-xs text-slate-700 font-medium leading-relaxed">
-                        &ldquo;{rev.comment}&rdquo;
-                      </p>
-                    </div>
-                  ))}
-              </div>
+                {/* Bottom Stacked Photo with "See All Property & Guest Photos >" Button */}
+                <div 
+                  onClick={() => {
+                    setGalleryModalIdx(2 % allPhotos.length);
+                    setIsGalleryModalOpen(true);
+                  }}
+                  className="flex-1 rounded-2xl overflow-hidden bg-slate-900 relative cursor-pointer group shadow-inner"
+                >
+                  <img 
+                    src={allPhotos[2] || allPhotos[0]} 
+                    alt="Property Interior" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
 
-              {/* Write Review Section */}
-              <div className="pt-2 border-t border-slate-100 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-800">Rate Your Experience:</span>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((starVal) => (
-                      <button
-                        type="button"
-                        key={starVal}
-                        onClick={() => setNewReviewRating(starVal)}
-                        className="p-0.5 hover:scale-110 transition-transform cursor-pointer"
-                        title={`${starVal} Star`}
-                      >
-                        <Star className={`w-4 h-4 ${starVal <= newReviewRating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
-                      </button>
-                    ))}
-                    <span className="text-xs font-bold text-slate-600 ml-1">
-                      {newReviewRating}/5
-                    </span>
+                  {/* Dark Pill Overlay (Exact Reference Matching) */}
+                  <div className="absolute bottom-2.5 right-2.5 bg-black/80 hover:bg-black text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 shadow-md transition-colors">
+                    <span>See All Property &amp; Guest Photos</span>
+                    <ChevronRight className="w-3 h-3 text-white" />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Your Name *"
-                    value={newReviewAuthor}
-                    onChange={(e) => setNewReviewAuthor(e.target.value)}
-                    className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:bg-white focus:border-purple-600"
-                  />
-                  <input
-                    type="text"
-                    placeholder="City (e.g. Boisar / Mumbai)"
-                    value={newReviewCity}
-                    onChange={(e) => setNewReviewCity(e.target.value)}
-                    className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:bg-white focus:border-purple-600"
-                  />
+              </div>
+            )}
+
+          </div>
+
+          {/* Right Box (4 Cols on Desktop): THE RECOMMENDED DEAL CARD (Exact Reference Matching) */}
+          <div className="lg:col-span-4 h-full">
+            <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm h-full flex flex-col justify-between space-y-3.5">
+              
+              <div className="space-y-3">
+                {/* Header: Room Thumbnail + "Recommended Deal" + Room Name */}
+                <div className="flex items-center gap-3">
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+                    <img 
+                      src={recommendedRoom.image || hotel.gallery[0]} 
+                      alt={recommendedRoom.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="space-y-0.5">
+                    <span className="inline-block bg-blue-50 text-blue-600 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full">
+                      Recommended Deal
+                    </span>
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                      {recommendedRoom.name}
+                    </h3>
+                  </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Describe your stay experience..."
-                    value={newReviewComment}
-                    onChange={(e) => setNewReviewComment(e.target.value)}
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:bg-white focus:border-purple-600"
-                  />
+                {/* Bullet Perks (Exact Reference Checkmarks) */}
+                <div className="space-y-1.5 text-xs text-slate-700 font-medium pt-1">
+                  <div className="flex items-center gap-2 text-emerald-700 font-semibold">
+                    <span className="w-4 h-4 rounded-full border border-emerald-500 flex items-center justify-center text-[10px] text-emerald-600">✓</span>
+                    <span>Free Cancellation before check-in</span>
+                    <Info className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full border border-slate-400 flex items-center justify-center text-[10px] text-slate-700">✓</span>
+                    <span>Free High-Speed WiFi</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 rounded-full border border-slate-400 flex items-center justify-center text-[10px] text-slate-700">✓</span>
+                    <span className="font-bold text-slate-900">Book with ₹0</span>
+                    <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.5 rounded">Pay on Arrival</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Price & Action Buttons */}
+              <div className="space-y-3 pt-2 border-t border-slate-100">
+                <div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl sm:text-3xl font-black text-slate-900">
+                      ₹{recommendedRoom.nightRate?.toLocaleString('en-IN') || hotel.nightRate}
+                    </span>
+                    <span className="text-sm font-semibold text-slate-400 line-through">
+                      ₹{Math.round((recommendedRoom.nightRate || hotel.nightRate) * 1.25).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 block mt-0.5 font-medium">
+                    + ₹0 extra fees · per night for 1 room
+                  </span>
+                </div>
+
+                {/* Buttons (Website Matched Clean Design) */}
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      const cleanAuthor = newReviewAuthor.trim();
-                      const cleanComment = newReviewComment.trim();
-
-                      if (!cleanAuthor || !cleanComment) {
-                        alert('Please enter your name and review details.');
-                        return;
-                      }
-
-                      const newRev = {
-                        id: `rev-${Date.now()}`,
-                        userName: cleanAuthor,
-                        userCity: newReviewCity.trim() || 'Boisar',
-                        rating: newReviewRating,
-                        date: 'Just now',
-                        title: 'Hotel Review',
-                        comment: cleanComment,
-                        stayType: stayMode === 'hourly' ? `Hourly (${hourlySlot})` : 'Night Stay'
-                      };
-
-                      const updated = [newRev, ...reviewsList];
-                      setReviewsList(updated);
-
-                      try {
-                        const currentSaved = JSON.parse(localStorage.getItem(`majh_boisar_hotel_reviews_${hotel.id}`) || '[]');
-                        localStorage.setItem(`majh_boisar_hotel_reviews_${hotel.id}`, JSON.stringify([newRev, ...currentSaved]));
-                      } catch (err) {
-                        console.error(err);
-                      }
-
-                      setNewReviewAuthor('');
-                      setNewReviewCity('');
-                      setNewReviewComment('');
-                      alert('Thank you! Your review has been submitted.');
-                    }}
-                    className="bg-purple-900 hover:bg-purple-800 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition-all cursor-pointer shrink-0 shadow-2xs active:scale-95"
+                    onClick={() => handleOpenReserveModal(recommendedRoom.name, recommendedRoom.nightRate || hotel.nightRate)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 active:scale-98 text-white text-xs sm:text-sm font-bold py-2.5 px-3 rounded-xl transition-all shadow-xs hover:shadow cursor-pointer text-center"
                   >
-                    Submit
+                    Reserve 1 Room
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleTabClick('rooms')}
+                    className="w-full bg-slate-100 hover:bg-slate-200 active:scale-98 text-slate-800 text-xs sm:text-sm font-bold py-2.5 px-3 rounded-xl border border-slate-200 transition-all cursor-pointer text-center"
+                  >
+                    View All Rooms
                   </button>
                 </div>
               </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        {/* 4. HIGHLIGHT FEATURE CARDS ROW (Simple & Easy, Website Blue Theme) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+          {/* Card 1: Centrally Located */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-2xs flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+              <Navigation className="w-4 h-4 text-blue-600" />
+            </div>
+            <div className="min-w-0">
+              <h4 className="text-xs sm:text-sm font-black text-slate-900 truncate">Centrally Located</h4>
+              <p className="text-[11px] text-slate-500 font-medium truncate">
+                {(hotel as any).stationDistance || '2 mins to Boisar Station'}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 2: Clean Rooms */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-2xs flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4 text-blue-600" />
+            </div>
+            <div className="min-w-0">
+              <h4 className="text-xs sm:text-sm font-black text-slate-900 truncate">Clean &amp; Sanitized</h4>
+              <p className="text-[11px] text-slate-500 font-medium truncate">
+                Fresh linens &amp; clean rooms
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3: Excellent Service */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-2xs flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+              <Users className="w-4 h-4 text-blue-600" />
+            </div>
+            <div className="min-w-0">
+              <h4 className="text-xs sm:text-sm font-black text-slate-900 truncate">24/7 Support</h4>
+              <p className="text-[11px] text-slate-500 font-medium truncate">
+                Attentive &amp; polite staff
+              </p>
+            </div>
+          </div>
+
+          {/* Card 4: Safe & Couple Friendly */}
+          <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-2xs flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4 text-blue-600" />
+            </div>
+            <div className="min-w-0">
+              <h4 className="text-xs sm:text-sm font-black text-slate-900 truncate">Couple Friendly</h4>
+              <p className="text-[11px] text-slate-500 font-medium truncate">
+                100% Safe · Local IDs Welcome
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 5. SECTION: ABOUT (#about) */}
+        <div id="about" className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-3.5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base sm:text-lg font-black text-slate-900">
+              About
+            </h3>
+            <span className="text-[11px] font-bold text-slate-500">Property Overview</span>
+          </div>
+
+          {/* Sub-tab Pills (Exact Reference Matching) */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1">
+            {[
+              'Overview',
+              'Food & Dining',
+              'Rooms',
+              'Facilities & Activities',
+              'Location & Nearby Areas'
+            ].map((pill) => (
+              <button
+                type="button"
+                key={pill}
+                onClick={() => setAboutSubTab(pill as any)}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  aboutSubTab === pill
+                    ? 'bg-blue-50 text-blue-600 border border-blue-200 font-black'
+                    : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600 border border-transparent'
+                }`}
+              >
+                {pill}
+              </button>
+            ))}
+          </div>
+
+          {/* Bullets corresponding to active sub-tab */}
+          <div className="text-xs sm:text-sm text-slate-700 space-y-2 leading-relaxed pt-1">
+            {aboutSubTab === 'Overview' && (
+              <>
+                <p className="flex items-start gap-2">
+                  <span className="text-slate-400 font-black">•</span>
+                  <span>This property occupies a central Boisar setting with convenient access to Boisar Railway Station and Tarapur MIDC.</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <span className="text-slate-400 font-black">•</span>
+                  <span>The hotel features well-appointed AC and non-AC rooms equipped with 24/7 power backup, clean linens, and modern attached washrooms.</span>
+                </p>
+                {isAboutExpanded && (
+                  <p className="flex items-start gap-2 animate-in fade-in duration-200">
+                    <span className="text-slate-400 font-black">•</span>
+                    <span>{hotel.description || 'Offers flexible hourly stays, day rest packages, and standard overnight stays with zero advance payment and pay-at-hotel convenience.'}</span>
+                  </p>
+                )}
+              </>
+            )}
+
+            {aboutSubTab === 'Food & Dining' && (
+              <>
+                <p className="flex items-start gap-2">
+                  <span className="text-slate-400 font-black">•</span>
+                  <span>Room service and in-house dining options serving freshly prepared North Indian, Chinese, and regional Maharashtrian dishes.</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <span className="text-slate-400 font-black">•</span>
+                  <span>Morning hot tea, coffee, and breakfast can be ordered directly to your room upon check-in.</span>
+                </p>
+              </>
+            )}
+
+            {aboutSubTab === 'Rooms' && (
+              <>
+                <p className="flex items-start gap-2">
+                  <span className="text-slate-400 font-black">•</span>
+                  <span>Spacious Deluxe Queen &amp; King bedrooms with hygienic sanitised mattresses and crisp bedding.</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <span className="text-slate-400 font-black">•</span>
+                  <span>24-hour running hot &amp; cold water geyser, complimentary toiletries, and flat-screen LED TV with entertainment channels.</span>
+                </p>
+              </>
+            )}
+
+            {aboutSubTab === 'Facilities & Activities' && (
+              <>
+                <p className="flex items-start gap-2">
+                  <span className="text-slate-400 font-black">•</span>
+                  <span>High-speed complimentary Wi-Fi, 24/7 front desk check-in, daily housekeeping, and power generator backup.</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <span className="text-slate-400 font-black">•</span>
+                  <span>Secure vehicle parking and 24/7 CCTV surveillance throughout common areas.</span>
+                </p>
+              </>
+            )}
+
+            {aboutSubTab === 'Location & Nearby Areas' && (
+              <>
+                <p className="flex items-start gap-2">
+                  <span className="text-slate-400 font-black">•</span>
+                  <span>Only 2 to 5 minutes from Boisar Railway Station and the central auto stand.</span>
+                </p>
+                <p className="flex items-start gap-2">
+                  <span className="text-slate-400 font-black">•</span>
+                  <span>5 minutes drive to Tarapur MIDC, and 25 to 30 minutes from Kelwa Beach and Shirgaon Fort.</span>
+                </p>
+              </>
+            )}
+
+            {/* View More link */}
+            <button
+              type="button"
+              onClick={() => setIsAboutExpanded(!isAboutExpanded)}
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline pt-1 flex items-center gap-1 cursor-pointer"
+            >
+              <span>{isAboutExpanded ? 'View Less' : 'View More'}</span>
+              <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isAboutExpanded ? '-rotate-90' : ''}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* 6. MAIN BODY SECTIONS WITH ANCHOR IDS */}
+
+        {/* SECTION: SELECT YOUR ROOM (#rooms) - Exact 3rd Reference Image */}
+        <div id="rooms" className="space-y-3.5 pt-2">
+          
+          {/* Header Title & Filter Pill */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Select your room
+              </h2>
+
+              <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                🔒 Guaranteed Best Tariff · Pay on Arrival
+              </span>
+            </div>
+
+            {/* Filter Pills: Only show Breakfast Included if hotel offers breakfast */}
+            {Boolean(
+              (hotel as any).hasBreakfast ||
+              (hotel.amenities && hotel.amenities.some(a => (typeof a === 'string' ? a : a.name || '').toLowerCase().includes('breakfast')))
+            ) && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFilterBreakfastOnly(!filterBreakfastOnly)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer border ${
+                    filterBreakfastOnly
+                      ? 'bg-blue-50 text-blue-700 border-blue-300 font-black ring-1 ring-blue-300'
+                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  Breakfast Included
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Table Container */}
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
+            
+            {/* Table Header Bar (Exact Reference 3) */}
+            <div className="bg-slate-100/90 border-b border-slate-200 py-2.5 px-4 hidden lg:grid lg:grid-cols-12 text-xs font-black text-slate-700">
+              <div className="lg:col-span-5 flex items-center gap-1">
+                <span>{displayRooms.length} Room Type</span>
+                <ChevronDown className="w-3.5 h-3.5" />
+              </div>
+              <div className="lg:col-span-4">
+                <span>Options</span>
+              </div>
+              <div className="lg:col-span-3 text-right">
+                <span>Price</span>
+              </div>
+            </div>
+
+            {/* Table Rows for each Room Type */}
+            <div className="divide-y divide-slate-200">
+              {displayRooms.map((room, idx) => {
+                const baseNightRate = room.nightRate || hotel.nightRate;
+                const baseOriginal = Math.round(baseNightRate * 1.25);
+                const breakfastNightRate = Math.round(baseNightRate * 1.1 + 522);
+                const breakfastOriginal = Math.round(breakfastNightRate * 1.22);
+                const roomOffersBreakfast = Boolean(
+                  (room as any).hasBreakfast ||
+                  (room.amenities && room.amenities.some((a: string) => (typeof a === 'string' ? a : '').toLowerCase().includes('breakfast'))) ||
+                  ((room.name || '').toLowerCase().includes('breakfast'))
+                );
+
+                return (
+                  <div key={room.id || idx} className="grid grid-cols-1 lg:grid-cols-12">
+                    
+                    {/* Left Column (lg:col-span-5): Photo, Title, Specs & Checklist */}
+                    <div className="lg:col-span-5 p-4 sm:p-5 border-b lg:border-b-0 lg:border-r border-slate-200 space-y-3">
+                      
+                      {/* Photo with Count Overlay & Click to Preview */}
+                      {(() => {
+                        const roomPhotos = Array.from(new Set([
+                          room.image,
+                          ...(Array.isArray((room as any).gallery) ? (room as any).gallery : [])
+                        ].filter(Boolean)));
+                        return (
+                          <div 
+                            onClick={() => {
+                              setViewingRoom(room);
+                              setViewingRoomPhotoIdx(0);
+                            }}
+                            className="relative aspect-[16/10] sm:aspect-[16/9] w-full rounded-xl overflow-hidden bg-slate-900 group cursor-pointer"
+                            title="Click to view room photos"
+                          >
+                            <img 
+                              src={room.image || hotel.gallery[0]} 
+                              alt={room.name} 
+                              className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+                            />
+                            {/* Photo Count badge */}
+                            <div className="absolute bottom-2.5 right-2.5 bg-black/75 backdrop-blur-xs text-white text-[10px] font-black px-2 py-1 rounded-md flex items-center gap-1 shadow-md">
+                              <Camera className="w-3 h-3 text-white" />
+                              <span>{roomPhotos.length > 1 ? `${roomPhotos.length} Photos` : 'Photo'}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Room Title */}
+                      <div className="space-y-1">
+                        <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                          {room.name}
+                        </h3>
+                        
+                        {/* Specs Row with Icons (Exact Reference 3) */}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 font-semibold pt-0.5">
+                          <span>📐 {room.size || '9 sq. mt.'}</span>
+                          <span>🛏️ {room.bedType || '1 queen bed'}</span>
+                          <span>🏙️ {(room as any).view || 'City view'}</span>
+                          <span>👥 Sleeps {room.maxGuests || 2}</span>
+                        </div>
+                      </div>
+
+                      {/* Checklist in 2 Columns (Exact Reference 3) */}
+                      <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-slate-600 font-medium pt-1 border-t border-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-800 font-black">✓</span>
+                          <span>Extra toilet</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-800 font-black">✓</span>
+                          <span>Shared bathroom</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-800 font-black">✓</span>
+                          <span>Toiletries</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-800 font-black">✓</span>
+                          <span>Towels</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-800 font-black">✓</span>
+                          <span>Walk-in shower</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-800 font-black">✓</span>
+                          <span>Free Wi-Fi</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 col-span-2">
+                          <span className="text-slate-800 font-black">✓</span>
+                          <span>Satellite channels</span>
+                        </div>
+                      </div>
+
+                      {/* View Details Link */}
+                      <button
+                        type="button"
+                        onClick={() => setViewingRoom(room)}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline pt-1 block cursor-pointer"
+                      >
+                        View Details
+                      </button>
+
+                    </div>
+
+                    {/* Right Column (lg:col-span-7): Clean Single Option (or 2 if owner offers breakfast) */}
+                    <div className="lg:col-span-7 divide-y divide-slate-100 flex flex-col justify-center">
+                      
+                      {/* Option 1: Standard Room Reservation */}
+                      {(!filterBreakfastOnly || !roomOffersBreakfast) && (
+                        <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                          
+                          {/* Left / Middle (7 Cols): Perks */}
+                          <div className="sm:col-span-7 space-y-1.5 text-left">
+                            <h4 className="text-sm font-black text-slate-900">
+                              Room With Free Cancellation
+                            </h4>
+
+                            <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-bold">
+                              <span className="w-3.5 h-3.5 rounded-full border border-emerald-500 flex items-center justify-center text-[9px] text-emerald-600">✓</span>
+                              <span>Free Cancellation before check-in</span>
+                            </div>
+
+                            <div className="flex items-center gap-3 text-xs text-slate-600 font-medium pt-0.5">
+                              <span>✓ Free WiFi</span>
+                              <span>✓ Sanitized Clean Linens</span>
+                            </div>
+                          </div>
+
+                          {/* Right Col (5 Cols): Badges, Price & Reserve Button */}
+                          <div className="sm:col-span-5 text-left sm:text-right space-y-2">
+                            <div className="flex items-center sm:justify-end gap-1.5">
+                              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                                Book with ₹0
+                              </span>
+                            </div>
+
+                            <div>
+                              <div className="flex items-baseline gap-1.5 sm:justify-end">
+                                <span className="text-xs text-slate-400 line-through">
+                                  ₹{baseOriginal.toLocaleString('en-IN')}
+                                </span>
+                                <span className="text-xl sm:text-2xl font-black text-slate-900">
+                                  ₹{baseNightRate.toLocaleString('en-IN')}
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-slate-500 font-medium block">
+                                + ₹0 extra fees · per night for 1 room
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenReserveModal(room.name, baseNightRate)}
+                              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs py-2.5 px-6 rounded-xl transition-all shadow-xs hover:shadow cursor-pointer"
+                            >
+                              Reserve 1 Room
+                            </button>
+                          </div>
+
+                        </div>
+                      )}
+
+                      {/* Option 2: ONLY if Hotel Owner Provides Breakfast */}
+                      {roomOffersBreakfast && (
+                        <div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center bg-amber-50/20">
+                          
+                          {/* Left / Middle (7 Cols): Perks */}
+                          <div className="sm:col-span-7 space-y-1.5 text-left">
+                            <h4 className="text-sm font-black text-slate-900">
+                              Room With Free Cancellation, Breakfast
+                            </h4>
+
+                            <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-bold">
+                              <span className="w-3.5 h-3.5 rounded-full border border-emerald-500 flex items-center justify-center text-[9px] text-emerald-600">✓</span>
+                              <span>Free Cancellation before check-in</span>
+                            </div>
+
+                            <div className="flex items-center gap-3 text-xs text-slate-600 font-medium pt-0.5">
+                              <span className="font-bold text-amber-900 bg-amber-100/80 border border-amber-200 px-1.5 py-0.5 rounded text-[11px]">
+                                🍳 Breakfast Included
+                              </span>
+                              <span>✓ Free WiFi</span>
+                            </div>
+                          </div>
+
+                          {/* Right Col (5 Cols): Badges, Price & Reserve Button */}
+                          <div className="sm:col-span-5 text-left sm:text-right space-y-2">
+                            <div className="flex items-center sm:justify-end gap-1.5">
+                              <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">
+                                Book with ₹0
+                              </span>
+                            </div>
+
+                            <div>
+                              <div className="flex items-baseline gap-1.5 sm:justify-end">
+                                <span className="text-xs text-slate-400 line-through">
+                                  ₹{breakfastOriginal.toLocaleString('en-IN')}
+                                </span>
+                                <span className="text-xl sm:text-2xl font-black text-slate-900">
+                                  ₹{breakfastNightRate.toLocaleString('en-IN')}
+                                </span>
+                              </div>
+                              <span className="text-[10px] text-slate-500 font-medium block">
+                                + ₹0 extra fees · per night for 1 room
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleOpenReserveModal(`${room.name} (Breakfast Included)`, breakfastNightRate)}
+                              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs py-2.5 px-6 rounded-xl transition-all shadow-xs hover:shadow cursor-pointer"
+                            >
+                              Reserve 1 Room
+                            </button>
+                          </div>
+
+                        </div>
+                      )}
+
+                    </div>
+
+                  </div>
+                );
+              })}
             </div>
 
           </div>
 
-          {/* Right Column (4 cols): Interactive Booking Widget (Sticky on Desktop) */}
-          <div className="lg:col-span-4 sticky top-16 space-y-3">
-            
-            <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-5 shadow-lg space-y-3.5 text-left">
-              
-              {/* Header Box Highlighted with Colored Background */}
-              <div 
-                style={{ background: 'linear-gradient(135deg, #180630 0%, #2b0c50 50%, #120424 100%)' }}
-                className="text-white p-3.5 rounded-2xl border border-purple-800/80 shadow-md flex items-center justify-between gap-3"
-              >
-                <div>
-                  <h3 className="text-base font-black text-white">Book Hotel Room</h3>
-                  <span className="text-[11px] text-emerald-300 font-bold flex items-center gap-1 mt-0.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Pay at hotel on arrival</span>
+        </div>
+
+        {/* ========================================================
+            SECTION: LOCATION & PROXIMITY (#location) - SINGLE INSTANCE
+        ======================================================== */}
+        <div id="location" className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-rose-600" />
+              <span>Location &amp; Proximity</span>
+            </h2>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${hotel.name} ${hotel.address} Boisar`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+            >
+              <span>Open in Google Maps</span>
+              <ArrowRight className="w-3 h-3" />
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+            {/* Left 7 Columns: Distance Cards & Description */}
+            <div className="lg:col-span-7 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-wider block">Railway Station</span>
+                  <span className="text-xs font-black text-slate-900 mt-1 flex items-center gap-1">
+                    <Train className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>{(hotel as any).stationDistance || (hotel.nearStation ? '2 mins walk to Boisar Station' : '8 mins to Station')}</span>
                   </span>
                 </div>
-                <div className="text-right bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 shrink-0">
-                  <span className="text-[9px] text-purple-200 block font-semibold uppercase tracking-wider">Total Tariff</span>
-                  <span className="text-xl font-black text-amber-300">₹{finalPayableTariff}</span>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-wider block">Industrial Zone</span>
+                  <span className="text-xs font-black text-slate-900 mt-1 flex items-center gap-1">
+                    <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>{(hotel as any).midcDistance || (hotel.nearMidc ? '5 mins drive to Tarapur MIDC' : '5 mins to MIDC')}</span>
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-wider block">Landmark</span>
+                  <span className="text-xs font-black text-slate-900 mt-1 flex items-center gap-1">
+                    <Compass className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>{hotel.landmark || 'Near Boisar Railway Station & Auto Stand'}</span>
+                  </span>
                 </div>
               </div>
 
-              {!bookingSuccessPass ? (
-                <form onSubmit={handleBookingSubmit} className="space-y-3">
-                  
-                  {/* Unified Stay Duration Selector (1-Tap Selection) */}
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1.5">
-                      Select Stay Duration:
-                    </label>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {(hotel.offersHourly !== false ? [
-                        { 
-                          id: '3h', 
-                          title: '3 Hours', 
-                          desc: 'Window: 9 AM – 7 PM',
-                          price: roomTypePreference === 'ac' ? hotel.hourlyRate3h : Math.max(399, hotel.hourlyRate3h - 200),
-                          active: stayMode === 'hourly' && hourlySlot === '3h',
-                          onClick: () => { setStayMode('hourly'); setHourlySlot('3h'); }
-                        },
-                        { 
-                          id: '6h', 
-                          title: '6 Hours', 
-                          desc: 'Window: 9 AM – 7 PM',
-                          price: roomTypePreference === 'ac' ? hotel.hourlyRate6h : Math.max(599, hotel.hourlyRate6h - 300),
-                          active: stayMode === 'hourly' && hourlySlot === '6h',
-                          onClick: () => { setStayMode('hourly'); setHourlySlot('6h'); }
-                        },
-                        { 
-                          id: '12h', 
-                          title: '☀️ 12h Day Stay', 
-                          desc: (hotel as any).dayStayTimingWindow || '09:00 AM – 07:00 PM',
-                          price: roomTypePreference === 'ac' ? hotel.hourlyRate12h : Math.max(899, hotel.hourlyRate12h - 400),
-                          active: stayMode === 'hourly' && hourlySlot === '12h',
-                          onClick: () => { setStayMode('hourly'); setHourlySlot('12h'); }
-                        },
-                        { 
-                          id: 'night', 
-                          title: '🌙 Night Stay', 
-                          desc: `In: ${(hotel as any).nightStayCheckIn || '12:00 PM'} · Out: ${(hotel as any).nightStayCheckOut || '11:00 AM'}`,
-                          price: roomTypePreference === 'ac' ? hotel.nightRate : Math.max(999, hotel.nightRate - 500),
-                          active: stayMode === 'night',
-                          onClick: () => setStayMode('night')
-                        }
-                      ] : [
-                        {
-                          id: 'day',
-                          title: '☀️ Day Stay',
-                          desc: (hotel as any).dayStayTimingWindow || '09:00 AM – 07:00 PM',
-                          timingLabel: 'Same-Day Rest',
-                          price: roomTypePreference === 'ac' ? ((hotel as any).dayRate || hotel.hourlyRate12h || Math.max(799, Math.round(hotel.nightRate * 0.75))) : Math.max(599, Math.round(((hotel as any).dayRate || hotel.hourlyRate12h || hotel.nightRate * 0.75) - 200)),
-                          active: stayMode === 'day',
-                          onClick: () => setStayMode('day')
-                        },
-                        {
-                          id: 'night',
-                          title: '🌙 Night Stay',
-                          desc: `In: ${(hotel as any).nightStayCheckIn || '12:00 PM'} · Out: ${(hotel as any).nightStayCheckOut || '11:00 AM'}`,
-                          timingLabel: 'Overnight Stay',
-                          price: roomTypePreference === 'ac' ? hotel.nightRate : Math.max(999, hotel.nightRate - 500),
-                          active: stayMode === 'night',
-                          onClick: () => setStayMode('night')
-                        }
-                      ]).map(slot => (
-                        <button
-                          type="button"
-                          key={slot.id}
-                          onClick={slot.onClick}
-                          className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                            slot.active
-                              ? 'bg-purple-900 text-white font-black border-purple-950 shadow-xs ring-2 ring-purple-600/30'
-                              : 'bg-slate-50 text-slate-700 font-bold border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-black">{slot.title}</span>
-                            <span className={`text-xs font-black ${slot.active ? 'text-amber-300' : 'text-purple-900'}`}>
-                              ₹{slot.price}
-                            </span>
-                          </div>
-                          <span className={`text-[10px] block mt-1 font-semibold ${slot.active ? 'text-purple-200' : 'text-slate-500'}`}>
-                            ⏰ {slot.desc}
-                          </span>
-                        </button>
+              <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+                {hotel.description || `${hotel.name} is a highly accessible hotel located on Navapur Road right near Boisar Railway Station, Boisar West. It offers clean, sanitized AC and Non-AC rooms with flexible 3-hour, 6-hour, 12-hour day-stay slots and comfortable overnight stays. 100% couple-friendly, accepting valid local IDs, making it ideal for transit passengers, couples, and Tarapur MIDC visitors.`}
+              </p>
+
+              <div className="text-xs text-slate-500 font-medium flex items-center gap-1.5 pt-1">
+                <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span>{hotel.address}</span>
+              </div>
+            </div>
+
+            {/* Right 5 Columns: Interactive Map Card (Exact Reference Image 2) */}
+            <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs group">
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${hotel.name} ${hotel.address} Boisar`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block relative h-40 w-full bg-slate-100 overflow-hidden cursor-pointer"
+              >
+                {/* Simulated Street Map Vector Background */}
+                <div className="absolute inset-0 bg-[#f4f3f0] opacity-90">
+                  <svg className="w-full h-full opacity-40" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0,20 Q120,40 240,10 T400,60" fill="none" stroke="#e0ded6" strokeWidth="18" />
+                    <path d="M50,150 Q180,90 350,130" fill="none" stroke="#ffffff" strokeWidth="14" />
+                    <path d="M120,0 L120,160" fill="none" stroke="#fff4cc" strokeWidth="12" />
+                    <path d="M260,0 L260,160" fill="none" stroke="#ffffff" strokeWidth="10" />
+                    <path d="M0,90 L400,90" fill="none" stroke="#ffe0b2" strokeWidth="10" />
+                  </svg>
+                </div>
+
+                {/* Street Label Placeholders */}
+                <div className="absolute top-3 left-4 text-[10px] font-bold text-slate-600 uppercase tracking-wider bg-white/70 px-1.5 py-0.5 rounded">
+                  BOISAR STATION RD
+                </div>
+                <div className="absolute bottom-3 left-4 text-[9px] font-semibold text-slate-500 bg-white/70 px-1.5 py-0.5 rounded">
+                  TARAPUR MIDC ROAD
+                </div>
+
+                {/* Prominent Red Pin Marker in the Center */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="relative animate-bounce">
+                    <div className="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-lg border-2 border-white">
+                      <MapPin className="w-4 h-4 fill-white text-rose-600" />
+                    </div>
+                    <div className="w-3 h-1.5 bg-black/30 rounded-full mx-auto blur-[1px] mt-0.5" />
+                  </div>
+                </div>
+
+                <div className="absolute bottom-1 right-2 text-[8px] text-slate-400 font-sans">
+                  Map data ©2026
+                </div>
+              </a>
+
+              <div className="p-2.5 text-center bg-white border-t border-slate-100">
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${hotel.name} ${hotel.address} Boisar`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center justify-center gap-1"
+                >
+                  <span>View on Map</span>
+                  <ArrowRight className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================
+            SECTION: REVIEWS (#reviews) - SINGLE INSTANCE
+        ======================================================== */}
+        <div id="reviews" className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4">
+          
+          {/* Top Score Banner */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-slate-900 text-white font-black text-xl flex items-center justify-center shadow-xs">
+                {hotel.rating >= 4.5 ? '8.5' : '8.2'}
+              </div>
+              <div>
+                <h4 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
+                  Excellent · {hotel.reviewsCount || 184} Ratings
+                </h4>
+                <span className="text-xs text-slate-500 font-medium">
+                  77% rated positive in last 3 months
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-xl text-xs font-black border border-emerald-200 self-start sm:self-auto">
+              <Star className="w-4 h-4 fill-emerald-600 text-emerald-600" />
+              <span>4.4 / 5</span>
+              <span className="text-emerald-600/70 text-[10px]">({hotel.reviewsCount || 184} Reviews)</span>
+            </div>
+          </div>
+
+          {/* "Guests are saying" Quote Card (Exact Reference 2) */}
+          <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3.5 space-y-1.5">
+            <span className="text-xs font-black text-slate-800 block">Guests are saying</span>
+            <p className="text-xs sm:text-sm text-slate-700 font-medium italic leading-relaxed">
+              &ldquo;{reviewsList[0]?.comment || 'Very neat and clean rooms. Location is right near the Boisar station, staff is very polite and helpful. Fast check-in.'}&rdquo;
+            </p>
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium pt-1">
+              <span>🇮🇳</span>
+              <span>{reviewsList[0]?.userName || 'Hemant Patil'}</span>
+              <span>·</span>
+              <span>Verified Guest</span>
+              <span>·</span>
+              <span>India</span>
+              <span>·</span>
+              <span>Oct 2026</span>
+            </div>
+          </div>
+
+          {/* Verified Guest Reviews Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {reviewsList
+              .filter((r) => r && r.userName && r.userName.length > 1 && r.comment && r.comment.length > 5)
+              .slice(0, 4)
+              .map((rev) => (
+                <div key={rev.id} className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-black text-slate-900">{rev.userName}</span>
+                      {rev.userCity && (
+                        <span className="text-[11px] text-slate-500">({rev.userCity})</span>
+                      )}
+                    </div>
+                    <div className="flex items-center text-amber-500 text-[10px]">
+                      {[...Array(Number(rev.rating) || 5)].map((_, i) => (
+                        <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-400" />
                       ))}
                     </div>
                   </div>
+                  <p className="text-xs text-slate-700 font-medium leading-relaxed">
+                    &ldquo;{rev.comment}&rdquo;
+                  </p>
+                </div>
+              ))}
+          </div>
 
-                  {/* Date & Time in 1 Simple Row */}
+          {/* Add Review Box */}
+          <div className="pt-2 border-t border-slate-100 space-y-2">
+            <span className="text-xs font-black text-slate-800 block">Rate Your Experience:</span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <input
+                type="text"
+                placeholder="Your Name *"
+                value={newReviewAuthor}
+                onChange={(e) => setNewReviewAuthor(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-blue-600 focus:bg-white"
+              />
+              <input
+                type="text"
+                placeholder="City (e.g. Boisar / Mumbai)"
+                value={newReviewCity}
+                onChange={(e) => setNewReviewCity(e.target.value)}
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-blue-600 focus:bg-white"
+              />
+              <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">
+                {[1, 2, 3, 4, 5].map((starVal) => (
+                  <button
+                    type="button"
+                    key={starVal}
+                    onClick={() => setNewReviewRating(starVal)}
+                    className="p-0.5 hover:scale-110 transition-transform cursor-pointer"
+                  >
+                    <Star className={`w-3.5 h-3.5 ${starVal <= newReviewRating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+                  </button>
+                ))}
+                <span className="text-xs font-bold text-slate-600 ml-1">{newReviewRating}/5</span>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Share your stay experience..."
+                value={newReviewComment}
+                onChange={(e) => setNewReviewComment(e.target.value)}
+                className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-800 outline-none focus:border-blue-600 focus:bg-white"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const cleanAuthor = newReviewAuthor.trim();
+                  const cleanComment = newReviewComment.trim();
+                  if (!cleanAuthor || !cleanComment) {
+                    showToast('Please enter your name and review details', 'error');
+                    return;
+                  }
+                  const newRev = {
+                    id: `rev-${Date.now()}`,
+                    userName: cleanAuthor,
+                    userCity: newReviewCity.trim() || 'Boisar',
+                    rating: newReviewRating,
+                    date: 'Just now',
+                    title: 'Hotel Review',
+                    comment: cleanComment,
+                    stayType: 'Night Stay'
+                  };
+                  setReviewsList([newRev, ...reviewsList]);
+                  try {
+                    const currentSaved = JSON.parse(localStorage.getItem(`majh_boisar_hotel_reviews_${hotel.id}`) || '[]');
+                    localStorage.setItem(`majh_boisar_hotel_reviews_${hotel.id}`, JSON.stringify([newRev, ...currentSaved]));
+                  } catch (e) {}
+                  setNewReviewAuthor('');
+                  setNewReviewCity('');
+                  setNewReviewComment('');
+                  showToast('Thank you! Your review has been submitted.', 'success');
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs active:scale-95 shrink-0"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ========================================================
+            SECTION: FACILITIES & AMENITIES (#facilities) - SINGLE INSTANCE
+        ======================================================== */}
+        {/* ========================================================
+            SECTION: FACILITIES & AMENITIES (#facilities) - SINGLE UNIFIED INSTANCE
+        ======================================================== */}
+        <div id="facilities" className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-blue-600" />
+              <span>Popular Facilities &amp; Amenities</span>
+            </h2>
+            <span className="text-[11px] font-bold text-slate-500">24/7 Available</span>
+          </div>
+
+          {/* Single Unified Icon Grid (Exact Same Consistent Style, No Duplicates) */}
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4 text-center">
+            {(() => {
+              const rawList = hotel.amenities && hotel.amenities.length > 0
+                ? hotel.amenities
+                : [
+                    'Free Wi-Fi',
+                    'Air Conditioning',
+                    'Car Parking',
+                    'LED TV',
+                    '24/7 Hot Water',
+                    'Clean Linens',
+                    'Power Backup',
+                    '24/7 Front Desk',
+                    '24*7 Security',
+                    'Elevator Access'
+                  ];
+
+              const definitions: { [key: string]: { name: string; icon: React.ReactNode } } = {
+                wifi: { name: 'Free Wi-Fi', icon: <Wifi className="w-5 h-5 text-blue-600" /> },
+                ac: { name: 'Air Conditioning', icon: <Wind className="w-5 h-5 text-blue-600" /> },
+                parking: { name: 'Car & Bike Parking', icon: <Car className="w-5 h-5 text-blue-600" /> },
+                tv: { name: 'LED Television', icon: <Tv className="w-5 h-5 text-blue-600" /> },
+                water: { name: '24/7 Hot Water', icon: <Bath className="w-5 h-5 text-blue-600" /> },
+                linens: { name: 'Clean Sanitised Linens', icon: <Sparkles className="w-5 h-5 text-blue-600" /> },
+                power: { name: 'Power Backup', icon: <Zap className="w-5 h-5 text-blue-600" /> },
+                desk: { name: '24/7 Front Desk', icon: <Clock className="w-5 h-5 text-blue-600" /> },
+                security: { name: '24*7 Security & CCTV', icon: <ShieldCheck className="w-5 h-5 text-blue-600" /> },
+                lift: { name: 'Elevator Access', icon: <Building2 className="w-5 h-5 text-blue-600" /> },
+                breakfast: { name: 'Buffet Breakfast', icon: <Utensils className="w-5 h-5 text-blue-600" /> },
+                service: { name: 'Room Service', icon: <Coffee className="w-5 h-5 text-blue-600" /> }
+              };
+
+              const seen = new Set<string>();
+              const list: { name: string; icon: React.ReactNode }[] = [];
+
+              rawList.forEach((am: any) => {
+                const rawName = typeof am === 'string' ? am : (am.name || '');
+                const lower = rawName.toLowerCase();
+
+                let key = '';
+                if (lower.includes('wi-fi') || lower.includes('wifi') || lower.includes('internet')) key = 'wifi';
+                else if (lower === 'ac' || lower.includes('air') || lower.includes('condition')) key = 'ac';
+                else if (lower.includes('park')) key = 'parking';
+                else if (lower.includes('tv') || lower.includes('television')) key = 'tv';
+                else if (lower.includes('water') || lower.includes('bath') || lower.includes('geyser') || lower.includes('shower')) key = 'water';
+                else if (lower.includes('linen') || lower.includes('housekeep') || lower.includes('sanitiz') || lower.includes('towel')) key = 'linens';
+                else if (lower.includes('power') || lower.includes('generator') || lower.includes('backup') || lower.includes('inverter')) key = 'power';
+                else if (lower.includes('desk') || lower.includes('reception')) key = 'desk';
+                else if (lower.includes('security') || lower.includes('cctv') || lower.includes('safe') || lower.includes('guard')) key = 'security';
+                else if (lower.includes('lift') || lower.includes('elevator')) key = 'lift';
+                else if (lower.includes('breakfast') || lower.includes('dining') || lower.includes('food') || lower.includes('restaurant')) key = 'breakfast';
+                else if (lower.includes('service')) key = 'service';
+
+                if (key && !seen.has(key) && definitions[key]) {
+                  seen.add(key);
+                  list.push(definitions[key]);
+                } else if (!key && rawName.trim()) {
+                  const cleanName = rawName.trim();
+                  if (!seen.has(cleanName)) {
+                    seen.add(cleanName);
+                    list.push({ name: cleanName, icon: <Sparkles className="w-5 h-5 text-blue-600" /> });
+                  }
+                }
+              });
+
+              // Ensure standard essentials are present
+              ['wifi', 'ac', 'parking', 'tv', 'water', 'linens', 'power', 'desk', 'security'].forEach(k => {
+                if (!seen.has(k) && definitions[k]) {
+                  seen.add(k);
+                  list.push(definitions[k]);
+                }
+              });
+
+              return list.map((am, i) => (
+                <div 
+                  key={i} 
+                  className="flex flex-col items-center gap-2 p-2 rounded-xl hover:bg-slate-50 transition-colors group"
+                >
+                  <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 group-hover:bg-blue-100 transition-all">
+                    {am.icon}
+                  </div>
+                  <span className="text-[11.5px] font-bold text-slate-700 leading-tight">
+                    {am.name}
+                  </span>
+                </div>
+              ));
+            })()}
+          </div>
+        </div>
+
+        {/* SECTION: POLICIES & HOUSE RULES (#policies) */}
+        <div id="policies" className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>Policies &amp; House Rules</span>
+            </h2>
+            <span className="text-[11px] font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+              Easy 2-Min Check-in
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-slate-700 font-medium">
+            {deduplicateRules(hotel.rules && hotel.rules.length > 0 ? hotel.rules : [
+              '18+ Valid Govt ID Required (Aadhaar / Driving License / DigiLocker)',
+              'Couples & Local Boisar IDs Warmly Welcome',
+              '24/7 Flexible Check-in & Standard Morning Check-out',
+              'Book with ₹0 — Pay at hotel upon room inspection',
+              'Visitors allowed in Reception Lobby only'
+            ]).map((rule, rIdx) => (
+              <div key={rIdx} className="flex items-start gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200/70">
+                <span className="text-emerald-600 font-black text-sm">✓</span>
+                <span className="text-slate-800 font-medium leading-relaxed">{rule.replace(/^✓\s*/, '')}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+
+      {/* 5. MOBILE FLOATING BOTTOM BAR (Fast 1-Tap Reservation for smartphone users) */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 px-4 py-2.5 shadow-lg flex items-center justify-between gap-3">
+        <div>
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Room Tariff</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-lg font-black text-slate-900">
+              ₹{recommendedRoom.nightRate || hotel.nightRate}
+            </span>
+            <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 rounded">
+              Book with ₹0
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => handleOpenReserveModal(recommendedRoom.name, recommendedRoom.nightRate || hotel.nightRate)}
+          className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs py-2.5 px-5 rounded-xl shadow-xs cursor-pointer transition-all"
+        >
+          Reserve Room
+        </button>
+      </div>
+
+      {/* ========================================================
+          6. RESERVE ROOM MODAL ("hum hotel m sirf reserved krnge same has resort")
+      ======================================================== */}
+      {/* RESERVE ROOM MODAL (Simple, Compact & Mobile-Optimized) */}
+      {mounted && isReserveModalOpen && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="fixed inset-0 z-[600] flex items-center justify-center p-2.5 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => {
+            if (!bookingSuccessPass) setIsReserveModalOpen(false);
+          }}
+        >
+          <div 
+            className="bg-white w-full max-w-[420px] rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-2xl overflow-hidden max-h-[94vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header: Clean website style */}
+            <div className="bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between shrink-0">
+              <div className="min-w-0 pr-2">
+                <span className="text-[9.5px] font-extrabold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full inline-block">
+                  ✓ {bookingSuccessPass ? 'Reservation Confirmed' : '₹0 Free Reservation'}
+                </span>
+                <h3 className="text-sm sm:text-base font-black text-slate-900 truncate mt-0.5">
+                  {bookingSuccessPass ? 'Digital Hotel Room Pass' : `Reserve at ${hotel.name}`}
+                </h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsReserveModalOpen(false);
+                  setBookingSuccessPass(null);
+                }}
+                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-3 sm:p-4 overflow-y-auto space-y-2.5 text-left">
+              
+              {!bookingSuccessPass ? (
+                <form onSubmit={handleBookingSubmit} className="space-y-2.5">
+                  
+                  {/* Compact Selected Room Strip */}
+                  <div className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2 text-xs">
+                    <div className="truncate">
+                      <span className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider block">Selected Room</span>
+                      <strong className="text-slate-900 font-black truncate block text-xs sm:text-sm">{selectedRoomName}</strong>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-[9.5px] text-slate-400 font-bold block">Pay on Arrival</span>
+                      <strong className="text-xs sm:text-sm font-black text-blue-700">₹{totalTariff}</strong>
+                    </div>
+                  </div>
+
+                  {/* Plan Switcher: Sleek Segmented Switcher */}
+                  <div className="bg-slate-100 p-1 rounded-xl grid grid-cols-2 text-xs font-bold gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setStayMode('night')}
+                      className={`py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer ${
+                        stayMode === 'night'
+                          ? 'bg-white text-slate-900 shadow-2xs font-black'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>🌙 Night Stay</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStayMode('day')}
+                      className={`py-1.5 px-2 rounded-lg text-center transition-all cursor-pointer ${
+                        stayMode === 'day'
+                          ? 'bg-white text-slate-900 shadow-2xs font-black'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>☀️ Day Stay (9am–7pm)</span>
+                    </button>
+                  </div>
+
+                  {/* Dates Selection (Compact Grid) */}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-600 mb-1">Check-in Date</label>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Check-in Date *</label>
                       <input
                         type="date"
                         required
                         value={checkInDate}
                         onChange={(e) => setCheckInDate(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-purple-600"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-blue-600 focus:bg-white"
                       />
                     </div>
+
                     <div>
-                      {stayMode === 'hourly' ? (
-                        <HotelTimePicker
-                          checkInTime={checkInTime}
-                          onChange={setCheckInTime}
-                          durationSlot={hourlySlot}
-                          label="Check-in Time"
-                        />
-                      ) : stayMode === 'day' ? (
+                      {stayMode === 'night' ? (
                         <div>
-                          <label className="block text-[10px] font-bold text-slate-600 mb-1">Day Window Check-out</label>
-                          <div className="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 truncate">
-                            Same Day (by 07:00 PM)
-                          </div>
-                        </div>
-                      ) : (
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-600 mb-1">Check-out Date</label>
+                          <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Check-out Date *</label>
                           <input
                             type="date"
                             required
                             value={checkOutDate}
                             onChange={(e) => setCheckOutDate(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-purple-600"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-blue-600 focus:bg-white"
                           />
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Check-out Time</label>
+                          <div className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-700 truncate">
+                            By 07:00 PM
+                          </div>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Room Type (AC vs Non-AC) Toggle */}
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-600 mb-1">Room Option</label>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setRoomTypePreference('ac')}
-                        className={`py-1.5 px-2 rounded-lg border text-xs font-bold transition-all cursor-pointer text-center ${
-                          roomTypePreference === 'ac'
-                            ? 'bg-purple-900 text-white font-black border-purple-900'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        AC Deluxe Room
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setRoomTypePreference('non_ac')}
-                        className={`py-1.5 px-2 rounded-lg border text-xs font-bold transition-all cursor-pointer text-center ${
-                          roomTypePreference === 'non_ac'
-                            ? 'bg-purple-900 text-white font-black border-purple-900'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        Non-AC Room
-                      </button>
+                  {/* Guest Contact Details (Compact Grid) */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Guest Full Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Your Name"
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-blue-600 focus:bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Mobile Number *</label>
+                      <input
+                        type="tel"
+                        required
+                        maxLength={10}
+                        placeholder="10-digit mobile"
+                        value={guestPhone}
+                        onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, ''))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-800 outline-none focus:border-blue-600 focus:bg-white font-mono"
+                      />
                     </div>
                   </div>
 
-                  {/* Coupon Link (Discreet) */}
-                  <div className="pt-0.5">
-                    {!appliedCoupon ? (
-                      <div>
-                        {!showCouponBox ? (
-                          <button
-                            type="button"
-                            onClick={() => setShowCouponBox(true)}
-                            className="text-[11px] font-bold text-purple-700 hover:underline cursor-pointer flex items-center gap-1"
-                          >
-                            <Tag className="w-3 h-3" />
-                            <span>Have a coupon code? (Use: BOISAR100)</span>
-                          </button>
-                        ) : (
-                          <div className="flex items-center gap-1.5 pt-1">
-                            <input
-                              type="text"
-                              placeholder="Code (e.g. BOISAR100)"
-                              value={couponInput}
-                              onChange={(e) => setCouponInput(e.target.value)}
-                              className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-800 uppercase flex-1 focus:outline-none focus:bg-white focus:border-purple-600 font-mono"
-                            />
-                            <button
-                              type="button"
-                              onClick={handleApplyCoupon}
-                              className="bg-purple-900 hover:bg-purple-800 text-white font-bold text-xs px-3 py-1 rounded-lg transition-colors cursor-pointer"
-                            >
-                              Apply
-                            </button>
-                          </div>
-                        )}
-                        {couponError && <p className="text-[10px] text-rose-600 font-bold mt-0.5">{couponError}</p>}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg text-[11px]">
-                        <span className="font-bold text-emerald-800">Coupon {appliedCoupon.code} applied (-₹{appliedCoupon.discount})</span>
-                        <button type="button" onClick={handleRemoveCoupon} className="text-rose-600 font-bold cursor-pointer">Remove</button>
-                      </div>
-                    )}
+                  {/* Rooms & Guests Count (Compact Grid) */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Rooms Count</label>
+                      <select
+                        value={roomsCount}
+                        onChange={(e) => setRoomsCount(Number(e.target.value))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-800 outline-none cursor-pointer"
+                      >
+                        <option value={1}>1 Room</option>
+                        <option value={2}>2 Rooms</option>
+                        <option value={3}>3 Rooms</option>
+                        <option value={4}>4 Rooms</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Guests Count</label>
+                      <select
+                        value={guestsCount}
+                        onChange={(e) => setGuestsCount(Number(e.target.value))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-slate-800 outline-none cursor-pointer"
+                      >
+                        <option value={1}>1 Guest</option>
+                        <option value={2}>2 Guests</option>
+                        <option value={3}>3 Guests</option>
+                        <option value={4}>4 Guests</option>
+                        <option value={6}>6 Guests</option>
+                      </select>
+                    </div>
                   </div>
 
-                  {/* Mandatory Login Wall or Guest Form */}
-                  {!isLoggedIn ? (
-                    <div className="bg-purple-50/70 border border-purple-200/90 rounded-2xl p-3.5 text-center space-y-2">
-                      <p className="text-xs text-slate-700 font-bold leading-snug">
-                        Sign in to confirm booking &amp; get instant room pass
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setLoginModalOpen(true)}
-                        className="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider active:scale-98"
-                      >
-                        <Lock className="w-3.5 h-3.5" />
-                        <span>Sign In with Mobile</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      {/* Guest Name & Phone */}
-                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Your Name *</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="Full Name"
-                            value={guestName}
-                            onChange={(e) => setGuestName(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-purple-600"
-                          />
-                        </div>
+                  {/* Sleek ₹0 Micro Reassurance Banner */}
+                  <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/80 text-emerald-800 px-2.5 py-1.5 rounded-xl text-[11px] font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span className="truncate">Book with ₹0 · Pay at reception on check-in</span>
+                  </div>
 
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-600 mb-0.5">Mobile Number *</label>
-                          <input
-                            type="tel"
-                            required
-                            maxLength={10}
-                            placeholder="10-digit mobile"
-                            value={guestPhone}
-                            onChange={(e) => setGuestPhone(e.target.value.replace(/\D/g, ''))}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:bg-white focus:border-purple-600 font-mono"
-                          />
-                        </div>
-                      </div>
+                  {/* Action Buttons: Sleek & Compact */}
+                  <div className="space-y-1.5 pt-0.5">
+                    <button
+                      type="submit"
+                      className="w-full bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs sm:text-sm py-2.5 px-4 rounded-xl transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-white" />
+                      <span>Confirm Reservation (Book with ₹0)</span>
+                    </button>
 
-                      {/* Payment Mode Selector */}
-                      <div className="pt-2 border-t border-slate-100">
-                        <label className="block text-[11px] font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-                          <span>Payment Mode:</span>
-                          <span className="text-[10px] text-slate-400 font-normal">Choose how you wish to pay</span>
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {/* Option 1: Pay at Hotel */}
-                          <button
-                            type="button"
-                            disabled={!isPayAtHotelAvailable}
-                            onClick={() => setPaymentMode('Pay at Hotel')}
-                            className={`p-2.5 rounded-xl border text-left transition-all relative ${
-                              !isPayAtHotelAvailable
-                                ? 'opacity-40 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400'
-                                : paymentMode === 'Pay at Hotel'
-                                ? 'bg-amber-50 text-amber-950 border-amber-400 ring-2 ring-amber-300/60 shadow-xs'
-                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 cursor-pointer'
-                            }`}
-                          >
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-sm">🏨</span>
-                              <span className="text-xs font-black">Pay at Hotel</span>
-                            </div>
-                            <span className="text-[9.5px] block mt-0.5 font-semibold leading-tight text-slate-500">
-                              {isPayAtHotelAvailable ? 'Pay at reception upon arrival' : 'Disabled by hotel owner'}
-                            </span>
-                            {paymentMode === 'Pay at Hotel' && isPayAtHotelAvailable && (
-                              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-amber-500" />
-                            )}
-                          </button>
-
-                          {/* Option 2: Pay Online */}
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMode('Online')}
-                            className={`p-2.5 rounded-xl border text-left transition-all relative ${
-                              paymentMode === 'Online'
-                                ? 'bg-purple-50 text-purple-950 border-purple-500 ring-2 ring-purple-300/60 shadow-xs'
-                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 cursor-pointer'
-                            }`}
-                          >
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-sm">💳</span>
-                              <span className="text-xs font-black">Pay Online / UPI</span>
-                            </div>
-                            <span className="text-[9.5px] block mt-0.5 font-semibold leading-tight text-slate-500">
-                              Instant confirmed digital pass
-                            </span>
-                            {paymentMode === 'Online' && (
-                              <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-purple-600" />
-                            )}
-                          </button>
-                        </div>
-
-                        {!isPayAtHotelAvailable && (
-                          <p className="text-[10px] text-amber-800 bg-amber-50 border border-amber-200/90 rounded-lg p-2 mt-1.5 font-medium leading-relaxed">
-                            ⚠️ Hotel management has disabled "Pay at Hotel". Please select <strong>Pay Online / UPI</strong> to complete your room booking.
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Primary Confirm Booking Button */}
-                      <button
-                        type="submit"
-                        className={`w-full font-black text-xs py-3 px-4 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer uppercase tracking-wider active:scale-98 ${
-                          paymentMode === 'Pay at Hotel'
-                            ? 'bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-amber-200'
-                            : 'bg-purple-900 hover:bg-purple-800 text-white shadow-purple-200'
-                        }`}
-                      >
-                        {paymentMode === 'Pay at Hotel' ? (
-                          <>
-                            <CheckCircle2 className="w-4 h-4 text-slate-950" />
-                            <span>Reserve Room (Pay ₹{finalPayableTariff} at Hotel)</span>
-                          </>
-                        ) : (
-                          <>
-                            <Zap className="w-4 h-4 text-amber-300" />
-                            <span>Pay ₹{finalPayableTariff} Online &amp; Confirm</span>
-                          </>
-                        )}
-                      </button>
-                    </>
-                  )}
-
-                  {/* Secondary Quick Action: WhatsApp & Phone */}
-                  <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
                     <button
                       type="button"
                       onClick={openWhatsApp}
-                      className="flex-1 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                      className="w-full bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#128C7E] border border-[#25D366]/30 font-bold text-xs py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                     >
-                      <MessageSquare className="w-3.5 h-3.5" />
-                      <span>Book on WhatsApp</span>
+                      <MessageSquare className="w-3.5 h-3.5 text-[#25D366]" />
+                      <span>Reserve via Hotel WhatsApp Directly</span>
                     </button>
-                    <a
-                      href={`tel:${hotel.phone}`}
-                      onClick={() => recordHotelClick(hotel.id, 'call')}
-                      className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl transition-all border border-slate-200 shrink-0"
-                      title="Call Reception"
-                    >
-                      <Phone className="w-3.5 h-3.5" />
-                    </a>
                   </div>
 
                 </form>
               ) : (
-                /* Confirmed Digital Pass Display */
-                <div className="space-y-4 text-center">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 mx-auto flex items-center justify-center">
-                    <CheckCircle2 className="w-7 h-7" />
+                /* Confirmed Digital Pass Display (Clean Website Matching Theme) */
+                <div className="space-y-3 text-center">
+                  
+                  {/* Top Success Icon */}
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 mx-auto flex items-center justify-center shadow-xs">
+                    <CheckCircle2 className="w-6 h-6 text-blue-600" />
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      {bookingSuccessPass.paymentMode === 'Pay at Hotel' ? 'RESERVATION CONFIRMED' : 'BOOKING PAID & CONFIRMED'}
-                    </span>
-                    <h3 className="text-base font-black text-slate-900 mt-1">Digital Room Pass</h3>
+                    <h3 className="text-base font-black text-slate-900">
+                      Room Reserved Successfully
+                    </h3>
+                    <p className="text-[11.5px] text-slate-500 font-medium mt-0.5">
+                      Your room is held at {bookingSuccessPass.hotelName}. Pay directly upon check-in.
+                    </p>
                   </div>
 
-                  <div 
-                    style={{ background: 'linear-gradient(145deg, #140526 0%, #250a48 50%, #10031f 100%)', color: '#ffffff' }}
-                    className="rounded-2xl p-4 text-left space-y-2.5 border border-purple-700/60 shadow-xl text-white"
-                  >
-                    <div className="flex justify-between items-center border-b border-purple-800/80 pb-2.5">
+                  {/* Pass Ticket Design (Clean white card matching Majh Boisar) */}
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden text-left text-xs divide-y divide-slate-100">
+                    
+                    {/* Ticket Header */}
+                    <div className="bg-slate-50 px-3.5 py-2.5 flex items-center justify-between">
                       <div>
-                        <span className="text-[9px] text-amber-300 font-extrabold uppercase tracking-widest block">BOOKING REFERENCE</span>
-                        <strong className="text-sm font-mono text-white font-black">{bookingSuccessPass.id}</strong>
+                        <span className="text-[8.5px] text-slate-400 font-black uppercase tracking-widest block">PASS REFERENCE ID</span>
+                        <strong className="text-xs sm:text-sm font-mono text-slate-900 font-black">{bookingSuccessPass.id}</strong>
                       </div>
-                      <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                        {bookingSuccessPass.paymentMode === 'Pay at Hotel' ? '✓ Reserved' : '✓ Confirmed'}
+                      <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[9.5px] font-black px-2.5 py-0.5 rounded-full uppercase">
+                        ✓ Pay at Hotel
                       </span>
                     </div>
 
-                    <div className="text-xs space-y-2 pt-1 font-medium">
-                      <div className="flex justify-between items-start gap-2">
-                        <span className="text-purple-200/90 font-semibold shrink-0">🏨 Hotel:</span>
-                        <span className="text-white font-black text-right">{bookingSuccessPass.hotelName}</span>
-                      </div>
-                      <div className="flex justify-between items-start gap-2">
-                        <span className="text-purple-200/90 font-semibold shrink-0">⏰ Stay Slot:</span>
-                        <span className="text-amber-300 font-black text-right">{bookingSuccessPass.timeSlot}</span>
-                      </div>
+                    {/* Ticket Details */}
+                    <div className="p-3.5 space-y-2 text-[11.5px] font-medium">
                       <div className="flex justify-between items-center gap-2">
-                        <span className="text-purple-200/90 font-semibold shrink-0">📅 Date:</span>
-                        <span className="text-white font-bold">{bookingSuccessPass.date}</span>
-                      </div>
-                      <div className="flex justify-between items-center gap-2">
-                        <span className="text-purple-200/90 font-semibold shrink-0">👤 Guest:</span>
-                        <span className="text-white font-bold">{bookingSuccessPass.guestName} ({bookingSuccessPass.guestPhone})</span>
-                      </div>
-                      <div className="flex justify-between items-center gap-2">
-                        <span className="text-purple-200/90 font-semibold shrink-0">💳 Payment Mode:</span>
-                        <span className={`font-black text-right ${bookingSuccessPass.paymentMode === 'Pay at Hotel' ? 'text-amber-300' : 'text-emerald-300'}`}>
-                          {bookingSuccessPass.paymentMode === 'Pay at Hotel' ? '🏨 Pay at Hotel (Cash / UPI)' : '💳 Paid Online'}
+                        <span className="text-slate-500 font-semibold flex items-center gap-1.5 shrink-0">
+                          <Building2 className="w-3.5 h-3.5 text-blue-600" /> Hotel:
                         </span>
+                        <span className="text-slate-900 font-bold text-right truncate">{bookingSuccessPass.hotelName}</span>
                       </div>
-                      <div className="flex justify-between items-center gap-2 pt-2 border-t border-purple-800/60">
-                        <span className="text-emerald-300 font-bold text-xs">
-                          {bookingSuccessPass.paymentMode === 'Pay at Hotel' ? '💰 Pay at Reception:' : '💰 Total Paid:'}
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-slate-500 font-semibold flex items-center gap-1.5 shrink-0">
+                          <BedDouble className="w-3.5 h-3.5 text-blue-600" /> Room:
                         </span>
-                        <div className="text-right">
-                          <span className="text-lg font-black text-amber-300 block">₹{bookingSuccessPass.totalAmount}</span>
-                          <span className="text-[9px] text-purple-200 block">
-                            {bookingSuccessPass.paymentMode === 'Pay at Hotel' ? 'Pay upon check-in' : 'Payment Completed ✓'}
-                          </span>
-                        </div>
+                        <span className="text-blue-700 font-black text-right truncate">{bookingSuccessPass.roomCategory}</span>
+                      </div>
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-slate-500 font-semibold flex items-center gap-1.5 shrink-0">
+                          <Calendar className="w-3.5 h-3.5 text-blue-600" /> Check-in:
+                        </span>
+                        <span className="text-slate-800 font-bold">{bookingSuccessPass.date}</span>
+                      </div>
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-slate-500 font-semibold flex items-center gap-1.5 shrink-0">
+                          <Clock className="w-3.5 h-3.5 text-blue-600" /> Stay:
+                        </span>
+                        <span className="text-slate-800 font-bold">{bookingSuccessPass.stayType || 'Night Stay'}</span>
+                      </div>
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-slate-500 font-semibold flex items-center gap-1.5 shrink-0">
+                          <User className="w-3.5 h-3.5 text-blue-600" /> Guest:
+                        </span>
+                        <span className="text-slate-800 font-bold truncate">{bookingSuccessPass.guestName} ({bookingSuccessPass.guestPhone})</span>
                       </div>
                     </div>
+
+                    {/* Payable Strip */}
+                    <div className="bg-blue-50/70 border-t border-blue-100/70 px-3.5 py-2.5 flex justify-between items-center">
+                      <div className="space-y-0.5">
+                        <span className="text-blue-950 font-bold text-xs block">
+                          Pay at Reception on Arrival:
+                        </span>
+                        <span className="text-[9.5px] text-blue-700 font-medium block">
+                          Booked with ₹0 Advance
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-base sm:text-lg font-black text-slate-900 block">₹{bookingSuccessPass.totalAmount}</span>
+                      </div>
+                    </div>
+
+                    {/* Micro Instructions */}
+                    <div className="px-3.5 py-2 bg-slate-50/80 text-[10.5px] text-slate-600 font-medium flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                      <span>Show this pass &amp; Govt ID at reception to collect room key.</span>
+                    </div>
+
                   </div>
 
+                  {/* Send Pass to WhatsApp CTA */}
                   <a
                     href={`https://wa.me/${hotel.whatsapp}?text=${encodeURIComponent(
-                      `Hello ${hotel.name},\nI have confirmed room booking on Majh Boisar.\n\n📋 Ref: ${bookingSuccessPass.id}\n👤 Guest: ${bookingSuccessPass.guestName}\n📱 Phone: ${bookingSuccessPass.guestPhone}\n⏰ Stay: ${bookingSuccessPass.stayType} - ${bookingSuccessPass.timeSlot}\n💳 Payment Mode: ${bookingSuccessPass.paymentMode} (₹${bookingSuccessPass.totalAmount})\n\nPlease confirm availability and room check-in.`
+                      `Hello ${hotel.name},\nI have reserved a room on Majh Boisar.\n\n📋 Pass Ref: ${bookingSuccessPass.id}\n🛏️ Room: ${bookingSuccessPass.roomCategory}\n👤 Guest: ${bookingSuccessPass.guestName} (${bookingSuccessPass.guestPhone})\n📅 Date: ${bookingSuccessPass.date}\n⏰ Stay: ${bookingSuccessPass.stayType}\n💰 Amount to Pay on Arrival: ₹${bookingSuccessPass.totalAmount}\n\nPlease confirm room check-in.`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-black text-xs py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-bold text-xs sm:text-sm py-2.5 px-3 rounded-xl transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <MessageSquare className="w-4 h-4" />
                     <span>Send Pass to Hotel WhatsApp</span>
                   </a>
 
-                  <div className="flex items-center gap-2 pt-1">
+                  {/* Secondary Buttons */}
+                  <div className="flex items-center gap-2 pt-0.5">
                     <button
                       type="button"
-                      onClick={() => setIsMyPassesModalOpen(true)}
-                      className="flex-1 bg-purple-100 hover:bg-purple-200 text-purple-950 font-black text-xs py-2.5 rounded-xl transition-all cursor-pointer"
+                      onClick={() => {
+                        setIsReserveModalOpen(false);
+                        setIsMyPassesModalOpen(true);
+                      }}
+                      className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                      🎫 View All My Passes
+                      <Ticket className="w-3.5 h-3.5 text-slate-500" />
+                      <span>View My Passes</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => {
                         setBookingSuccessPass(null);
-                        refreshUserPasses();
+                        setIsReserveModalOpen(false);
                       }}
-                      className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer"
                     >
-                      + Book Another Slot
+                      Done
                     </button>
                   </div>
                 </div>
@@ -1527,8 +2155,120 @@ export default function HotelDetailPage() {
 
             </div>
           </div>
-        </div>
-      </div>
+        </div>,
+        document.body
+      )}
+
+
+      {/* ========================================================
+          ROOM DETAILS PREVIEW MODAL ("View Details" on room card)
+      ======================================================== */}
+      {mounted && viewingRoom && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setViewingRoom(null)}
+        >
+          <div 
+            className="bg-white w-full max-w-lg rounded-3xl border border-slate-200 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="bg-slate-900 text-white p-4 flex items-center justify-between shrink-0">
+              <h3 className="text-base font-black text-white leading-tight">
+                {viewingRoom.name}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setViewingRoom(null)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-4 text-left">
+              {(() => {
+                const roomPhotos = Array.from(new Set([
+                  viewingRoom.image,
+                  ...(Array.isArray(viewingRoom.gallery) ? viewingRoom.gallery : [])
+                ].filter(Boolean)));
+                const currentImg = roomPhotos[viewingRoomPhotoIdx] || viewingRoom.image || hotel.gallery[0];
+                return (
+                  <div className="space-y-2">
+                    <div className="aspect-[16/9] w-full rounded-2xl overflow-hidden bg-slate-900 relative">
+                      <img src={currentImg} alt={viewingRoom.name} className="w-full h-full object-cover" />
+                      {roomPhotos.length > 1 && (
+                        <div className="absolute bottom-2.5 right-2.5 bg-black/75 backdrop-blur-xs text-white text-[10px] font-black px-2.5 py-1 rounded-md shadow-sm">
+                          {viewingRoomPhotoIdx + 1} / {roomPhotos.length}
+                        </div>
+                      )}
+                    </div>
+                    {roomPhotos.length > 1 && (
+                      <div className="flex gap-2 overflow-x-auto pb-1 pt-0.5">
+                        {roomPhotos.map((photo: string, pIdx: number) => (
+                          <button
+                            key={pIdx}
+                            type="button"
+                            onClick={() => setViewingRoomPhotoIdx(pIdx)}
+                            className={`w-14 h-14 rounded-xl overflow-hidden border-2 shrink-0 transition-all cursor-pointer ${
+                              viewingRoomPhotoIdx === pIdx ? 'border-blue-600 scale-95 shadow-md ring-2 ring-blue-600/20' : 'border-slate-200 opacity-70 hover:opacity-100'
+                            }`}
+                          >
+                            <img src={photo} alt="" className="w-full h-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-700 font-bold border-b border-slate-100 pb-3">
+                <span>📐 Size: {viewingRoom.size || '9 sq. mt.'}</span>
+                <span>🛏️ Bed: {viewingRoom.bedType || '1 queen bed'}</span>
+                <span>🏙️ View: {viewingRoom.view || 'City view'}</span>
+                <span>👥 Sleeps: {viewingRoom.maxGuests || 2} Guests</span>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">Room Amenities &amp; Features</h4>
+                <div className="grid grid-cols-2 gap-2 text-xs text-slate-700 font-medium">
+                  {(viewingRoom.amenities || ['Extra toilet', 'Attached bathroom', 'Toiletries', 'Towels', 'Walk-in shower', 'Free Wi-Fi', 'Satellite channels']).map((am: string, i: number) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="text-emerald-600 font-black">✓</span>
+                      <span>{am}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900">
+                <strong>✓ Free Cancellation before check-in</strong> · Book with ₹0 Advance
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Price per night</span>
+                  <span className="text-xl font-black text-slate-900">₹{viewingRoom.nightRate?.toLocaleString('en-IN') || hotel.nightRate}</span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewingRoom(null);
+                    handleOpenReserveModal(viewingRoom.name, viewingRoom.nightRate || hotel.nightRate);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs py-2.5 px-5 rounded-xl transition-all shadow-xs cursor-pointer"
+                >
+                  Reserve This Room
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Guest's All Hotel Booking Passes Modal */}
       <MyHotelPassesModal
@@ -1540,7 +2280,7 @@ export default function HotelDetailPage() {
       />
 
       {/* ========================================================
-          FULL PHOTO GALLERY MODAL / LIGHTBOX (100% SOLID DARK BACKDROP & ULTRA VISIBLE CLOSE)
+          7. FULL PHOTO GALLERY MODAL / LIGHTBOX
       ======================================================== */}
       {mounted && isGalleryModalOpen && typeof document !== 'undefined' && createPortal(
         <div 
@@ -1559,7 +2299,7 @@ export default function HotelDetailPage() {
           className="flex flex-col justify-between select-none text-white overflow-hidden animate-in fade-in duration-150"
           onClick={() => setIsGalleryModalOpen(false)}
         >
-          {/* Top Bar (Solid Dark Header, Never Covered by Anything) */}
+          {/* Top Bar */}
           <div 
             style={{ backgroundColor: '#111115' }}
             className="h-16 px-4 sm:px-8 flex items-center justify-between border-b border-white/20 shrink-0 z-50 shadow-lg"
@@ -1574,7 +2314,6 @@ export default function HotelDetailPage() {
               </p>
             </div>
 
-            {/* High-Contrast Unmissable Close Button */}
             <button
               type="button"
               onClick={(e) => {
@@ -1589,7 +2328,7 @@ export default function HotelDetailPage() {
             </button>
           </div>
 
-          {/* Center Main Photo (Solid Pure Black Canvas) */}
+          {/* Center Main Photo Canvas */}
           <div 
             className="flex-1 w-full h-[calc(100vh-160px)] min-h-0 relative flex items-center justify-center p-3 sm:p-6 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
@@ -1602,7 +2341,7 @@ export default function HotelDetailPage() {
                   setGalleryModalIdx(prev => (prev - 1 + allPhotos.length) % allPhotos.length);
                 }}
                 className="absolute left-3 sm:left-8 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-slate-900/90 hover:bg-amber-400 hover:text-slate-950 text-white flex items-center justify-center cursor-pointer transition-all z-40 shadow-2xl border-2 border-white/40 active:scale-90"
-                title="Previous Photo (Left Arrow)"
+                title="Previous Photo"
               >
                 <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
               </button>
@@ -1624,14 +2363,14 @@ export default function HotelDetailPage() {
                   setGalleryModalIdx(prev => (prev + 1) % allPhotos.length);
                 }}
                 className="absolute right-3 sm:right-8 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-slate-900/90 hover:bg-amber-400 hover:text-slate-950 text-white flex items-center justify-center cursor-pointer transition-all z-40 shadow-2xl border-2 border-white/40 active:scale-90"
-                title="Next Photo (Right Arrow)"
+                title="Next Photo"
               >
                 <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />
               </button>
             )}
           </div>
 
-          {/* Bottom Thumbnail Strip (Solid Dark Footer) */}
+          {/* Bottom Thumbnail Strip */}
           <div 
             style={{ backgroundColor: '#111115' }}
             className="h-20 sm:h-24 px-4 py-2 border-t border-white/20 shrink-0 flex items-center justify-center overflow-x-auto scrollbar-none z-50"
@@ -1660,6 +2399,7 @@ export default function HotelDetailPage() {
         </div>,
         document.body
       )}
+
     </div>
   );
 }

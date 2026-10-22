@@ -76,12 +76,167 @@ export interface HotelItem {
   clicksCount: number;
   bookingsCount: number;
   isComingSoon?: boolean;
+  createdBy?: string;
+  assignedOwnerPhone?: string;
 }
 
-// All demo hotel data removed — new real hotels will be added via Admin Panel
-export const BOISAR_HOTELS: HotelItem[] = [];
+export function getHotelAssignedOwnerPhone(hotel: any): string {
+  if (!hotel) return '';
+  if (typeof window !== 'undefined') {
+    const localOwner = localStorage.getItem(`majh_boisar_hotel_owner_${hotel.id}`) ||
+                       localStorage.getItem(`majh_boisar_hotel_owner_${hotel.slug}`);
+    if (localOwner) {
+      const clean = localOwner.replace(/\D/g, '').slice(-10);
+      if (clean.length === 10) return clean;
+    }
+  }
+  const createdBy = (hotel.createdBy || hotel.assignedOwnerPhone || '').toString().replace(/\D/g, '').slice(-10);
+  if (createdBy && createdBy.length === 10) return createdBy;
+  return '';
+}
 
-const DEMO_HOTEL_KEYWORDS = ['shivanand', 'freesia', 'sarovar', 'blugent', 'boisar-residency', 'boisar residency', 'sai residency', 'galaxy'];
+// Verified Boisar Hotels
+export const BOISAR_HOTELS: HotelItem[] = [
+  {
+    id: 'hotel-shivanand',
+    slug: 'hotel-shivanand',
+    name: 'Hotel Shivanand',
+    tagline: 'Clean, Safe & Budget-Friendly Stay near Boisar Railway Station',
+    category: 'Budget',
+    badge: 'TOP PICK',
+    offerBadge: 'Book with ₹0',
+    suitabilityTag: 'Couples & Transit Stay',
+    location: 'Navapur Road, Boisar West',
+    address: 'Navapur Road, Near Boisar Railway Station, Boisar West, Palghar, Maharashtra 401501',
+    landmark: '2 Mins from Boisar Railway Station & Auto Stand',
+    phone: '9307294733',
+    whatsapp: '919307294733',
+    rating: 4.4,
+    reviewsCount: 184,
+    hourlyRate3h: 699,
+    hourlyRate6h: 999,
+    hourlyRate12h: 1499,
+    dayRate: 1299,
+    nightRate: 1699,
+    offersHourly: true,
+    is3hAvailable: true,
+    is6hAvailable: true,
+    is12hAvailable: true,
+    isDayAvailable: true,
+    isNightAvailable: true,
+    isCoupleFriendly: true,
+    acceptsLocalId: true,
+    isPayAtHotelAvailable: true,
+    nearStation: true,
+    nearMidc: true,
+    stationDistance: '2 mins walk to Boisar Station',
+    midcDistance: '5 mins drive to Tarapur MIDC',
+    coupleBadgeText: 'Couples 18+ Welcome',
+    safetyBadgeText: '100% Verified Safe',
+    checkinBadgeText: '24/7 Front Desk',
+    houseRulesTag: 'Easy 2-Min Check-in',
+    dayStayTimingWindow: '09:00 AM – 07:00 PM',
+    nightStayCheckIn: '12:00 PM',
+    nightStayCheckOut: '11:00 AM',
+    gallery: [
+      'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=800&auto=format&fit=crop&q=80'
+    ],
+    amenities: [
+      { name: 'Free WiFi', icon: 'Wifi' },
+      { name: 'Air Conditioning', icon: 'Wind' },
+      { name: 'Car & Bike Parking', icon: 'Car' },
+      { name: 'LED Television', icon: 'Tv' },
+      { name: '24/7 Hot Water', icon: 'Bath' },
+      { name: 'Clean Sanitised Linens', icon: 'Sparkles' },
+      { name: 'Power Generator Backup', icon: 'Zap' },
+      { name: '24/7 Front Desk', icon: 'Clock' },
+      { name: 'CCTV Security', icon: 'ShieldCheck' }
+    ],
+    description: 'Hotel Shivanand is a highly accessible hotel located on Navapur Road right near Boisar Railway Station, Boisar West. It offers clean, sanitized AC and Non-AC rooms with flexible 3-hour, 6-hour, 12-hour day-stay slots and comfortable overnight stays. 100% couple-friendly, accepting valid local IDs, making it ideal for transit passengers, couples, and Tarapur MIDC visitors.',
+    rules: [
+      '18+ Valid Govt ID Required (Aadhaar / Driving License / DigiLocker)',
+      'Couples & Local Boisar IDs Warmly Welcome',
+      '24/7 Flexible Check-in & Standard Morning Check-out',
+      'Book with ₹0 — Pay at hotel upon room inspection',
+      'Visitors allowed in Reception Lobby only'
+    ],
+    rooms: [
+      {
+        id: 'shivanand-r1',
+        name: 'Value Queen Room',
+        type: 'Queen Bed · AC Room',
+        bedType: '1 queen bed',
+        maxGuests: 2,
+        size: '9 sq. mt.',
+        hourly3h: 699,
+        hourly6h: 999,
+        hourly12h: 1499,
+        nightRate: 1699,
+        image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&auto=format&fit=crop&q=80',
+        amenities: ['Extra toilet', 'Attached bathroom', 'Toiletries', 'Towels', 'Walk-in shower', 'Free Wi-Fi', 'Satellite channels']
+      },
+      {
+        id: 'shivanand-r2',
+        name: 'Deluxe AC Room',
+        type: 'King Bed · Deluxe AC',
+        bedType: '1 king bed',
+        maxGuests: 3,
+        size: '14 sq. mt.',
+        hourly3h: 899,
+        hourly6h: 1299,
+        hourly12h: 1799,
+        nightRate: 2099,
+        image: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&auto=format&fit=crop&q=80',
+        amenities: ['Extra toilet', 'Attached bathroom', 'Toiletries', 'Towels', 'Walk-in shower', 'Free Wi-Fi', 'Satellite channels']
+      },
+      {
+        id: 'shivanand-r3',
+        name: 'Executive Suite',
+        type: 'Suite · Living Area',
+        bedType: '1 king bed + sofa',
+        maxGuests: 4,
+        size: '22 sq. mt.',
+        hourly3h: 1199,
+        hourly6h: 1599,
+        hourly12h: 2199,
+        nightRate: 2699,
+        image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&auto=format&fit=crop&q=80',
+        amenities: ['Extra toilet', 'Attached bathroom', 'Toiletries', 'Towels', 'Walk-in shower', 'Free Wi-Fi', 'Satellite channels', 'Tea/Coffee Maker']
+      }
+    ],
+    reviews: [
+      {
+        id: 'rev-shivanand-1',
+        userName: 'Hemant Patil',
+        userCity: 'Boisar',
+        rating: 5,
+        date: 'Recent Stay',
+        title: 'Very Clean and Close to Station',
+        comment: 'Very neat and clean rooms. Location is right near the Boisar station, staff is very polite and helpful. Fast check-in.',
+        stayType: 'Night Stay'
+      },
+      {
+        id: 'rev-shivanand-2',
+        userName: 'Rahul Sharma',
+        userCity: 'Mumbai',
+        rating: 4,
+        date: 'Recent Stay',
+        title: 'Great budget hotel for MIDC business',
+        comment: 'Stayed for 2 days for business at Tarapur MIDC. Quick commute, AC works nicely, good power backup and fast Wi-Fi.',
+        stayType: 'Night Stay'
+      }
+    ],
+    viewsCount: 382,
+    clicksCount: 114,
+    bookingsCount: 28
+  }
+];
+
+const DEMO_HOTEL_KEYWORDS = ['freesia', 'sarovar', 'blugent', 'boisar-residency', 'boisar residency', 'sai residency', 'galaxy'];
 
 function isLegacyDemo(item: any): boolean {
   if (!item) return false;
@@ -221,6 +376,15 @@ export function getAllHotels(): HotelItem[] {
     console.error(e);
   }
 
+  // Sync Assigned Owner Phone Number
+  list = list.map(h => {
+    const owner = getHotelAssignedOwnerPhone(h);
+    return {
+      ...h,
+      createdBy: owner || (h as any).createdBy || ''
+    };
+  });
+
   return list;
 }
 
@@ -277,7 +441,7 @@ export function normalizeHotelAmenity(name: string): string {
   if (lower.includes('bath') || lower.includes('washroom')) return 'Private Bathroom';
   if (lower.includes('toilet') || lower.includes('dental') || lower.includes('soap')) return 'Complimentary Toiletries';
   if (lower.includes('tea') || lower.includes('coffee') || lower.includes('kettle')) return 'Tea / Coffee Maker';
-  if (lower.includes('pool') || lower.includes('swim')) return 'Swimming Pool';
+  if (lower.includes('breakfast')) return 'Complimentary Breakfast';
   if (lower.includes('restaur') || lower.includes('dining') || lower.includes('food') || lower.includes('kitchen')) return 'In-house Restaurant';
 
   return clean;
@@ -395,6 +559,18 @@ export function getHotelBySlugOrId(idOrSlug: string): HotelItem | undefined {
             nightRate: isFinite(lowestNight) ? lowestNight : found.nightRate,
           };
         }
+      }
+
+      // Load saved custom gallery
+      const customGallery = localStorage.getItem(`majh_boisar_hotel_gallery_${found.id}`) ||
+        localStorage.getItem(`majh_boisar_hotel_gallery_${found.slug}`);
+      if (customGallery) {
+        try {
+          const parsedGallery = JSON.parse(customGallery);
+          if (Array.isArray(parsedGallery) && parsedGallery.length > 0) {
+            customObj.gallery = parsedGallery;
+          }
+        } catch (e) { }
       }
 
       // Load saved custom rules & tag

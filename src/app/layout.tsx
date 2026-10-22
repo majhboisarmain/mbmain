@@ -468,12 +468,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
               <footer className="bg-[#9b111e] text-white shrink-0 rounded-t-[32px] sm:rounded-t-[44px] overflow-hidden shadow-2xl mt-2 sm:mt-4">
                 <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 pt-10 sm:pt-14 pb-8">
                   {/* Big White Majh Boisar Logo in Center */}
-                  <div className="flex flex-col items-center justify-center text-center">
-                    <a href="/" className="inline-block group">
+                  <div className="flex flex-col items-center justify-center text-center py-2 sm:py-4">
+                    <a href="/" className="inline-flex items-center justify-center group">
                       <img 
                         src="/majh-boisar-full-logo.png" 
                         alt="Majh Boisar" 
-                        className="h-16 sm:h-24 md:h-28 lg:h-32 w-auto brightness-0 invert drop-shadow-md select-none transition-transform duration-300 group-hover:scale-105" 
+                        className="h-24 sm:h-32 md:h-36 lg:h-44 w-auto max-w-[88vw] sm:max-w-none object-contain brightness-0 invert drop-shadow-xl select-none transition-transform duration-300 group-hover:scale-105" 
                       />
                     </a>
                   </div>

@@ -236,7 +236,10 @@ export const CATEGORY_SLUG_MAP: Record<string, string> = {
   'dairy': 'Dairy Products',
   'dairy-products': 'Dairy Products',
   'meat-poultry': 'Meat Poultry',
-  'fruits-vegetables': 'Fruits Vegetables'
+  'fruits-vegetables': 'Fruits Vegetables',
+  'accounting-software-dealers': 'Accounting Software Dealers',
+  'accounting-software': 'Accounting Software Dealers',
+  'software-dealers': 'Accounting Software Dealers'
 };
 
 /**
@@ -373,7 +376,8 @@ export const CATEGORY_SEARCH_SYNONYMS: Record<string, string[]> = {
   'lawyers': ['lawyer', 'advocate', 'legal advisor'],
   'pet-clinics': ['pet clinic', 'veterinary'],
   'baby-care': ['baby care', 'pediatric'],
-  'spa-wellness': ['spa', 'massage', 'wellness center']
+  'spa-wellness': ['spa', 'massage', 'wellness center'],
+  'accounting-software-dealers': ['accounting software', 'software dealers', 'tally', 'billing software', 'gst software', 'accounting', 'vyapaari', 'vyapaaridesk']
 };
 
 /**

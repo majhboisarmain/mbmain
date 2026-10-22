@@ -11,7 +11,12 @@ import {
   PawPrint, Landmark, Activity, Coins, Truck, Mail, LayoutGrid, ChevronLeft,
   Smartphone, Store, Sprout, Camera, ShoppingBag, Zap, FileText, Droplet, Tv,
   ChevronDown, Users, User, Briefcase, Home, Tag, AlertTriangle, Lock, Car, CreditCard,
-  Share2, Calendar, Bath, Bed, Compass, Maximize2, Armchair, Layers
+  Share2, Calendar, Bath, Bed, Compass, Maximize2, Armchair, Layers,
+  Dumbbell, Glasses, Droplets, Printer, Calculator, FileSpreadsheet, IndianRupee,
+  Music, Shirt, Pill, Coffee, Cake, Pizza, ShoppingCart, Hotel, Hammer,
+  Paintbrush, Wind, Bug, Gem, Footprints, Laptop, Palette, Flame,
+  Package, PartyPopper, CookingPot, TrendingUp, Scale, Baby, Flower2,
+  Milk, Apple, SunMedium, Building2
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -381,114 +386,311 @@ const subServicesMap: Record<string, string[]> = {
   "Jewellery": ["Gold Ornaments", "Silver Jewellery", "Diamond Ring & Necklace", "Platinum Jewelry", "Custom Hallmark Gold", "Jewellery Repair & Polish"]
 };
 
-function getCategoryIcon(name: string) {
-  const lowercase = name.toLowerCase();
-  
-  if (lowercase.includes('influencer') || lowercase.includes('creator') || lowercase.includes('blogger')) {
-    return <Users className="w-5 h-5 text-indigo-600" />;
+function getCategoryIcon(name: string, sizeClass = "w-8 h-8 sm:w-9 sm:h-9") {
+  const lower = name.toLowerCase().trim();
+
+  // Fitness & Gyms
+  if (lower.includes('protein') || lower.includes('supplement') || lower.includes('nutrition')) {
+    return <Dumbbell className={`${sizeClass} text-amber-600`} />;
   }
-  if (lowercase.includes('doctor') || lowercase.includes('dentist') || lowercase.includes('physio') || lowercase.includes('skin clinic') || lowercase.includes('eye hospital')) {
-    return <Stethoscope className="w-5 h-5 text-teal-600" />;
+  if (lower.includes('gym') || lower.includes('fitness') || lower.includes('workout')) {
+    return <Dumbbell className={`${sizeClass} text-rose-600`} />;
   }
-  if (lowercase.includes('hospital') || lowercase.includes('clinic') || lowercase.includes('medical') || lowercase.includes('lab') || lowercase.includes('diagnostic')) {
-    return <HeartPulse className="w-5 h-5 text-rose-600" />;
+  // Finance & Software
+  if (lower.includes('software') || lower.includes('accounting') || lower.includes('tally') || lower.includes('billing') || lower.includes('erp')) {
+    return <Calculator className={`${sizeClass} text-indigo-600`} />;
   }
-  if (lowercase.includes('plumber') || lowercase.includes('carpenter') || lowercase.includes('repair') || lowercase.includes('garage') || lowercase.includes('spare') || lowercase.includes('service') || lowercase.includes('locksmith')) {
-    return <Wrench className="w-5 h-5 text-sky-600" />;
+  if (lower.includes('ca ') || lower.includes('chartered') || lower.includes('tax') || lower.includes('gst') || lower.includes('audit')) {
+    return <FileSpreadsheet className={`${sizeClass} text-cyan-600`} />;
   }
-  if (lowercase.includes('electrician') || lowercase.includes('electrical') || lowercase.includes('battery') || lowercase.includes('solar') || lowercase.includes('generator')) {
-    return <Zap className="w-5 h-5 text-amber-500" />;
+  if (lower.includes('loan') || lower.includes('finance') || lower.includes('credit')) {
+    return <IndianRupee className={`${sizeClass} text-emerald-600`} />;
   }
-  if (lowercase.includes('restaurant') || lowercase.includes('cafe') || lowercase.includes('food') || lowercase.includes('pizza') || lowercase.includes('burger') || lowercase.includes('sweet') || lowercase.includes('tiffin') || lowercase.includes('catering') || lowercase.includes('bakery') || lowercase.includes('cake') || lowercase.includes('ice cream') || lowercase.includes('tea') || lowercase.includes('juice') || lowercase.includes('kitchen')) {
-    return <Utensils className="w-5 h-5 text-red-500" />;
+  if (lower.includes('insurance') || lower.includes('lic') || lower.includes('policy')) {
+    return <ShieldCheck className={`${sizeClass} text-emerald-600`} />;
   }
-  if (lowercase.includes('school') || lowercase.includes('college') || lowercase.includes('coaching') || lowercase.includes('tuition') || lowercase.includes('class') || lowercase.includes('institute') || lowercase.includes('academy') || lowercase.includes('library')) {
-    return <GraduationCap className="w-5 h-5 text-indigo-600" />;
+  if (lower.includes('lawyer') || lower.includes('advocate') || lower.includes('legal') || lower.includes('court')) {
+    return <Scale className={`${sizeClass} text-slate-700`} />;
   }
-  if (lowercase.includes('beauty') || lowercase.includes('parlour') || lowercase.includes('salon') || lowercase.includes('spa') || lowercase.includes('massage') || lowercase.includes('makeup') || lowercase.includes('mehendi') || lowercase.includes('tattoo')) {
-    return <Scissors className="w-5 h-5 text-pink-600" />;
+  // Utilities & Printing
+  if (lower.includes('purifier') || lower.includes('ro filter') || lower.includes('water filter') || lower.includes('aquaguard')) {
+    return <Droplets className={`${sizeClass} text-blue-600`} />;
   }
-  if (lowercase.includes('hotel') || lowercase.includes('resort') || lowercase.includes('pg') || lowercase.includes('hostel') || lowercase.includes('building') || lowercase.includes('builder') || lowercase.includes('developer') || lowercase.includes('interior') || lowercase.includes('architect')) {
-    return <Building className="w-5 h-5 text-teal-700" />;
+  if (lower.includes('print') || lower.includes('radium') || lower.includes('banner') || lower.includes('flex') || lower.includes('xerox')) {
+    return <Printer className={`${sizeClass} text-violet-600`} />;
   }
-  if (lowercase.includes('real estate') || lowercase.includes('property') || lowercase.includes('bank') || lowercase.includes('atm') || lowercase.includes('loan') || lowercase.includes('tax') || lowercase.includes('gst') || lowercase.includes('ca') || lowercase.includes('insurance') || lowercase.includes('lawyer')) {
-    return <Landmark className="w-5 h-5 text-cyan-600" />;
+  // Vision & Healthcare
+  if (lower.includes('optic') || lower.includes('eye') || lower.includes('spectacle') || lower.includes('chashma') || lower.includes('lens')) {
+    return <Glasses className={`${sizeClass} text-sky-600`} />;
   }
-  if (lowercase.includes('travel') || lowercase.includes('rental') || lowercase.includes('taxi') || lowercase.includes('packers') || lowercase.includes('courier') || lowercase.includes('truck') || lowercase.includes('garage') || lowercase.includes('petrol') || lowercase.includes('ev charge')) {
-    return <Truck className="w-5 h-5 text-orange-600" />;
+  if (lower.includes('doctor') || lower.includes('clinic') || lower.includes('physician')) {
+    return <Stethoscope className={`${sizeClass} text-teal-600`} />;
   }
-  if (lowercase.includes('grocery') || lowercase.includes('shop') || lowercase.includes('store') || lowercase.includes('supermarket') || lowercase.includes('dairy') || lowercase.includes('chakki') || lowercase.includes('mill') || lowercase.includes('dealer')) {
-    return <Store className="w-5 h-5 text-emerald-600" />;
+  if (lower.includes('hospital') || lower.includes('emergency') || lower.includes('nursing home')) {
+    return <HeartPulse className={`${sizeClass} text-rose-600`} />;
   }
-  if (lowercase.includes('mobile') || lowercase.includes('laptop') || lowercase.includes('computer') || lowercase.includes('printer') || lowercase.includes('electronic') || lowercase.includes('appliance') || lowercase.includes('tv') || lowercase.includes('cctv')) {
-    return <Smartphone className="w-5 h-5 text-rose-500" />;
+  if (lower.includes('dentist') || lower.includes('dental') || lower.includes('teeth')) {
+    return <Stethoscope className={`${sizeClass} text-teal-600`} />;
   }
-  if (lowercase.includes('pet') || lowercase.includes('aquarium') || lowercase.includes('veterinary')) {
-    return <PawPrint className="w-5 h-5 text-green-600" />;
+  if (lower.includes('pathology') || lower.includes('diagnostic') || lower.includes('blood test') || lower.includes('lab')) {
+    return <Activity className={`${sizeClass} text-purple-600`} />;
   }
-  if (lowercase.includes('jewel') || lowercase.includes('gift') || lowercase.includes('toy') || lowercase.includes('sports') || lowercase.includes('book') || lowercase.includes('stationery') || lowercase.includes('flower') || lowercase.includes('wear') || lowercase.includes('garment') || lowercase.includes('footwear') || lowercase.includes('cosmetic') || lowercase.includes('perfume') || lowercase.includes('furniture') || lowercase.includes('mattress') || lowercase.includes('bag')) {
-    return <ShoppingBag className="w-5 h-5 text-pink-500" />;
+  if (lower.includes('medical') || lower.includes('pharmacy') || lower.includes('chemist') || lower.includes('medicine')) {
+    return <Pill className={`${sizeClass} text-rose-600`} />;
   }
-  if (lowercase.includes('sprout') || lowercase.includes('seed') || lowercase.includes('fertilizer') || lowercase.includes('pesticide') || lowercase.includes('tractor') || lowercase.includes('feed')) {
-    return <Sprout className="w-5 h-5 text-emerald-700" />;
+  // Arts & Performance
+  if (lower.includes('dance')) {
+    return <Sparkles className={`${sizeClass} text-pink-600`} />;
   }
-  if (lowercase.includes('print') || lowercase.includes('design') || lowercase.includes('marketing') || lowercase.includes('seo') || lowercase.includes('cyber') || lowercase.includes('xerox') || lowercase.includes('photocopy')) {
-    return <FileText className="w-5 h-5 text-slate-700" />;
+  if (lower.includes('music') || lower.includes('singing') || lower.includes('guitar')) {
+    return <Music className={`${sizeClass} text-purple-600`} />;
   }
-  return <LayoutGrid className="w-5 h-5 text-teal-600" />;
+  if (lower.includes('yoga') || lower.includes('meditation')) {
+    return <Flower2 className={`${sizeClass} text-emerald-600`} />;
+  }
+  // Education & Jobs
+  if (lower.includes('school') || lower.includes('vidyalaya') || lower.includes('college') || lower.includes('institute') || lower.includes('academy')) {
+    return <GraduationCap className={`${sizeClass} text-indigo-600`} />;
+  }
+  if (lower.includes('coaching') || lower.includes('tuition')) {
+    return <GraduationCap className={`${sizeClass} text-blue-600`} />;
+  }
+  if (lower.includes('job') || lower.includes('placement') || lower.includes('recruitment') || lower.includes('career')) {
+    return <Briefcase className={`${sizeClass} text-blue-600`} />;
+  }
+  // Beauty & Lifestyle
+  if (lower.includes('salon') || lower.includes('parlour') || lower.includes('beauty') || lower.includes('haircut')) {
+    return <Scissors className={`${sizeClass} text-pink-600`} />;
+  }
+  if (lower.includes('cloth') || lower.includes('garment') || lower.includes('wear') || lower.includes('fashion') || lower.includes('boutique')) {
+    return <Shirt className={`${sizeClass} text-purple-600`} />;
+  }
+  if (lower.includes('photo') || lower.includes('camera') || lower.includes('studio') || lower.includes('video')) {
+    return <Camera className={`${sizeClass} text-slate-700`} />;
+  }
+  if (lower.includes('travel') || lower.includes('tour') || lower.includes('ticket') || lower.includes('taxi')) {
+    return <Compass className={`${sizeClass} text-amber-600`} />;
+  }
+  // Food & Dining
+  if (lower.includes('cafe') || lower.includes('coffee') || lower.includes('tea')) {
+    return <Coffee className={`${sizeClass} text-amber-700`} />;
+  }
+  if (lower.includes('bakery') || lower.includes('baker') || lower.includes('cake') || lower.includes('pastry')) {
+    return <Cake className={`${sizeClass} text-amber-600`} />;
+  }
+  if (lower.includes('street food') || lower.includes('chaat') || lower.includes('snack') || lower.includes('pizza') || lower.includes('burger')) {
+    return <Pizza className={`${sizeClass} text-red-600`} />;
+  }
+  if (lower.includes('restaurant') || lower.includes('dining') || lower.includes('food') || lower.includes('thali')) {
+    return <Utensils className={`${sizeClass} text-orange-600`} />;
+  }
+  if (lower.includes('grocery') || lower.includes('kirana') || lower.includes('supermarket') || lower.includes('mart')) {
+    return <ShoppingCart className={`${sizeClass} text-emerald-600`} />;
+  }
+  // Stays & Real Estate
+  if (lower.includes('real estate') || lower.includes('property') || lower.includes('flat') || lower.includes('plot') || lower.includes('builder')) {
+    return <Home className={`${sizeClass} text-sky-600`} />;
+  }
+  if (lower.includes('hotel') || lower.includes('lodge')) {
+    return <Hotel className={`${sizeClass} text-amber-600`} />;
+  }
+  if (lower.includes('resort') || lower.includes('villa')) {
+    return <SunMedium className={`${sizeClass} text-teal-600`} />;
+  }
+  if (lower.includes('hostel') || lower.includes('pg ') || lower.includes('paying guest')) {
+    return <Building2 className={`${sizeClass} text-indigo-600`} />;
+  }
+  // Home Maintenance & Services
+  if (lower.includes('electrician') || lower.includes('wiring') || lower.includes('electrical')) {
+    return <Zap className={`${sizeClass} text-amber-500`} />;
+  }
+  if (lower.includes('plumber') || lower.includes('pipe') || lower.includes('sanitary')) {
+    return <Wrench className={`${sizeClass} text-sky-600`} />;
+  }
+  if (lower.includes('carpenter') || lower.includes('furniture') || lower.includes('wood')) {
+    return <Hammer className={`${sizeClass} text-orange-600`} />;
+  }
+  if (lower.includes('paint') || lower.includes('whitewash')) {
+    return <Paintbrush className={`${sizeClass} text-violet-600`} />;
+  }
+  if (lower.includes('ac service') || lower.includes('air condition') || lower.includes('cooling')) {
+    return <Wind className={`${sizeClass} text-cyan-600`} />;
+  }
+  if (lower.includes('pest') || lower.includes('termite')) {
+    return <Bug className={`${sizeClass} text-emerald-600`} />;
+  }
+  // Wellness, Retail & Other
+  if (lower.includes('yoga') || lower.includes('meditation') || lower.includes('spa') || lower.includes('wellness')) {
+    return <Flower2 className={`${sizeClass} text-emerald-600`} />;
+  }
+  if (lower.includes('jewel') || lower.includes('gold') || lower.includes('silver') || lower.includes('diamond')) {
+    return <Gem className={`${sizeClass} text-amber-500`} />;
+  }
+  if (lower.includes('footwear') || lower.includes('shoe') || lower.includes('sandal')) {
+    return <Footprints className={`${sizeClass} text-orange-600`} />;
+  }
+  if (lower.includes('electronic') || lower.includes('appliance') || lower.includes('tv')) {
+    return <Tv className={`${sizeClass} text-blue-600`} />;
+  }
+  if (lower.includes('mobile') || lower.includes('smartphone') || lower.includes('phone')) {
+    return <Smartphone className={`${sizeClass} text-violet-600`} />;
+  }
+  if (lower.includes('computer') || lower.includes('laptop')) {
+    return <Laptop className={`${sizeClass} text-blue-600`} />;
+  }
+  if (lower.includes('hardware') || lower.includes('building material')) {
+    return <Wrench className={`${sizeClass} text-slate-600`} />;
+  }
+  if (lower.includes('interior') || lower.includes('decor')) {
+    return <Palette className={`${sizeClass} text-pink-600`} />;
+  }
+  if (lower.includes('fabricat') || lower.includes('welding')) {
+    return <Flame className={`${sizeClass} text-orange-600`} />;
+  }
+  if (lower.includes('garage') || lower.includes('mechanic') || lower.includes('car repair') || lower.includes('bike')) {
+    return <Car className={`${sizeClass} text-red-600`} />;
+  }
+  if (lower.includes('car rental') || lower.includes('cab')) {
+    return <Car className={`${sizeClass} text-sky-600`} />;
+  }
+  if (lower.includes('packer') || lower.includes('mover') || lower.includes('shifting')) {
+    return <Package className={`${sizeClass} text-amber-600`} />;
+  }
+  if (lower.includes('event') || lower.includes('wedding')) {
+    return <PartyPopper className={`${sizeClass} text-fuchsia-600`} />;
+  }
+  if (lower.includes('catering') || lower.includes('caterer') || lower.includes('tiffin')) {
+    return <CookingPot className={`${sizeClass} text-orange-600`} />;
+  }
+  if (lower.includes('digital marketing') || lower.includes('seo')) {
+    return <TrendingUp className={`${sizeClass} text-indigo-600`} />;
+  }
+  if (lower.includes('pet') || lower.includes('veterinary') || lower.includes('dog')) {
+    return <PawPrint className={`${sizeClass} text-emerald-600`} />;
+  }
+  if (lower.includes('baby') || lower.includes('infant')) {
+    return <Baby className={`${sizeClass} text-pink-600`} />;
+  }
+  if (lower.includes('dairy') || lower.includes('milk')) {
+    return <Milk className={`${sizeClass} text-sky-600`} />;
+  }
+  if (lower.includes('meat') || lower.includes('chicken') || lower.includes('mutton') || lower.includes('fish')) {
+    return <Utensils className={`${sizeClass} text-red-600`} />;
+  }
+  if (lower.includes('fruit') || lower.includes('vegetable') || lower.includes('sabzi')) {
+    return <Apple className={`${sizeClass} text-emerald-600`} />;
+  }
+
+  return <LayoutGrid className={`${sizeClass} text-teal-600`} />;
 }
 
 function getCategoryBgClass(name: string) {
-  const lowercase = name.toLowerCase();
-  if (lowercase.includes('influencer') || lowercase.includes('creator') || lowercase.includes('blogger')) {
-    return 'bg-indigo-100/70 border-indigo-200/60 text-indigo-700';
+  const lower = name.toLowerCase().trim();
+
+  // Fitness
+  if (lower.includes('protein') || lower.includes('supplement') || lower.includes('nutrition')) {
+    return 'bg-gradient-to-br from-amber-50 to-orange-100/70 border-amber-200/70 text-amber-700';
   }
-  if (lowercase.includes('doctor') || lowercase.includes('dentist') || lowercase.includes('physio') || lowercase.includes('skin') || lowercase.includes('eye')) {
-    return 'bg-teal-100/70 border-teal-200/60 text-teal-700';
+  if (lower.includes('gym') || lower.includes('fitness') || lower.includes('workout')) {
+    return 'bg-gradient-to-br from-rose-50 to-red-100/70 border-rose-200/70 text-rose-700';
   }
-  if (lowercase.includes('hospital') || lowercase.includes('clinic') || lowercase.includes('medical') || lowercase.includes('lab') || lowercase.includes('diagnostic')) {
-    return 'bg-rose-100/70 border-rose-200/60 text-rose-700';
+  // Finance & Software
+  if (lower.includes('software') || lower.includes('accounting') || lower.includes('tally') || lower.includes('billing')) {
+    return 'bg-gradient-to-br from-slate-50 to-indigo-100/70 border-indigo-200/70 text-indigo-700';
   }
-  if (lowercase.includes('plumber') || lowercase.includes('carpenter') || lowercase.includes('repair') || lowercase.includes('garage') || lowercase.includes('spare') || lowercase.includes('service')) {
-    return 'bg-sky-100/70 border-sky-200/60 text-sky-700';
+  if (lower.includes('ca ') || lower.includes('tax') || lower.includes('gst')) {
+    return 'bg-gradient-to-br from-cyan-50 to-teal-100/70 border-cyan-200/70 text-cyan-700';
   }
-  if (lowercase.includes('electrician') || lowercase.includes('electrical') || lowercase.includes('battery') || lowercase.includes('solar') || lowercase.includes('generator')) {
-    return 'bg-amber-100/70 border-amber-200/60 text-amber-700';
+  if (lower.includes('loan') || lower.includes('finance') || lower.includes('credit') || lower.includes('insurance')) {
+    return 'bg-gradient-to-br from-emerald-50 to-teal-100/70 border-emerald-200/70 text-emerald-700';
   }
-  if (lowercase.includes('restaurant') || lowercase.includes('cafe') || lowercase.includes('food') || lowercase.includes('pizza') || lowercase.includes('burger') || lowercase.includes('sweet') || lowercase.includes('tiffin') || lowercase.includes('catering') || lowercase.includes('bakery') || lowercase.includes('cake') || lowercase.includes('ice cream') || lowercase.includes('tea') || lowercase.includes('juice') || lowercase.includes('kitchen')) {
-    return 'bg-orange-100/70 border-orange-200/60 text-orange-700';
+  if (lower.includes('lawyer') || lower.includes('legal')) {
+    return 'bg-gradient-to-br from-slate-50 to-zinc-100/80 border-slate-200/80 text-slate-700';
   }
-  if (lowercase.includes('school') || lowercase.includes('college') || lowercase.includes('coaching') || lowercase.includes('tuition') || lowercase.includes('class') || lowercase.includes('institute') || lowercase.includes('academy') || lowercase.includes('library')) {
-    return 'bg-purple-100/70 border-purple-200/60 text-purple-700';
+  // Utilities
+  if (lower.includes('purifier') || lower.includes('ro filter') || lower.includes('water filter')) {
+    return 'bg-gradient-to-br from-blue-50 to-sky-100/70 border-blue-200/70 text-blue-700';
   }
-  if (lowercase.includes('beauty') || lowercase.includes('parlour') || lowercase.includes('salon') || lowercase.includes('spa') || lowercase.includes('massage') || lowercase.includes('makeup') || lowercase.includes('mehendi') || lowercase.includes('tattoo')) {
-    return 'bg-pink-100/70 border-pink-200/60 text-pink-700';
+  if (lower.includes('print') || lower.includes('radium') || lower.includes('banner')) {
+    return 'bg-gradient-to-br from-violet-50 to-fuchsia-100/70 border-violet-200/70 text-violet-700';
   }
-  if (lowercase.includes('real estate') || lowercase.includes('property') || lowercase.includes('bank') || lowercase.includes('atm') || lowercase.includes('loan') || lowercase.includes('ca') || lowercase.includes('gst') || lowercase.includes('lawyer')) {
-    return 'bg-cyan-100/70 border-cyan-200/60 text-cyan-700';
+  // Vision & Healthcare
+  if (lower.includes('optic') || lower.includes('eye') || lower.includes('spectacle')) {
+    return 'bg-gradient-to-br from-sky-50 to-cyan-100/70 border-sky-200/70 text-sky-700';
   }
-  if (lowercase.includes('travel') || lowercase.includes('transport') || lowercase.includes('rental') || lowercase.includes('taxi') || lowercase.includes('truck') || lowercase.includes('courier')) {
-    return 'bg-amber-100/70 border-amber-200/60 text-amber-700';
+  if (lower.includes('doctor') || lower.includes('dentist') || lower.includes('clinic')) {
+    return 'bg-gradient-to-br from-teal-50 to-cyan-100/70 border-teal-200/70 text-teal-700';
   }
-  if (lowercase.includes('grocery') || lowercase.includes('shop') || lowercase.includes('store') || lowercase.includes('supermarket') || lowercase.includes('dairy')) {
-    return 'bg-emerald-100/70 border-emerald-200/60 text-emerald-700';
+  if (lower.includes('hospital') || lower.includes('medical') || lower.includes('emergency')) {
+    return 'bg-gradient-to-br from-rose-50 to-red-100/70 border-rose-200/70 text-rose-700';
   }
-  if (lowercase.includes('jewel') || lowercase.includes('garment') || lowercase.includes('wear') || lowercase.includes('cloth') || lowercase.includes('shopping')) {
-    return 'bg-fuchsia-100/70 border-fuchsia-200/60 text-fuchsia-700';
+  if (lower.includes('pathology') || lower.includes('diagnostic') || lower.includes('lab')) {
+    return 'bg-gradient-to-br from-purple-50 to-rose-100/70 border-purple-200/70 text-purple-700';
   }
-  return 'bg-slate-100/80 border-slate-200/60 text-slate-700';
+  // Education & Jobs
+  if (lower.includes('school') || lower.includes('vidyalaya') || lower.includes('college') || lower.includes('coaching') || lower.includes('tuition')) {
+    return 'bg-gradient-to-br from-indigo-50 to-purple-100/70 border-indigo-200/70 text-indigo-700';
+  }
+  if (lower.includes('job') || lower.includes('placement') || lower.includes('career')) {
+    return 'bg-gradient-to-br from-blue-50 to-indigo-100/70 border-blue-200/70 text-blue-700';
+  }
+  // Arts & Beauty
+  if (lower.includes('dance') || lower.includes('music')) {
+    return 'bg-gradient-to-br from-purple-50 to-pink-100/70 border-purple-200/70 text-purple-700';
+  }
+  if (lower.includes('salon') || lower.includes('parlour') || lower.includes('beauty') || lower.includes('makeup')) {
+    return 'bg-gradient-to-br from-pink-50 to-fuchsia-100/70 border-pink-200/70 text-pink-700';
+  }
+  if (lower.includes('cloth') || lower.includes('garment') || lower.includes('fashion') || lower.includes('wear')) {
+    return 'bg-gradient-to-br from-purple-50 to-indigo-100/70 border-purple-200/70 text-purple-700';
+  }
+  if (lower.includes('photo') || lower.includes('camera') || lower.includes('studio')) {
+    return 'bg-gradient-to-br from-slate-50 to-zinc-100/80 border-slate-200/80 text-slate-700';
+  }
+  if (lower.includes('travel') || lower.includes('tour') || lower.includes('rental')) {
+    return 'bg-gradient-to-br from-amber-50 to-orange-100/70 border-amber-200/70 text-amber-700';
+  }
+  // Food & Dining
+  if (lower.includes('restaurant') || lower.includes('food') || lower.includes('street food')) {
+    return 'bg-gradient-to-br from-orange-50 to-red-100/70 border-orange-200/70 text-orange-700';
+  }
+  if (lower.includes('cafe') || lower.includes('coffee') || lower.includes('bakery') || lower.includes('cake')) {
+    return 'bg-gradient-to-br from-amber-50 to-yellow-100/70 border-amber-200/70 text-amber-800';
+  }
+  if (lower.includes('grocery') || lower.includes('supermarket') || lower.includes('fruit') || lower.includes('vegetable')) {
+    return 'bg-gradient-to-br from-emerald-50 to-green-100/70 border-emerald-200/70 text-emerald-700';
+  }
+  // Stays & Services
+  if (lower.includes('real estate') || lower.includes('property') || lower.includes('flat')) {
+    return 'bg-gradient-to-br from-sky-50 to-blue-100/70 border-sky-200/70 text-sky-700';
+  }
+  if (lower.includes('hotel') || lower.includes('resort') || lower.includes('hostel')) {
+    return 'bg-gradient-to-br from-amber-50 to-teal-100/70 border-amber-200/70 text-amber-700';
+  }
+  if (lower.includes('electrician') || lower.includes('plumber') || lower.includes('carpenter') || lower.includes('repair') || lower.includes('service')) {
+    return 'bg-gradient-to-br from-sky-50 to-amber-100/70 border-sky-200/70 text-sky-700';
+  }
+  if (lower.includes('jewel') || lower.includes('gold')) {
+    return 'bg-gradient-to-br from-yellow-50 to-amber-100/70 border-yellow-200/70 text-amber-700';
+  }
+  if (lower.includes('mobile') || lower.includes('electronic') || lower.includes('computer')) {
+    return 'bg-gradient-to-br from-indigo-50 to-blue-100/70 border-indigo-200/70 text-indigo-700';
+  }
+
+  return 'bg-gradient-to-br from-teal-50 to-slate-100/80 border-slate-200/70 text-teal-700';
 }
 
 const CATEGORY_IMAGE_MAP: Record<string, string> = {
-  // Canonical Categories
-  "Protein": "https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?auto=format&fit=crop&w=360&q=80",
-  "Loans": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=360&q=80",
+  // Canonical Categories with authentic high-resolution images
+  "Protein": "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=360&q=80",
+  "Loans": "https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=360&q=80",
   "Gyms": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=360&q=80",
   "Eye Opticians": "https://images.unsplash.com/photo-1574258495973-f010dfbb5371?auto=format&fit=crop&w=360&q=80",
-  "Water Purifier": "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=360&q=80",
+  "Water Purifier": "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?auto=format&fit=crop&w=360&q=80",
   "Schools": "https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=360&q=80",
-  "Digital Printing": "https://images.unsplash.com/photo-1562654501-a0ccc0fc3fb1?auto=format&fit=crop&w=360&q=80",
-  "Jobs": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=360&q=80",
+  "Digital Printing": "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=360&q=80",
+  "Accounting Software Dealers": "https://images.unsplash.com/photo-1554224154-26032ffc0d07?auto=format&fit=crop&w=360&q=80",
+  "Jobs": "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=360&q=80",
   "Dance Classes": "https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&w=360&q=80",
   "Music Classes": "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=360&q=80",
   "Salons": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=360&q=80",
@@ -532,7 +734,7 @@ const CATEGORY_IMAGE_MAP: Record<string, string> = {
   "Event Organisers": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=360&q=80",
   "Catering": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=360&q=80",
   "Digital Marketing": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=360&q=80",
-  "Insurance": "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=360&q=80",
+  "Insurance": "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=360&q=80",
   "Lawyers": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=360&q=80",
   "Pet Clinics": "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=360&q=80",
   "Baby Care": "https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?auto=format&fit=crop&w=360&q=80",
@@ -543,9 +745,16 @@ const CATEGORY_IMAGE_MAP: Record<string, string> = {
 };
 
 function getCategoryImage(name: string): string {
+  if (!name) return "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=360&q=80";
+
   if (CATEGORY_IMAGE_MAP[name]) {
     return CATEGORY_IMAGE_MAP[name];
   }
+  const canonical = formatCategoryTitle(name);
+  if (CATEGORY_IMAGE_MAP[canonical]) {
+    return CATEGORY_IMAGE_MAP[canonical];
+  }
+
   const lowercase = name.toLowerCase();
   for (const [catName, imgUrl] of Object.entries(CATEGORY_IMAGE_MAP)) {
     const words = catName.toLowerCase().split(/[ &]+/);
@@ -553,7 +762,7 @@ function getCategoryImage(name: string): string {
       return imgUrl;
     }
   }
-  return "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=260&q=80";
+  return "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=360&q=80";
 }
 
 const BOISAR_ICONIC_PLACES = [
@@ -2596,37 +2805,25 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
               <Link
                 key={cat.name}
                 href={`/category/${getCategorySlug(cat.name)}`}
-                className="group bg-white rounded-[20px_20px_32px_8px] border border-slate-200/90 p-2 sm:p-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-teal-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center justify-between text-center relative"
+                className="group bg-white rounded-2xl border border-slate-200/80 p-2 sm:p-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-[#008080] hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center justify-between text-center relative min-h-[92px] sm:min-h-[102px]"
               >
-                {/* Clean Image Box */}
-                <div className="w-full aspect-square rounded-[14px] sm:rounded-[16px] bg-slate-100 overflow-hidden transition-transform duration-300 group-hover:scale-105 shadow-2xs relative">
-                  <img
-                    src={cat.image}
-                    alt={cat.name}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/imagess/used items.png';
-                    }}
-                  />
+                {/* Clean Floating Icon (MakeMyTrip Style) */}
+                <div className="relative w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center mt-1">
+                  <div className="transition-transform duration-300 group-hover:scale-115 group-hover:-translate-y-0.5">
+                    {cat.icon}
+                  </div>
                   {cat.count > 0 && (
-                    <span className="absolute top-1 right-1 bg-teal-800 text-white text-[8.5px] font-black px-1.5 py-0.5 rounded-md shadow-xs pointer-events-none">
+                    <span className="absolute -top-1 -right-1.5 bg-teal-800 text-white text-[8px] sm:text-[8.5px] font-black px-1.5 py-0.2 rounded-full shadow-xs pointer-events-none border border-white">
                       {cat.count}
                     </span>
                   )}
                 </div>
 
                 {/* Title label */}
-                <div className="min-h-[2.3rem] sm:min-h-[2.5rem] flex flex-col items-center justify-center w-full px-0.5 mt-1.5 sm:mt-2 mb-0.5">
-                  <p className="text-[10px] min-[360px]:text-[11px] sm:text-[12px] font-bold text-slate-700 text-center leading-[1.25] line-clamp-2 group-hover:text-teal-700 transition-colors">
+                <div className="flex items-center justify-center w-full px-0.5 mt-1 sm:mt-1.5 min-h-[2rem]">
+                  <p className="text-[10px] min-[360px]:text-[11px] sm:text-[12px] font-bold text-slate-700 text-center leading-[1.2] line-clamp-2 group-hover:text-[#008080] transition-colors">
                     {cat.name}
                   </p>
-                  {cat.count > 0 && (
-                    <span className="text-[8.5px] sm:text-[9px] font-black text-teal-700 leading-none mt-0.5">
-                      {cat.count} {cat.count === 1 ? 'Listing' : 'Listings'}
-                    </span>
-                  )}
                 </div>
               </Link>
             ))}
