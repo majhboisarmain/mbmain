@@ -229,10 +229,14 @@ export async function PUT(
     }
     if (subscription !== undefined) {
       data.subscription = subscription;
-      // Auto toggle premium if subscription is upgraded
-      data.premium = ['Silver', 'Gold', 'Premium', 'Enterprise'].includes(subscription);
+      // Auto toggle premium if subscription is upgraded (any tier other than 'Free')
+      const isPaidSub = Boolean(subscription && subscription !== 'Free');
+      data.premium = isPaidSub;
     }
     if (premium !== undefined) data.premium = premium;
+    if (data.subscription && data.subscription !== 'Free') {
+      data.premium = true;
+    }
     if (verified !== undefined) data.verified = verified;
     if (body.hasHomeDelivery !== undefined) data.hasHomeDelivery = body.hasHomeDelivery === true || body.hasHomeDelivery === 'true';
     

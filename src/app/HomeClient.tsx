@@ -1185,9 +1185,16 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) {
+            const isFeatured = (b: any) => Boolean(b.premium || (b.subscription && b.subscription !== 'Free'));
             const sorted = [...data]
               .filter((b: any) => b.verified)
-              .sort((a: any, b: any) => (b.rating || 0) - (a.rating || 0));
+              .sort((a: any, b: any) => {
+                const featA = isFeatured(a);
+                const featB = isFeatured(b);
+                if (featA && !featB) return -1;
+                if (!featA && featB) return 1;
+                return (b.rating || 0) - (a.rating || 0);
+              });
             setBusinesses(sorted);
 
             // Extract custom categories that are verified using canonical mapping (prevent duplicates)

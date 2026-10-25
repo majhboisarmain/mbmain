@@ -263,17 +263,20 @@ export default function SearchClient() {
       const res = await fetch(url);
       const data = await res.json();
 
-      // Apply client-side sorting if needed (Featured / Premium always top)
+      // Apply client-side sorting: Featured / Subscribed always on top
       let resultData = [...data];
+      const isFeatured = (b: any) => Boolean(b.premium || (b.subscription && b.subscription !== 'Free'));
       resultData.sort((a, b) => {
-        if (a.premium && !b.premium) return -1;
-        if (!a.premium && b.premium) return 1;
+        const featA = isFeatured(a);
+        const featB = isFeatured(b);
+        if (featA && !featB) return -1;
+        if (!featA && featB) return 1;
         if (sortBy === 'rating') {
           return (b.rating || 0) - (a.rating || 0);
         } else if (sortBy === 'popularity') {
           return ((b.views || 0) + (b.reviewCount || 0)) - ((a.views || 0) + (a.reviewCount || 0));
         }
-        return 0;
+        return (b.rating || 0) - (a.rating || 0) || (b.views || 0) - (a.views || 0);
       });
 
       setBusinesses(resultData);
@@ -567,6 +570,7 @@ export default function SearchClient() {
                   ? business.address
                   : `${business.address}${business.location ? `, ${business.location}` : ''}`;
                 const hasHomeDelivery = Boolean(business.subscription && business.subscription !== 'Free' && (business as any).hasHomeDelivery !== false);
+                const isFeaturedBiz = Boolean(business.premium || (business.subscription && business.subscription !== 'Free'));
 
                 const bizSlugOrId = (business as any).slug || business.id;
 
@@ -574,11 +578,14 @@ export default function SearchClient() {
                   <div
                     key={business.id}
                     onClick={() => router.push(`/business/${bizSlugOrId}`)}
-                    className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md hover:border-teal-500/40 transition-all duration-200 relative group cursor-pointer flex flex-col text-left"
+                    className={`bg-white border rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all duration-200 relative group cursor-pointer flex flex-col text-left ${
+                      isFeaturedBiz
+                        ? 'border-amber-300 ring-1 ring-amber-400/30 shadow-amber-500/5'
+                        : 'border-slate-200/90 hover:border-teal-500/40'
+                    }`}
                   >
                     {/* Top Section: Clean Photo Grid (Direct Side-by-Side Photos) */}
                     <div 
-                      onClick={(e) => e.stopPropagation()}
                       className="relative w-full overflow-hidden rounded-t-2xl bg-slate-100"
                     >
                       {allPhotos.length <= 1 ? (
@@ -590,11 +597,15 @@ export default function SearchClient() {
                             src={coverImage}
                             alt=""
                             aria-hidden="true"
+                            loading="lazy"
+                            decoding="async"
                             className="absolute inset-0 w-full h-full object-cover blur-sm opacity-25 scale-110 pointer-events-none"
                           />
                           <img
                             src={coverImage}
                             alt={business.name}
+                            loading="lazy"
+                            decoding="async"
                             onError={(e) => { (e.target as HTMLImageElement).src = '/majh-boisar-mb-logo.png'; }}
                             className="relative z-10 w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
                           />
@@ -615,6 +626,8 @@ export default function SearchClient() {
                               <img
                                 src={imgUrl}
                                 alt={`${business.name} photo ${pIdx + 1}`}
+                                loading="lazy"
+                                decoding="async"
                                 onError={(e) => { (e.target as HTMLImageElement).src = '/majh-boisar-mb-logo.png'; }}
                                 className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
                               />
@@ -637,6 +650,8 @@ export default function SearchClient() {
                               <img
                                 src={imgUrl}
                                 alt={`${business.name} photo ${pIdx + 1}`}
+                                loading="lazy"
+                                decoding="async"
                                 onError={(e) => { (e.target as HTMLImageElement).src = '/majh-boisar-mb-logo.png'; }}
                                 className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
                               />
@@ -654,6 +669,12 @@ export default function SearchClient() {
                       {/* Top Badges Overlay */}
                       <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-1.5 pointer-events-none">
                         <div className="flex flex-wrap items-center gap-1.5">
+                          {isFeaturedBiz && (
+                            <span className="bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black text-[9px] sm:text-[9.5px] px-2 py-0.5 rounded-md shadow-md flex items-center gap-1 backdrop-blur-xs tracking-wider uppercase border border-amber-300/60">
+                              <Sparkles className="w-2.5 h-2.5 fill-slate-950 text-slate-950" />
+                              <span>Featured</span>
+                            </span>
+                          )}
                           {hasHomeDelivery && (
                             <span className="bg-emerald-600 text-white text-[9.5px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md flex items-center gap-1 backdrop-blur-xs">
                               <Truck className="w-3 h-3 text-white" />

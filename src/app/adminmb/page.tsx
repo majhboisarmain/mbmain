@@ -1708,6 +1708,7 @@ export default function AdminPanelPage() {
   const [editBizImage, setEditBizImage] = useState('');
   const [editBizVerified, setEditBizVerified] = useState(false);
   const [editBizPremium, setEditBizPremium] = useState(false);
+  const [editBizSubscription, setEditBizSubscription] = useState('Free');
   const [editBizGallery, setEditBizGallery] = useState<string[]>([]);
   const [editBizGoogleMaps, setEditBizGoogleMaps] = useState('');
   const [editBizOwnerPhone, setEditBizOwnerPhone] = useState('');
@@ -2276,7 +2277,8 @@ export default function AdminPanelPage() {
           image: editBizImage,
           gallery: editBizGallery,
           verified: editBizVerified,
-          premium: editBizPremium,
+          subscription: editBizSubscription,
+          premium: editBizPremium || (editBizSubscription !== 'Free'),
           createdBy: editBizOwnerPhone ? editBizOwnerPhone.replace(/\D/g, '').slice(-10) : null,
           isAdmin: true,
         })
@@ -3448,13 +3450,23 @@ export default function AdminPanelPage() {
 
   const handleTogglePremium = async (id: number, currentPremium: boolean) => {
     try {
+      const nextPremium = !currentPremium;
+      const targetBiz = businesses.find(b => b.id === id);
+      const nextSub = nextPremium 
+        ? (targetBiz?.subscription && targetBiz.subscription !== 'Free' ? targetBiz.subscription : 'Premium')
+        : 'Free';
+
       const res = await fetch(`/api/businesses/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ premium: !currentPremium })
+        body: JSON.stringify({ 
+          premium: nextPremium,
+          subscription: nextSub,
+          isAdmin: true
+        })
       });
       if (res.ok) {
-        logEvent(`Toggled Sponsored Premium status for ID: ${id} to ${!currentPremium}`);
+        logEvent(`Toggled Sponsored Premium status for ID: ${id} to ${nextPremium} (Plan: ${nextSub})`);
         fetchAdminData();
       }
     } catch (e) {
@@ -5870,6 +5882,7 @@ export default function AdminPanelPage() {
                                         setEditBizGoogleMaps(b.googleMaps || '');
                                         setEditBizVerified(b.verified || false);
                                         setEditBizPremium(b.premium || false);
+                                        setEditBizSubscription(b.subscription || 'Free');
                                         setEditBizOwnerPhone(((b as any).createdBy || b.phone || '').replace(/\D/g, '').slice(-10));
                                         setAdminEditModalOpen(true);
                                       }}
@@ -5910,9 +5923,50 @@ export default function AdminPanelPage() {
                                   </div>
                                 </td>
                                 <td className="py-2.5 px-3">
-                                  <span className="bg-slate-100 border border-slate-200 text-slate-700 font-bold px-2 py-0.5 rounded text-[10px]">
-                                    {b.subscription}
-                                  </span>
+                                  <select
+                                    value={b.subscription || 'Free'}
+                                    onChange={async (e) => {
+                                      const newSub = e.target.value;
+                                      const isPaid = newSub !== 'Free';
+                                      try {
+                                        const res = await fetch(`/api/businesses/${b.id}`, {
+                                          method: 'PUT',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({
+                                            subscription: newSub,
+                                            premium: isPaid,
+                                            isAdmin: true
+                                          })
+                                        });
+                                        if (res.ok) {
+                                          logEvent(`Updated Subscription for "${b.name}" to ${newSub} (Featured/Premium: ${isPaid})`);
+                                          showToast(`Subscription for "${b.name}" set to ${newSub}! (Featured: ${isPaid ? 'YES' : 'NO'})`, 'success');
+                                          fetchAdminData();
+                                        } else {
+                                          alert('Failed to update subscription');
+                                        }
+                                      } catch (err) {
+                                        console.error(err);
+                                        alert('Error updating subscription');
+                                      }
+                                    }}
+                                    className={`text-[10px] font-black rounded-lg px-2 py-1 border cursor-pointer outline-none transition-all shadow-xs ${
+                                      b.subscription && b.subscription !== 'Free'
+                                        ? 'bg-amber-50 border-amber-300 text-amber-900 font-black'
+                                        : 'bg-slate-50 border-slate-200 text-slate-600'
+                                    }`}
+                                    title="Change subscription plan (Paid plans automatically become Featured / Premium on top)"
+                                  >
+                                    <option value="Free">Free</option>
+                                    <option value="Starter">Starter</option>
+                                    <option value="Basic">Basic</option>
+                                    <option value="Silver">Silver</option>
+                                    <option value="Gold">Gold</option>
+                                    <option value="Pro">Pro</option>
+                                    <option value="Premium">Premium</option>
+                                    <option value="Enterprise">Enterprise</option>
+                                    <option value="Admin Created">Admin Created (VIP)</option>
+                                  </select>
                                 </td>
                                 <td className="py-2.5 px-3 text-slate-500 font-bold">
                                   <span className="flex items-center gap-1">
@@ -10166,25 +10220,54 @@ export default function AdminPanelPage() {
                 )}
               </div>
 
-              <div className="flex gap-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                <label className="flex items-center gap-2 cursor-pointer font-bold">
-                  <input
-                    type="checkbox"
-                    checked={editBizVerified}
-                    onChange={e => setEditBizVerified(e.target.checked)}
-                    className="text-teal-605 rounded border-slate-300 focus:ring-teal-500 w-4 h-4 cursor-pointer"
-                  />
-                  <span>Verified Badge Checkmark</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer font-bold">
-                  <input
-                    type="checkbox"
-                    checked={editBizPremium}
-                    onChange={e => setEditBizPremium(e.target.checked)}
-                    className="text-teal-605 rounded border-slate-300 focus:ring-teal-500 w-4 h-4 cursor-pointer"
-                  />
-                  <span>Featured Premium Listing</span>
-                </label>
+              <div className="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">
+                    Subscription Plan Tier
+                  </label>
+                  <select
+                    value={editBizSubscription}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditBizSubscription(val);
+                      if (val !== 'Free') {
+                        setEditBizPremium(true);
+                      }
+                    }}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
+                  >
+                    <option value="Free">Free Plan</option>
+                    <option value="Starter">Starter Plan</option>
+                    <option value="Basic">Basic Plan</option>
+                    <option value="Silver">Silver Plan</option>
+                    <option value="Gold">Gold Plan</option>
+                    <option value="Pro">Pro Plan</option>
+                    <option value="Premium">Premium Plan</option>
+                    <option value="Enterprise">Enterprise Plan</option>
+                    <option value="Admin Created">Admin Created (VIP)</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-4 pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer font-bold">
+                    <input
+                      type="checkbox"
+                      checked={editBizVerified}
+                      onChange={e => setEditBizVerified(e.target.checked)}
+                      className="text-teal-605 rounded border-slate-300 focus:ring-teal-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span>Verified Badge Checkmark</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer font-bold">
+                    <input
+                      type="checkbox"
+                      checked={editBizPremium}
+                      onChange={e => setEditBizPremium(e.target.checked)}
+                      className="text-teal-605 rounded border-slate-300 focus:ring-teal-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span>Featured Premium Listing</span>
+                  </label>
+                </div>
               </div>
 
               <div className="flex gap-3 pt-2 justify-end">

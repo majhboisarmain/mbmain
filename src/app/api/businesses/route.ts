@@ -298,6 +298,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Smart Ranking:
+    const isFeatured = (b: any) => Boolean(b.premium || (b.subscription && b.subscription !== 'Free'));
+
     // Scenario 2: GPS User Location provided
     if (hasUserLocation) {
       const MAX_RADIUS_KM = 1.0;
@@ -305,36 +307,50 @@ export async function GET(request: NextRequest) {
       const outsideRadius = result.filter(b => b.distanceKm === null || b.distanceKm > MAX_RADIUS_KM);
 
       if (withinRadius.length > 0) {
-        // Sort 1km businesses by nearest distance first, then views & rating
+        // Sort 1km businesses: Featured/Subscribed first, then nearest distance, then rating & views
         withinRadius.sort((a, b) => {
+          const featA = isFeatured(a);
+          const featB = isFeatured(b);
+          if (featA && !featB) return -1;
+          if (!featA && featB) return 1;
           if ((a.distanceKm ?? 999) !== (b.distanceKm ?? 999)) {
             return (a.distanceKm ?? 999) - (b.distanceKm ?? 999);
           }
-          if ((b.views || 0) !== (a.views || 0)) return (b.views || 0) - (a.views || 0);
-          return (b.rating || 0) - (a.rating || 0);
+          if ((b.rating || 0) !== (a.rating || 0)) return (b.rating || 0) - (a.rating || 0);
+          return (b.views || 0) - (a.views || 0);
         });
 
-        // Sort outside 1km businesses by views & rating
+        // Sort outside 1km businesses: Featured/Subscribed first, then rating & views
         outsideRadius.sort((a, b) => {
-          if ((b.views || 0) !== (a.views || 0)) return (b.views || 0) - (a.views || 0);
-          return (b.rating || 0) - (a.rating || 0);
+          const featA = isFeatured(a);
+          const featB = isFeatured(b);
+          if (featA && !featB) return -1;
+          if (!featA && featB) return 1;
+          if ((b.rating || 0) !== (a.rating || 0)) return (b.rating || 0) - (a.rating || 0);
+          return (b.views || 0) - (a.views || 0);
         });
 
         result = [...withinRadius, ...outsideRadius];
       } else {
-        // No businesses in 1km -> Fallback to Profile Views & Rating
+        // No businesses in 1km -> Featured/Subscribed first, then rating & views
         result.sort((a, b) => {
-          if ((b.views || 0) !== (a.views || 0)) return (b.views || 0) - (a.views || 0);
-          return (b.rating || 0) - (a.rating || 0);
+          const featA = isFeatured(a);
+          const featB = isFeatured(b);
+          if (featA && !featB) return -1;
+          if (!featA && featB) return 1;
+          if ((b.rating || 0) !== (a.rating || 0)) return (b.rating || 0) - (a.rating || 0);
+          return (b.views || 0) - (a.views || 0);
         });
       }
     } else {
-      // Scenario 1: Google Direct Search / Organic Traffic -> Sort by Views DESC, Rating DESC
+      // Scenario 1: Google Direct Search / Category / Organic Traffic -> Featured/Subscribed first, then Rating DESC, Views DESC
       result.sort((a, b) => {
-        if ((b.views || 0) !== (a.views || 0)) return (b.views || 0) - (a.views || 0);
+        const featA = isFeatured(a);
+        const featB = isFeatured(b);
+        if (featA && !featB) return -1;
+        if (!featA && featB) return 1;
         if ((b.rating || 0) !== (a.rating || 0)) return (b.rating || 0) - (a.rating || 0);
-        if (a.premium && !b.premium) return -1;
-        if (!a.premium && b.premium) return 1;
+        if ((b.views || 0) !== (a.views || 0)) return (b.views || 0) - (a.views || 0);
         return 0;
       });
     }
@@ -430,6 +446,7 @@ export async function POST(request: NextRequest) {
     const cleanOwnerPhone = (body.ownerPhone || body.phone || body.whatsapp || body.createdBy || '').toString().replace(/\D/g, '').slice(-10);
     const parsedLat = (body.latitude != null && !isNaN(parseFloat(body.latitude))) ? parseFloat(body.latitude) : null;
     const parsedLng = (body.longitude != null && !isNaN(parseFloat(body.longitude))) ? parseFloat(body.longitude) : null;
+    const subPlan = body.subscription || (body.createdBy === 'Admin' ? 'Admin Created' : 'Free');
 
     let business: any;
     try {
@@ -456,13 +473,12 @@ export async function POST(request: NextRequest) {
           location: location || 'Boisar',
           latitude: parsedLat,
           longitude: parsedLng,
-          workingHours: workingHours || '9:00 AM - 9:00 PM',
-          subscription: body.subscription || (body.createdBy === 'Admin' ? 'Admin Created' : 'Free'),
+          subscription: subPlan,
           hasHomeDelivery: body.hasHomeDelivery === true || body.hasHomeDelivery === 'true',
           verified: body.verified !== undefined 
             ? body.verified 
             : (category?.toLowerCase().includes('maid') || category?.toLowerCase().includes('helper') ? false : true),
-          premium: body.premium !== undefined ? body.premium : (body.createdBy === 'Admin' ? true : false),
+          premium: body.premium !== undefined ? body.premium : (subPlan !== 'Free' || body.createdBy === 'Admin'),
           rating: body.rating !== undefined ? parseFloat(body.rating) : 5.0,
           createdBy: cleanOwnerPhone || (body.createdBy === 'Admin' ? 'Admin' : null)
         }
@@ -493,11 +509,11 @@ export async function POST(request: NextRequest) {
           latitude: parsedLat,
           longitude: parsedLng,
           workingHours: workingHours || '9:00 AM - 9:00 PM',
-          subscription: body.subscription || (body.createdBy === 'Admin' ? 'Admin Created' : 'Free'),
+          subscription: subPlan,
           verified: body.verified !== undefined 
             ? body.verified 
             : (category?.toLowerCase().includes('maid') || category?.toLowerCase().includes('helper') ? false : true),
-          premium: body.premium !== undefined ? body.premium : (body.createdBy === 'Admin' ? true : false),
+          premium: body.premium !== undefined ? body.premium : (subPlan !== 'Free' || body.createdBy === 'Admin'),
           rating: body.rating !== undefined ? parseFloat(body.rating) : 5.0
         }
       });

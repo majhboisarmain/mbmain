@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { 
   MapPin, Phone, MessageSquare, Star, ShieldCheck, 
-  CheckCircle, Mail, HelpCircle, Truck, ShoppingBag
+  CheckCircle, Mail, HelpCircle, Truck, ShoppingBag, Sparkles
 } from 'lucide-react';
 import { formatCategoryTitle, buildCategoryPrismaFilter } from '@/lib/categories';
 
@@ -178,11 +178,22 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
     businesses = await prisma.business.findMany({
       where: filterConditions,
       orderBy: [
+        { premium: 'desc' },
         { verified: 'desc' },
         { rating: 'desc' },
         { views: 'desc' }
       ],
       take: 50
+    });
+
+    // Ensure businesses with premium or active subscription are strictly ranked on top
+    const isFeatured = (b: any) => Boolean(b.premium || (b.subscription && b.subscription !== 'Free'));
+    businesses.sort((a, b) => {
+      const featA = isFeatured(a);
+      const featB = isFeatured(b);
+      if (featA && !featB) return -1;
+      if (!featA && featB) return 1;
+      return (b.rating || 0) - (a.rating || 0) || (b.views || 0) - (a.views || 0);
     });
   } catch (e) {
     console.error('Error loading businesses for category:', e);
@@ -345,6 +356,7 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
                   ? business.address
                   : `${business.address}${business.location ? `, ${business.location}` : ''}`;
                 const hasHomeDelivery = Boolean(business.subscription && business.subscription !== 'Free' && business.hasHomeDelivery !== false);
+                const isFeaturedBiz = Boolean(business.premium || (business.subscription && business.subscription !== 'Free'));
                 const cleanPhone = (business.phone || '').replace(/\D/g, '');
                 const cleanWa = (business.whatsapp || business.phone || '').replace(/\D/g, '');
                 const bizHref = `/business/${business.slug || business.id}`;
@@ -352,124 +364,141 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
                 return (
                   <div
                     key={business.id}
-                    className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md hover:border-teal-500/40 transition-all duration-200 relative group flex flex-col text-left"
+                    className={`bg-white border rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all duration-200 relative group flex flex-col text-left ${
+                      isFeaturedBiz
+                        ? 'border-amber-300 ring-1 ring-amber-400/30 shadow-amber-500/5'
+                        : 'border-slate-200/90 hover:border-teal-500/40'
+                    }`}
                   >
-                    {/* Top Section: Clean Photo Grid (3 Side-by-Side Photos) */}
-                    <div className="relative w-full overflow-hidden rounded-t-2xl bg-slate-100">
-                      {allPhotos.length <= 1 ? (
-                        <Link 
-                          href={bizHref}
-                          className="w-full h-44 sm:h-52 relative overflow-hidden group/photo bg-slate-900 flex items-center justify-center block"
-                        >
-                          <img
-                            src={coverImage}
-                            alt=""
-                            aria-hidden="true"
-                            className="absolute inset-0 w-full h-full object-cover blur-sm opacity-25 scale-110 pointer-events-none"
-                          />
-                          <img
-                            src={coverImage}
-                            alt={business.name}
-                            className="relative z-10 w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
-                          />
-                          {business.views != null && business.views > 0 && (
-                            <div className="absolute bottom-2 right-2 bg-slate-950/85 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none backdrop-blur-xs z-20">
-                              <span>👁️ {business.views.toLocaleString()} visits</span>
-                            </div>
-                          )}
-                        </Link>
-                      ) : allPhotos.length === 2 ? (
-                        <div className="grid grid-cols-2 gap-1.5 w-full h-44 sm:h-50 p-1.5 bg-slate-50">
-                          {allPhotos.slice(0, 2).map((imgUrl, pIdx) => (
-                            <Link
-                              key={pIdx}
-                              href={bizHref}
-                              className="w-full h-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs relative bg-slate-900 group/photo flex items-center justify-center block"
-                            >
-                              <img
-                                src={imgUrl}
-                                alt={`${business.name} photo ${pIdx + 1}`}
-                                className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
-                              />
-                              {pIdx === 1 && business.views != null && business.views > 0 && (
-                                <div className="absolute bottom-1.5 right-1.5 bg-slate-950/85 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none backdrop-blur-xs">
-                                  <span>👁️ {business.views.toLocaleString()} visits</span>
-                                </div>
-                              )}
-                            </Link>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-3 gap-1.5 w-full h-38 sm:h-44 p-1.5 bg-slate-50">
-                          {allPhotos.slice(0, 3).map((imgUrl, pIdx) => (
-                            <Link
-                              key={pIdx}
-                              href={bizHref}
-                              className="w-full h-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs relative bg-slate-900 group/photo flex items-center justify-center block"
-                            >
-                              <img
-                                src={imgUrl}
-                                alt={`${business.name} photo ${pIdx + 1}`}
-                                className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-300"
-                              />
-                              {/* Visits badge on 3rd photo */}
-                              {pIdx === 2 && business.views != null && business.views > 0 && (
-                                <div className="absolute bottom-1.5 right-1.5 bg-slate-950/85 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none backdrop-blur-xs">
-                                  <span>👁️ {business.views.toLocaleString()} visits</span>
-                                </div>
-                              )}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
+                    {/* Entire upper + middle area is a single Link so clicking anywhere on the box opens the business */}
+                    <Link
+                      href={bizHref}
+                      className="block flex-1 flex flex-col cursor-pointer text-left focus:outline-none no-underline group/card"
+                    >
+                      {/* Top Section: Clean Photo Grid (3 Side-by-Side Photos) */}
+                      <div className="relative w-full overflow-hidden rounded-t-2xl bg-slate-100">
+                        {allPhotos.length <= 1 ? (
+                          <div className="w-full h-44 sm:h-52 relative overflow-hidden bg-slate-900 flex items-center justify-center block">
+                            <img
+                              src={coverImage}
+                              alt=""
+                              aria-hidden="true"
+                              loading="lazy"
+                              decoding="async"
+                              className="absolute inset-0 w-full h-full object-cover blur-sm opacity-25 scale-110 pointer-events-none"
+                            />
+                            <img
+                              src={coverImage}
+                              alt={business.name}
+                              loading="lazy"
+                              decoding="async"
+                              className="relative z-10 w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300"
+                            />
+                            {business.views != null && business.views > 0 && (
+                              <div className="absolute bottom-2 right-2 bg-slate-950/85 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none backdrop-blur-xs z-20">
+                                <span>👁️ {business.views.toLocaleString()} visits</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : allPhotos.length === 2 ? (
+                          <div className="grid grid-cols-2 gap-1.5 w-full h-44 sm:h-50 p-1.5 bg-slate-50">
+                            {allPhotos.slice(0, 2).map((imgUrl, pIdx) => (
+                              <div
+                                key={pIdx}
+                                className="w-full h-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs relative bg-slate-900 flex items-center justify-center block"
+                              >
+                                <img
+                                  src={imgUrl}
+                                  alt={`${business.name} photo ${pIdx + 1}`}
+                                  loading="lazy"
+                                  decoding="async"
+                                  className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300"
+                                />
+                                {pIdx === 1 && business.views != null && business.views > 0 && (
+                                  <div className="absolute bottom-1.5 right-1.5 bg-slate-950/85 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none backdrop-blur-xs">
+                                    <span>👁️ {business.views.toLocaleString()} visits</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-3 gap-1.5 w-full h-38 sm:h-44 p-1.5 bg-slate-50">
+                            {allPhotos.slice(0, 3).map((imgUrl, pIdx) => (
+                              <div
+                                key={pIdx}
+                                className="w-full h-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs relative bg-slate-900 flex items-center justify-center block"
+                              >
+                                <img
+                                  src={imgUrl}
+                                  alt={`${business.name} photo ${pIdx + 1}`}
+                                  loading="lazy"
+                                  decoding="async"
+                                  className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300"
+                                />
+                                {/* Visits badge on 3rd photo */}
+                                {pIdx === 2 && business.views != null && business.views > 0 && (
+                                  <div className="absolute bottom-1.5 right-1.5 bg-slate-950/85 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-white/20 flex items-center gap-1 pointer-events-none backdrop-blur-xs">
+                                    <span>👁️ {business.views.toLocaleString()} visits</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
-                      {/* Top Badges Overlay */}
-                      <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-1.5 pointer-events-none">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {hasHomeDelivery && (
-                            <span className="bg-emerald-600 text-white text-[9.5px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md flex items-center gap-1 backdrop-blur-xs">
-                              <Truck className="w-3 h-3 text-white" />
-                              <span>Home Delivery</span>
-                            </span>
-                          )}
-                          {business.verified && (
-                            <span className="bg-teal-700 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-xs backdrop-blur-xs flex items-center gap-0.5">
-                              <ShieldCheck className="w-2.5 h-2.5" />
-                              <span>Verified</span>
-                            </span>
-                          )}
+                        {/* Top Badges Overlay */}
+                        <div className="absolute top-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-1.5 pointer-events-none">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {isFeaturedBiz && (
+                              <span className="bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black text-[9px] sm:text-[9.5px] px-2 py-0.5 rounded-md shadow-md flex items-center gap-1 backdrop-blur-xs tracking-wider uppercase border border-amber-300/60">
+                                <Sparkles className="w-2.5 h-2.5 fill-slate-950 text-slate-950" />
+                                <span>Featured</span>
+                              </span>
+                            )}
+                            {hasHomeDelivery && (
+                              <span className="bg-emerald-600 text-white text-[9.5px] sm:text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md flex items-center gap-1 backdrop-blur-xs">
+                                <Truck className="w-3 h-3 text-white" />
+                                <span>Home Delivery</span>
+                              </span>
+                            )}
+                            {business.verified && (
+                              <span className="bg-teal-700 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-xs backdrop-blur-xs flex items-center gap-0.5">
+                                <ShieldCheck className="w-2.5 h-2.5" />
+                                <span>Verified</span>
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Middle Section: Business Information Details */}
-                    <div className="p-3.5 space-y-2 flex-1">
-                      <div>
-                        <h3 className="font-black text-sm sm:text-base text-slate-900 leading-snug hover:text-teal-700 transition-colors line-clamp-2">
-                          <Link href={bizHref}>
+                      {/* Middle Section: Business Information Details */}
+                      <div className="p-3.5 space-y-2 flex-1">
+                        <div>
+                          <h3 className="font-black text-sm sm:text-base text-slate-900 leading-snug group-hover/card:text-teal-700 transition-colors line-clamp-2">
                             {business.name}
-                          </Link>
-                        </h3>
-                      </div>
+                          </h3>
+                        </div>
 
-                      {/* Category & Review Ratings Row */}
-                      <div className="flex items-center gap-2 flex-wrap pt-0.5">
-                        <span className="bg-teal-50 border border-teal-200/80 text-teal-800 text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md shrink-0">
-                          {business.category}
-                        </span>
-                        <span className="text-[10.5px] font-bold text-slate-500 flex items-center gap-1 shrink-0">
-                          <Star className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
-                          <span className="text-slate-800 font-black">{business.rating ? Number(business.rating).toFixed(1) : '5.0'}</span>
-                          <span className="text-slate-400">({business.reviewCount || 0} Ratings)</span>
-                        </span>
-                      </div>
+                        {/* Category & Review Ratings Row */}
+                        <div className="flex items-center gap-2 flex-wrap pt-0.5">
+                          <span className="bg-teal-50 border border-teal-200/80 text-teal-800 text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-md shrink-0">
+                            {business.category}
+                          </span>
+                          <span className="text-[10.5px] font-bold text-slate-500 flex items-center gap-1 shrink-0">
+                            <Star className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
+                            <span className="text-slate-800 font-black">{business.rating ? Number(business.rating).toFixed(1) : '5.0'}</span>
+                            <span className="text-slate-400">({business.reviewCount || 0} Ratings)</span>
+                          </span>
+                        </div>
 
-                      {/* Location Address Block */}
-                      <p className="text-[11px] sm:text-xs text-slate-600 font-medium flex items-start gap-1.5 line-clamp-2">
-                        <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
-                        <span>{displayAddress}</span>
-                      </p>
-                    </div>
+                        {/* Location Address Block */}
+                        <p className="text-[11px] sm:text-xs text-slate-600 font-medium flex items-start gap-1.5 line-clamp-2">
+                          <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
+                          <span>{displayAddress}</span>
+                        </p>
+                      </div>
+                    </Link>
 
                     {/* Bottom Section: Action Buttons Full-Width Strip */}
                     <div className="grid grid-cols-3 gap-1.5 sm:gap-2 p-2.5 pt-0 border-t border-slate-100 w-full mt-auto">

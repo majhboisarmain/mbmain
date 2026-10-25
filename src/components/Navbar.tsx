@@ -194,32 +194,44 @@ export default function Navbar() {
 
   useEffect(() => {
     let lastScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+    let ticking = false;
 
-    const handleScroll = () => {
+    const updateScroll = () => {
       const currentScrollY = window.scrollY;
-      setIsScrolled(currentScrollY > 8);
+      const shouldBeScrolled = currentScrollY > 8;
+      setIsScrolled(prev => (prev !== shouldBeScrolled ? shouldBeScrolled : prev));
+
       if (pathname === '/') {
-        setIsScrolledPastHero(currentScrollY > 220);
+        const shouldBePastHero = currentScrollY > 220;
+        setIsScrolledPastHero(prev => (prev !== shouldBePastHero ? shouldBePastHero : prev));
       } else {
         setIsScrolledPastHero(false);
       }
 
-      // Smart hide navbar on scroll down, show on scroll up or when near top
-      if (currentScrollY <= 25) {
-        setIsNavVisible(true);
-      } else if (currentScrollY > lastScrollY + 6 && currentScrollY > 60) {
-        // Scrolling down -> hide navbar (move up out of screen)
-        setIsNavVisible(false);
-      } else if (currentScrollY < lastScrollY - 6) {
+      // Smooth hide navbar on scroll down, show on scroll up with safe threshold to prevent jitter
+      if (currentScrollY <= 30) {
+        setIsNavVisible(prev => (!prev ? true : prev));
+      } else if (currentScrollY > lastScrollY + 28 && currentScrollY > 90) {
+        // Scrolling down -> hide navbar
+        setIsNavVisible(prev => (prev ? false : prev));
+      } else if (currentScrollY < lastScrollY - 18) {
         // Scrolling up -> show navbar
-        setIsNavVisible(true);
+        setIsNavVisible(prev => (!prev ? true : prev));
       }
 
       lastScrollY = currentScrollY;
+      ticking = false;
+    };
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateScroll);
+        ticking = true;
+      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
+    updateScroll();
 
     const handleOpenUserMenu = () => {
       setIsNavVisible(true);
@@ -281,7 +293,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={`sticky top-0 z-[150] bg-white transition-transform duration-300 ease-in-out overflow-visible pt-[env(safe-area-inset-top,0px)] ${
+      <header className={`sticky top-0 z-[150] bg-white transition-transform duration-300 ease-out will-change-transform overflow-visible pt-[env(safe-area-inset-top,0px)] ${
         isHeaderShown ? 'translate-y-0' : '-translate-y-full shadow-none pointer-events-none'
       } ${
         isScrolled

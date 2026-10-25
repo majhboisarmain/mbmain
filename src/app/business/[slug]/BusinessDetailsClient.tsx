@@ -175,9 +175,12 @@ export default function BusinessDetailsPage({ initialBusiness, businessSlug }: B
   const galleryImages = business && Array.isArray((business as any).gallery)
     ? (business as any).gallery.filter(Boolean)
     : [];
+  const productImages = business?.products
+    ? business.products.map(p => p.image).filter(Boolean) as string[]
+    : [];
 
   const allImages = business
-    ? Array.from(new Set([...rawImageParts, ...galleryImages].filter(Boolean)))
+    ? Array.from(new Set([...rawImageParts, ...galleryImages, ...productImages].filter(Boolean)))
     : [];
 
   const coverPhoto = useMemo(() => {
@@ -193,6 +196,22 @@ export default function BusinessDetailsPage({ initialBusiness, businessSlug }: B
   const cartItems = Object.values(cart);
   const totalCartCount = cartItems.reduce((sum, item) => sum + item.count, 0);
   const totalCartPrice = cartItems.reduce((sum, item) => sum + (item.price * item.count), 0);
+
+  // Safe back handler ensuring navigation always succeeds
+  const handleBack = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (typeof window !== 'undefined') {
+      const hasAppReferrer = Boolean(document.referrer && document.referrer.includes(window.location.host));
+      if (hasAppReferrer) {
+        router.back();
+      } else {
+        router.push(`/category/${encodeURIComponent((business?.category || '').toLowerCase())}`);
+      }
+    }
+  };
 
   // Keyboard navigation for lightbox
   useEffect(() => {
@@ -210,21 +229,33 @@ export default function BusinessDetailsPage({ initialBusiness, businessSlug }: B
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [lightboxIndex, allImages.length]);
 
+  // Ensure touch action and overflow are clean on mount
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.style.touchAction = '';
+      document.body.style.overflow = '';
+    }
+  }, []);
+
   // Prevent background body scroll when any modal is open
   useEffect(() => {
     const isModalOpen = Boolean(
       checkoutModalOpen || enquiryModalOpen || addProductModalOpen || addServiceModalOpen || lightboxIndex !== null
     );
-    if (isModalOpen) {
-      const prevOverflow = document.body.style.overflow;
-      const prevTouch = document.body.style.touchAction;
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
-      return () => {
-        document.body.style.overflow = prevOverflow;
-        document.body.style.touchAction = prevTouch;
-      };
+    if (typeof document !== 'undefined') {
+      if (isModalOpen) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+      document.body.style.touchAction = '';
     }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = '';
+        document.body.style.touchAction = '';
+      }
+    };
   }, [checkoutModalOpen, enquiryModalOpen, addProductModalOpen, addServiceModalOpen, lightboxIndex]);
 
   // Safe WhatsApp URL helper ensuring correct international format (+91 for India)
@@ -896,6 +927,7 @@ _Please confirm order acceptance & delivery time._`;
                 <img
                   src={coverPhoto}
                   alt={`${business.name} cover`}
+                  decoding="async"
                   className="w-full h-full object-cover brightness-90 group-hover:scale-105 transition-transform duration-500"
                 />
                 {/* Dark gradient overlay as desired for sleek contrast */}
@@ -910,15 +942,16 @@ _Please confirm order acceptance & delivery time._`;
             {/* FLOATING ACTION OVERLAYS */}
             <div
               onClick={(e) => e.stopPropagation()}
-              className="absolute top-3 left-3 right-3 flex items-center justify-between z-20 pointer-events-auto"
+              className="absolute top-3 left-3 right-3 flex items-center justify-between z-30 pointer-events-auto"
             >
               <button
-                onClick={() => router.back()}
-                className="h-8 px-3 rounded-xl bg-black/50 hover:bg-black/70 active:scale-95 text-white backdrop-blur-md flex items-center gap-1.5 text-xs font-semibold shadow-xs cursor-pointer transition-all border border-white/20"
+                type="button"
+                onClick={handleBack}
+                className="h-8 px-3 rounded-xl bg-black/60 hover:bg-black/80 active:scale-95 text-white backdrop-blur-md flex items-center gap-1.5 text-xs font-semibold shadow-xs cursor-pointer transition-all border border-white/20 select-none"
                 title="Go Back"
               >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back</span>
+                <ArrowLeft className="w-3.5 h-3.5 pointer-events-none" />
+                <span className="pointer-events-none">Back</span>
               </button>
 
               <div className="flex items-center gap-1.5">
@@ -1077,15 +1110,8 @@ _Please confirm order acceptance & delivery time._`;
             {/* Action Buttons Row: Clean, Balanced Minimal 3-Button Grid */}
             <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-3 pt-3 border-t border-slate-100">
               <a
-                href={isLoggedIn ? `tel:${business.phone}` : '#'}
-                onClick={(e) => {
-                  if (!isLoggedIn) {
-                    e.preventDefault();
-                    setLoginModalOpen(true);
-                  } else {
-                    trackClick('phoneClicks');
-                  }
-                }}
+                href={business.phone ? `tel:${business.phone.replace(/\D/g, '')}` : '#'}
+                onClick={() => trackClick('phoneClicks')}
                 className="py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer shadow-xs"
               >
                 <Phone className="w-3.5 h-3.5 text-teal-400 shrink-0" />
@@ -1093,16 +1119,10 @@ _Please confirm order acceptance & delivery time._`;
               </a>
 
               <a
-                href={isLoggedIn ? `https://wa.me/${business.whatsapp.replace(/\+/g, '').replace(/\s/g, '')}?text=${encodeURIComponent(`Hi ${business.name}, I found your storefront on Majh Boisar and would like to ask a few questions.`)}` : '#'}
-                target={isLoggedIn ? "_blank" : undefined}
-                onClick={(e) => {
-                  if (!isLoggedIn) {
-                    e.preventDefault();
-                    setLoginModalOpen(true);
-                  } else {
-                    trackClick('whatsappClicks');
-                  }
-                }}
+                href={getWhatsAppUrl(business.whatsapp || business.phone, `Hi ${business.name}, I found your storefront on Majh Boisar and would like to ask a few questions.`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackClick('whatsappClicks')}
                 className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer shadow-xs"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-white shrink-0" />
@@ -1111,13 +1131,7 @@ _Please confirm order acceptance & delivery time._`;
 
               <button
                 type="button"
-                onClick={() => {
-                  if (!isLoggedIn) {
-                    setLoginModalOpen(true);
-                    return;
-                  }
-                  setEnquiryModalOpen(true);
-                }}
+                onClick={() => setEnquiryModalOpen(true)}
                 className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer"
               >
                 <Mail className="w-3.5 h-3.5 text-slate-600 shrink-0" />
@@ -1155,20 +1169,24 @@ _Please confirm order acceptance & delivery time._`;
           ];
 
           return (
-            <div className="mb-5 flex gap-1 overflow-x-auto whitespace-nowrap p-1 rounded-xl bg-slate-100/90 border border-slate-200/70 w-full scrollbar-hide">
+            <div className="mb-5 flex gap-1 overflow-x-auto whitespace-nowrap p-1 rounded-xl bg-slate-100/90 border border-slate-200/70 w-full scrollbar-hide relative z-10">
               {tabsList.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveTab(tab.id);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 select-none ${
                     activeTab === tab.id
                       ? 'bg-white text-slate-900 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <span>{tab.label}</span>
+                  <span className="pointer-events-none">{tab.label}</span>
                   {typeof tab.count === 'number' && tab.count > 0 && (
-                    <span className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded-md ${
+                    <span className={`pointer-events-none text-[10px] font-extrabold px-1.5 py-0.2 rounded-md ${
                       activeTab === tab.id ? 'bg-slate-100 text-slate-700' : 'bg-slate-200/60 text-slate-600'
                     }`}>
                       {tab.count}
@@ -1231,28 +1249,19 @@ _Please confirm order acceptance & delivery time._`;
                     ) : (
                       <div className="pt-1 flex flex-wrap justify-center items-center gap-2">
                         <a
-                          href={isLoggedIn ? `tel:${business.phone}` : '#'}
-                          onClick={(e) => {
-                            if (!isLoggedIn) {
-                              e.preventDefault();
-                              setLoginModalOpen(true);
-                            }
-                          }}
-                          className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-xs"
+                          href={business.phone ? `tel:${business.phone.replace(/\D/g, '')}` : '#'}
+                          onClick={() => trackClick('phoneClicks')}
+                          className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer"
                         >
                           <Phone className="w-3.5 h-3.5 text-teal-400" />
                           <span>Call Store</span>
                         </a>
                         <a
-                          href={isLoggedIn ? `https://wa.me/${business.whatsapp.replace(/\+/g, '').replace(/\s/g, '')}?text=${encodeURIComponent(`Hi ${business.name}, I want to enquire about your products and services.`)}` : '#'}
-                          target={isLoggedIn ? "_blank" : undefined}
-                          onClick={(e) => {
-                            if (!isLoggedIn) {
-                              e.preventDefault();
-                              setLoginModalOpen(true);
-                            }
-                          }}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-xs"
+                          href={getWhatsAppUrl(business.whatsapp || business.phone, `Hi ${business.name}, I want to enquire about your products and services.`)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => trackClick('whatsappClicks')}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
                           <span>WhatsApp</span>
@@ -1305,7 +1314,16 @@ _Please confirm order acceptance & delivery time._`;
                             key={prod.id}
                             className="bg-white border border-slate-200/80 rounded-xl sm:rounded-2xl p-2 sm:p-3 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden text-left"
                           >
-                            <div className="relative w-full aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-slate-50 border border-slate-100 mb-1.5 sm:mb-2 flex items-center justify-center">
+                            <div
+                              onClick={() => {
+                                if (prod.image) {
+                                  const idx = allImages.indexOf(prod.image);
+                                  if (idx >= 0) setLightboxIndex(idx);
+                                }
+                              }}
+                              className={`relative w-full aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-slate-50 border border-slate-100 mb-1.5 sm:mb-2 flex items-center justify-center ${prod.image ? 'cursor-pointer hover:opacity-95' : ''}`}
+                              title={prod.image ? "Click to view photo" : undefined}
+                            >
                               {prod.image ? (
                                 <img
                                   src={prod.image}
@@ -1362,7 +1380,7 @@ _Please confirm order acceptance & delivery time._`;
                                 </span>
                               </div>
 
-                              {hasDelivery && (
+                              {hasDelivery ? (
                                 <div className="flex items-center gap-1">
                                   {inCart ? (
                                     <div className="flex items-center gap-0.5 sm:gap-1 bg-emerald-600 text-white rounded-lg px-1 py-0.5 shadow-2xs">
@@ -1395,6 +1413,22 @@ _Please confirm order acceptance & delivery time._`;
                                     </button>
                                   )}
                                 </div>
+                              ) : (
+                                <a
+                                  href={getWhatsAppUrl(business.whatsapp || business.phone, `🛒 *PRODUCT ENQUIRY*
+━━━━━━━━━━━━━━━━━━━━
+🏬 *Store:* ${business.name}
+📦 *Product:* ${prod.name}
+${priceNum > 0 ? `💰 *Price:* ₹${priceNum.toLocaleString('en-IN')}\n` : ''}━━━━━━━━━━━━━━━━━━━━
+Hi ${business.name}, I want to inquire about "${prod.name}" listed on Majh Boisar. Is this available?`)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={() => trackClick('whatsappClicks')}
+                                  className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[9.5px] sm:text-[11px] font-bold px-2 py-1 rounded-lg transition-all shadow-2xs flex items-center gap-1 cursor-pointer shrink-0"
+                                >
+                                  <MessageSquare className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                                  <span>Enquire</span>
+                                </a>
                               )}
                             </div>
                           </div>
@@ -1495,21 +1529,15 @@ _Please confirm order acceptance & delivery time._`;
                               </div>
 
                               <a
-                                href={isLoggedIn ? getWhatsAppUrl(business.whatsapp || business.phone, `🛠️ *SERVICE INQUIRY / BOOKING*
+                                href={getWhatsAppUrl(business.whatsapp || business.phone, `🛠️ *SERVICE INQUIRY / BOOKING*
 ━━━━━━━━━━━━━━━━━━━━
 🏬 *Provider:* ${business.name}
 🔧 *Service:* ${srv.name}
 ${priceNum > 0 ? `💰 *Starting Price:* ₹${priceNum.toLocaleString('en-IN')}\n` : '💰 *Price:* On Request / Quotation\n'}${srv.duration ? `⏱️ *Duration:* ${srv.duration}\n` : ''}${srv.description ? `📝 *Details:* ${srv.description}\n` : ''}━━━━━━━━━━━━━━━━━━━━
-Hi ${business.name}, I want to book/enquire about this service listed on Majh Boisar. Please share your availability & quotation.`) : '#'}
-                                target={isLoggedIn ? "_blank" : undefined}
-                                onClick={(e) => {
-                                  if (!isLoggedIn) {
-                                    e.preventDefault();
-                                    setLoginModalOpen(true);
-                                  } else {
-                                    trackClick('whatsappClicks');
-                                  }
-                                }}
+Hi ${business.name}, I want to book/enquire about this service listed on Majh Boisar. Please share your availability & quotation.`)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => trackClick('whatsappClicks')}
                                 className="bg-teal-700 hover:bg-teal-800 text-white text-xs font-black px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
                               >
                                 <MessageSquare className="w-3.5 h-3.5" />
@@ -1555,10 +1583,13 @@ Hi ${business.name}, I want to book/enquire about this service listed on Majh Bo
 
                       {/* Filter pills ONLY if both products AND services exist */}
                       {hasProducts && hasServices && (
-                        <div className="flex items-center bg-slate-100 p-0.5 rounded-xl shrink-0 self-start sm:self-auto">
+                        <div className="flex items-center bg-slate-100 p-0.5 rounded-xl shrink-0 self-start sm:self-auto relative z-10 select-none">
                           <button
                             type="button"
-                            onClick={() => setCatalogFilter('all')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCatalogFilter('all');
+                            }}
                             className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                               catalogFilter === 'all'
                                 ? 'bg-white text-slate-900 shadow-2xs'
@@ -1569,7 +1600,10 @@ Hi ${business.name}, I want to book/enquire about this service listed on Majh Bo
                           </button>
                           <button
                             type="button"
-                            onClick={() => setCatalogFilter('products')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCatalogFilter('products');
+                            }}
                             className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                               catalogFilter === 'products'
                                 ? 'bg-white text-slate-900 shadow-2xs'
@@ -1580,7 +1614,10 @@ Hi ${business.name}, I want to book/enquire about this service listed on Majh Bo
                           </button>
                           <button
                             type="button"
-                            onClick={() => setCatalogFilter('services')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCatalogFilter('services');
+                            }}
                             className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                               catalogFilter === 'services'
                                 ? 'bg-white text-slate-900 shadow-2xs'
@@ -1628,6 +1665,8 @@ Hi ${business.name}, I want to book/enquire about this service listed on Majh Bo
                         <img
                           src={url}
                           alt={`${business.name} photo ${index + 1}`}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -1953,13 +1992,7 @@ Hi ${business.name}, I want to book/enquire about this service listed on Majh Bo
 
               <button
                 type="button"
-                onClick={() => {
-                  if (!isLoggedIn) {
-                    setLoginModalOpen(true);
-                    return;
-                  }
-                  setEnquiryModalOpen(true);
-                }}
+                onClick={() => setEnquiryModalOpen(true)}
                 className="w-full bg-teal-600 hover:bg-teal-500 active:scale-98 text-white font-bold text-xs py-2.5 rounded-xl transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <span>Send Requirement</span>
