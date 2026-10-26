@@ -1463,20 +1463,53 @@ function DashboardContent() {
   });
   
   const [hotelDashboardGallery, setHotelDashboardGallery] = useState<string[]>([]);
+  const [isUploadingHotelPhotos, setIsUploadingHotelPhotos] = useState(false);
+  const [isSavingHotel, setIsSavingHotel] = useState(false);
 
-  const handleHotelDashboardFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHotelDashboardFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          setHotelDashboardGallery(prev => [...prev, reader.result as string]);
+    setIsUploadingHotelPhotos(true);
+    try {
+      const compressedList: string[] = [];
+      for (const file of Array.from(files)) {
+        try {
+          const compressed = await compressImage(file, 1200, 1200, 0.75);
+          if (compressed) {
+            compressedList.push(compressed);
+          }
+        } catch (compErr) {
+          console.warn('Image compression fallback:', compErr);
+          const raw = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          if (raw) compressedList.push(raw);
         }
-      };
-      reader.readAsDataURL(file);
+      }
+      if (compressedList.length > 0) {
+        setHotelDashboardGallery(prev => [...prev, ...compressedList]);
+        showToast(`📸 ${compressedList.length} photo(s) added! Click "Save Changes" to save.`, 'success');
+      }
+    } catch (err) {
+      console.error('Error processing hotel photos:', err);
+      showToast('Failed to process photos', 'error');
+    } finally {
+      setIsUploadingHotelPhotos(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleSetMainDashboardGalleryPhoto = (idx: number) => {
+    if (idx <= 0 || idx >= hotelDashboardGallery.length) return;
+    setHotelDashboardGallery(prev => {
+      const target = prev[idx];
+      const rest = prev.filter((_, i) => i !== idx);
+      return [target, ...rest];
     });
+    showToast('⭐ Set as Main Cover photo! Click "Save Changes" to apply.', 'info');
   };
 
   const handleRemoveDashboardGalleryPhoto = (idx: number) => {
@@ -2159,7 +2192,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
     showToast(`🔔 New Order added for Table #${newOrder.tableNumber}!`, 'success');
   };
 
-  const handleSaveFullHotelListing = (e: React.FormEvent) => {
+  const handleSaveFullHotelListing = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hotelProfileName.trim() || !hotelProfilePhone.trim()) {
       alert('Please enter Hotel Name and Reception Phone number.');
@@ -2283,64 +2316,117 @@ _Powered by Majh Boisar (majhboisar.com)_`
       nightStayCheckOut: nightStayCheckOut || '11:00 AM'
     };
 
+    setIsSavingHotel(true);
+    showToast('⏳ Saving hotel details & syncing photos...', 'info');
+
+    // 1. Try to sync to central database via /api/hotels
+    try {
+      const res = await fetch('/api/hotels', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: (typeof hotelId === 'number' || (typeof hotelId === 'string' && /^\d+$/.test(hotelId))) ? Number(hotelId) : undefined,
+          slug: hotelSlug,
+          name: hotelProfileName,
+          tagline: hotelProfileTagline,
+          category: hotelProfileCategory,
+          location: hotelProfileArea,
+          address: hotelProfileAddress,
+          landmark: hotelProfileLandmark,
+          phone: hotelProfilePhone,
+          whatsapp: hotelProfileWhatsapp,
+          description: hotelProfileDescription,
+          gallery: hotelDashboardGallery,
+          amenities: amenitiesObjects,
+          rules: rulesArray,
+          rooms: roomsToSave,
+          isCoupleFriendly: hotelProfileCoupleFriendly,
+          acceptsLocalId: hotelProfileLocalId,
+          nearStation: hotelProfileNearStation,
+          nearMidc: hotelProfileNearMidc,
+          hourlyRate3h: Number(acRate3h) || 699,
+          hourlyRate6h: Number(acRate6h) || 1099,
+          hourlyRate12h: Number(acRate12h) || 1599,
+          nightRate: Number(acRateNight) || 1899,
+          offersHourly: hourlyBookingsEnabled
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hotel && Array.isArray(data.hotel.gallery) && data.hotel.gallery.length > 0) {
+          // If server or Cloudinary returned permanent URLs, update gallery
+          setHotelDashboardGallery(data.hotel.gallery);
+          updatedHotelObj.gallery = data.hotel.gallery;
+        }
+      }
+    } catch (apiErr) {
+      console.warn('API hotel sync warning (will fallback to storage):', apiErr);
+    }
+
+    // 2. Safely sync to localStorage without crashing on quota
     if (typeof window !== 'undefined') {
-      localStorage.setItem(`majh_boisar_hotel_rooms_${hotelSlug}`, JSON.stringify(roomsToSave));
-      localStorage.setItem(`majh_boisar_hotel_rooms_${hotelId}`, JSON.stringify(roomsToSave));
-      localStorage.setItem('majh_boisar_hotel_rates_ac_3h', String(acRate3h));
-      localStorage.setItem('majh_boisar_hotel_rates_ac_6h', String(acRate6h));
-      localStorage.setItem('majh_boisar_hotel_rates_ac_12h', String(acRate12h));
-      localStorage.setItem('majh_boisar_hotel_rates_ac_night', String(acRateNight));
-      localStorage.setItem('majh_boisar_hotel_rates_nonac_3h', String(nonAcRate3h));
-      localStorage.setItem('majh_boisar_hotel_rates_nonac_6h', String(nonAcRate6h));
-      localStorage.setItem('majh_boisar_hotel_rates_nonac_12h', String(nonAcRate12h));
-      localStorage.setItem('majh_boisar_hotel_rates_nonac_night', String(nonAcRateNight));
-      localStorage.setItem('majh_boisar_hotel_day_stay_timing', dayStayTimingWindow);
-      localStorage.setItem('majh_boisar_hotel_night_checkin', nightStayCheckIn);
-      localStorage.setItem('majh_boisar_hotel_night_checkout', nightStayCheckOut);
-      localStorage.setItem(`majh_boisar_hotel_day_stay_timing_${hotelSlug}`, dayStayTimingWindow);
-      localStorage.setItem(`majh_boisar_hotel_night_checkin_${hotelSlug}`, nightStayCheckIn);
-      localStorage.setItem(`majh_boisar_hotel_night_checkout_${hotelSlug}`, nightStayCheckOut);
-      localStorage.setItem(`majh_boisar_hotel_hourly_${hotelSlug}`, String(hourlyBookingsEnabled));
-      localStorage.setItem(`majh_boisar_hotel_hourly_${hotelId}`, String(hourlyBookingsEnabled));
-      localStorage.setItem(`majh_boisar_hotel_rules_${hotelSlug}`, JSON.stringify(rulesArray));
-      localStorage.setItem(`majh_boisar_hotel_rules_${hotelId}`, JSON.stringify(rulesArray));
-      localStorage.setItem(`majh_boisar_hotel_rules_tag_${hotelSlug}`, hotelProfileRulesTag);
-      localStorage.setItem(`majh_boisar_hotel_rules_tag_${hotelId}`, hotelProfileRulesTag);
-      localStorage.setItem(`majh_boisar_hotel_gallery_${hotelSlug}`, JSON.stringify(hotelDashboardGallery));
-      localStorage.setItem(`majh_boisar_hotel_gallery_${hotelId}`, JSON.stringify(hotelDashboardGallery));
-      
-      const customHotels = JSON.parse(localStorage.getItem('majh_boisar_custom_hotels_v2') || '[]');
-      const filtered = customHotels.filter((h: any) => 
-        (h.id || '').toLowerCase() !== hotelId.toLowerCase() && 
-        (h.slug || '').toLowerCase() !== hotelSlug.toLowerCase() && 
-        (h.name || '').toLowerCase().trim() !== hotelProfileName.toLowerCase().trim()
-      );
-      localStorage.setItem('majh_boisar_custom_hotels_v2', JSON.stringify([updatedHotelObj, ...filtered]));
-
-      // Also save into admin hotels registry
       try {
-        const adminHotels = JSON.parse(localStorage.getItem('majh_boisar_admin_hotels') || '[]');
-        const filteredAdmin = adminHotels.filter((h: any) => 
+        localStorage.setItem(`majh_boisar_hotel_rooms_${hotelSlug}`, JSON.stringify(roomsToSave));
+        localStorage.setItem(`majh_boisar_hotel_rooms_${hotelId}`, JSON.stringify(roomsToSave));
+        localStorage.setItem('majh_boisar_hotel_rates_ac_3h', String(acRate3h));
+        localStorage.setItem('majh_boisar_hotel_rates_ac_6h', String(acRate6h));
+        localStorage.setItem('majh_boisar_hotel_rates_ac_12h', String(acRate12h));
+        localStorage.setItem('majh_boisar_hotel_rates_ac_night', String(acRateNight));
+        localStorage.setItem('majh_boisar_hotel_rates_nonac_3h', String(nonAcRate3h));
+        localStorage.setItem('majh_boisar_hotel_rates_nonac_6h', String(nonAcRate6h));
+        localStorage.setItem('majh_boisar_hotel_rates_nonac_12h', String(nonAcRate12h));
+        localStorage.setItem('majh_boisar_hotel_rates_nonac_night', String(nonAcRateNight));
+        localStorage.setItem('majh_boisar_hotel_day_stay_timing', dayStayTimingWindow);
+        localStorage.setItem('majh_boisar_hotel_night_checkin', nightStayCheckIn);
+        localStorage.setItem('majh_boisar_hotel_night_checkout', nightStayCheckOut);
+        localStorage.setItem(`majh_boisar_hotel_day_stay_timing_${hotelSlug}`, dayStayTimingWindow);
+        localStorage.setItem(`majh_boisar_hotel_night_checkin_${hotelSlug}`, nightStayCheckIn);
+        localStorage.setItem(`majh_boisar_hotel_night_checkout_${hotelSlug}`, nightStayCheckOut);
+        localStorage.setItem(`majh_boisar_hotel_hourly_${hotelSlug}`, String(hourlyBookingsEnabled));
+        localStorage.setItem(`majh_boisar_hotel_hourly_${hotelId}`, String(hourlyBookingsEnabled));
+        localStorage.setItem(`majh_boisar_hotel_rules_${hotelSlug}`, JSON.stringify(rulesArray));
+        localStorage.setItem(`majh_boisar_hotel_rules_${hotelId}`, JSON.stringify(rulesArray));
+        localStorage.setItem(`majh_boisar_hotel_rules_tag_${hotelSlug}`, hotelProfileRulesTag);
+        localStorage.setItem(`majh_boisar_hotel_rules_tag_${hotelId}`, hotelProfileRulesTag);
+        localStorage.setItem(`majh_boisar_hotel_gallery_${hotelSlug}`, JSON.stringify(updatedHotelObj.gallery));
+        localStorage.setItem(`majh_boisar_hotel_gallery_${hotelId}`, JSON.stringify(updatedHotelObj.gallery));
+        
+        const customHotels = JSON.parse(localStorage.getItem('majh_boisar_custom_hotels_v2') || '[]');
+        const filtered = customHotels.filter((h: any) => 
           (h.id || '').toLowerCase() !== hotelId.toLowerCase() && 
           (h.slug || '').toLowerCase() !== hotelSlug.toLowerCase() && 
           (h.name || '').toLowerCase().trim() !== hotelProfileName.toLowerCase().trim()
         );
-        localStorage.setItem('majh_boisar_admin_hotels', JSON.stringify([updatedHotelObj, ...filteredAdmin]));
-      } catch (err) {}
+        localStorage.setItem('majh_boisar_custom_hotels_v2', JSON.stringify([updatedHotelObj, ...filtered]));
 
-      // Also save into user hotels registry for home modal compatibility
-      try {
-        const userHotels = JSON.parse(localStorage.getItem('majh_boisar_user_hotels') || '[]');
-        const filteredUser = userHotels.filter((h: any) => 
-          (h.id || '').toLowerCase() !== hotelId.toLowerCase() && 
-          (h.slug || '').toLowerCase() !== hotelSlug.toLowerCase() && 
-          (h.name || '').toLowerCase().trim() !== hotelProfileName.toLowerCase().trim()
-        );
-        localStorage.setItem('majh_boisar_user_hotels', JSON.stringify([updatedHotelObj, ...filteredUser]));
-      } catch (err) {}
+        // Also save into admin hotels registry
+        try {
+          const adminHotels = JSON.parse(localStorage.getItem('majh_boisar_admin_hotels') || '[]');
+          const filteredAdmin = adminHotels.filter((h: any) => 
+            (h.id || '').toLowerCase() !== hotelId.toLowerCase() && 
+            (h.slug || '').toLowerCase() !== hotelSlug.toLowerCase() && 
+            (h.name || '').toLowerCase().trim() !== hotelProfileName.toLowerCase().trim()
+          );
+          localStorage.setItem('majh_boisar_admin_hotels', JSON.stringify([updatedHotelObj, ...filteredAdmin]));
+        } catch (err) {}
 
-      window.dispatchEvent(new Event('storage'));
-      window.dispatchEvent(new CustomEvent('majh_boisar_hotel_updated', { detail: updatedHotelObj }));
+        // Also save into user hotels registry for home modal compatibility
+        try {
+          const userHotels = JSON.parse(localStorage.getItem('majh_boisar_user_hotels') || '[]');
+          const filteredUser = userHotels.filter((h: any) => 
+            (h.id || '').toLowerCase() !== hotelId.toLowerCase() && 
+            (h.slug || '').toLowerCase() !== hotelSlug.toLowerCase() && 
+            (h.name || '').toLowerCase().trim() !== hotelProfileName.toLowerCase().trim()
+          );
+          localStorage.setItem('majh_boisar_user_hotels', JSON.stringify([updatedHotelObj, ...filteredUser]));
+        } catch (err) {}
+
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new CustomEvent('majh_boisar_hotel_updated', { detail: updatedHotelObj }));
+      } catch (storageErr) {
+        console.warn('localStorage quota handled safely:', storageErr);
+      }
     }
 
     setBusiness((prev: any) => prev ? ({
@@ -2353,7 +2439,8 @@ _Powered by Majh Boisar (majhboisar.com)_`
       whatsapp: hotelProfileWhatsapp
     }) : null);
 
-    showToast(`🎉 Hotel Profile for "${hotelProfileName}" updated successfully!`, 'success');
+    setIsSavingHotel(false);
+    showToast(`🎉 Hotel details & photo gallery saved successfully!`, 'success');
   };
 
   // Hotel Owner Bank & UPI Payout State
@@ -7616,10 +7703,11 @@ _Powered by Majh Boisar (majhboisar.com)_`
                         <div className="flex justify-end pt-2 border-t border-slate-100">
                           <button
                             type="button"
+                            disabled={isSavingHotel || isUploadingHotelPhotos}
                             onClick={handleSaveFullHotelListing}
-                            className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-8 py-3 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+                            className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-bold text-xs px-8 py-3 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
                           >
-                            <span>✓ Save Tariffs &amp; Timings</span>
+                            <span>{isSavingHotel ? '⏳ Saving...' : '✓ Save Tariffs & Timings'}</span>
                           </button>
                         </div>
                       </div>
@@ -7669,9 +7757,10 @@ _Powered by Majh Boisar (majhboisar.com)_`
                           </div>
                           <button
                             type="submit"
-                            className="self-start sm:self-auto bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-5 py-2 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-98"
+                            disabled={isSavingHotel || isUploadingHotelPhotos}
+                            className="self-start sm:self-auto bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-bold text-xs px-5 py-2 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-98"
                           >
-                            <span>✓ Save Changes</span>
+                            <span>{isSavingHotel ? '⏳ Saving...' : '✓ Save Changes'}</span>
                           </button>
                         </div>
 
@@ -7826,19 +7915,24 @@ _Powered by Majh Boisar (majhboisar.com)_`
 
                           {/* Upload Dropzone & URL Input */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <label className="border-2 border-dashed border-slate-300 hover:border-slate-500 bg-white hover:bg-slate-50 rounded-xl p-3.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all text-center">
+                            <label className={`border-2 border-dashed ${isUploadingHotelPhotos ? 'border-blue-500 bg-blue-50/50' : 'border-slate-300 hover:border-slate-500 bg-white hover:bg-slate-50'} rounded-xl p-3.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all text-center`}>
                               <input
                                 type="file"
                                 multiple
                                 accept="image/*"
+                                disabled={isUploadingHotelPhotos}
                                 onChange={handleHotelDashboardFileUpload}
                                 className="hidden"
                               />
                               <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">
-                                📤
+                                {isUploadingHotelPhotos ? '⏳' : '📤'}
                               </div>
-                              <p className="text-xs font-bold text-slate-900">+ Choose Photos from Device</p>
-                              <p className="text-[10px] text-slate-500">Upload multiple JPG / PNG files</p>
+                              <p className="text-xs font-bold text-slate-900">
+                                {isUploadingHotelPhotos ? 'Compressing photos...' : '+ Choose Photos from Device'}
+                              </p>
+                              <p className="text-[10px] text-slate-500">
+                                {isUploadingHotelPhotos ? 'Optimizing file size...' : 'Upload multiple JPG / PNG files'}
+                              </p>
                             </label>
 
                             <div className="bg-white border border-slate-200 rounded-xl p-3.5 flex flex-col justify-between gap-2">
@@ -7884,11 +7978,21 @@ _Powered by Majh Boisar (majhboisar.com)_`
                                     <button
                                       type="button"
                                       onClick={() => handleRemoveDashboardGalleryPhoto(idx)}
-                                      className="absolute top-1.5 right-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-black transition-colors cursor-pointer shadow-xs"
+                                      className="absolute top-1.5 right-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-black transition-colors cursor-pointer shadow-xs z-10"
                                       title="Delete Photo"
                                     >
                                       ✕
                                     </button>
+                                    {idx > 0 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleSetMainDashboardGalleryPhoto(idx)}
+                                        className="absolute top-1.5 left-1.5 bg-slate-900/80 hover:bg-blue-600 text-white rounded px-1.5 py-0.5 text-[8.5px] font-bold transition-colors cursor-pointer shadow-xs z-10"
+                                        title="Make Cover Photo"
+                                      >
+                                        ⭐ Set Main
+                                      </button>
+                                    )}
                                     <span className={`absolute bottom-1.5 left-1.5 text-white text-[8.5px] font-black px-1.5 py-0.5 rounded shadow-2xs ${idx === 0 ? 'bg-blue-600' : 'bg-slate-900/80'}`}>
                                       {idx === 0 ? '⭐ Main Cover' : `Photo ${idx + 1}`}
                                     </span>
@@ -8077,9 +8181,10 @@ _Powered by Majh Boisar (majhboisar.com)_`
                         <div className="flex justify-end pt-2 border-t border-slate-100">
                           <button
                             type="submit"
-                            className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-8 py-3 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+                            disabled={isSavingHotel || isUploadingHotelPhotos}
+                            className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-bold text-xs px-8 py-3 rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
                           >
-                            <span>✓ Save &amp; Publish Hotel Profile</span>
+                            <span>{isSavingHotel ? '⏳ Saving Photos & Hotel...' : '✓ Save & Publish Hotel Profile'}</span>
                           </button>
                         </div>
                       </form>

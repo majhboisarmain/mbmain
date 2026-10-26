@@ -312,6 +312,31 @@ export default function HotelDetailPage() {
 
     refreshHotel();
 
+    // Fetch live hotel from API database to ensure real-time photos & details across all devices
+    fetch('/api/hotels')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.hotels)) {
+          const cleanKey = id.toLowerCase().trim();
+          const liveMatch = data.hotels.find((h: any) => 
+            (h.id && String(h.id).toLowerCase().trim() === cleanKey) ||
+            (h.slug && h.slug.toLowerCase().trim() === cleanKey) ||
+            (h.name && h.name.toLowerCase().trim() === cleanKey) ||
+            (h.name && h.name.toLowerCase().replace(/\s+/g, '-') === cleanKey)
+          );
+          if (liveMatch) {
+            setHotel(prev => ({
+              ...(prev || {}),
+              ...liveMatch,
+              gallery: (Array.isArray(liveMatch.gallery) && liveMatch.gallery.length > 0) ? liveMatch.gallery : (prev?.gallery || []),
+              rooms: (Array.isArray(liveMatch.rooms) && liveMatch.rooms.length > 0) ? liveMatch.rooms : (prev?.rooms || []),
+              rules: (Array.isArray(liveMatch.rules) && liveMatch.rules.length > 0) ? liveMatch.rules : (prev?.rules || [])
+            } as any));
+          }
+        }
+      })
+      .catch(err => console.error('Error fetching live hotel details:', err));
+
     if (loggedInUser) {
       setGuestName(loggedInUser.name || '');
       setGuestPhone(loggedInUser.phone || '');
