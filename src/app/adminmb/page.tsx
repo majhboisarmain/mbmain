@@ -14,7 +14,7 @@ import {
   ToggleLeft, ToggleRight, Coins, Terminal, RefreshCw, BarChart2,
   Edit, Plus, X, Users, Phone, UserCheck, PlusCircle, MapPin, Briefcase, FileText,
   HardDrive, Database, Server, Smartphone, Zap, Lock, KeyRound, EyeOff, Waves, Compass, Utensils,
-  Car, ExternalLink, Wrench, Heart, Download, Filter, Search, CheckCheck, CreditCard, Globe
+  Car, ExternalLink, Wrench, Heart, Download, Filter, Search, CheckCheck, CreditCard, Globe, PauseCircle, PlayCircle
 } from 'lucide-react';
 
 export interface HomeFeaturedRestaurant {
@@ -281,28 +281,35 @@ export default function AdminPanelPage() {
   const [adminPasscode, setAdminPasscode] = useState('');
   const [adminPasscodeError, setAdminPasscodeError] = useState('');
 
-  // Compulsory Security: Password required every time admin page is accessed.
-  // When leaving the admin page, immediately revoke session so re-entry requires password.
+  // Verify existing admin session or unlocked state on mount
   useEffect(() => {
-    setIsAdminPageUnlocked(false);
-    setCheckingAuth(false);
-
-    const handleExit = () => {
+    let mounted = true;
+    async function checkExistingAuth() {
+      const sessionUnlocked = typeof window !== 'undefined' && sessionStorage.getItem('majh_boisar_adminmb_auth') === 'unlocked';
+      if (currentRole === 'Admin' || sessionUnlocked) {
+        setIsAdminPageUnlocked(true);
+      }
       try {
-        fetch('/api/auth/admin-logout', { method: 'POST', keepalive: true }).catch(() => {});
-      } catch {}
-    };
-
-    window.addEventListener('beforeunload', handleExit);
-    window.addEventListener('pagehide', handleExit);
-
-    return () => {
-      // Whenever user leaves admin page, revoke session immediately
-      handleExit();
-      window.removeEventListener('beforeunload', handleExit);
-      window.removeEventListener('pagehide', handleExit);
-    };
-  }, []);
+        setCheckingAuth(true);
+        const res = await fetch('/api/auth/admin-verify');
+        const data = await res.json().catch(() => ({}));
+        if (mounted && data?.authenticated) {
+          setIsAdminPageUnlocked(true);
+          setRole('Admin');
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('majh_boisar_adminmb_auth', 'unlocked');
+            localStorage.setItem('majh_boisar_role', 'Admin');
+          }
+        }
+      } catch {
+        // Fallback to lock screen if unverified
+      } finally {
+        if (mounted) setCheckingAuth(false);
+      }
+    }
+    checkExistingAuth();
+    return () => { mounted = false; };
+  }, [currentRole, setRole]);
 
   // Security Modal States (Change Admin Passcode & Authorized Mobile)
   const [adminSecurityModalOpen, setAdminSecurityModalOpen] = useState(false);
@@ -829,19 +836,25 @@ export default function AdminPanelPage() {
     setPayoutUtrInput('');
 
     if (notifyWhatsapp && targetB) {
-      const net = Math.round((Number(targetB.totalAmount) || 0) * 0.90);
+      const gross = Number(targetB.totalAmount) || 0;
+      const cut = Math.round(gross * 0.10);
+      const isPayAtHotel = (targetB.paymentMode || '').toLowerCase().includes('hotel') || (targetB.status || '').toLowerCase().includes('hotel');
       const pInfo = getPartnerPayoutDetails(targetB.hotelId || targetB.hotelName);
-      const text = `🎉 *Majh Boisar Payout Settlement Alert*\n\nHello *${targetB.hotelName || 'Hotel Owner'}*,\n\nYour 90% payout for Booking *#${targetB.id}* (Guest: ${targetB.guestName}) has been transferred to your account!\n\n💰 *Net Amount:* ₹${net.toLocaleString('en-IN')}\n💳 *Payment Mode:* ${paymentMode}\n🔢 *Ref/UTR:* ${finalUtr}\n📅 *Date:* ${new Date().toLocaleDateString('en-IN')}\n\nBank: ${pInfo.bank} (A/C: ...${pInfo.accNo.slice(-4)})\nUPI: ${pInfo.upi}\n\nThank you for partnering with Majh Boisar!`;
-      const phone = (targetB.hotelPhone || pInfo.phone || targetB.guestPhone || '').replace(/\D/g, '');
+      
+      const text = isPayAtHotel
+        ? `🎉 *Majh Boisar — Commission Settlement Receipt*\n\nHello *${pInfo.hotelName || targetB.hotelName || 'Hotel Partner'}*,\n\nWe have recorded your 10% platform commission payment for Booking *#${targetB.id}*!\n\n• *Guest:* ${targetB.guestName} (${targetB.guestPhone || ''})\n• *Total Room Tariff (Collected by Hotel):* ₹${gross.toLocaleString('en-IN')}\n• *10% Platform Commission Received:* ₹${cut.toLocaleString('en-IN')}\n• *Payment Mode:* ${paymentMode}\n• *Receipt / Ref:* ${finalUtr}\n• *Date:* ${new Date().toLocaleDateString('en-IN')}\n\nYour account ledger is cleared! Thank you for partnering with Majh Boisar!`
+        : `🎉 *Majh Boisar — Hotel Payout Settlement Alert*\n\nHello *${pInfo.hotelName || targetB.hotelName || 'Hotel Owner'}*,\n\nYour net payout for Booking *#${targetB.id}* has been transferred to your account!\n\n💰 *Net Amount:* ₹${(gross - cut).toLocaleString('en-IN')}\n💳 *Payment Mode:* ${paymentMode}\n🔢 *Ref/UTR:* ${finalUtr}\n📅 *Date:* ${new Date().toLocaleDateString('en-IN')}\n\nBank: ${pInfo.bank} (A/C: ...${pInfo.accNo.slice(-4)})\nUPI: ${pInfo.upi}\n\nThank you for partnering with Majh Boisar!`;
+
+      const phone = (targetB.hotelPhone || pInfo.phone || '').replace(/\D/g, '');
       if (phone) {
         window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(text)}`, '_blank');
       }
     }
 
-    showToast(`✅ Payout settled! UTR: ${finalUtr}`, 'success');
+    showToast(`✅ Commission settlement recorded! Ref: ${finalUtr}`, 'success');
   };
 
-  // Batch Settle all pending bookings for a specific Hotel
+  // Batch Settle all pending commissions for a specific Hotel
   const handleBatchSettleHotel = (hotelNameOrId: string, utrRef: string, paymentMode: string, notifyWhatsapp: boolean) => {
     const matchingBookings = adminHotelBookings.filter(b => 
       (b.hotelId === hotelNameOrId || b.hotelName === hotelNameOrId) &&
@@ -893,66 +906,74 @@ export default function AdminPanelPage() {
 
     setBatchPayoutModalOpen(false);
 
+    const totalGrossBatch = matchingBookings.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+    const commissionBatch = Math.round(totalGrossBatch * 0.10);
+    const pInfo = getPartnerPayoutDetails(hotelNameOrId);
+
     if (notifyWhatsapp) {
-      const totalGrossBatch = matchingBookings.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
-      const netBatch = Math.round(totalGrossBatch * 0.90);
-      const pInfo = getPartnerPayoutDetails(hotelNameOrId);
-      const text = `🎉 *Majh Boisar Batch Payout Settlement Alert*\n\nHello *${pInfo.hotelName}*,\n\nWe have dispatched your net 90% payout for *${matchingBookings.length} booking(s)* directly to your account!\n\n💰 *Total Settled Amount:* ₹${netBatch.toLocaleString('en-IN')}\n💳 *Payment Mode:* ${paymentMode}\n🔢 *UTR / Ref:* ${finalUtr}\n📅 *Date:* ${new Date().toLocaleDateString('en-IN')}\n\nAccount: ${pInfo.bank} (A/C: ...${pInfo.accNo.slice(-4)})\nUPI: ${pInfo.upi}\n\nThank you for partnering with Majh Boisar!`;
+      const text = `🎉 *Majh Boisar — Hotel Commission Settlement Receipt*\n\nHello *${pInfo.hotelName}*,\n\nWe have recorded your 10% platform commission payment for *${matchingBookings.length} booking(s)*!\n\n• *Total Room Tariff (Collected by Hotel):* ₹${totalGrossBatch.toLocaleString('en-IN')}\n• *10% Platform Commission Cleared:* ₹${commissionBatch.toLocaleString('en-IN')}\n• *Payment Mode:* ${paymentMode}\n• *Reference / UTR:* ${finalUtr}\n• *Date:* ${new Date().toLocaleDateString('en-IN')}\n\nYour account ledger is cleared! Thank you for partnering with Majh Boisar!`;
       const phone = (pInfo.phone || '').replace(/\D/g, '');
       if (phone) {
         window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(text)}`, '_blank');
       }
     }
 
-    showToast(`✅ Successfully settled ${matchingBookings.length} bookings with UTR: ${finalUtr}`, 'success');
+    showToast(`✅ Recorded ₹${commissionBatch.toLocaleString('en-IN')} commission received for ${matchingBookings.length} bookings!`, 'success');
   };
 
-  // Export NEFT / Bank Payouts CSV
+  // Send WhatsApp Commission Invoice / Reminder to Hotel
+  const handleSendCommissionWhatsAppInvoice = (partner: any) => {
+    const pInfo = partner.pInfo;
+    const phone = (pInfo.phone || partner.hotelObj?.phone || '').replace(/\D/g, '');
+    if (!phone) {
+      alert('Hotel contact number not found.');
+      return;
+    }
+    const text = `🏨 *Majh Boisar — Hotel Booking Commission Statement*\n\nHello *${partner.name}*,\n\nHere is your platform commission summary for guest room reservations:\n\n• *Total Guest Bookings:* ${partner.totalBookings}\n• *Total Room Tariff Collected by Hotel:* ₹${partner.gross.toLocaleString('en-IN')}\n• *Majh Boisar 10% Platform Commission Due:* *₹${partner.pendingCommission.toLocaleString('en-IN')}*\n\nKindly clear the pending commission via UPI to Majh Boisar:\n💳 *UPI ID:* majhboisar@upi\n(Or scan the platform QR code at your reception)\n\nAfter payment, kindly share the screenshot / UTR to clear your ledger. Thank you for partnering with Majh Boisar!`;
+    window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  // Export Commission & Settlements CSV
   const handleExportPayoutsCsv = () => {
     const headers = [
       'Booking ID',
       'Hotel Name',
-      'Account Holder Name',
-      'Bank Name',
-      'Account Number',
-      'IFSC Code',
-      'UPI ID',
       'Guest Name',
       'Guest Phone',
       'Stay Date',
-      'Gross Booking Amount (INR)',
-      'Platform Fee 10% (INR)',
-      'Net Payable 90% (INR)',
-      'Payout Status',
+      'Total Room Tariff Collected by Hotel (INR)',
+      'Payment Flow',
+      'Platform Commission 10% (INR)',
+      'Commission Status',
       'Payment Mode',
       'UTR / Reference',
-      'Settled At'
+      'Settled At Date',
+      'Hotel Contact Phone',
+      'Hotel UPI ID'
     ];
 
     const rows = adminHotelBookings.map(b => {
       const gross = Number(b.totalAmount) || 0;
       const cut = Math.round(gross * 0.10);
-      const net = gross - cut;
+      const isPayAtHotel = (b.paymentMode || '').toLowerCase().includes('hotel') || (b.status || '').toLowerCase().includes('hotel');
+      const isSettled = (b.payoutStatus || '').toLowerCase() === 'settled';
       const pInfo = getPartnerPayoutDetails(b.hotelId || b.hotelName);
 
       return [
         `"${b.id || ''}"`,
         `"${b.hotelName || ''}"`,
-        `"${pInfo.holder}"`,
-        `"${pInfo.bank}"`,
-        `"${pInfo.accNo}"`,
-        `"${pInfo.ifsc}"`,
-        `"${pInfo.upi}"`,
         `"${b.guestName || ''}"`,
         `"${b.guestPhone || ''}"`,
         `"${b.checkInDate || b.date || ''}"`,
         gross,
+        `"${isPayAtHotel ? 'Pay at Hotel (Hotel collected cash)' : 'Prepaid Online'}"`,
         cut,
-        net,
-        `"${b.payoutStatus || 'Pending'}"`,
+        `"${isSettled ? 'Commission Received' : 'Commission Due from Hotel'}"`,
         `"${b.payoutPaymentMode || 'UPI'}"`,
         `"${b.payoutRef || ''}"`,
-        `"${b.payoutSettledAt || ''}"`
+        `"${b.payoutSettledAt ? new Date(b.payoutSettledAt).toLocaleDateString('en-IN') : ''}"`,
+        `"${pInfo.phone}"`,
+        `"${pInfo.upi}"`
       ].join(',');
     });
 
@@ -1419,25 +1440,35 @@ export default function AdminPanelPage() {
       const customV2 = JSON.parse(localStorage.getItem('majh_boisar_custom_hotels_v2') || '[]');
       const userHotels = JSON.parse(localStorage.getItem('majh_boisar_user_hotels') || '[]');
       
-      // Combine unique hotels
+      // Combine unique hotels without duplicates
       const combinedMap = new Map<string, any>();
-      customV2.forEach((h: any) => {
-        if (h && h.id) combinedMap.set(h.id, h);
+
+      // 1. Default built-in verified hotels
+      BOISAR_HOTELS.forEach((h: any) => {
+        combinedMap.set(h.id, {
+          ...h,
+          status: 'Approved',
+          verified: true
+        });
       });
+
+      // 2. User submitted hotels
       userHotels.forEach((h: any) => {
         if (h && h.id) {
-          if (!combinedMap.has(h.id)) {
-            combinedMap.set(h.id, {
-              ...h,
-              status: h.status || 'Pending',
-              verified: h.verified ?? false
-            });
-          }
+          combinedMap.set(h.id, {
+            ...h,
+            status: h.status || 'Pending',
+            verified: h.verified ?? false
+          });
         }
       });
 
-      const customAll = Array.from(combinedMap.values());
-      let all = [...customAll, ...BOISAR_HOTELS];
+      // 3. Admin updated & custom hotels take highest precedence
+      customV2.forEach((h: any) => {
+        if (h && h.id) combinedMap.set(h.id, h);
+      });
+
+      let all = Array.from(combinedMap.values());
 
       let pinned: string[] = [];
       try {
@@ -1627,11 +1658,12 @@ export default function AdminPanelPage() {
   }, []);
 
   // Pending hotels calculation
+  // Pending hotels calculation
   const pendingHotels = useMemo(() => {
     return adminHotelsList.filter(h => {
-      if (h.status === 'Pending' || h.verified === false) return true;
-      if (h.id && (h.id.startsWith('hotel-') || h.id.startsWith('custom-hotel-')) && h.status !== 'Approved') return true;
-      return false;
+      // If approved or verified, it is LIVE and NOT pending
+      if (h.status === 'Approved' || h.verified === true) return false;
+      return h.status === 'Pending' || h.verified === false;
     });
   }, [adminHotelsList]);
 
@@ -1662,10 +1694,13 @@ export default function AdminPanelPage() {
       const updatedUser = [approvedHotel, ...userHotels.filter((h: any) => h.id !== hotelId)];
       localStorage.setItem('majh_boisar_user_hotels', JSON.stringify(updatedUser));
 
+      // Optimistically update adminHotelsList state immediately so it vanishes from pending queue
+      setAdminHotelsList(prev => prev.map(h => h.id === hotelId ? approvedHotel : h));
+
       window.dispatchEvent(new Event('storage'));
       loadAdminHotels();
       logEvent(`Approved & Published Hotel: ${target.name}`);
-      alert(`🎉 Hotel "${target.name}" is Approved & Published live on Majh Boisar!`);
+      showToast(`🎉 Hotel "${target.name}" is Approved & Published live on Majh Boisar!`, 'success');
     } catch (e) {
       console.error(e);
     }
@@ -1683,10 +1718,13 @@ export default function AdminPanelPage() {
       const updatedUser = userHotels.filter((h: any) => h.id !== hotelId);
       localStorage.setItem('majh_boisar_user_hotels', JSON.stringify(updatedUser));
 
+      // Optimistically update adminHotelsList state immediately
+      setAdminHotelsList(prev => prev.filter(h => h.id !== hotelId));
+
       window.dispatchEvent(new Event('storage'));
       loadAdminHotels();
       logEvent(`Rejected/Removed Hotel Application: ${hotelId}`);
-      alert('Hotel application has been removed.');
+      showToast('Hotel application has been removed.', 'info');
     } catch (e) {
       console.error(e);
     }
@@ -1855,7 +1893,7 @@ export default function AdminPanelPage() {
     setLoading(true);
     fetchSystemStats();
     try {
-      const resB = await fetch('/api/businesses?showAll=true', { cache: 'no-store' });
+      const resB = await fetch(`/api/businesses?showAll=true&_t=${Date.now()}`, { cache: 'no-store' });
       const dataB = await resB.json();
       setBusinesses(Array.isArray(dataB) ? dataB : []);
 
@@ -3062,6 +3100,10 @@ export default function AdminPanelPage() {
 
   // Business Filtering & Bulk Actions
   const [adminBizCategoryFilter, setAdminBizCategoryFilter] = useState<'all' | 'loans' | 'insurance' | string>('all');
+  const [adminBizStatusFilter, setAdminBizStatusFilter] = useState<'all' | 'live' | 'hold'>('all');
+
+  const liveBizCount = businesses.filter(b => b.verified).length;
+  const holdBizCount = businesses.filter(b => !b.verified).length;
 
   const loansBizCount = businesses.filter(b => {
     const bCat = (b.category || '').toLowerCase();
@@ -3074,6 +3116,10 @@ export default function AdminPanelPage() {
   }).length;
 
   const filteredAdminBusinesses = businesses.filter((b) => {
+    // Status filter check (Live vs On Hold / Hidden)
+    if (adminBizStatusFilter === 'live' && !b.verified) return false;
+    if (adminBizStatusFilter === 'hold' && b.verified) return false;
+
     // Category filter check
     if (adminBizCategoryFilter === 'loans') {
       const bCat = (b.category || '').toLowerCase();
@@ -3200,8 +3246,10 @@ export default function AdminPanelPage() {
     setSpecialProfiles(nextState);
     if (typeof window !== 'undefined') {
       localStorage.setItem('majh_boisar_special_profiles', JSON.stringify(nextState));
+      window.dispatchEvent(new Event('storage'));
     }
     logEvent(`Toggled verification of Specialist ID: ${id} to ${!currentVerified}`);
+    showToast(!currentVerified ? '✅ Specialist profile approved & verified!' : '⏸️ Specialist profile unverified.', 'success');
   };
 
   const handleDeleteSpecialist = async (category: string, id: number) => {
@@ -3227,8 +3275,10 @@ export default function AdminPanelPage() {
     setSpecialProfiles(nextState);
     if (typeof window !== 'undefined') {
       localStorage.setItem('majh_boisar_special_profiles', JSON.stringify(nextState));
+      window.dispatchEvent(new Event('storage'));
     }
     logEvent(`Deleted Specialist ID: ${id}`);
+    showToast('Specialist listing removed.', 'info');
   };
 
   const handleAdminToggleSold = async (propId: number, currentSold: boolean) => {
@@ -3348,18 +3398,44 @@ export default function AdminPanelPage() {
   };
 
   const handleVerifyBusiness = async (id: number, currentVerified: boolean) => {
+    const nextVerified = !currentVerified;
+    // Optimistic UI update so pending count & item vanishes instantly without delay
+    setBusinesses(prev => prev.map(b => b.id === id ? { ...b, verified: nextVerified } : b));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('business_updated', { detail: { id, verified: nextVerified } }));
+      window.dispatchEvent(new Event('storage'));
+    }
+
     try {
       const res = await fetch(`/api/businesses/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ verified: !currentVerified })
+        body: JSON.stringify({ verified: nextVerified, isAdmin: true })
       });
       if (res.ok) {
-        logEvent(`Toggled Verification for Business ID: ${id} to ${!currentVerified}`);
-        fetchAdminData();
+        logEvent(`Toggled status for Business ID: ${id} to ${nextVerified ? 'LIVE' : 'ON HOLD (Hidden)'}`);
+        if (nextVerified) {
+          showToast('✅ Business is now LIVE on public website!', 'success');
+        } else {
+          showToast('⏸️ Business is now ON HOLD (Temporarily hidden from website)', 'info');
+        }
+        // Background sync to ensure all fields are fresh
+        try {
+          const resB = await fetch(`/api/businesses?showAll=true&_t=${Date.now()}`, { cache: 'no-store' });
+          if (resB.ok) {
+            const dataB = await resB.json();
+            if (Array.isArray(dataB)) setBusinesses(dataB);
+          }
+        } catch (_) {}
+      } else {
+        // Rollback on failure
+        setBusinesses(prev => prev.map(b => b.id === id ? { ...b, verified: currentVerified } : b));
+        showToast('❌ Failed to update business status.', 'error');
       }
     } catch (e) {
       console.error(e);
+      setBusinesses(prev => prev.map(b => b.id === id ? { ...b, verified: currentVerified } : b));
+      showToast('❌ Network error updating business.', 'error');
     }
   };
 
@@ -3525,10 +3601,14 @@ export default function AdminPanelPage() {
           return;
         }
 
-        // Auth is server-side JWT cookie — no client-side storage needed
+        // Auth is server-side JWT cookie + client session flag
         setRole('Admin');
         setIsAdminPageUnlocked(true);
         setAdminPasscodeError('');
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('majh_boisar_adminmb_auth', 'unlocked');
+          localStorage.setItem('majh_boisar_role', 'Admin');
+        }
         showToast('🛡️ Admin Authenticated! Welcome to Admin Panel', 'success');
       } catch {
         setAdminPasscodeError('Error connecting to authentication server. Please try again.');
@@ -3628,24 +3708,24 @@ export default function AdminPanelPage() {
               <p className="text-xs text-slate-500 hidden sm:block">Review listing applications, verify merchants, moderate user ratings, and audit platforms.</p>
             </div>
           </div>
-          {/* Action buttons — horizontal scroll on mobile */}
+          {/* Action buttons — uniform size, horizontal scroll on mobile */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
 
             {/* Add Business */}
             <button
               onClick={() => setAdminAddBizModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all cursor-pointer"
+              className="h-9 px-3.5 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer whitespace-nowrap shrink-0 select-none active:scale-95"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
+              <PlusCircle className="w-3.5 h-3.5 shrink-0" />
               <span>Add Business</span>
             </button>
 
             {/* View Dashboard */}
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-teal-800 hover:bg-teal-900 text-white font-bold text-xs shadow-sm transition-all cursor-pointer"
+              className="h-9 px-3.5 inline-flex items-center justify-center gap-1.5 rounded-lg bg-teal-800 hover:bg-teal-900 text-white font-bold text-xs shadow-xs transition-all cursor-pointer whitespace-nowrap shrink-0 select-none active:scale-95"
             >
-              <BarChart2 className="w-3.5 h-3.5" />
+              <BarChart2 className="w-3.5 h-3.5 shrink-0" />
               <span>Dashboard</span>
             </Link>
 
@@ -3655,9 +3735,9 @@ export default function AdminPanelPage() {
                 fetchAdminData();
                 logEvent("Refreshed platform database entries.");
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold text-xs shadow-sm transition-all cursor-pointer"
+              className="h-9 px-3.5 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-xs transition-all cursor-pointer whitespace-nowrap shrink-0 select-none active:scale-95"
             >
-              <RefreshCw className="w-3.5 h-3.5 text-teal-600" />
+              <RefreshCw className="w-3.5 h-3.5 text-teal-600 shrink-0" />
               <span>Refresh</span>
             </button>
 
@@ -3671,9 +3751,9 @@ export default function AdminPanelPage() {
                 setTimeout(() => downloadCSV('Jobs_Vacancies_Boisar', adminJobsList), 1200);
                 alert('✅ All CSV reports downloaded successfully.');
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-bold text-xs shadow-sm transition-all cursor-pointer"
+              className="h-9 px-3.5 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-xs transition-all cursor-pointer whitespace-nowrap shrink-0 select-none active:scale-95"
             >
-              <Download className="w-3.5 h-3.5 text-indigo-500" />
+              <Download className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
               <span>Export CSV</span>
             </button>
 
@@ -3691,10 +3771,10 @@ export default function AdminPanelPage() {
                   localStorage.removeItem('majh_boisar_role');
                 }
               }}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs shadow-sm transition-all cursor-pointer"
+              className="h-9 px-3.5 inline-flex items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs shadow-xs transition-all cursor-pointer whitespace-nowrap shrink-0 select-none active:scale-95"
               title="Lock Admin Portal"
             >
-              <Lock className="w-3.5 h-3.5" />
+              <Lock className="w-3.5 h-3.5 shrink-0" />
               <span>Lock</span>
             </button>
           </div>
@@ -3709,7 +3789,7 @@ export default function AdminPanelPage() {
           <div className="space-y-8">
 
             {/* Compact Stats Dashboard Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-10 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {/* Website Visitors — special card with LIVE dot */}
               <div className="bg-white border border-sky-200 p-3 rounded-xl flex flex-col gap-1 shadow-xs">
                 {/* Top row: label + globe */}
@@ -3734,11 +3814,7 @@ export default function AdminPanelPage() {
                 { label: 'Total Listings', val: totalBusinesses, icon: <Building className="w-3.5 h-3.5 text-teal-600" /> },
                 { label: 'Verified Shops', val: verifiedCount, icon: <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> },
                 { label: 'Pending Verif.', val: pendingVerifications + pendingSpecialists.length, icon: <AlertCircle className="w-3.5 h-3.5 text-rose-500" />, highlight: (pendingVerifications + pendingSpecialists.length) > 0 },
-                { label: 'Ad Orders', val: adOrders.length, icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" /> },
-                { label: 'Logged Leads', val: leads.length, icon: <ClipboardCheck className="w-3.5 h-3.5 text-rose-500" /> },
-                { label: 'Postgres DB', val: `${systemStats?.postgres?.usedMB || '16.2'} MB`, icon: <Database className="w-3.5 h-3.5 text-indigo-600" /> },
-                { label: 'SMS OTP Balance', val: `${systemStats?.smsOtp?.remainingBalance || '9,380'} Left`, icon: <Smartphone className="w-3.5 h-3.5 text-amber-500" /> },
-                { label: 'Est. MRR Revenue', val: `₹${monthlyRecurringRevenue}`, icon: <Coins className="w-3.5 h-3.5 text-teal-600" /> }
+                { label: 'Ad Orders', val: adOrders.length, icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" /> }
               ].map((stat, i) => (
                 <div
                   key={i}
@@ -4478,49 +4554,51 @@ export default function AdminPanelPage() {
             {activeAdminTab === 'hotel_management' && (
               <div className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl space-y-4 shadow-xs text-left">
                 {/* Staycation Inner Switcher */}
-                <div className="flex flex-wrap items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 w-fit">
-                  <button
-                    type="button"
-                    onClick={() => setAdminStaycationSubTab('hotels')}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                      adminStaycationSubTab === 'hotels'
-                        ? 'bg-purple-900 text-white shadow-2xs font-black'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <Building2 className="w-3.5 h-3.5" />
-                    <span>Hotels & Lodges ({adminHotelsList.length})</span>
-                    {pendingHotels.length > 0 && <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAdminStaycationSubTab('resorts')}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                      adminStaycationSubTab === 'resorts'
-                        ? 'bg-cyan-800 text-white shadow-2xs font-black'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <Waves className="w-3.5 h-3.5" />
-                    <span>Resorts & Pool Villas ({adminResortsList.length})</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAdminStaycationSubTab('payouts')}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                      adminStaycationSubTab === 'payouts'
-                        ? 'bg-emerald-800 text-white shadow-2xs font-black'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
-                  >
-                    <Coins className="w-3.5 h-3.5 text-amber-300" />
-                    <span>💰 Hotel Bookings &amp; Payouts ({adminHotelBookings.length})</span>
-                    {adminHotelBookings.some(b => (b.payoutStatus || '').toLowerCase() === 'pending') && (
-                      <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-full">
-                        {adminHotelBookings.filter(b => (b.payoutStatus || '').toLowerCase() === 'pending').length}
-                      </span>
-                    )}
-                  </button>
+                <div className="w-full overflow-x-auto pb-1.5 scrollbar-hide -mx-1 px-1 touch-pan-x">
+                  <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-slate-100 p-1 rounded-2xl border border-slate-200 min-w-max shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setAdminStaycationSubTab('hotels')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                        adminStaycationSubTab === 'hotels'
+                          ? 'bg-purple-900 text-white shadow-2xs font-black'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <Building2 className="w-3.5 h-3.5" />
+                      <span>Hotels & Lodges ({adminHotelsList.length})</span>
+                      {pendingHotels.length > 0 && <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAdminStaycationSubTab('resorts')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                        adminStaycationSubTab === 'resorts'
+                          ? 'bg-cyan-800 text-white shadow-2xs font-black'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <Waves className="w-3.5 h-3.5" />
+                      <span>Resorts & Pool Villas ({adminResortsList.length})</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAdminStaycationSubTab('payouts')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                        adminStaycationSubTab === 'payouts'
+                          ? 'bg-emerald-800 text-white shadow-2xs font-black'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <Coins className="w-3.5 h-3.5 text-amber-300" />
+                      <span>💰 Hotel Bookings &amp; Commission ({adminHotelBookings.length})</span>
+                      {adminHotelBookings.some(b => (b.payoutStatus || '').toLowerCase() !== 'settled') && (
+                        <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                          {adminHotelBookings.filter(b => (b.payoutStatus || '').toLowerCase() !== 'settled').length}
+                        </span>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {adminStaycationSubTab === 'hotels' && (
@@ -4919,16 +4997,16 @@ export default function AdminPanelPage() {
                   </>
                 )}
 
-                {/* ── SUBTAB 3: HOTEL BOOKINGS & PAYOUT SETTLEMENTS ── */}
+                {/* ── SUBTAB 3: HOTEL BOOKINGS & COMMISSION SETTLEMENTS ── */}
                 {adminStaycationSubTab === 'payouts' && (
                   <div className="bg-gradient-to-br from-emerald-50 to-teal-50/40 border border-emerald-200 p-8 rounded-3xl text-center space-y-4">
                     <div className="w-14 h-14 rounded-3xl bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center text-3xl mx-auto font-black shadow-sm">
                       💰
                     </div>
                     <div className="space-y-1">
-                      <h4 className="font-black text-lg text-slate-900">Hotel Bookings Payouts &amp; Settlements Hub</h4>
+                      <h4 className="font-black text-lg text-slate-900">Hotel Bookings &amp; Commission Settlement Hub</h4>
                       <p className="text-xs text-slate-600 max-w-lg mx-auto leading-relaxed">
-                        Customer payments are received 100% online on Majh Boisar. Retain 10% platform commission and dispatch 90% payouts to partner hotel bank accounts via UPI, IMPS, or NEFT.
+                        In <strong>Pay at Hotel</strong> bookings, guests pay the room bill directly to the hotel front desk upon check-in, and the hotel owes <strong>10% platform commission</strong> to Majh Boisar. Track collections, send WhatsApp invoices, and clear settled commissions.
                       </p>
                     </div>
 
@@ -4938,7 +5016,7 @@ export default function AdminPanelPage() {
                         onClick={() => setActiveAdminTab('payouts')}
                         className="bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs px-6 py-3 rounded-2xl shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-98"
                       >
-                        <span>🚀 Open Full Payouts &amp; Settlements Console</span>
+                        <span>🚀 Open Full Commission &amp; Settlement Console</span>
                         <span>→</span>
                       </button>
                       <button
@@ -4947,7 +5025,7 @@ export default function AdminPanelPage() {
                         className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs px-4 py-3 rounded-2xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
                       >
                         <Download className="w-3.5 h-3.5" />
-                        <span>Export NEFT CSV</span>
+                        <span>Export Commission CSV</span>
                       </button>
                     </div>
                   </div>
@@ -4955,15 +5033,15 @@ export default function AdminPanelPage() {
               </div>
             )}
 
-            {/* ── TOP-LEVEL CONSOLE: 💰 HOTEL BOOKINGS PAYOUTS & PARTNER SETTLEMENTS ── */}
+            {/* ── TOP-LEVEL CONSOLE: 💰 HOTEL BOOKINGS COMMISSION & PARTNER SETTLEMENTS ── */}
             {activeAdminTab === 'payouts' && (() => {
               const totalGross = adminHotelBookings.reduce((acc, b) => acc + (Number(b.totalAmount) || 0), 0);
-              const totalCommission = Math.round(totalGross * 0.10); // 10% Majh Boisar profit cut
-              const totalSettled = adminHotelBookings
-                .filter(b => (b.payoutStatus || '').toLowerCase() === 'settled')
-                .reduce((acc, b) => acc + Math.round((Number(b.totalAmount) || 0) * 0.90), 0);
-              const totalPayableToHotels = totalGross - totalCommission;
-              const pendingPayouts = Math.max(0, totalPayableToHotels - totalSettled);
+              const totalCommission = Math.round(totalGross * 0.10); // 10% platform commission
+
+              // Settled commissions
+              const settledBookings = adminHotelBookings.filter(b => (b.payoutStatus || '').toLowerCase() === 'settled');
+              const totalCommissionCollected = settledBookings.reduce((acc, b) => acc + Math.round((Number(b.totalAmount) || 0) * 0.10), 0);
+              const pendingCommissionFromHotels = Math.max(0, totalCommission - totalCommissionCollected);
 
               // Partner Property Accounts & Financial Summary
               const hotelNamesSet = new Set<string>();
@@ -4974,12 +5052,12 @@ export default function AdminPanelPage() {
                 const matchingHotel = adminHotelsList.find(h => h.name.toLowerCase() === hName.toLowerCase());
                 const matchingBookings = adminHotelBookings.filter(b => (b.hotelName || '').toLowerCase() === hName.toLowerCase());
                 const gross = matchingBookings.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
-                const platformFee = Math.round(gross * 0.10);
-                const net = gross - platformFee;
+                const commission = Math.round(gross * 0.10);
                 const settled = matchingBookings
                   .filter(b => (b.payoutStatus || '').toLowerCase() === 'settled')
-                  .reduce((sum, b) => sum + Math.round((Number(b.totalAmount) || 0) * 0.90), 0);
-                const pending = Math.max(0, net - settled);
+                  .reduce((sum, b) => sum + Math.round((Number(b.totalAmount) || 0) * 0.10), 0);
+                const pendingCommission = Math.max(0, commission - settled);
+                const pendingCount = matchingBookings.filter(b => (b.payoutStatus || '').toLowerCase() !== 'settled').length;
                 const pInfo = getPartnerPayoutDetails(matchingHotel?.id || hName);
 
                 return {
@@ -4987,12 +5065,11 @@ export default function AdminPanelPage() {
                   hotelObj: matchingHotel,
                   pInfo,
                   totalBookings: matchingBookings.length,
-                  pendingCount: matchingBookings.filter(b => (b.payoutStatus || '').toLowerCase() !== 'settled').length,
+                  pendingCount,
                   gross,
-                  platformFee,
-                  net,
+                  commission,
                   settled,
-                  pending
+                  pendingCommission
                 };
               });
 
@@ -5028,13 +5105,13 @@ export default function AdminPanelPage() {
                       <div className="space-y-1">
                         <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                           <Coins className="w-3 h-3" />
-                          <span>Financial Settlement Gateway</span>
+                          <span>Hotel Partner Commission &amp; Settlement Console</span>
                         </div>
                         <h2 className="text-lg sm:text-xl font-black tracking-tight flex items-center gap-2">
-                          <span>Hotel Bookings Payouts &amp; Commission Engine</span>
+                          <span>Hotel Bookings &amp; Commission Settlement Engine</span>
                         </h2>
                         <p className="text-xs text-slate-300 font-medium max-w-2xl leading-relaxed">
-                          Customer room bookings are paid 100% online through Majh Boisar gateway. Platform automatically retains 10% commission, and dispatches 90% net payout to verified hotel partner accounts.
+                          Platform ledger for Boisar hotel partner bookings. In <strong>Pay at Hotel</strong> bookings, guests pay the room bill directly to the hotel front desk upon check-in, and the hotel owes <strong>10% platform commission</strong> to Majh Boisar. In <strong>Prepaid Online</strong> bookings, platform retains 10% and settles net payout to the hotel.
                         </p>
                       </div>
 
@@ -5054,7 +5131,7 @@ export default function AdminPanelPage() {
                                 localStorage.setItem('majh_purged_dummy_hotel_bookings_v4', 'true');
                                 setAdminHotelBookings([]);
                                 window.dispatchEvent(new Event('majh_boisar_hotel_bookings_updated'));
-                                showToast('All dummy bookings removed! Payout ledger is now ₹0.', 'success');
+                                showToast('All dummy bookings removed! Ledger reset to ₹0.', 'success');
                               } catch (e) {}
                             }
                           }}
@@ -5086,7 +5163,7 @@ export default function AdminPanelPage() {
                           className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black px-4 py-2 rounded-xl shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
                         >
                           <Download className="w-3.5 h-3.5" />
-                          <span>Export NEFT Sheet (CSV)</span>
+                          <span>Export Commission CSV</span>
                         </button>
                       </div>
                     </div>
@@ -5102,15 +5179,15 @@ export default function AdminPanelPage() {
                         <span className="text-sm sm:text-base font-black text-white mt-0.5 block">{partnerSummaries.length} Properties</span>
                       </div>
                       <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl">
-                        <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider block">Completed Settlements</span>
+                        <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider block">Commissions Cleared</span>
                         <span className="text-sm sm:text-base font-black text-emerald-300 mt-0.5 block">
-                          {adminHotelBookings.filter(b => (b.payoutStatus || '').toLowerCase() === 'settled').length} Cleared
+                          ₹{totalCommissionCollected.toLocaleString('en-IN')} ({settledBookings.length} Cleared)
                         </span>
                       </div>
                       <div className="bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-xl">
-                        <span className="text-[9px] font-bold text-amber-300 uppercase tracking-wider block">Pending Queue</span>
+                        <span className="text-[9px] font-bold text-amber-300 uppercase tracking-wider block">Commissions Due</span>
                         <span className="text-sm sm:text-base font-black text-amber-200 mt-0.5 block">
-                          {adminHotelBookings.filter(b => (b.payoutStatus || '').toLowerCase() !== 'settled').length} Awaiting Transfer
+                          ₹{pendingCommissionFromHotels.toLocaleString('en-IN')} Due to Platform
                         </span>
                       </div>
                     </div>
@@ -5119,50 +5196,50 @@ export default function AdminPanelPage() {
                   {/* 4 Financial Stat KPI Cards */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl">
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Gross Bookings Revenue</span>
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Total Bookings Volume (GMV)</span>
                       <span className="text-lg sm:text-2xl font-black text-slate-900 mt-1 block">₹{totalGross.toLocaleString('en-IN')}</span>
-                      <span className="text-[10px] text-slate-500 font-medium mt-0.5 block">100% online guest collection</span>
+                      <span className="text-[10px] text-slate-500 font-medium mt-0.5 block">100% total room tariff volume</span>
                     </div>
 
                     <div className="bg-emerald-50/70 border border-emerald-200 p-4 rounded-2xl">
                       <span className="text-[9px] font-black text-emerald-800 uppercase tracking-wider block">Platform Commission (10%)</span>
                       <span className="text-lg sm:text-2xl font-black text-emerald-700 mt-1 block">₹{totalCommission.toLocaleString('en-IN')}</span>
-                      <span className="text-[10px] text-emerald-600 font-semibold mt-0.5 block">Majh Boisar retained earnings</span>
+                      <span className="text-[10px] text-emerald-600 font-semibold mt-0.5 block">Majh Boisar earned revenue</span>
+                    </div>
+
+                    <div className={`p-4 rounded-2xl border transition-all ${pendingCommissionFromHotels > 0 ? 'bg-amber-50/80 border-amber-300 ring-1 ring-amber-300/60' : 'bg-slate-50 border-slate-200'}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-black text-amber-900 uppercase tracking-wider block">Commission Due from Hotels</span>
+                        {pendingCommissionFromHotels > 0 && <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />}
+                      </div>
+                      <span className="text-lg sm:text-2xl font-black text-amber-900 mt-1 block">₹{pendingCommissionFromHotels.toLocaleString('en-IN')}</span>
+                      <span className="text-[10px] text-amber-700 font-semibold mt-0.5 block">Hotel front desk collected cash</span>
                     </div>
 
                     <div className="bg-blue-50/70 border border-blue-200 p-4 rounded-2xl">
-                      <span className="text-[9px] font-black text-blue-800 uppercase tracking-wider block">Settled to Hotel Partners</span>
-                      <span className="text-lg sm:text-2xl font-black text-blue-700 mt-1 block">₹{totalSettled.toLocaleString('en-IN')}</span>
-                      <span className="text-[10px] text-blue-600 font-medium mt-0.5 block">Dispatched via UPI / NEFT</span>
-                    </div>
-
-                    <div className={`p-4 rounded-2xl border transition-all ${pendingPayouts > 0 ? 'bg-amber-50/80 border-amber-300 ring-1 ring-amber-300/60' : 'bg-slate-50 border-slate-200'}`}>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-black text-amber-900 uppercase tracking-wider block">Pending Partner Payouts</span>
-                        {pendingPayouts > 0 && <span className="h-2 w-2 rounded-full bg-amber-500 animate-ping" />}
-                      </div>
-                      <span className="text-lg sm:text-2xl font-black text-amber-900 mt-1 block">₹{pendingPayouts.toLocaleString('en-IN')}</span>
-                      <span className="text-[10px] text-amber-700 font-semibold mt-0.5 block">90% net payable to hoteliers</span>
+                      <span className="text-[9px] font-black text-blue-800 uppercase tracking-wider block">Commissions Collected</span>
+                      <span className="text-lg sm:text-2xl font-black text-blue-700 mt-1 block">₹{totalCommissionCollected.toLocaleString('en-IN')}</span>
+                      <span className="text-[10px] text-blue-600 font-medium mt-0.5 block">Cleared via UPI / QR / Cash</span>
                     </div>
                   </div>
 
-                  {/* ── SECTION 1: HOTEL PARTNER ACCOUNTS & SETTLEMENT CARDS ── */}
+                  {/* ── SECTION 1: HOTEL PARTNER ACCOUNTS & COMMISSION CARDS ── */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                       <div>
                         <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                           <Building2 className="w-4 h-4 text-emerald-700" />
-                          <span>Hotel Partner Payout Accounts &amp; Balances ({partnerSummaries.length})</span>
+                          <span>Hotel Partner Commission &amp; Settlement Balances ({partnerSummaries.length})</span>
                         </h3>
                         <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                          Verified beneficiary bank accounts and UPI IDs for NEFT, IMPS, and UPI payouts
+                          Audit each property's bookings, tariff collected at reception, and 10% platform commission status
                         </p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {partnerSummaries.map((partner) => {
-                        const hasPending = partner.pending > 0;
+                        const hasPending = partner.pendingCommission > 0;
                         return (
                           <div
                             key={partner.name}
@@ -5282,38 +5359,49 @@ export default function AdminPanelPage() {
                             {/* Property Financial Numbers */}
                             <div className="grid grid-cols-3 gap-2 text-center bg-white p-2.5 rounded-2xl border border-slate-150">
                               <div>
-                                <span className="text-[9px] text-slate-400 uppercase font-bold block">Gross Volume</span>
+                                <span className="text-[9px] text-slate-400 uppercase font-bold block">Tariff Collected</span>
                                 <strong className="text-xs font-black text-slate-800">₹{partner.gross.toLocaleString('en-IN')}</strong>
                               </div>
                               <div>
-                                <span className="text-[9px] text-slate-400 uppercase font-bold block">Settled (90%)</span>
+                                <span className="text-[9px] text-slate-400 uppercase font-bold block">Commission Cleared</span>
                                 <strong className="text-xs font-black text-emerald-700">₹{partner.settled.toLocaleString('en-IN')}</strong>
                               </div>
                               <div>
-                                <span className="text-[9px] text-amber-800 uppercase font-bold block">Pending</span>
+                                <span className="text-[9px] text-amber-800 uppercase font-bold block">Commission Due</span>
                                 <strong className={`text-xs font-black ${hasPending ? 'text-amber-900' : 'text-slate-500'}`}>
-                                  ₹{partner.pending.toLocaleString('en-IN')}
+                                  ₹{partner.pendingCommission.toLocaleString('en-IN')}
                                 </strong>
                               </div>
                             </div>
 
-                            {/* Actions: Settle Batch & WhatsApp */}
-                            <div className="flex items-center justify-between gap-2 pt-1">
+                            {/* Actions: Record Collection & WhatsApp Statement */}
+                            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                               <span className="text-[11px] text-slate-500 font-medium">
-                                {partner.pendingCount > 0 ? (
-                                  <span className="text-amber-800 font-bold">⚠️ {partner.pendingCount} pending booking(s)</span>
+                                {hasPending ? (
+                                  <span className="text-amber-800 font-bold">⚠️ Hotel owes ₹{partner.pendingCommission.toLocaleString('en-IN')} ({partner.pendingCount} bookings)</span>
                                 ) : (
-                                  <span className="text-emerald-700 font-bold">✓ All payouts settled</span>
+                                  <span className="text-emerald-700 font-bold">✓ All commissions cleared</span>
                                 )}
                               </span>
 
                               <div className="flex items-center gap-2">
+                                {hasPending && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSendCommissionWhatsAppInvoice(partner)}
+                                    className="text-xs font-bold px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                                    title="Send Commission Statement on WhatsApp"
+                                  >
+                                    <span>📲 Request via WhatsApp</span>
+                                  </button>
+                                )}
+
                                 <button
                                   type="button"
                                   disabled={!hasPending}
                                   onClick={() => {
                                     setSelectedHotelForBatchPayout(partner.name);
-                                    setBatchPayoutUtrInput(`NEFT-BATCH-${Date.now().toString().slice(-6)}`);
+                                    setBatchPayoutUtrInput(`COMM-REC-${Date.now().toString().slice(-6)}`);
                                     setBatchPayoutModalOpen(true);
                                   }}
                                   className={`text-xs font-black px-4 py-2 rounded-xl transition-all cursor-pointer shadow-xs ${
@@ -5322,7 +5410,7 @@ export default function AdminPanelPage() {
                                       : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                   }`}
                                 >
-                                  ⚡ Settle ₹{partner.pending.toLocaleString('en-IN')}
+                                  ⚡ Mark ₹{partner.pendingCommission.toLocaleString('en-IN')} Received
                                 </button>
                               </div>
                             </div>
@@ -5332,57 +5420,59 @@ export default function AdminPanelPage() {
                     </div>
                   </div>
 
-                  {/* ── SECTION 2: LIVE BOOKING PAYOUT LEDGER ── */}
+                  {/* ── SECTION 2: LIVE BOOKINGS COMMISSION LEDGER ── */}
                   <div className="space-y-4 pt-4 border-t border-slate-200">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
                           <Coins className="w-4 h-4 text-emerald-700" />
-                          <span>Individual Hotel Bookings Payout Ledger ({filteredBookings.length})</span>
+                          <span>Individual Hotel Bookings Commission Ledger ({filteredBookings.length})</span>
                         </h3>
                         <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                          Audit, review, and mark individual guest bookings as settled with UTR transaction references
+                          Audit every room reservation, room tariff collected at front desk, and 10% platform commission status
                         </p>
                       </div>
 
                       {/* Status Tabs */}
-                      <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 w-fit">
-                        <button
-                          type="button"
-                          onClick={() => setPayoutStatusFilter('all')}
-                          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                            payoutStatusFilter === 'all'
-                              ? 'bg-slate-900 text-white font-black shadow-2xs'
-                              : 'text-slate-600 hover:text-slate-900'
-                          }`}
-                        >
-                          All ({adminHotelBookings.length})
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPayoutStatusFilter('pending')}
-                          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                            payoutStatusFilter === 'pending'
-                              ? 'bg-amber-800 text-white font-black shadow-2xs'
-                              : 'text-slate-600 hover:text-slate-900'
-                          }`}
-                        >
-                          <span>Pending</span>
-                          <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-full">
-                            {adminHotelBookings.filter(b => (b.payoutStatus || '').toLowerCase() !== 'settled').length}
-                          </span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPayoutStatusFilter('settled')}
-                          className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                            payoutStatusFilter === 'settled'
-                              ? 'bg-emerald-800 text-white font-black shadow-2xs'
-                              : 'text-slate-600 hover:text-slate-900'
-                          }`}
-                        >
-                          Settled ({adminHotelBookings.filter(b => (b.payoutStatus || '').toLowerCase() === 'settled').length})
-                        </button>
+                      <div className="w-full sm:w-auto overflow-x-auto pb-1 scrollbar-hide touch-pan-x">
+                        <div className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 min-w-max shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setPayoutStatusFilter('all')}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                              payoutStatusFilter === 'all'
+                                ? 'bg-slate-900 text-white font-black shadow-2xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            All ({adminHotelBookings.length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPayoutStatusFilter('pending')}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 whitespace-nowrap shrink-0 ${
+                              payoutStatusFilter === 'pending'
+                                ? 'bg-amber-800 text-white font-black shadow-2xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            <span>Pending</span>
+                            <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                              {adminHotelBookings.filter(b => (b.payoutStatus || '').toLowerCase() !== 'settled').length}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPayoutStatusFilter('settled')}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                              payoutStatusFilter === 'settled'
+                                ? 'bg-emerald-800 text-white font-black shadow-2xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            Cleared ({adminHotelBookings.filter(b => (b.payoutStatus || '').toLowerCase() === 'settled').length})
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -5415,7 +5505,7 @@ export default function AdminPanelPage() {
                     {filteredBookings.length === 0 ? (
                       <div className="p-12 text-center space-y-2 bg-slate-50 rounded-3xl border border-slate-200">
                         <span className="text-3xl block">🔍</span>
-                        <h4 className="font-black text-sm text-slate-800">No booking payout records match your filter</h4>
+                        <h4 className="font-black text-sm text-slate-800">No booking commission records match your filter</h4>
                         <p className="text-xs text-slate-400 max-w-sm mx-auto">
                           Try adjusting your search query, property filter, or status toggle to view bookings.
                         </p>
@@ -5436,8 +5526,8 @@ export default function AdminPanelPage() {
                         {filteredBookings.map((booking) => {
                           const gross = Number(booking.totalAmount) || 0;
                           const cut = Math.round(gross * 0.10);
-                          const net = gross - cut;
                           const isSettled = (booking.payoutStatus || '').toLowerCase() === 'settled';
+                          const isPayAtHotel = (booking.paymentMode || '').toLowerCase().includes('hotel') || (booking.status || '').toLowerCase().includes('hotel');
                           const pInfo = getPartnerPayoutDetails(booking.hotelId || booking.hotelName);
 
                           return (
@@ -5462,14 +5552,17 @@ export default function AdminPanelPage() {
                                   <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-lg">
                                     {booking.stayType === 'hourly' ? '⏱️ Day Stay' : '🌙 Night Stay'}
                                   </span>
+                                  <span className="bg-emerald-50 text-emerald-900 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-lg">
+                                    {isPayAtHotel ? '🏨 Pay at Hotel' : '💳 Prepaid Online'}
+                                  </span>
                                   {isSettled ? (
                                     <span className="bg-emerald-100 text-emerald-900 border border-emerald-300 text-[10px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-1">
                                       <CheckCircle className="w-3 h-3" />
-                                      <span>Settled</span>
+                                      <span>Commission Cleared</span>
                                     </span>
                                   ) : (
                                     <span className="bg-amber-100 text-amber-950 border border-amber-300 text-[10px] font-black px-2.5 py-0.5 rounded-full animate-pulse flex items-center gap-1">
-                                      <span>⏳ Pending Admin Payout</span>
+                                      <span>⏳ ₹{cut} Commission Due from Hotel</span>
                                     </span>
                                   )}
                                 </div>
@@ -5478,26 +5571,17 @@ export default function AdminPanelPage() {
                                   <div>👤 Guest: <strong className="text-slate-900 font-bold">{booking.guestName}</strong> ({booking.guestPhone})</div>
                                   <div>📅 Stay Slot: <strong className="text-slate-900 font-bold">{booking.checkInDate || booking.date || 'Today'}</strong> {booking.timeSlot ? `• ${booking.timeSlot}` : ''}</div>
                                   <div className="flex items-center gap-1">
-                                    <span>⚡ Hotel UPI:</span>
-                                    <strong className="font-mono text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded">{pInfo.upi}</strong>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        navigator.clipboard.writeText(pInfo.upi);
-                                        showToast(`Copied UPI: ${pInfo.upi}`, 'success');
-                                      }}
-                                      className="text-[9px] text-teal-700 font-bold hover:underline cursor-pointer"
-                                    >
-                                      Copy
-                                    </button>
+                                    <span>⚡ Hotel Contact:</span>
+                                    <strong className="font-mono text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded">{pInfo.phone}</strong>
+                                    {pInfo.upi && <span className="text-slate-400">· UPI: {pInfo.upi}</span>}
                                   </div>
                                   <div>
-                                    <span>🏛️ Bank A/C:</span>
-                                    <strong className="font-mono text-slate-900 ml-1">...{pInfo.accNo.slice(-4)}</strong> ({pInfo.ifsc})
+                                    <span>💵 Guest Payment:</span>
+                                    <strong className="text-slate-900 font-bold ml-1">{isPayAtHotel ? 'Paid directly to Hotel Desk' : 'Paid Online'}</strong>
                                   </div>
                                   {booking.payoutRef && (
                                     <div className="sm:col-span-2 text-emerald-800 font-semibold flex items-center gap-1">
-                                      <span>🔢 Settlement UTR / Ref:</span>
+                                      <span>🔢 Commission Receipt / Ref:</span>
                                       <strong className="font-mono bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded text-emerald-900">{booking.payoutRef}</strong>
                                       {booking.payoutSettledAt && (
                                         <span className="text-[10px] text-slate-400">({new Date(booking.payoutSettledAt).toLocaleDateString('en-IN')})</span>
@@ -5511,21 +5595,32 @@ export default function AdminPanelPage() {
                               <div className="flex flex-wrap sm:flex-nowrap items-center justify-between lg:justify-end gap-4 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-200/80">
                                 <div className="text-left sm:text-right space-y-0.5">
                                   <div className="text-xs text-slate-400 font-medium">
-                                    Gross Guest Paid: <strong>₹{gross}</strong> • Platform Fee (10%): <strong className="text-emerald-700">₹{cut}</strong>
+                                    Room Tariff (Collected by Hotel): <strong>₹{gross}</strong>
                                   </div>
                                   <div className="text-sm font-black text-slate-900">
-                                    Payable to Hotel (90%): <span className="text-emerald-700 text-base font-black">₹{net.toLocaleString('en-IN')}</span>
+                                    Majh Boisar 10% Cut: <span className="text-emerald-700 text-base font-black">₹{cut.toLocaleString('en-IN')}</span>
                                   </div>
                                 </div>
 
                                 <div className="flex items-center gap-1.5">
-                                  <a
-                                    href={`upi://pay?pa=${encodeURIComponent(pInfo.upi)}&pn=${encodeURIComponent(booking.hotelName || 'Hotel')}&am=${net}&cu=INR&tn=${encodeURIComponent(`Majh Boisar Payout #${booking.id}`)}`}
-                                    className="bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs px-3 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer"
-                                    title="Open UPI app to transfer"
-                                  >
-                                    <span>⚡ Pay UPI</span>
-                                  </a>
+                                  {!isSettled && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const phone = (booking.hotelPhone || pInfo.phone || '').replace(/\D/g, '');
+                                        if (!phone) {
+                                          alert('Hotel phone number not found.');
+                                          return;
+                                        }
+                                        const text = `🏨 *Majh Boisar — Commission Invoice for Booking #${booking.id}*\n\nHello *${booking.hotelName}*,\n\nGuest *${booking.guestName}* completed their stay (Room Tariff: ₹${gross}).\n\n• *10% Platform Commission Due:* *₹${cut}*\n• *UPI ID for Payment:* majhboisar@upi\n\nKindly share the UTR once paid to clear this booking in the ledger. Thank you!`;
+                                        window.open(`https://wa.me/91${phone}?text=${encodeURIComponent(text)}`, '_blank');
+                                      }}
+                                      className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-xs px-2.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
+                                      title="Send WhatsApp bill for this booking"
+                                    >
+                                      <span>📲 WhatsApp</span>
+                                    </button>
+                                  )}
 
                                   <button
                                     type="button"
@@ -5541,7 +5636,7 @@ export default function AdminPanelPage() {
                                         : 'bg-purple-900 hover:bg-purple-950 text-white'
                                     }`}
                                   >
-                                    {isSettled ? '✏️ Edit UTR' : '💸 Settle Payout'}
+                                    {isSettled ? '✏️ Edit Ref' : '⚡ Mark Received'}
                                   </button>
                                 </div>
                               </div>
@@ -5564,83 +5659,85 @@ export default function AdminPanelPage() {
                     (list || []).map((p: any) => ({ ...p, catKey: cat }))
                   );
                   return (
-                    <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 w-fit">
-                      <button
-                        type="button"
-                        onClick={() => setAdminListingSubTab('businesses')}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                          adminListingSubTab === 'businesses'
-                            ? 'bg-slate-900 text-white shadow-2xs font-black'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <Building className="w-3.5 h-3.5" />
-                        <span>Local Businesses ({businesses.length})</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAdminListingSubTab('specialists')}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                          adminListingSubTab === 'specialists'
-                            ? 'bg-teal-700 text-white shadow-2xs font-black'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Specialists &amp; Freelancers ({allSpecialists.length})</span>
-                        {pendingSpecialists.length > 0 && <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAdminListingSubTab('travels')}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                          adminListingSubTab === 'travels'
-                            ? 'bg-blue-700 text-white shadow-2xs font-black'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <Car className="w-3.5 h-3.5" />
-                        <span>Travels &amp; Vehicles ({adminVehiclesList.length})</span>
-                        {adminVehiclesList.filter(v => !v.verified).length > 0 && (
-                          <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
-                            {adminVehiclesList.filter(v => !v.verified).length} pending
-                          </span>
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAdminListingSubTab('home-services')}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                          adminListingSubTab === 'home-services'
-                            ? 'bg-teal-700 text-white shadow-2xs font-black'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <Wrench className="w-3.5 h-3.5" />
-                        <span>Home Services ({adminTechniciansList.length})</span>
-                        {adminTechniciansList.filter(t => !t.verified).length > 0 && (
-                          <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
-                            {adminTechniciansList.filter(t => !t.verified).length} pending
-                          </span>
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAdminListingSubTab('blood-donors')}
-                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                          adminListingSubTab === 'blood-donors'
-                            ? 'bg-rose-700 text-white shadow-2xs font-black'
-                            : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <Heart className="w-3.5 h-3.5" />
-                        <span>Blood Donors ({adminDonorsList.length})</span>
-                        {adminDonorsList.filter(d => !d.verified).length > 0 && (
-                          <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
-                            {adminDonorsList.filter(d => !d.verified).length} pending
-                          </span>
-                        )}
-                      </button>
+                    <div className="w-full overflow-x-auto pb-1.5 scrollbar-hide -mx-1 px-1 touch-pan-x">
+                      <div className="inline-flex items-center gap-1.5 sm:gap-2 bg-slate-100 p-1 rounded-2xl border border-slate-200 min-w-max shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setAdminListingSubTab('businesses')}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                            adminListingSubTab === 'businesses'
+                              ? 'bg-slate-900 text-white shadow-2xs font-black'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          <Building className="w-3.5 h-3.5" />
+                          <span>Local Businesses ({businesses.length})</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdminListingSubTab('specialists')}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                            adminListingSubTab === 'specialists'
+                              ? 'bg-teal-700 text-white shadow-2xs font-black'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Specialists &amp; Freelancers ({allSpecialists.length})</span>
+                          {pendingSpecialists.length > 0 && <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdminListingSubTab('travels')}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                            adminListingSubTab === 'travels'
+                              ? 'bg-blue-700 text-white shadow-2xs font-black'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          <Car className="w-3.5 h-3.5" />
+                          <span>Travels &amp; Vehicles ({adminVehiclesList.length})</span>
+                          {adminVehiclesList.filter(v => !v.verified).length > 0 && (
+                            <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
+                              {adminVehiclesList.filter(v => !v.verified).length} pending
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdminListingSubTab('home-services')}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                            adminListingSubTab === 'home-services'
+                              ? 'bg-teal-700 text-white shadow-2xs font-black'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          <Wrench className="w-3.5 h-3.5" />
+                          <span>Home Services ({adminTechniciansList.length})</span>
+                          {adminTechniciansList.filter(t => !t.verified).length > 0 && (
+                            <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
+                              {adminTechniciansList.filter(t => !t.verified).length} pending
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdminListingSubTab('blood-donors')}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                            adminListingSubTab === 'blood-donors'
+                              ? 'bg-rose-700 text-white shadow-2xs font-black'
+                              : 'text-slate-600 hover:text-slate-900'
+                          }`}
+                        >
+                          <Heart className="w-3.5 h-3.5" />
+                          <span>Blood Donors ({adminDonorsList.length})</span>
+                          {adminDonorsList.filter(d => !d.verified).length > 0 && (
+                            <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
+                              {adminDonorsList.filter(d => !d.verified).length} pending
+                            </span>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   );
                 })()}
@@ -5709,15 +5806,15 @@ export default function AdminPanelPage() {
                           <span className="text-[10px] font-black text-amber-900 uppercase">⚡ {selectedBizIds.length} Selected:</span>
                           <button
                             onClick={() => handleBulkVerifyBusinesses(true)}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black px-2.5 py-1 rounded cursor-pointer"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black px-2.5 py-1 rounded cursor-pointer flex items-center gap-1"
                           >
-                            Verify Selected
+                            <span>🟢 Make Live</span>
                           </button>
                           <button
                             onClick={() => handleBulkVerifyBusinesses(false)}
-                            className="bg-slate-600 hover:bg-slate-700 text-white text-[10px] font-black px-2.5 py-1 rounded cursor-pointer"
+                            className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black px-2.5 py-1 rounded cursor-pointer flex items-center gap-1"
                           >
-                            Unverify Selected
+                            <span>⏸️ Put On Hold (Hide)</span>
                           </button>
                           <button
                             onClick={handleBulkDeleteBusinesses}
@@ -5739,14 +5836,14 @@ export default function AdminPanelPage() {
                       )}
                     </div>
 
-                    {/* Category Filter Pills: All, Loans, Insurance, Specific Category */}
+                    {/* Filter Pills: Status (Live, On Hold) & Category */}
                     <div className="flex flex-wrap items-center gap-2 bg-white border border-slate-200/90 rounded-xl p-2.5 shadow-2xs">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">Filter by Category:</span>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider pl-1">Status:</span>
                       <button
                         type="button"
-                        onClick={() => setAdminBizCategoryFilter('all')}
+                        onClick={() => setAdminBizStatusFilter('all')}
                         className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                          adminBizCategoryFilter === 'all'
+                          adminBizStatusFilter === 'all'
                             ? 'bg-slate-900 text-white shadow-2xs font-black'
                             : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100'
                         }`}
@@ -5755,19 +5852,56 @@ export default function AdminPanelPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setAdminBizCategoryFilter('loans')}
+                        onClick={() => setAdminBizStatusFilter('live')}
                         className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          adminBizStatusFilter === 'live'
+                            ? 'bg-emerald-700 text-white shadow-xs font-black ring-2 ring-emerald-400'
+                            : 'bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100/70'
+                        }`}
+                      >
+                        <span>🟢 Live ({liveBizCount})</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdminBizStatusFilter('hold')}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                          adminBizStatusFilter === 'hold'
+                            ? 'bg-amber-600 text-white shadow-xs font-black ring-2 ring-amber-400'
+                            : 'bg-amber-50 border border-amber-300 text-amber-900 hover:bg-amber-100/70'
+                        }`}
+                      >
+                        <span>⏸️ On Hold / Hidden ({holdBizCount})</span>
+                      </button>
+
+                      <div className="h-4 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Category:</span>
+                      <button
+                        type="button"
+                        onClick={() => setAdminBizCategoryFilter('all')}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          adminBizCategoryFilter === 'all'
+                            ? 'bg-slate-800 text-white shadow-2xs font-bold'
+                            : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        All Categories
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAdminBizCategoryFilter('loans')}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                           adminBizCategoryFilter === 'loans'
                             ? 'bg-teal-700 text-white shadow-xs font-black ring-2 ring-teal-400'
                             : 'bg-teal-50 border border-teal-200 text-teal-800 hover:bg-teal-100/70'
                         }`}
                       >
-                        <span>🏦 Loans & Finance ({loansBizCount})</span>
+                        <span>🏦 Loans ({loansBizCount})</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setAdminBizCategoryFilter('insurance')}
-                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                           adminBizCategoryFilter === 'insurance'
                             ? 'bg-sky-700 text-white shadow-xs font-black ring-2 ring-sky-400'
                             : 'bg-sky-50 border border-sky-200 text-sky-800 hover:bg-sky-100/70'
@@ -5800,10 +5934,13 @@ export default function AdminPanelPage() {
                         </optgroup>
                       </select>
 
-                      {adminBizCategoryFilter !== 'all' && (
+                      {(adminBizCategoryFilter !== 'all' || adminBizStatusFilter !== 'all') && (
                         <button
                           type="button"
-                          onClick={() => setAdminBizCategoryFilter('all')}
+                          onClick={() => {
+                            setAdminBizCategoryFilter('all');
+                            setAdminBizStatusFilter('all');
+                          }}
                           className="text-[11px] font-black text-rose-600 hover:underline cursor-pointer"
                         >
                           ✕ Clear
@@ -5827,7 +5964,7 @@ export default function AdminPanelPage() {
                             <th className="py-2.5 px-3">Category</th>
                             <th className="py-2.5 px-3">Tier</th>
                             <th className="py-2.5 px-3">Stats</th>
-                            <th className="py-2.5 px-3 text-center">Verified</th>
+                            <th className="py-2.5 px-3 text-center">Status / Visibility</th>
                             <th className="py-2.5 px-3 text-center">Featured</th>
                             <th className="py-2.5 px-3 text-center">Actions</th>
                           </tr>
@@ -5835,7 +5972,7 @@ export default function AdminPanelPage() {
                         <tbody className="divide-y divide-slate-100 text-slate-700 font-medium text-xs">
                           {filteredAdminBusinesses.length > 0 ? (
                             filteredAdminBusinesses.map((b) => (
-                              <tr key={b.id} className={`hover:bg-slate-50 transition-colors ${selectedBizIds.includes(b.id) ? 'bg-teal-50/40' : ''}`}>
+                              <tr key={b.id} className={`hover:bg-slate-50 transition-colors ${!b.verified ? 'bg-amber-50/30' : ''} ${selectedBizIds.includes(b.id) ? 'bg-teal-50/40' : ''}`}>
                                 <td className="py-2.5 px-3 text-center">
                                   <input
                                     type="checkbox"
@@ -5847,6 +5984,11 @@ export default function AdminPanelPage() {
                                 <td className="py-2.5 px-3 font-extrabold text-slate-800">
                                   <div className="flex items-center gap-1.5 flex-wrap">
                                     <span>{b.name}</span>
+                                    {!b.verified && (
+                                      <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[8.5px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 shrink-0" title="This listing is temporarily on hold / hidden from public website">
+                                        ⏸️ On Hold (Hidden)
+                                      </span>
+                                    )}
                                     {(b.subscription === 'Admin Created' || b.description?.includes('[Created by Admin]') || (b as any).createdBy === 'Admin' || (b as any).postedBy === 'Admin') && (
                                       <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-xs flex items-center gap-1 shrink-0">
                                         👑 Created by Admin
@@ -5975,14 +6117,17 @@ export default function AdminPanelPage() {
                                 </td>
                                 <td className="py-2.5 px-3 text-center">
                                   <button
+                                    type="button"
                                     onClick={() => handleVerifyBusiness(b.id, b.verified)}
-                                    className="text-slate-400 hover:text-teal-600 transition-colors cursor-pointer inline-flex items-center"
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black transition-all cursor-pointer shadow-2xs select-none active:scale-95 ${
+                                      b.verified
+                                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300'
+                                        : 'bg-amber-50 border border-amber-300 text-amber-900 hover:bg-amber-100'
+                                    }`}
+                                    title={b.verified ? 'Listing is LIVE on public website. Click to Put on Hold / Temporarily Hide' : 'Listing is ON HOLD (Hidden from website). Click to Make Live'}
                                   >
-                                    {b.verified ? (
-                                      <ToggleRight className="w-6 h-6 text-emerald-500" />
-                                    ) : (
-                                      <ToggleLeft className="w-6 h-6 text-slate-300" />
-                                    )}
+                                    <span className={`w-2 h-2 rounded-full shrink-0 ${b.verified ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                                    <span>{b.verified ? '🟢 Live' : '⏸️ On Hold (Hidden)'}</span>
                                   </button>
                                 </td>
                                 <td className="py-2.5 px-3 text-center">
@@ -6006,6 +6151,18 @@ export default function AdminPanelPage() {
                                       title="Assign / Change Owner Phone"
                                     >
                                       <KeyRound className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleVerifyBusiness(b.id, b.verified)}
+                                      className={`p-1 rounded transition-all cursor-pointer ${
+                                        b.verified
+                                          ? 'text-amber-600 hover:text-amber-800 hover:bg-amber-50'
+                                          : 'text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50'
+                                      }`}
+                                      title={b.verified ? 'Put on Hold / Temporarily Hide from Website' : 'Resume / Make Live on Website'}
+                                    >
+                                      {b.verified ? <PauseCircle className="w-4 h-4" /> : <PlayCircle className="w-4 h-4" />}
                                     </button>
                                     <button
                                       onClick={async () => {
@@ -10256,7 +10413,7 @@ export default function AdminPanelPage() {
                       onChange={e => setEditBizVerified(e.target.checked)}
                       className="text-teal-605 rounded border-slate-300 focus:ring-teal-500 w-4 h-4 cursor-pointer"
                     />
-                    <span>Verified Badge Checkmark</span>
+                    <span>Approved & Live on Website (Uncheck to Put On Hold / Hide)</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer font-bold">
                     <input
@@ -12387,11 +12544,10 @@ export default function AdminPanelPage() {
         </div>
       )}
 
-      {/* ── 1. SINGLE HOTEL BOOKING PAYOUT SETTLEMENT CONFIRMATION MODAL ── */}
+      {/* ── 1. SINGLE HOTEL BOOKING COMMISSION SETTLEMENT CONFIRMATION MODAL ── */}
       {payoutModalOpen && selectedBookingForPayout && (() => {
         const gross = Number(selectedBookingForPayout.totalAmount) || 0;
         const cut = Math.round(gross * 0.10);
-        const net = gross - cut;
         const pInfo = getPartnerPayoutDetails(selectedBookingForPayout.hotelId || selectedBookingForPayout.hotelName);
 
         return (
@@ -12399,11 +12555,11 @@ export default function AdminPanelPage() {
             <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-left animate-in fade-in zoom-in duration-200 my-8">
               <div className="flex items-center justify-between border-b border-slate-150 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center justify-center font-bold text-base">
-                    💸
+                  <div className="w-9 h-9 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center font-bold text-base">
+                    🧾
                   </div>
                   <div>
-                    <h4 className="font-black text-sm text-slate-900">Confirm Hotel Payout Settlement</h4>
+                    <h4 className="font-black text-sm text-slate-900">Record Hotel Commission Collection</h4>
                     <p className="text-[11px] text-slate-500 font-medium">Booking #{selectedBookingForPayout.id} • {selectedBookingForPayout.roomCategory || selectedBookingForPayout.roomType || 'Room'}</p>
                   </div>
                 </div>
@@ -12414,6 +12570,15 @@ export default function AdminPanelPage() {
                 >
                   ✕
                 </button>
+              </div>
+
+              {/* Business Model Clarification Note */}
+              <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3 text-[11px] text-amber-900 flex items-start gap-2">
+                <span className="text-base leading-none">🏨</span>
+                <div>
+                  <span className="font-black">Pay at Hotel Model: </span>
+                  <span>Guest paid 100% room bill directly at the hotel front desk. Hotelier owes Majh Boisar 10% platform commission.</span>
+                </div>
               </div>
 
               {/* Settlement Summary Breakdown */}
@@ -12431,104 +12596,24 @@ export default function AdminPanelPage() {
                   <span className="font-bold text-slate-700">{selectedBookingForPayout.checkInDate || selectedBookingForPayout.date || 'Today'}</span>
                 </div>
                 <div className="flex justify-between border-t border-slate-200/80 pt-2">
-                  <span className="text-slate-500 font-semibold">Gross Paid Online by Guest:</span>
+                  <span className="text-slate-500 font-semibold">Total Room Tariff (Collected by Hotel):</span>
                   <span className="font-bold text-slate-800">₹{gross.toLocaleString('en-IN')}</span>
                 </div>
-                <div className="flex justify-between text-emerald-800 font-bold">
-                  <span>Majh Boisar Retained (10% Platform Cut):</span>
-                  <span>- ₹{cut.toLocaleString('en-IN')}</span>
-                </div>
-                <div className="flex justify-between border-t border-slate-300 pt-2.5 text-sm bg-emerald-50/70 -mx-4 -mb-4 p-4 rounded-b-2xl">
-                  <span className="font-black text-slate-900">Net Payable to Hotel Owner (90%):</span>
-                  <span className="font-black text-emerald-700 text-lg">₹{net.toLocaleString('en-IN')}</span>
+                <div className="flex justify-between border-t border-slate-300 pt-2.5 text-sm bg-emerald-50/80 -mx-4 -mb-4 p-4 rounded-b-2xl">
+                  <span className="font-black text-slate-900">10% Platform Commission Received:</span>
+                  <span className="font-black text-emerald-700 text-lg">₹{cut.toLocaleString('en-IN')}</span>
                 </div>
               </div>
 
-              {/* Hotel Partner Bank & UPI Payout Credentials */}
-              <div className="bg-emerald-50/40 border border-emerald-200 rounded-2xl p-3.5 space-y-2.5 text-xs">
-                <div className="flex items-center justify-between border-b border-emerald-100 pb-1.5">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-900 flex items-center gap-1.5">
-                    <span>🏦 Hotel Beneficiary Payout Account</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const textToCopy = `Beneficiary: ${pInfo.holder}\nBank: ${pInfo.bank}\nA/C: ${pInfo.accNo}\nIFSC: ${pInfo.ifsc}\nUPI: ${pInfo.upi}`;
-                      navigator.clipboard.writeText(textToCopy);
-                      showToast('📋 Full bank details copied to clipboard!', 'success');
-                    }}
-                    className="text-[10px] text-emerald-800 font-bold hover:underline cursor-pointer flex items-center gap-1"
-                  >
-                    <span>📋 Copy All</span>
-                  </button>
+              {/* Hotel Partner Contact */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-1.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Hotel Partner Contact</span>
+                  <span className="text-[11px] font-bold text-slate-700">{pInfo.phone}</span>
                 </div>
-
-                <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div>
-                    <span className="text-slate-400 block text-[9px] uppercase font-bold">A/C Holder Name</span>
-                    <strong className="text-slate-800 font-bold">{pInfo.holder}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[9px] uppercase font-bold">Bank Name</span>
-                    <strong className="text-slate-800 font-bold">{pInfo.bank}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[9px] uppercase font-bold">Account Number</span>
-                    <div className="flex items-center gap-1.5">
-                      <strong className="font-mono text-slate-900 font-bold">{pInfo.accNo}</strong>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(pInfo.accNo);
-                          showToast('Copied A/C Number', 'success');
-                        }}
-                        className="text-[9px] text-emerald-700 hover:text-emerald-900 font-bold cursor-pointer"
-                      >
-                        Copy
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block text-[9px] uppercase font-bold">IFSC Code</span>
-                    <div className="flex items-center gap-1.5">
-                      <strong className="font-mono text-slate-900 font-bold">{pInfo.ifsc}</strong>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(pInfo.ifsc);
-                          showToast('Copied IFSC Code', 'success');
-                        }}
-                        className="text-[9px] text-emerald-700 hover:text-emerald-900 font-bold cursor-pointer"
-                      >
-                        Copy
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-1 border-t border-emerald-100 flex items-center justify-between">
-                  <div className="text-[11px]">
-                    <span className="text-slate-400 block text-[9px] uppercase font-bold">⚡ UPI ID</span>
-                    <strong className="font-mono text-slate-900 font-black">{pInfo.upi}</strong>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(pInfo.upi);
-                        showToast('Copied UPI ID', 'success');
-                      }}
-                      className="text-[10px] bg-white border border-emerald-300 text-emerald-800 px-2 py-1 rounded-lg font-bold hover:bg-emerald-50 cursor-pointer"
-                    >
-                      📋 Copy UPI
-                    </button>
-                    <a
-                      href={`upi://pay?pa=${encodeURIComponent(pInfo.upi)}&pn=${encodeURIComponent(selectedBookingForPayout.hotelName || 'Hotel')}&am=${net}&cu=INR&tn=${encodeURIComponent(`Majh Boisar Payout #${selectedBookingForPayout.id}`)}`}
-                      className="text-[10px] bg-emerald-700 text-white px-2.5 py-1 rounded-lg font-black hover:bg-emerald-800 cursor-pointer flex items-center gap-1"
-                    >
-                      <span>⚡ Open UPI</span>
-                    </a>
-                  </div>
+                <div className="text-[11px] text-slate-500 flex justify-between">
+                  <span>Registered A/C: <strong>{pInfo.bank} ({pInfo.holder})</strong></span>
+                  <span>UPI: <strong className="font-mono text-slate-800">{pInfo.upi}</strong></span>
                 </div>
               </div>
 
@@ -12537,24 +12622,24 @@ export default function AdminPanelPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
-                      Payment Mode
+                      Commission Paid Via
                     </label>
                     <select
                       value={payoutPaymentMode}
                       onChange={e => setPayoutPaymentMode(e.target.value as any)}
                       className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none cursor-pointer"
                     >
-                      <option value="UPI">⚡ UPI Transfer (GPay/PhonePe)</option>
-                      <option value="NEFT">🏛️ NEFT NetBanking</option>
-                      <option value="IMPS">⚡ IMPS Immediate Transfer</option>
-                      <option value="Cash">💵 Cash Settlement</option>
+                      <option value="UPI">⚡ UPI (GPay / PhonePe / Paytm)</option>
+                      <option value="Cash">💵 Cash Paid by Hotelier</option>
+                      <option value="NEFT">🏛️ Bank NEFT / IMPS</option>
+                      <option value="Other">📝 Other / Direct Adjustment</option>
                     </select>
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
-                        UTR / Ref Number *
+                        Receipt / Ref No.
                       </label>
                       <button
                         type="button"
@@ -12581,7 +12666,7 @@ export default function AdminPanelPage() {
                     onChange={e => setPayoutNotifyWhatsapp(e.target.checked)}
                     className="w-4 h-4 text-emerald-600 rounded cursor-pointer"
                   />
-                  <span className="text-xs text-slate-700 font-bold">📲 Open WhatsApp to notify Hotel Owner instantly</span>
+                  <span className="text-xs text-slate-700 font-bold">📲 Send WhatsApp commission clearance receipt to Hotel Owner</span>
                 </label>
               </div>
 
@@ -12599,7 +12684,7 @@ export default function AdminPanelPage() {
                   onClick={() => handleMarkBookingPayoutSettled(selectedBookingForPayout.id, payoutUtrInput, payoutPaymentMode, payoutNotifyWhatsapp)}
                   className="flex-1 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black transition-all shadow-xs cursor-pointer active:scale-98"
                 >
-                  ✓ Confirm &amp; Mark Paid
+                  ✓ Confirm &amp; Mark ₹{cut} Received
                 </button>
               </div>
             </div>
@@ -12607,7 +12692,7 @@ export default function AdminPanelPage() {
         );
       })()}
 
-      {/* ── 2. BATCH HOTEL PAYOUT SETTLEMENT MODAL (SETTLE PROPERTY BALANCE) ── */}
+      {/* ── 2. BATCH HOTEL COMMISSION SETTLEMENT MODAL ── */}
       {batchPayoutModalOpen && selectedHotelForBatchPayout && (() => {
         const matching = adminHotelBookings.filter(b => 
           (b.hotelId === selectedHotelForBatchPayout || b.hotelName === selectedHotelForBatchPayout) &&
@@ -12615,7 +12700,6 @@ export default function AdminPanelPage() {
         );
         const totalGross = matching.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
         const totalPlatformCut = Math.round(totalGross * 0.10);
-        const totalNetPayable = totalGross - totalPlatformCut;
         const pInfo = getPartnerPayoutDetails(selectedHotelForBatchPayout);
 
         return (
@@ -12623,11 +12707,11 @@ export default function AdminPanelPage() {
             <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-left animate-in fade-in zoom-in duration-200 my-8">
               <div className="flex items-center justify-between border-b border-slate-150 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-2xl bg-purple-50 text-purple-900 border border-purple-200 flex items-center justify-center font-bold text-base">
+                  <div className="w-9 h-9 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center font-bold text-base">
                     ⚡
                   </div>
                   <div>
-                    <h4 className="font-black text-sm text-slate-900">Batch Settle Property Balance</h4>
+                    <h4 className="font-black text-sm text-slate-900">Record Hotel Commission Settlement (Batch)</h4>
                     <p className="text-[11px] text-slate-500 font-medium">{pInfo.hotelName} • {matching.length} Pending Booking(s)</p>
                   </div>
                 </div>
@@ -12640,61 +12724,40 @@ export default function AdminPanelPage() {
                 </button>
               </div>
 
-              {/* Batch Financial Summary */}
-              <div className="bg-purple-50/50 border border-purple-200 rounded-2xl p-4 space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-500 font-semibold">Pending Bookings to Clear:</span>
-                  <strong className="text-slate-900 bg-white px-2 py-0.5 rounded border border-purple-200">{matching.length} Bookings</strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500 font-semibold">Total Gross Bookings Value:</span>
-                  <span className="font-bold text-slate-800">₹{totalGross.toLocaleString('en-IN')}</span>
-                </div>
-                <div className="flex justify-between text-teal-800 font-bold">
-                  <span>Majh Boisar 10% Retained Cut:</span>
-                  <span>- ₹{totalPlatformCut.toLocaleString('en-IN')}</span>
-                </div>
-                <div className="flex justify-between border-t border-purple-200 pt-2.5 text-sm bg-purple-100/50 -mx-4 -mb-4 p-4 rounded-b-2xl">
-                  <span className="font-black text-slate-900">Total Net Dispatched (90%):</span>
-                  <span className="font-black text-purple-900 text-lg">₹{totalNetPayable.toLocaleString('en-IN')}</span>
+              {/* Pay at Hotel Note */}
+              <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3 text-[11px] text-amber-900 flex items-start gap-2">
+                <span className="text-base leading-none">🏨</span>
+                <div>
+                  <span className="font-black">Pay at Hotel Settlement: </span>
+                  <span>The hotelier collected {matching.length} guest payments at check-in. This settles the 10% platform commission due to Majh Boisar.</span>
                 </div>
               </div>
 
-              {/* Hotel Bank Credentials */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2 text-xs">
-                <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block">
-                  Beneficiary Account Details
-                </span>
-                <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div>
-                    <span className="text-slate-400 text-[9px] block">A/C Holder:</span>
-                    <strong className="text-slate-800">{pInfo.holder}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[9px] block">Bank:</span>
-                    <strong className="text-slate-800">{pInfo.bank}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[9px] block">A/C No:</span>
-                    <strong className="font-mono text-slate-900">{pInfo.accNo}</strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 text-[9px] block">IFSC Code:</span>
-                    <strong className="font-mono text-slate-900">{pInfo.ifsc}</strong>
-                  </div>
+              {/* Batch Financial Summary */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-500 font-semibold">Pending Bookings to Clear:</span>
+                  <strong className="text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">{matching.length} Bookings</strong>
                 </div>
-                <div className="pt-1.5 border-t border-slate-200 flex items-center justify-between">
-                  <span className="text-[11px] font-mono text-slate-800 font-bold">UPI: {pInfo.upi}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(`A/C: ${pInfo.accNo}\nIFSC: ${pInfo.ifsc}\nHolder: ${pInfo.holder}\nUPI: ${pInfo.upi}`);
-                      showToast('Copied Bank & UPI Details', 'success');
-                    }}
-                    className="text-[10px] text-teal-700 font-bold hover:underline cursor-pointer"
-                  >
-                    📋 Copy Account
-                  </button>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 font-semibold">Total Room Tariff Collected by Hotel:</span>
+                  <span className="font-bold text-slate-800">₹{totalGross.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-300 pt-2.5 text-sm bg-emerald-50/80 -mx-4 -mb-4 p-4 rounded-b-2xl">
+                  <span className="font-black text-slate-900">Total 10% Commission to Collect:</span>
+                  <span className="font-black text-emerald-700 text-lg">₹{totalPlatformCut.toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+
+              {/* Hotel Contact & Reference */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-1.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Hotelier Contact</span>
+                  <span className="text-[11px] font-bold text-slate-800">{pInfo.phone}</span>
+                </div>
+                <div className="text-[11px] text-slate-500 flex justify-between">
+                  <span>Registered A/C: <strong>{pInfo.bank} ({pInfo.holder})</strong></span>
+                  <span>UPI: <strong className="font-mono text-slate-800">{pInfo.upi}</strong></span>
                 </div>
               </div>
 
@@ -12703,29 +12766,29 @@ export default function AdminPanelPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
-                      Batch Payment Mode
+                      Batch Collection Mode
                     </label>
                     <select
                       value={batchPayoutPaymentMode}
                       onChange={e => setBatchPayoutPaymentMode(e.target.value as any)}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-purple-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none cursor-pointer"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none cursor-pointer"
                     >
-                      <option value="NEFT">🏛️ NEFT Corporate Transfer</option>
-                      <option value="IMPS">⚡ IMPS Immediate Transfer</option>
                       <option value="UPI">⚡ UPI Batch Settlement</option>
-                      <option value="Cash">💵 Cash Settlement</option>
+                      <option value="Cash">💵 Cash Paid by Hotelier</option>
+                      <option value="NEFT">🏛️ Bank NEFT / Corporate IMPS</option>
+                      <option value="Other">📝 Other Settlement</option>
                     </select>
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
-                        UTR / Batch Ref *
+                        UTR / Batch Receipt Ref *
                       </label>
                       <button
                         type="button"
                         onClick={() => setBatchPayoutUtrInput(`${batchPayoutPaymentMode}-BATCH-${Date.now().toString().slice(-6)}`)}
-                        className="text-[9px] text-purple-700 font-bold hover:underline cursor-pointer"
+                        className="text-[9px] text-emerald-700 font-bold hover:underline cursor-pointer"
                       >
                         Auto-Gen
                       </button>
@@ -12735,7 +12798,7 @@ export default function AdminPanelPage() {
                       value={batchPayoutUtrInput}
                       onChange={e => setBatchPayoutUtrInput(e.target.value)}
                       placeholder={`e.g. ${batchPayoutPaymentMode}-948201`}
-                      className="w-full bg-slate-50 border border-slate-200 focus:border-purple-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none font-mono"
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -12745,9 +12808,9 @@ export default function AdminPanelPage() {
                     type="checkbox"
                     checked={batchPayoutNotifyWhatsapp}
                     onChange={e => setBatchPayoutNotifyWhatsapp(e.target.checked)}
-                    className="w-4 h-4 text-purple-600 rounded cursor-pointer"
+                    className="w-4 h-4 text-emerald-600 rounded cursor-pointer"
                   />
-                  <span className="text-xs text-slate-700 font-bold">📲 Open WhatsApp to notify Hotel Owner of batch settlement</span>
+                  <span className="text-xs text-slate-700 font-bold">📲 Open WhatsApp to send commission clearance receipt to Hotel Owner</span>
                 </label>
               </div>
 
@@ -12763,9 +12826,9 @@ export default function AdminPanelPage() {
                 <button
                   type="button"
                   onClick={() => handleBatchSettleHotel(selectedHotelForBatchPayout, batchPayoutUtrInput, batchPayoutPaymentMode, batchPayoutNotifyWhatsapp)}
-                  className="flex-1 py-2.5 rounded-xl bg-purple-900 hover:bg-purple-950 text-white text-xs font-black transition-all shadow-xs cursor-pointer active:scale-98"
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black transition-all shadow-xs cursor-pointer active:scale-98"
                 >
-                  ✓ Confirm Batch Settlement
+                  ✓ Confirm &amp; Record ₹{totalPlatformCut} Received
                 </button>
               </div>
             </div>
@@ -12783,7 +12846,7 @@ export default function AdminPanelPage() {
                   🏦
                 </div>
                 <div>
-                  <h4 className="font-black text-sm text-slate-900">Edit Payout Account Details</h4>
+                  <h4 className="font-black text-sm text-slate-900">Edit Partner Settlement &amp; Bank Account</h4>
                   <p className="text-[11px] text-slate-500 font-medium">{selectedPartnerForBankEdit.name || 'Hotel Partner'}</p>
                 </div>
               </div>
@@ -12885,7 +12948,7 @@ export default function AdminPanelPage() {
                   type="submit"
                   className="flex-1 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-black transition-all shadow-xs cursor-pointer active:scale-98"
                 >
-                  💾 Save Payout Account
+                  💾 Save Account Details
                 </button>
               </div>
             </form>

@@ -2,20 +2,36 @@ import { PrismaClient } from '../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import pg from 'pg';
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
+const globalForDb = globalThis as unknown as {
+  prisma?: PrismaClient;
+  pool?: pg.Pool;
+};
 
-const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
+// Reuse existing pool across hot reloads in development to prevent connection leaks
+export const pool =
+  globalForDb.pool ??
+  new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    max: 10, // Maintain a healthy pool size
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  });
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForDb.pool = pool;
+}
+
 const adapter = new PrismaPg(pool);
 
 const prismaClientSingleton = () => {
   return new PrismaClient({ adapter });
 };
 
-export { pool };
-export const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
+export const prisma = globalForDb.prisma ?? prismaClientSingleton();
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prismaClientSingleton();
+if (process.env.NODE_ENV !== 'production') {
+  globalForDb.prisma = prisma;
+}
+
 

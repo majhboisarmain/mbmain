@@ -94,7 +94,7 @@ interface Business {
 }
 
 function DashboardContent() {
-  const { currentRole, isLoggedIn, login, setLoginModalOpen, setRole, loggedInUser, showToast, hasRegisteredBusiness, setHasRegisteredBusiness } = useApp();
+  const { currentRole, isLoggedIn, login, setLoginModalOpen, setRole, loggedInUser, showToast, hasRegisteredBusiness, setHasRegisteredBusiness, isAdmin, isPlatformAdminPhone } = useApp();
   const searchParams = useSearchParams();
   const modeParam = searchParams?.get('mode');
   const tabParam = searchParams?.get('tab');
@@ -103,12 +103,26 @@ function DashboardContent() {
   const bizIdParam = searchParams?.get('bizId') || searchParams?.get('id') || searchParams?.get('businessId');
   const registerParam = searchParams?.get('register') === 'true' || searchParams?.get('action') === 'register' || modeParam === 'register';
 
-  // SECURE: Admin auth is ONLY verified via server-side JWT cookie
-  const [isAdminAuth, setIsAdminAuth] = useState(false);
+  // Admin auth verified via server-side JWT cookie, AppContext admin role, or verified admin phone
+  const [isAdminAuth, setIsAdminAuth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const auth = sessionStorage.getItem('majh_boisar_adminmb_auth');
+      const role = localStorage.getItem('majh_boisar_role');
+      if (auth === 'unlocked' || role === 'Admin') return true;
+    }
+    return false;
+  });
 
   useEffect(() => {
     let mounted = true;
     async function verifyAdminSession() {
+      // 1. If currently logged in as verified platform admin phone or admin role, unlock immediately
+      if (isPlatformAdminPhone(loggedInUser?.phone) || (loggedInUser as any)?.role === 'Admin' || currentRole === 'Admin') {
+        setIsAdminAuth(true);
+        if (currentRole !== 'Admin') setRole('Admin');
+        return;
+      }
+      // 2. Check server-side admin JWT session
       try {
         const res = await fetch('/api/auth/admin-verify');
         const data = await res.json().catch(() => ({}));
@@ -117,12 +131,12 @@ function DashboardContent() {
           setRole('Admin');
         }
       } catch {
-        // Not admin — no bypass possible
+        // Not admin
       }
     }
     verifyAdminSession();
     return () => { mounted = false; };
-  }, [setRole]);
+  }, [setRole, loggedInUser?.phone, currentRole, isPlatformAdminPhone]);
 
   // If guest arrives to register business, open the login modal automatically so they log in first
   useEffect(() => {

@@ -6,10 +6,19 @@ import ToastContainer, { ToastItem, ToastType } from '@/components/ToastContaine
 
 export type Role = 'Guest' | 'User' | 'BusinessOwner' | 'Admin';
 
-interface LoggedInUser {
+export const ADMIN_PHONE_NUMBERS = ['9307294733', '7769947217'];
+
+export function isPlatformAdminPhone(phone?: string | null): boolean {
+  if (!phone) return false;
+  const clean = phone.replace(/\D/g, '').slice(-10);
+  return ADMIN_PHONE_NUMBERS.some(p => p.slice(-10) === clean);
+}
+
+export interface LoggedInUser {
   name: string;
   phone: string;
   email?: string;
+  role?: Role;
 }
 
 interface AppContextType {
@@ -20,6 +29,7 @@ interface AppContextType {
   userName: string;
   userEmail: string;
   isLoggedIn: boolean;
+  isAdmin: boolean;
   loggedInUser: LoggedInUser | null;
   login: (name: string, phone: string, email?: string) => void;
   logout: () => void;
@@ -33,6 +43,7 @@ interface AppContextType {
   hasRegisteredBusiness: boolean;
   setHasRegisteredBusiness: (val: boolean) => void;
   checkBusinessStatus: (phone: string) => Promise<void>;
+  isPlatformAdminPhone: (phone?: string | null) => boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -43,6 +54,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   
   // Login states
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   const [loggedInUser, setLoggedInUser] = useState<LoggedInUser | null>(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [adModalOpen, setAdModalOpen] = useState(false);
@@ -135,9 +147,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('majh_boisar_has_business', hasBusiness ? 'true' : 'false');
       }
 
-      // Do not overwrite Admin role if currently authenticated as Admin
+      // Do not overwrite Admin role if currently authenticated as Admin or using Admin phone
+      const isAdmPhone = isPlatformAdminPhone(phone);
       const currentSavedRole = typeof window !== 'undefined' ? localStorage.getItem('majh_boisar_role') : null;
-      if (currentSavedRole === 'Admin' || currentRole === 'Admin') {
+      if (isAdmPhone || currentSavedRole === 'Admin' || currentRole === 'Admin') {
+        setRoleState('Admin');
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('majh_boisar_role', 'Admin');
+          sessionStorage.setItem('majh_boisar_adminmb_auth', 'unlocked');
+        }
         return;
       }
 
@@ -159,17 +177,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = (name: string, phone: string, email?: string) => {
-    const user = { name, phone, email };
+    const isAdmPhone = isPlatformAdminPhone(phone);
+    const assignedRole: Role = isAdmPhone ? 'Admin' : 'User';
+    const user: LoggedInUser = { name, phone, email, role: assignedRole };
     setIsLoggedIn(true);
     setLoggedInUser(user);
-    setRoleState('User');
+    setRoleState(assignedRole);
 
     showToast(`Welcome ${name}! Logged in successfully 🎉`, 'success');
 
     if (typeof window !== 'undefined') {
       localStorage.setItem('majh_boisar_user', JSON.stringify(user));
-      localStorage.removeItem('majh_boisar_role');
-      localStorage.removeItem('majh_boisar_has_business');
+      if (isAdmPhone) {
+        localStorage.setItem('majh_boisar_role', 'Admin');
+        sessionStorage.setItem('majh_boisar_adminmb_auth', 'unlocked');
+      } else {
+        localStorage.removeItem('majh_boisar_role');
+        localStorage.removeItem('majh_boisar_has_business');
+      }
 
       // Append to registered users list for Admin Panel tracking & Central DB
       try {
@@ -183,6 +208,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             ...existingUsers[existingIndex],
             name: name || existingUsers[existingIndex].name || 'Registered Citizen',
             email: email || existingUsers[existingIndex].email || `${cleanPhone}@majhboisar.in`,
+            role: isAdmPhone ? 'Platform Admin' : existingUsers[existingIndex].role || 'Registered User',
             lastLogin: new Date().toISOString()
           };
           localStorage.setItem('majh_boisar_registered_users', JSON.stringify(existingUsers));
@@ -192,7 +218,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             name: name || 'Registered Citizen',
             phone: cleanPhone,
             email: email || `${cleanPhone}@majhboisar.in`,
-            role: 'Registered User',
+            role: isAdmPhone ? 'Platform Admin' : 'Registered User',
             joinedDate: new Date().toISOString().split('T')[0],
             lastLogin: new Date().toISOString(),
             status: 'Active'
@@ -209,7 +235,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               name: name || 'Registered Citizen',
               phone: cleanPhone,
               email: email || `${cleanPhone}@majhboisar.in`,
-              role: 'Registered User'
+              role: isAdmPhone ? 'Platform Admin' : 'Registered User'
             })
           }).catch((err) => console.warn('Could not post user to /api/users:', err));
         }
@@ -247,6 +273,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('majh_boisar_role');
       localStorage.removeItem('majh_boisar_has_business');
       localStorage.removeItem('majh_boisar_my_biz_ids');
+      sessionStorage.removeItem('majh_boisar_adminmb_auth');
     }
   };
 
@@ -254,21 +281,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       const savedRole = localStorage.getItem('majh_boisar_role') as Role;
       const isAdminSessionValid = sessionStorage.getItem('majh_boisar_adminmb_auth') === 'unlocked';
-
-      if (savedRole === 'Admin') {
-        // Only keep Admin role if session is still valid (authenticated via /adminmb portal)
-        if (isAdminSessionValid) {
-          setRoleState('Admin');
-        } else {
-          // Session expired (browser was closed), clear stale admin role
-          localStorage.removeItem('majh_boisar_role');
-          setRoleState('User');
-        }
-      } else if (savedRole && ['Guest', 'User', 'BusinessOwner'].includes(savedRole)) {
-        setRoleState(savedRole);
-      }
       
       const savedUser = localStorage.getItem('majh_boisar_user');
+      let isSavedUserAdmin = false;
+
       if (savedUser) {
         try {
           const parsed = JSON.parse(savedUser);
@@ -279,6 +295,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setLoggedInUser(null);
             setIsLoggedIn(false);
           } else {
+            isSavedUserAdmin = isPlatformAdminPhone(parsed.phone);
             setLoggedInUser(parsed);
             setIsLoggedIn(true);
 
@@ -293,6 +310,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           console.error(e);
         }
       }
+
+      // If user is logged in with Admin phone number or was authenticated as Admin, ALWAYS preserve Admin
+      if (isSavedUserAdmin || (savedRole === 'Admin' && isAdminSessionValid)) {
+        setRoleState('Admin');
+        localStorage.setItem('majh_boisar_role', 'Admin');
+        sessionStorage.setItem('majh_boisar_adminmb_auth', 'unlocked');
+      } else if (savedRole && ['Guest', 'User', 'BusinessOwner'].includes(savedRole)) {
+        setRoleState(savedRole);
+      }
     }
   }, []);
 
@@ -304,6 +330,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const { name: userName, email: userEmail } = roleDetails[currentRole];
+  const isAdmin = currentRole === 'Admin' || (loggedInUser as any)?.role === 'Admin' || isPlatformAdminPhone(loggedInUser?.phone);
 
   return (
     <AppContext.Provider
@@ -315,6 +342,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         userName,
         userEmail,
         isLoggedIn,
+        isAdmin,
         loggedInUser,
         login,
         logout,
@@ -327,6 +355,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         hasRegisteredBusiness,
         setHasRegisteredBusiness,
         checkBusinessStatus,
+        isPlatformAdminPhone,
       }}
     >
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

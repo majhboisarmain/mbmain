@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 import { NextRequest, NextResponse } from 'next/server';
+import { LRUCache } from 'lru-cache';
 import { prisma } from '@/lib/db';
 import { uploadImage, uploadGallery } from '@/lib/cloudinary';
 import { specialProfiles } from '@/lib/mockProfiles'; // Clean HMR
@@ -10,6 +11,12 @@ import { badRequestResponse, internalServerErrorResponse } from '@/lib/authGuard
 import { expandCategorySearchTerms } from '@/lib/categoryMapping';
 import { formatCategoryTitle, getCategorySearchTerms } from '@/lib/categories';
 import { generateBusinessSlug } from '@/lib/slugify';
+
+// In-memory cache for fast search queries and listing summaries (30s TTL)
+export const apiBusinessesCache = new LRUCache<string, any[]>({
+  max: 100,
+  ttl: 1000 * 30, // 30 seconds
+});
 
 function getHaversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth's radius in km
@@ -31,9 +38,23 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const query = searchParams.get('query');
     const location = searchParams.get('location');
-    const showAll = searchParams.get('showAll') === 'true' || searchParams.get('admin') === 'true';
+    const isAdmin = searchParams.get('admin') === 'true';
+    const showAll = searchParams.get('showAll') === 'true' || isAdmin;
     const premium = searchParams.get('premium') === 'true';
     const minRating = searchParams.get('rating') ? parseFloat(searchParams.get('rating')!) : null;
+
+    // Fast memory cache check for public visitors
+    const cacheKey = request.url;
+    if (!isAdmin && apiBusinessesCache.has(cacheKey)) {
+      const cached = apiBusinessesCache.get(cacheKey);
+      return NextResponse.json(cached, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+          'X-Cache': 'HIT',
+        },
+      });
+    }
+
 
     const userLatStr = searchParams.get('userLat') || searchParams.get('lat');
     const userLngStr = searchParams.get('userLng') || searchParams.get('lng');
@@ -359,9 +380,14 @@ export async function GET(request: NextRequest) {
       ? 'no-store, no-cache, must-revalidate, proxy-revalidate'
       : 'public, s-maxage=30, stale-while-revalidate=120';
 
+    if (!isAdmin) {
+      apiBusinessesCache.set(cacheKey, result);
+    }
+
     return NextResponse.json(result, {
       headers: {
         'Cache-Control': cacheControlHeader,
+        'X-Cache': 'MISS',
       },
     });
   } catch (error: any) {
@@ -371,7 +397,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    apiBusinessesCache.clear(); // Invalidate listing caches
     const body = await request.json();
+
 
     // Server-side Zod validation
     const validationResult = businessSchema.safeParse(body);

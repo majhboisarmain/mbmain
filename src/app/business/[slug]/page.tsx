@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import { notFound, permanentRedirect } from 'next/navigation';
 import Link from 'next/link';
+import { cache } from 'react';
+import { LRUCache } from 'lru-cache';
 import { prisma } from '@/lib/db';
 import BusinessDetailsClient from './BusinessDetailsClient';
 import { ChevronRight, MapPin, Phone, MessageSquare, Clock, ShieldCheck, Tag, CheckCircle } from 'lucide-react';
@@ -8,6 +10,73 @@ import { ChevronRight, MapPin, Phone, MessageSquare, Clock, ShieldCheck, Tag, Ch
 interface Props {
   params: Promise<{ slug: string }>;
 }
+
+// In-memory cache for ultra-fast business retrieval across visitor navigations (60s TTL)
+const businessCache = new LRUCache<string, any>({
+  max: 300,
+  ttl: 1000 * 60, // 60 seconds
+});
+
+const relatedCache = new LRUCache<string, any[]>({
+  max: 100,
+  ttl: 1000 * 60 * 2, // 2 minutes
+});
+
+// React.cache deduplicates queries within the exact same SSR render pass (generateMetadata + BusinessProfilePage)
+export const getCachedBusiness = cache(async (slugOrId: string) => {
+  if (!slugOrId) return null;
+  const cacheKey = slugOrId.toLowerCase().trim();
+  const cached = businessCache.get(cacheKey);
+  if (cached) return cached;
+
+  const numId = parseInt(slugOrId);
+  const business = await prisma.business.findFirst({
+    where: !isNaN(numId) ? { id: numId } : { slug: slugOrId },
+    include: {
+      reviews: { orderBy: { createdAt: 'desc' } },
+      services: true,
+      products: true,
+      faqs: true,
+    }
+  });
+
+  if (business) {
+    businessCache.set(cacheKey, business);
+    if (business.slug) businessCache.set(business.slug.toLowerCase(), business);
+    if (business.id) businessCache.set(business.id.toString(), business);
+  }
+
+  return business;
+});
+
+export const getCachedRelatedBusinesses = cache(async (category: string, currentId: number) => {
+  const cacheKey = `${category.toLowerCase()}_${currentId}`;
+  const cached = relatedCache.get(cacheKey);
+  if (cached) return cached;
+
+  const related = await prisma.business.findMany({
+    where: {
+      category,
+      id: { not: currentId },
+      verified: true,
+    },
+    take: 4,
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      category: true,
+      location: true,
+      address: true,
+      phone: true,
+      rating: true,
+      image: true
+    }
+  });
+
+  relatedCache.set(cacheKey, related);
+  return related;
+});
 
 const SCHEMA_TYPE_MAP: Record<string, string> = {
   'Gyms & Fitness Centers': 'ExerciseGym',
@@ -45,26 +114,7 @@ const SCHEMA_TYPE_MAP: Record<string, string> = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const numId = parseInt(slug);
-
-  const business = await prisma.business.findFirst({
-    where: !isNaN(numId) ? { id: numId } : { slug },
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      category: true,
-      description: true,
-      location: true,
-      locality: true,
-      address: true,
-      image: true,
-      phone: true,
-      isIndexable: true,
-      seoTitle: true,
-      seoDescription: true,
-    }
-  });
+  const business = await getCachedBusiness(slug);
 
   if (!business) {
     return {
@@ -148,53 +198,21 @@ export default async function BusinessProfilePage({ params }: Props) {
   const { slug } = await params;
   const numId = parseInt(slug);
 
-  // 1. Backward-Compatibility 301 Permanent Redirect for legacy numeric IDs
-  if (!isNaN(numId)) {
-    const legacyBiz = await prisma.business.findUnique({
-      where: { id: numId },
-      select: { slug: true }
-    });
-    if (legacyBiz?.slug) {
-      permanentRedirect(`/business/${legacyBiz.slug}`);
-    }
-  }
-
-  // 2. Fetch full business record with relations
-  const business = await prisma.business.findFirst({
-    where: { slug },
-    include: {
-      reviews: { orderBy: { createdAt: 'desc' } },
-      services: true,
-      products: true,
-      faqs: true,
-      leads: { orderBy: { createdAt: 'desc' } }
-    }
-  });
+  // Fetch full business record with relations (from React.cache + LRUCache)
+  const business = await getCachedBusiness(slug);
 
   if (!business) {
     notFound();
   }
 
-  // Related businesses in the same category
-  const relatedBusinesses = await prisma.business.findMany({
-    where: {
-      category: business.category,
-      id: { not: business.id },
-      verified: true,
-    },
-    take: 4,
-    select: {
-      id: true,
-      slug: true,
-      name: true,
-      category: true,
-      location: true,
-      address: true,
-      phone: true,
-      rating: true,
-      image: true
-    }
-  });
+  // Backward-Compatibility 301 Permanent Redirect for legacy numeric IDs
+  if (!isNaN(numId) && business.slug && business.slug !== slug) {
+    permanentRedirect(`/business/${business.slug}`);
+  }
+
+  // Related businesses in the same category (cached)
+  const relatedBusinesses = await getCachedRelatedBusinesses(business.category, business.id);
+
 
   // Prepare images
   const rawParts = (business.image || '').split('||gallery_sep||').filter(Boolean);
@@ -207,7 +225,7 @@ export default async function BusinessProfilePage({ params }: Props) {
   const genuineReviews = business.reviews || [];
   const hasReviews = genuineReviews.length > 0;
   const avgRating = hasReviews
-    ? Math.round((genuineReviews.reduce((acc, r) => acc + r.rating, 0) / genuineReviews.length) * 10) / 10
+    ? Math.round((genuineReviews.reduce((acc: number, r: any) => acc + r.rating, 0) / genuineReviews.length) * 10) / 10
     : 0;
 
   const localBusinessSchema: Record<string, any> = {
@@ -303,21 +321,23 @@ export default async function BusinessProfilePage({ params }: Props) {
 
       {/* 2. SSR Semantic Clean Breadcrumbs */}
       <div className="bg-white border-b border-slate-200/90 px-4 py-2.5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-slate-500">
-          <nav aria-label="Breadcrumb" className="flex items-center space-x-1.5 flex-wrap">
-            <Link href="/" className="hover:text-teal-700 transition-colors">Home</Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <Link href="/location/boisar" className="hover:text-teal-700 transition-colors">Boisar</Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <Link 
-              href={`/category/${encodeURIComponent(business.category.toLowerCase())}`} 
-              className="hover:text-teal-700 transition-colors"
-            >
-              {business.category}
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-slate-900 font-semibold truncate max-w-[200px]">{business.name}</span>
-          </nav>
+        <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-slate-500 gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <nav aria-label="Breadcrumb" className="flex items-center space-x-1.5 flex-wrap">
+              <Link href="/" className="hover:text-teal-700 transition-colors">Home</Link>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              <Link href="/location/boisar" className="hover:text-teal-700 transition-colors">Boisar</Link>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              <Link 
+                href={`/category/${encodeURIComponent(business.category.toLowerCase())}`} 
+                className="hover:text-teal-700 transition-colors"
+              >
+                {business.category}
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-slate-900 font-semibold truncate max-w-[200px]">{business.name}</span>
+            </nav>
+          </div>
 
           <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-full">
             <ShieldCheck className="w-3 h-3 text-teal-700" />
@@ -341,7 +361,7 @@ export default async function BusinessProfilePage({ params }: Props) {
           <div>
             <h2>Services offered by {business.name} in Boisar:</h2>
             <ul>
-              {business.services.map((s, idx) => (
+              {business.services.map((s: any, idx: number) => (
                 <li key={idx}>{s.name} {s.price ? `- ₹${s.price}` : ''}</li>
               ))}
             </ul>
@@ -351,7 +371,7 @@ export default async function BusinessProfilePage({ params }: Props) {
           <div>
             <h2>Products available at {business.name}:</h2>
             <ul>
-              {business.products.map((p, idx) => (
+              {business.products.map((p: any, idx: number) => (
                 <li key={idx}>{p.name} - ₹{p.price}</li>
               ))}
             </ul>

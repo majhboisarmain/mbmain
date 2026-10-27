@@ -6,12 +6,14 @@ import Link from 'next/link';
 import {
   Search, MapPin, CheckCircle, Star, Sparkles, X,
   ChevronRight, ChevronLeft, Phone, Send, Info,
-  Filter, Heart, Award, ShieldCheck, Mail, ShoppingBag, Truck
+  Filter, Heart, Award, ShieldCheck, Mail, ShoppingBag, Truck,
+  ChevronDown, Percent
 } from 'lucide-react';
 import AdModal from '@/components/AdModal';
 import SportsTurfModal from '@/components/LocalHub/SportsTurfModal';
 import { useApp } from '@/context/AppContext';
 import { formatCategoryTitle } from '@/lib/categories';
+import BackButton from '@/components/BackButton';
 
 interface Business {
   id: number;
@@ -418,8 +420,8 @@ export default function SearchClient() {
       {/* 3. Main Search Body - Compact & Clean */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-2 sm:mt-3">
 
-        {/* Search Metadata & Header */}
-        <div className="flex items-center justify-between gap-2 mb-2">
+        {/* Search Metadata & Header with Back Button */}
+        <div className="flex items-center justify-between gap-2.5 mb-2">
           {(() => {
             const displayTitle = urlCategory 
               ? formatCategoryTitle(urlCategory)
@@ -428,13 +430,16 @@ export default function SearchClient() {
                 : 'Local Services';
 
             return (
-              <div className="min-w-0 flex-1">
-                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">
-                  Palghar &gt; Boisar &gt; {displayTitle}
-                </p>
-                <h1 className="text-xs sm:text-sm md:text-base font-black text-slate-800 tracking-tight truncate leading-snug">
-                  {displayTitle} in Boisar
-                </h1>
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <BackButton variant="pill" label="Back" fallbackUrl="/" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">
+                    Palghar &gt; Boisar &gt; {displayTitle}
+                  </p>
+                  <h1 className="text-xs sm:text-sm md:text-base font-black text-slate-800 tracking-tight truncate leading-snug">
+                    {displayTitle} in Boisar
+                  </h1>
+                </div>
               </div>
             );
           })()}
@@ -447,76 +452,69 @@ export default function SearchClient() {
           )}
         </div>
 
-        {/* Filters Row - Compact scrollable row */}
-        <div className="flex items-center gap-1.5 mb-2.5 border-b border-slate-200/60 pb-1.5 overflow-x-auto whitespace-nowrap scrollbar-hide scroll-smooth">
-          {/* GPS Near Me (1 km) button */}
-          <button
-            onClick={detectLocation}
-            disabled={gettingLocation}
-            className={`px-2.5 py-1 rounded-md border text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
-              userCoords
-                ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
-                : 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100'
-            }`}
-          >
-            <MapPin className={`w-3 h-3 ${userCoords ? 'text-white' : 'text-emerald-700'} ${gettingLocation ? 'animate-bounce' : ''}`} />
-            <span>{gettingLocation ? 'Locating...' : userCoords ? 'Near Me (1 km) ON' : 'Near Me (1 km)'}</span>
-          </button>
-
+        {/* Filters Row - Clean, uniform h-8 height, no awkward sizing */}
+        <div className="flex items-center gap-2 mb-2.5 border-b border-slate-200/60 pb-2 overflow-x-auto whitespace-nowrap scrollbar-hide scroll-smooth">
           {/* Sort By Dropdown */}
           <div className="relative shrink-0">
             <select
               value={sortBy}
               onChange={(e: any) => setSortBy(e.target.value)}
-              className="bg-white border border-slate-200 text-slate-700 text-[10px] font-bold px-2 py-1 rounded-md shadow-2xs focus:outline-none cursor-pointer"
+              className="h-8 pl-3 pr-7 bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-700 text-[11px] font-bold rounded-lg shadow-2xs focus:outline-none focus:border-teal-500 cursor-pointer appearance-none shrink-0 transition-colors"
             >
               <option value="none">Sort by</option>
               <option value="rating">Top Rated</option>
               <option value="popularity">Most Views</option>
             </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           <button
+            type="button"
             onClick={() => setFilterRating(!filterRating)}
-            className={`px-2 py-1 rounded-md border text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${filterRating
-                ? 'bg-teal-50 border-teal-500 text-teal-700 shadow-sm'
-                : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-              }`}
+            className={`h-8 px-3 rounded-lg border text-[11px] font-bold transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap active:scale-95 ${
+              filterRating
+                ? 'bg-amber-50 border-amber-400 text-amber-900 shadow-2xs font-extrabold'
+                : 'bg-white border-slate-200/90 text-slate-700 hover:bg-slate-50 shadow-2xs'
+            }`}
           >
-            <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+            <Star className={`w-3.5 h-3.5 shrink-0 ${filterRating ? 'fill-amber-500 text-amber-500' : 'fill-amber-400 text-amber-400'}`} />
             <span>4.5+ Rated</span>
           </button>
 
           <button
+            type="button"
             onClick={() => setFilterVerified(!filterVerified)}
-            className={`px-2 py-1 rounded-md border text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${filterVerified
-                ? 'bg-teal-50 border-teal-500 text-teal-700 shadow-sm'
-                : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-              }`}
+            className={`h-8 px-3 rounded-lg border text-[11px] font-bold transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap active:scale-95 ${
+              filterVerified
+                ? 'bg-teal-50 border-teal-500 text-teal-800 shadow-2xs font-extrabold'
+                : 'bg-white border-slate-200/90 text-slate-700 hover:bg-slate-50 shadow-2xs'
+            }`}
           >
-            <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />
+            <CheckCircle className={`w-3.5 h-3.5 shrink-0 ${filterVerified ? 'text-teal-600' : 'text-emerald-500'}`} />
             <span>MB Verified</span>
           </button>
 
           <button
+            type="button"
             onClick={() => alert("Special offers and discounts are active on verified listings.")}
-            className="px-2 py-1 rounded-md border bg-white border-slate-200 text-slate-600 hover:border-slate-300 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
+            className="h-8 px-3 rounded-lg border bg-white border-slate-200/90 text-slate-700 hover:bg-slate-50 text-[11px] font-bold transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap shadow-2xs active:scale-95"
           >
+            <Percent className="w-3.5 h-3.5 text-teal-600 shrink-0" />
             <span>% Deals</span>
           </button>
 
-          {/* If userCoords or filter active, show Clear button */}
-          {(userCoords || filterRating || filterVerified || sortBy !== 'none') && (
+          {/* If filter active, show Clear button */}
+          {(filterRating || filterVerified || sortBy !== 'none') && (
             <button
+              type="button"
               onClick={() => {
-                setUserCoords(null);
                 setFilterRating(false);
                 setFilterVerified(false);
                 setSortBy('none');
               }}
-              className="text-[10px] text-rose-600 hover:underline font-bold ml-1 cursor-pointer shrink-0"
+              className="h-8 px-2.5 text-[11px] text-rose-600 hover:bg-rose-50 rounded-lg font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap"
             >
-              Reset Filters
+              Reset
             </button>
           )}
         </div>
@@ -589,9 +587,10 @@ export default function SearchClient() {
                       className="relative w-full overflow-hidden rounded-t-2xl bg-slate-100"
                     >
                       {allPhotos.length <= 1 ? (
-                        <div 
-                          onClick={() => router.push(`/business/${bizSlugOrId}`)}
-                          className="w-full h-44 sm:h-52 relative cursor-pointer overflow-hidden group/photo bg-slate-900 flex items-center justify-center"
+                        <Link 
+                          href={`/business/${bizSlugOrId}`}
+                          prefetch={true}
+                          className="w-full h-44 sm:h-52 relative cursor-pointer overflow-hidden group/photo bg-slate-900 flex items-center justify-center block"
                         >
                           <img
                             src={coverImage}
@@ -614,14 +613,15 @@ export default function SearchClient() {
                               <span>👁️ {business.views.toLocaleString()} visits</span>
                             </div>
                           )}
-                        </div>
+                        </Link>
                       ) : allPhotos.length === 2 ? (
                         <div className="grid grid-cols-2 gap-1.5 w-full h-44 sm:h-50 p-1.5 bg-slate-50">
                           {allPhotos.slice(0, 2).map((imgUrl, pIdx) => (
-                            <div
+                            <Link
                               key={pIdx}
-                              onClick={() => router.push(`/business/${bizSlugOrId}`)}
-                              className="w-full h-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs relative bg-slate-900 cursor-pointer group/photo flex items-center justify-center"
+                              href={`/business/${bizSlugOrId}`}
+                              prefetch={true}
+                              className="w-full h-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs relative bg-slate-900 cursor-pointer group/photo flex items-center justify-center block"
                             >
                               <img
                                 src={imgUrl}
@@ -636,16 +636,17 @@ export default function SearchClient() {
                                   <span>👁️ {business.views.toLocaleString()} visits</span>
                                 </div>
                               )}
-                            </div>
+                            </Link>
                           ))}
                         </div>
                       ) : (
                         <div className="grid grid-cols-3 gap-1.5 w-full h-38 sm:h-44 p-1.5 bg-slate-50">
                           {allPhotos.slice(0, 3).map((imgUrl, pIdx) => (
-                            <div
+                            <Link
                               key={pIdx}
-                              onClick={() => router.push(`/business/${bizSlugOrId}`)}
-                              className="w-full h-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs relative bg-slate-900 cursor-pointer group/photo flex items-center justify-center"
+                              href={`/business/${bizSlugOrId}`}
+                              prefetch={true}
+                              className="w-full h-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs relative bg-slate-900 cursor-pointer group/photo flex items-center justify-center block"
                             >
                               <img
                                 src={imgUrl}
@@ -661,7 +662,7 @@ export default function SearchClient() {
                                   <span>👁️ {business.views.toLocaleString()} visits</span>
                                 </div>
                               )}
-                            </div>
+                            </Link>
                           ))}
                         </div>
                       )}
@@ -705,7 +706,7 @@ export default function SearchClient() {
                       {/* Business Name Header */}
                       <div>
                         <h3 className="font-black text-sm sm:text-base text-slate-900 leading-snug hover:text-teal-700 transition-colors line-clamp-2">
-                          <Link href={`/business/${bizSlugOrId}`} onClick={(e) => e.stopPropagation()}>
+                          <Link href={`/business/${bizSlugOrId}`} prefetch={true} onClick={(e) => e.stopPropagation()}>
                             {business.name}
                           </Link>
                         </h3>

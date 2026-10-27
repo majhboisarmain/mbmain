@@ -19,7 +19,8 @@ import {
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
 
 export default function Navbar() {
-  const { currentRole, setRole, userName, isLoggedIn, loggedInUser, updateUserProfile, logout, loginModalOpen, setLoginModalOpen, setAdModalOpen, showToast, hasRegisteredBusiness } = useApp();
+  const { currentRole, setRole, userName, isLoggedIn, loggedInUser, updateUserProfile, logout, loginModalOpen, setLoginModalOpen, setAdModalOpen, showToast, hasRegisteredBusiness, isAdmin, isPlatformAdminPhone } = useApp();
+  const isUserAdmin = isAdmin || currentRole === 'Admin' || (loggedInUser as any)?.role === 'Admin' || isPlatformAdminPhone(loggedInUser?.phone);
   const { t } = useLanguage();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -303,7 +304,7 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between gap-1.5 sm:gap-4 overflow-visible">
 
           {/* Logo Section */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 min-w-0">
             <Link href="/" className="flex items-center group py-0.5">
               <img
                 src="/majh-boisar-full-logo.png"
@@ -508,7 +509,7 @@ export default function Navbar() {
             </Link>
 
             {/* Register Your Business CTA — only for users without a registered business */}
-            {mounted && !hasRegisteredBusiness && currentRole !== 'BusinessOwner' && currentRole !== 'Admin' && (loggedInUser as any)?.role !== 'BusinessOwner' && (loggedInUser as any)?.role !== 'Admin' && (
+            {mounted && !hasRegisteredBusiness && currentRole !== 'BusinessOwner' && !isUserAdmin && (loggedInUser as any)?.role !== 'BusinessOwner' && (
               <Link
                 href="/dashboard?register=true"
                 className="btn-teal text-xs font-black px-3 py-1.5 rounded-lg hover:shadow-md transition-shadow flex items-center gap-1.5 cursor-pointer"
@@ -739,7 +740,7 @@ export default function Navbar() {
                           </button>
 
                           {/* Business Dashboard or Register */}
-                          {isLoggedIn && !hasRegisteredBusiness && currentRole !== 'Admin' && (loggedInUser as any)?.role !== 'Admin' && currentRole !== 'BusinessOwner' && (loggedInUser as any)?.role !== 'BusinessOwner' ? (
+                          {isLoggedIn && !hasRegisteredBusiness && !isUserAdmin && currentRole !== 'BusinessOwner' && (loggedInUser as any)?.role !== 'BusinessOwner' ? (
                             <Link
                               href="/dashboard?register=true"
                               onClick={() => setProfileDropdownOpen(false)}
@@ -763,7 +764,7 @@ export default function Navbar() {
                           )}
 
                           {/* Admin Panel */}
-                          {(currentRole === 'Admin' || (loggedInUser as any)?.role === 'Admin') && (
+                          {isUserAdmin && (
                             <Link
                               href="/adminmb"
                               onClick={() => setProfileDropdownOpen(false)}
@@ -1018,7 +1019,7 @@ export default function Navbar() {
                     <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                   </Link>
 
-                  {isLoggedIn && (currentRole === 'Admin' || (loggedInUser as any)?.role === 'Admin') && (
+                  {isLoggedIn && isUserAdmin && (
                     <>
                       <div className="h-px bg-slate-100 mx-3" />
                       <Link

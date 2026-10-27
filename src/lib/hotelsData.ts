@@ -78,6 +78,8 @@ export interface HotelItem {
   isComingSoon?: boolean;
   createdBy?: string;
   assignedOwnerPhone?: string;
+  status?: 'Pending' | 'Approved' | 'Rejected';
+  verified?: boolean;
 }
 
 export function getHotelAssignedOwnerPhone(hotel: any): string {
@@ -101,6 +103,8 @@ export const BOISAR_HOTELS: HotelItem[] = [
     id: 'hotel-shivanand',
     slug: 'hotel-shivanand',
     name: 'Hotel Shivanand',
+    status: 'Approved',
+    verified: true,
     tagline: 'Clean, Safe & Budget-Friendly Stay near Boisar Railway Station',
     category: 'Budget',
     badge: 'TOP PICK',

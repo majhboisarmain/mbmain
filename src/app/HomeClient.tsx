@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { 
   Search, MapPin, Sparkles, Phone, ArrowRight, MessageSquare, 
   PlusCircle, Plus, CheckCircle, Star, Sparkle, X, Send, Eye, ShieldCheck,
@@ -35,6 +35,8 @@ import CommunityEventsModal from '@/components/LocalHub/CommunityEventsModal';
 import HotelBookingModal from '@/components/LocalHub/HotelBookingModal';
 import ResortVillaModal from '@/components/LocalHub/ResortVillaModal';
 import ReportModal from '@/components/ReportModal';
+import ExitAppModal from '@/components/ExitAppModal';
+import MMTCategoryIcon from '@/components/MMTCategoryIcon';
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
 import { getCategorySlug, formatCategoryTitle, getCategorySearchTerms } from '@/lib/categories';
 
@@ -99,14 +101,15 @@ interface AdCampaign {
 }
 
 const rawCategories = [
-  "Protein", "Loans", "Gyms", "Eye Opticians", "Water Purifier", "Schools", "Digital Printing", "Jobs",
+  "Protein", "Loans", "Gyms", "Eye Opticians", "Water Purifier", "Schools", "Digital Printing",
   "Dance Classes", "Music Classes", "Salons", "Clothing", "Photographers", "Travel Agencies", "Medical Stores",
   "CA Consultants", "Doctors", "Hospitals", "Dentists", "Pathology Labs", "Restaurants", "Cafes", "Bakeries",
   "Street Food", "Grocery", "Real Estate", "Hotels", "Resorts", "Hostels", "Electricians", "Plumbers",
   "Carpenters", "Painters", "AC Service", "Pest Control", "Yoga Classes", "Coaching Classes", "Jewellery",
   "Footwear", "Electronics", "Mobile Shops", "Computer Repair", "Hardware", "Interior Designers", "Fabrication",
   "Auto Garages", "Car Rentals", "Packers Movers", "Event Organisers", "Catering", "Digital Marketing",
-  "Insurance", "Lawyers", "Pet Clinics", "Baby Care", "Spa Wellness", "Dairy Products", "Meat Poultry", "Fruits Vegetables"
+  "Insurance", "Lawyers", "Pet Clinics", "Baby Care", "Spa Wellness", "Dairy Products", "Meat Poultry", "Fruits Vegetables",
+  "Accounting Software Dealers"
 ];
 
 export interface HomeFeaturedRestaurant {
@@ -386,203 +389,10 @@ const subServicesMap: Record<string, string[]> = {
   "Jewellery": ["Gold Ornaments", "Silver Jewellery", "Diamond Ring & Necklace", "Platinum Jewelry", "Custom Hallmark Gold", "Jewellery Repair & Polish"]
 };
 
-function getCategoryIcon(name: string, sizeClass = "w-8 h-8 sm:w-9 sm:h-9") {
-  const lower = name.toLowerCase().trim();
-
-  // Fitness & Gyms
-  if (lower.includes('protein') || lower.includes('supplement') || lower.includes('nutrition')) {
-    return <Dumbbell className={`${sizeClass} text-amber-600`} />;
-  }
-  if (lower.includes('gym') || lower.includes('fitness') || lower.includes('workout')) {
-    return <Dumbbell className={`${sizeClass} text-rose-600`} />;
-  }
-  // Finance & Software
-  if (lower.includes('software') || lower.includes('accounting') || lower.includes('tally') || lower.includes('billing') || lower.includes('erp')) {
-    return <Calculator className={`${sizeClass} text-indigo-600`} />;
-  }
-  if (lower.includes('ca ') || lower.includes('chartered') || lower.includes('tax') || lower.includes('gst') || lower.includes('audit')) {
-    return <FileSpreadsheet className={`${sizeClass} text-cyan-600`} />;
-  }
-  if (lower.includes('loan') || lower.includes('finance') || lower.includes('credit')) {
-    return <IndianRupee className={`${sizeClass} text-emerald-600`} />;
-  }
-  if (lower.includes('insurance') || lower.includes('lic') || lower.includes('policy')) {
-    return <ShieldCheck className={`${sizeClass} text-emerald-600`} />;
-  }
-  if (lower.includes('lawyer') || lower.includes('advocate') || lower.includes('legal') || lower.includes('court')) {
-    return <Scale className={`${sizeClass} text-slate-700`} />;
-  }
-  // Utilities & Printing
-  if (lower.includes('purifier') || lower.includes('ro filter') || lower.includes('water filter') || lower.includes('aquaguard')) {
-    return <Droplets className={`${sizeClass} text-blue-600`} />;
-  }
-  if (lower.includes('print') || lower.includes('radium') || lower.includes('banner') || lower.includes('flex') || lower.includes('xerox')) {
-    return <Printer className={`${sizeClass} text-violet-600`} />;
-  }
-  // Vision & Healthcare
-  if (lower.includes('optic') || lower.includes('eye') || lower.includes('spectacle') || lower.includes('chashma') || lower.includes('lens')) {
-    return <Glasses className={`${sizeClass} text-sky-600`} />;
-  }
-  if (lower.includes('doctor') || lower.includes('clinic') || lower.includes('physician')) {
-    return <Stethoscope className={`${sizeClass} text-teal-600`} />;
-  }
-  if (lower.includes('hospital') || lower.includes('emergency') || lower.includes('nursing home')) {
-    return <HeartPulse className={`${sizeClass} text-rose-600`} />;
-  }
-  if (lower.includes('dentist') || lower.includes('dental') || lower.includes('teeth')) {
-    return <Stethoscope className={`${sizeClass} text-teal-600`} />;
-  }
-  if (lower.includes('pathology') || lower.includes('diagnostic') || lower.includes('blood test') || lower.includes('lab')) {
-    return <Activity className={`${sizeClass} text-purple-600`} />;
-  }
-  if (lower.includes('medical') || lower.includes('pharmacy') || lower.includes('chemist') || lower.includes('medicine')) {
-    return <Pill className={`${sizeClass} text-rose-600`} />;
-  }
-  // Arts & Performance
-  if (lower.includes('dance')) {
-    return <Sparkles className={`${sizeClass} text-pink-600`} />;
-  }
-  if (lower.includes('music') || lower.includes('singing') || lower.includes('guitar')) {
-    return <Music className={`${sizeClass} text-purple-600`} />;
-  }
-  if (lower.includes('yoga') || lower.includes('meditation')) {
-    return <Flower2 className={`${sizeClass} text-emerald-600`} />;
-  }
-  // Education & Jobs
-  if (lower.includes('school') || lower.includes('vidyalaya') || lower.includes('college') || lower.includes('institute') || lower.includes('academy')) {
-    return <GraduationCap className={`${sizeClass} text-indigo-600`} />;
-  }
-  if (lower.includes('coaching') || lower.includes('tuition')) {
-    return <GraduationCap className={`${sizeClass} text-blue-600`} />;
-  }
-  if (lower.includes('job') || lower.includes('placement') || lower.includes('recruitment') || lower.includes('career')) {
-    return <Briefcase className={`${sizeClass} text-blue-600`} />;
-  }
-  // Beauty & Lifestyle
-  if (lower.includes('salon') || lower.includes('parlour') || lower.includes('beauty') || lower.includes('haircut')) {
-    return <Scissors className={`${sizeClass} text-pink-600`} />;
-  }
-  if (lower.includes('cloth') || lower.includes('garment') || lower.includes('wear') || lower.includes('fashion') || lower.includes('boutique')) {
-    return <Shirt className={`${sizeClass} text-purple-600`} />;
-  }
-  if (lower.includes('photo') || lower.includes('camera') || lower.includes('studio') || lower.includes('video')) {
-    return <Camera className={`${sizeClass} text-slate-700`} />;
-  }
-  if (lower.includes('travel') || lower.includes('tour') || lower.includes('ticket') || lower.includes('taxi')) {
-    return <Compass className={`${sizeClass} text-amber-600`} />;
-  }
-  // Food & Dining
-  if (lower.includes('cafe') || lower.includes('coffee') || lower.includes('tea')) {
-    return <Coffee className={`${sizeClass} text-amber-700`} />;
-  }
-  if (lower.includes('bakery') || lower.includes('baker') || lower.includes('cake') || lower.includes('pastry')) {
-    return <Cake className={`${sizeClass} text-amber-600`} />;
-  }
-  if (lower.includes('street food') || lower.includes('chaat') || lower.includes('snack') || lower.includes('pizza') || lower.includes('burger')) {
-    return <Pizza className={`${sizeClass} text-red-600`} />;
-  }
-  if (lower.includes('restaurant') || lower.includes('dining') || lower.includes('food') || lower.includes('thali')) {
-    return <Utensils className={`${sizeClass} text-orange-600`} />;
-  }
-  if (lower.includes('grocery') || lower.includes('kirana') || lower.includes('supermarket') || lower.includes('mart')) {
-    return <ShoppingCart className={`${sizeClass} text-emerald-600`} />;
-  }
-  // Stays & Real Estate
-  if (lower.includes('real estate') || lower.includes('property') || lower.includes('flat') || lower.includes('plot') || lower.includes('builder')) {
-    return <Home className={`${sizeClass} text-sky-600`} />;
-  }
-  if (lower.includes('hotel') || lower.includes('lodge')) {
-    return <Hotel className={`${sizeClass} text-amber-600`} />;
-  }
-  if (lower.includes('resort') || lower.includes('villa')) {
-    return <SunMedium className={`${sizeClass} text-teal-600`} />;
-  }
-  if (lower.includes('hostel') || lower.includes('pg ') || lower.includes('paying guest')) {
-    return <Building2 className={`${sizeClass} text-indigo-600`} />;
-  }
-  // Home Maintenance & Services
-  if (lower.includes('electrician') || lower.includes('wiring') || lower.includes('electrical')) {
-    return <Zap className={`${sizeClass} text-amber-500`} />;
-  }
-  if (lower.includes('plumber') || lower.includes('pipe') || lower.includes('sanitary')) {
-    return <Wrench className={`${sizeClass} text-sky-600`} />;
-  }
-  if (lower.includes('carpenter') || lower.includes('furniture') || lower.includes('wood')) {
-    return <Hammer className={`${sizeClass} text-orange-600`} />;
-  }
-  if (lower.includes('paint') || lower.includes('whitewash')) {
-    return <Paintbrush className={`${sizeClass} text-violet-600`} />;
-  }
-  if (lower.includes('ac service') || lower.includes('air condition') || lower.includes('cooling')) {
-    return <Wind className={`${sizeClass} text-cyan-600`} />;
-  }
-  if (lower.includes('pest') || lower.includes('termite')) {
-    return <Bug className={`${sizeClass} text-emerald-600`} />;
-  }
-  // Wellness, Retail & Other
-  if (lower.includes('yoga') || lower.includes('meditation') || lower.includes('spa') || lower.includes('wellness')) {
-    return <Flower2 className={`${sizeClass} text-emerald-600`} />;
-  }
-  if (lower.includes('jewel') || lower.includes('gold') || lower.includes('silver') || lower.includes('diamond')) {
-    return <Gem className={`${sizeClass} text-amber-500`} />;
-  }
-  if (lower.includes('footwear') || lower.includes('shoe') || lower.includes('sandal')) {
-    return <Footprints className={`${sizeClass} text-orange-600`} />;
-  }
-  if (lower.includes('electronic') || lower.includes('appliance') || lower.includes('tv')) {
-    return <Tv className={`${sizeClass} text-blue-600`} />;
-  }
-  if (lower.includes('mobile') || lower.includes('smartphone') || lower.includes('phone')) {
-    return <Smartphone className={`${sizeClass} text-violet-600`} />;
-  }
-  if (lower.includes('computer') || lower.includes('laptop')) {
-    return <Laptop className={`${sizeClass} text-blue-600`} />;
-  }
-  if (lower.includes('hardware') || lower.includes('building material')) {
-    return <Wrench className={`${sizeClass} text-slate-600`} />;
-  }
-  if (lower.includes('interior') || lower.includes('decor')) {
-    return <Palette className={`${sizeClass} text-pink-600`} />;
-  }
-  if (lower.includes('fabricat') || lower.includes('welding')) {
-    return <Flame className={`${sizeClass} text-orange-600`} />;
-  }
-  if (lower.includes('garage') || lower.includes('mechanic') || lower.includes('car repair') || lower.includes('bike')) {
-    return <Car className={`${sizeClass} text-red-600`} />;
-  }
-  if (lower.includes('car rental') || lower.includes('cab')) {
-    return <Car className={`${sizeClass} text-sky-600`} />;
-  }
-  if (lower.includes('packer') || lower.includes('mover') || lower.includes('shifting')) {
-    return <Package className={`${sizeClass} text-amber-600`} />;
-  }
-  if (lower.includes('event') || lower.includes('wedding')) {
-    return <PartyPopper className={`${sizeClass} text-fuchsia-600`} />;
-  }
-  if (lower.includes('catering') || lower.includes('caterer') || lower.includes('tiffin')) {
-    return <CookingPot className={`${sizeClass} text-orange-600`} />;
-  }
-  if (lower.includes('digital marketing') || lower.includes('seo')) {
-    return <TrendingUp className={`${sizeClass} text-indigo-600`} />;
-  }
-  if (lower.includes('pet') || lower.includes('veterinary') || lower.includes('dog')) {
-    return <PawPrint className={`${sizeClass} text-emerald-600`} />;
-  }
-  if (lower.includes('baby') || lower.includes('infant')) {
-    return <Baby className={`${sizeClass} text-pink-600`} />;
-  }
-  if (lower.includes('dairy') || lower.includes('milk')) {
-    return <Milk className={`${sizeClass} text-sky-600`} />;
-  }
-  if (lower.includes('meat') || lower.includes('chicken') || lower.includes('mutton') || lower.includes('fish')) {
-    return <Utensils className={`${sizeClass} text-red-600`} />;
-  }
-  if (lower.includes('fruit') || lower.includes('vegetable') || lower.includes('sabzi')) {
-    return <Apple className={`${sizeClass} text-emerald-600`} />;
-  }
-
-  return <LayoutGrid className={`${sizeClass} text-teal-600`} />;
+function getCategoryIcon(name: string, sizeClass = "w-11 h-11 sm:w-12 sm:h-12") {
+  return <MMTCategoryIcon name={name} className={sizeClass} />;
 }
+
 
 function getCategoryBgClass(name: string) {
   const lower = name.toLowerCase().trim();
@@ -860,8 +670,6 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   const { userName, currentRole, isLoggedIn, loggedInUser, loginModalOpen, setLoginModalOpen, adModalOpen, setAdModalOpen, showToast } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [dynamicCategories, setDynamicCategories] = useState<string[]>([]);
@@ -1306,7 +1114,8 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   }, [selectedProfile, activeSpecialCategory, propertyMode]);
 
   const closePortal = () => {
-    if (pathname === '/properties' || pathname?.startsWith('/properties')) {
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    if (currentPath === '/properties' || currentPath.startsWith('/properties')) {
       router.push('/');
     }
     setActiveSpecialCategory(null);
@@ -1333,6 +1142,9 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
   // Auto-open specific portal modal if URL contains search parameters or query keywords or on /properties route
   useEffect(() => {
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+
     if (initialSpecialCategory) {
       setActiveSpecialCategory(initialSpecialCategory);
       if (searchParams?.get('postProperty') === 'true') {
@@ -1340,7 +1152,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       }
       return;
     }
-    if (pathname === '/properties' || pathname?.startsWith('/properties')) {
+    if (currentPath === '/properties' || currentPath.startsWith('/properties')) {
       setActiveSpecialCategory('properties');
       if (searchParams?.get('postProperty') === 'true') {
         setPostPropertyModalOpen(true);
@@ -1426,27 +1238,70 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       setPortraitTurfTab('turf');
       setPortraitTurfOpen(true);
     }
-  }, [searchParams, router]);
+  }, [router]);
+
+  const [showExitModal, setShowExitModal] = useState(false);
 
   useEffect(() => {
-    if (selectedProfile || activeSpecialCategory) {
-      window.history.pushState({ modalOpen: true }, '');
+    if (typeof window === 'undefined') return;
 
-      const handlePopState = () => {
-        if (selectedProfile) {
-          setSelectedProfile(null);
-        } else if (activeSpecialCategory) {
-          setActiveSpecialCategory(null);
-          setPropertyMode(null);
+    // Push initial history guard so pressing back triggers popstate instead of exiting instantly
+    window.history.pushState({ page: 'home_guard' }, '');
+
+    const handlePopState = (e: PopStateEvent) => {
+      // 1. If any modal / profile is open, close that first
+      if (selectedProfile) {
+        setSelectedProfile(null);
+        window.history.pushState({ page: 'home_guard' }, '');
+        return;
+      }
+      if (activeSpecialCategory) {
+        setActiveSpecialCategory(null);
+        setPropertyMode(null);
+        window.history.pushState({ page: 'home_guard' }, '');
+        return;
+      }
+      if (portraitTurfOpen) {
+        setPortraitTurfOpen(false);
+        window.history.pushState({ page: 'home_guard' }, '');
+        return;
+      }
+
+      // 2. If already showing the exit modal, pressing back again confirms exit
+      if (showExitModal) {
+        setShowExitModal(false);
+        if (window.history.length > 2) {
+          window.history.go(-2);
+        } else {
+          window.history.back();
         }
-      };
+        return;
+      }
 
-      window.addEventListener('popstate', handlePopState);
-      return () => {
-        window.removeEventListener('popstate', handlePopState);
-      };
+      // 3. User pressed back on Home page -> show Exit Confirmation Modal!
+      setShowExitModal(true);
+      window.history.pushState({ page: 'home_guard' }, '');
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [selectedProfile, activeSpecialCategory, portraitTurfOpen, showExitModal]);
+
+  const handleConfirmExit = () => {
+    setShowExitModal(false);
+    if (typeof window !== 'undefined') {
+      try {
+        window.close();
+      } catch (e) {}
+      if (window.history.length > 2) {
+        window.history.go(-2);
+      } else {
+        window.history.back();
+      }
     }
-  }, [selectedProfile, activeSpecialCategory]);
+  };
 
   const [ads, setAds] = useState<AdCampaign[]>([
     {
@@ -1557,6 +1412,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   // Auto-select property if id parameter is provided in URL (?id=123)
   useEffect(() => {
     if (activeSpecialCategory === 'properties') {
+      const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
       const propId = searchParams?.get('id');
       if (propId && profilesState.properties && profilesState.properties.length > 0) {
         const found = profilesState.properties.find((p: any) => String(p.id) === String(propId));
@@ -1565,7 +1421,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
         }
       }
     }
-  }, [activeSpecialCategory, searchParams, profilesState.properties]);
+  }, [activeSpecialCategory, profilesState.properties]);
 
   const handleShareProperty = async () => {
     if (!selectedProfile) return;
@@ -2219,6 +2075,8 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
     [...rawCategories, ...dynamicCategories].forEach(rawName => {
       const canonical = formatCategoryTitle(rawName);
       const lower = canonical.toLowerCase();
+      // Exclude 'Jobs' from Explore Categories as Jobs has its own dedicated portal
+      if (lower === 'jobs' || lower === 'job' || lower.startsWith('job')) return;
       if (!seen.has(lower)) {
         seen.add(lower);
         canonicalList.push(canonical);
@@ -2383,10 +2241,10 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
         
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center relative z-40 overflow-visible">
 
-          {/* Search Inputs Bar — Clean Single NoBroker Rounded Input Style */}
-          <div className="max-w-xl mx-auto relative z-50">
-            <div className="bg-white border border-slate-200/90 shadow-[0_4px_20px_rgb(0,0,0,0.06)] hover:shadow-md hover:border-slate-350 focus-within:border-slate-700 focus-within:ring-4 focus-within:ring-slate-900/5 rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2.5 transition-all">
-              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 shrink-0 stroke-[2.2]" />
+          {/* Search Inputs Bar — Clean, Crisp, Professional Rounded Pill */}
+          <div className="w-[94%] sm:w-full max-w-[480px] mx-auto relative z-50">
+            <div className="bg-white border-2 border-slate-200 hover:border-teal-500 focus-within:border-[#008080] focus-within:ring-4 focus-within:ring-teal-500/10 rounded-full px-3.5 sm:px-4 py-2 sm:py-2.5 flex items-center gap-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.06)] hover:shadow-md transition-all">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600 shrink-0 stroke-[2.2]" />
               <input
                 type="text"
                 value={searchQuery}
@@ -2402,16 +2260,20 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     fetchBusinesses(); 
                   }
                 }}
-                placeholder="Search Plumbing, Electrical, Cleaning..."
-                className="bg-transparent border-0 text-xs sm:text-sm focus:outline-none w-full text-slate-800 placeholder:text-slate-400 font-bold"
+                placeholder="Find everything here in Boisar..."
+                className="bg-transparent border-0 text-xs sm:text-sm focus:outline-none w-full text-slate-800 placeholder:text-slate-400 font-semibold"
               />
               {loading && searchQuery && (
                 <div className="w-3.5 h-3.5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin shrink-0" />
               )}
-              {searchQuery && (
+              {searchQuery ? (
                 <button onClick={() => setSearchQuery('')} className="p-1 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 shrink-0 cursor-pointer">
                   <X className="w-3.5 h-3.5" />
                 </button>
+              ) : (
+                <div className="p-1.5 rounded-full bg-teal-50 text-teal-600 shrink-0">
+                  <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                </div>
               )}
             </div>
 
@@ -2497,6 +2359,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         <Link
                           key={biz.id}
                           href={`/business/${(biz as any).slug || biz.id}`}
+                          prefetch={true}
                           onClick={() => setIsSearchFocused(false)}
                           className="px-3.5 py-2 hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors group"
                         >
@@ -2782,58 +2645,61 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
         </div>
       </div>
 
-      {/* 3. Grid of Category Blocks (Explore Categories - Popular style compact cards) */}
-      <div className="w-full bg-gradient-to-b from-[#f8fafc] via-[#f1f5f9]/70 to-[#fafbfb] border-b border-slate-200/70 py-4 sm:py-6">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between border-b border-slate-200/60 pb-3 mb-4">
-            <div className="flex items-center gap-2">
-              <span className="h-4 w-1 rounded-full bg-[#008080] shrink-0"></span>
-              <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
-                Explore Categories
-              </h2>
-            </div>
-            <button
-              onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
-              className="text-xs sm:text-sm font-bold text-[#008080] hover:text-teal-900 flex items-center gap-1 transition-all duration-200 cursor-pointer group active:scale-95 select-none"
-            >
-              <span className="group-hover:underline underline-offset-4 decoration-teal-400">
-                {isCategoriesExpanded ? 'Show Less' : `View All (${categories.length})`}
-              </span>
-              <ChevronDown 
-                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#008080] group-hover:text-teal-900 transition-transform duration-300 ${
-                  isCategoriesExpanded ? 'rotate-180' : ''
-                }`} 
-              />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-8 gap-2.5 sm:gap-3">
-            {displayedCategories.map((cat) => (
-              <Link
-                key={cat.name}
-                href={`/category/${getCategorySlug(cat.name)}`}
-                className="group bg-white rounded-2xl border border-slate-200/80 p-2 sm:p-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-[#008080] hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col items-center justify-between text-center relative min-h-[92px] sm:min-h-[102px]"
+      {/* 3. Grid of Category Blocks (MakeMyTrip Style Single Card with 4 Columns on Mobile) */}
+      <div className="w-full py-2.5 sm:py-5">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          {/* Unified White Card Container (MakeMyTrip Style) */}
+          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4 sm:p-6 transition-all">
+            {/* Header inside the card */}
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="h-4 w-1 rounded-full bg-[#008080] shrink-0"></span>
+                <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
+                  Explore Categories
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCategoriesExpanded(!isCategoriesExpanded)}
+                className="text-xs sm:text-sm font-bold text-[#008080] hover:text-teal-900 flex items-center gap-1 transition-all duration-200 cursor-pointer group active:scale-95 select-none"
               >
-                {/* Clean Floating Icon (MakeMyTrip Style) */}
-                <div className="relative w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center mt-1">
-                  <div className="transition-transform duration-300 group-hover:scale-115 group-hover:-translate-y-0.5">
-                    {cat.icon}
-                  </div>
-                  {cat.count > 0 && (
-                    <span className="absolute -top-1 -right-1.5 bg-teal-800 text-white text-[8px] sm:text-[8.5px] font-black px-1.5 py-0.2 rounded-full shadow-xs pointer-events-none border border-white">
-                      {cat.count}
-                    </span>
-                  )}
-                </div>
+                <span className="group-hover:underline underline-offset-4 decoration-teal-400">
+                  {isCategoriesExpanded ? 'Show Less' : 'View All'}
+                </span>
+                <ChevronDown 
+                  className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#008080] group-hover:text-teal-900 transition-transform duration-300 ${
+                    isCategoriesExpanded ? 'rotate-180' : ''
+                  }`} 
+                />
+              </button>
+            </div>
 
-                {/* Title label */}
-                <div className="flex items-center justify-center w-full px-0.5 mt-1 sm:mt-1.5 min-h-[2rem]">
-                  <p className="text-[10px] min-[360px]:text-[11px] sm:text-[12px] font-bold text-slate-700 text-center leading-[1.2] line-clamp-2 group-hover:text-[#008080] transition-colors">
+            {/* Exactly 4 Columns on Mobile & Responsive Grid, Clean Unboxed Items */}
+            <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-y-5 sm:gap-y-6 gap-x-2 sm:gap-x-4">
+              {displayedCategories.map((cat) => (
+                <Link
+                  key={cat.name}
+                  href={`/category/${getCategorySlug(cat.name)}`}
+                  prefetch={true}
+                  className="group flex flex-col items-center justify-start text-center cursor-pointer active:scale-95 transition-transform"
+                >
+                  {/* Clean 3D Isometric Icon (MMT Style) */}
+                  <div className="relative w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
+                    {cat.icon}
+                    {cat.count > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-teal-800 text-white text-[8px] sm:text-[8.5px] font-black px-1.5 py-0.2 rounded-full shadow-xs pointer-events-none border border-white">
+                        {cat.count}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Clean Text Label (2 lines max, centered, readable) */}
+                  <p className="mt-2 text-[10.5px] min-[360px]:text-[11px] sm:text-xs font-semibold text-slate-800 text-center leading-[1.25] line-clamp-2 px-0.5 group-hover:text-teal-700 transition-colors">
                     {cat.name}
                   </p>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -8205,6 +8071,13 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           </div>
         </div>
       )}
+
+      {/* Exit App Confirmation Modal */}
+      <ExitAppModal
+        isOpen={showExitModal}
+        onClose={() => setShowExitModal(false)}
+        onConfirmExit={handleConfirmExit}
+      />
 
     </div>
   );

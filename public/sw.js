@@ -1,12 +1,13 @@
 // Majh Boisar - Service Worker for PWA
-const CACHE_NAME = 'majhboisar-v1';
+const CACHE_NAME = 'majhboisar-v2';
 const OFFLINE_URL = '/';
 
 const PRECACHE_ASSETS = [
   '/',
   '/manifest.json',
   '/icon-192x192.png',
-  '/icon-512x512.png'
+  '/icon-512x512.png',
+  '/majh-boisar-mb-logo.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -36,9 +37,17 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match(OFFLINE_URL);
-      })
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(OFFLINE_URL) || caches.match('/');
+        })
     );
     return;
   }

@@ -157,8 +157,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
       return;
     }
 
-    // Check if this is the Master Admin Phone: 7769947217
-    if (cleanInputPhone.endsWith('7769947217')) {
+    // Check if this is an Admin Phone: 9307294733 or 7769947217
+    if (cleanInputPhone.endsWith('9307294733') || cleanInputPhone.endsWith('7769947217')) {
       setIsLoading(false);
       setStep('admin_password');
       showToast('🔒 Admin phone verified. Super Admin password is required.', 'info', 4000);
@@ -239,11 +239,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setOtpError('');
 
     try {
+      const cleanPhone = (mobileNumber || '').replace(/\D/g, '');
+      const effectivePhone = cleanPhone.endsWith('9307294733') ? '9307294733' : '7769947217';
       const res = await fetch('/api/auth/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phone: mobileNumber || '7769947217',
+          phone: effectivePhone,
           password: adminPasscode.trim(),
         }),
       });
@@ -258,8 +260,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
       setOtpError('');
       setRole('Admin');
-      login('Super Admin (7769947217)', '7769947217', 'majhboisar@gmail.com');
-      showToast('🛡️ Super Admin Authenticated! Opening Admin Panel...', 'success', 3500);
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('majh_boisar_adminmb_auth', 'unlocked');
+        localStorage.setItem('majh_boisar_role', 'Admin');
+        localStorage.setItem('majh_boisar_phone', effectivePhone);
+      }
+      const adminName = effectivePhone === '9307294733' ? 'Admin (9307294733)' : 'Super Admin (7769947217)';
+      login(adminName, effectivePhone, 'majhboisar@gmail.com');
+      showToast('🛡️ Admin Authenticated! Opening Admin Panel...', 'success', 3500);
       resetForm();
       onClose();
       router.push('/adminmb');
@@ -575,7 +583,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                   <span className="text-xs font-black uppercase tracking-wider">Super Admin Detected</span>
                 </div>
                 <p className="text-[11px] text-slate-300 font-medium">
-                  Admin Mobile <strong className="text-white">+91 7769947217</strong> verified via OTP.
+                  Admin Mobile <strong className="text-white">+91 {(mobileNumber || '').replace(/\D/g, '').slice(-10) || '7769947217'}</strong> verified via OTP.
                 </p>
                 <p className="text-[10px] text-amber-400 font-bold">
                   ⚠️ Super Admin password is compulsory to open the Admin Panel.

@@ -34,9 +34,5 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-xs font-bold text-slate-500">Loading Majh Boisar...</div>}>
-      <HomeClient />
-    </Suspense>
-  );
+  return <HomeClient />;
 }

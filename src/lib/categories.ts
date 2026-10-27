@@ -11,7 +11,6 @@ export const EXPLORE_CATEGORIES = [
   "Water Purifier",
   "Schools",
   "Digital Printing",
-  "Jobs",
   "Dance Classes",
   "Music Classes",
   "Salons",
@@ -70,35 +69,111 @@ export const CATEGORY_SLUG_MAP: Record<string, string> = {
   // Protein (Single canonical category)
   'protein': 'Protein',
   'protein-shop': 'Protein',
+  'protein-shops': 'Protein',
   'protein-supplements': 'Protein',
+  'nutrition': 'Protein',
+  'nutrition-supplements': 'Protein',
+  'whey-protein': 'Protein',
 
-  // Loans (Single canonical category)
+  // Loans (Single canonical category - all finance and loan services unified)
   'loans': 'Loans',
   'loan': 'Loans',
+  'loans-finance': 'Loans',
+  'loan-finance': 'Loans',
+  'loans-and-finance': 'Loans',
+  'loan-and-finance': 'Loans',
   'loan-consultants': 'Loans',
   'loan-consultants-finance': 'Loans',
+  'business-loan-consultants': 'Loans',
   'finance': 'Loans',
+  'finance-companies': 'Loans',
+  'financial-services': 'Loans',
+  'financial-advisor': 'Loans',
+  'financial-advisors': 'Loans',
+  'financial-consultants': 'Loans',
+  'gold-loan': 'Loans',
+  'gold-loans': 'Loans',
+  'home-loan': 'Loans',
+  'home-loans': 'Loans',
+  'personal-loan': 'Loans',
+  'personal-loans': 'Loans',
+  'business-loan': 'Loans',
+  'business-loans': 'Loans',
+  'vehicle-loan': 'Loans',
+  'vehicle-loans': 'Loans',
+  'education-loan': 'Loans',
+  'education-loans': 'Loans',
+  'microfinance': 'Loans',
+
+  // Footwear (Single canonical category - all shoe and footwear stores unified)
+  'footwear': 'Footwear',
+  'footwear-stores': 'Footwear',
+  'footwear-store': 'Footwear',
+  'footwear-shops': 'Footwear',
+  'footwear-shop': 'Footwear',
+  'wholesale-footwear': 'Footwear',
+  'shoes': 'Footwear',
+  'shoe': 'Footwear',
+  'shoe-stores': 'Footwear',
+  'shoe-store': 'Footwear',
+  'shoe-shops': 'Footwear',
+  'shoe-shop': 'Footwear',
+  'shoe-repair': 'Footwear',
+  'chappal': 'Footwear',
+  'sandals': 'Footwear',
+
+  // Water Purifier & RO Service (Single canonical category)
+  'water-purifier': 'Water Purifier',
+  'water-purifiers': 'Water Purifier',
+  'water-purifier-dealers': 'Water Purifier',
+  'water-purifier-dealer': 'Water Purifier',
+  'water-purifier-service': 'Water Purifier',
+  'water-purifier-ro-service': 'Water Purifier',
+  'ro-service': 'Water Purifier',
+  'ro-services': 'Water Purifier',
+  'ro-filter': 'Water Purifier',
+  'ro-filter-service': 'Water Purifier',
+  'ro-water-purifier': 'Water Purifier',
+  'ro': 'Water Purifier',
+  'aquaguard': 'Water Purifier',
 
   // Gyms & Fitness (Single canonical category)
   'gyms': 'Gyms',
   'gym': 'Gyms',
   'gyms-fitness-centers': 'Gyms',
+  'gyms-and-fitness-centers': 'Gyms',
   'fitness-centers': 'Gyms',
+  'fitness-center': 'Gyms',
   'fitness': 'Gyms',
+  'workout': 'Gyms',
 
   // Salons & Beauty (Single canonical category)
   'salons': 'Salons',
   'salon': 'Salons',
+  'hair-salons': 'Salons',
+  'hair-salon': 'Salons',
   'salon-beauty-parlour': 'Salons',
   'beauty-parlours': 'Salons',
   'beauty-parlour': 'Salons',
+  'beauty-parlor': 'Salons',
+  'beauty-salons': 'Salons',
+  'beauty-salon': 'Salons',
   'beauty-parlours-salons': 'Salons',
 
   // Clothing & Fashion (Single canonical category)
   'clothing': 'Clothing',
   'clothing-stores': 'Clothing',
+  'clothing-store': 'Clothing',
   'clothing-fashion': 'Clothing',
+  'garments': 'Clothing',
+  'garment-stores': 'Clothing',
+  'garment-store': 'Clothing',
+  'garment-shops': 'Clothing',
+  'ethnic-wear-stores': 'Clothing',
+  'bridal-wear-designers': 'Clothing',
+  'wholesale-garments': 'Clothing',
   'fashion': 'Clothing',
+  'fashion-stores': 'Clothing',
   'fashion-boutiques': 'Clothing',
 
   // Photographers & Videographers (Single canonical category)
@@ -109,69 +184,115 @@ export const CATEGORY_SLUG_MAP: Record<string, string> = {
 
   // Medical Stores & Pharmacies (Single canonical category)
   'medical-stores': 'Medical Stores',
+  'medical-store': 'Medical Stores',
   'medical-stores-pharmacy': 'Medical Stores',
   'pharmacy': 'Medical Stores',
   'pharmacies': 'Medical Stores',
+  'online-pharmacy': 'Medical Stores',
+  'chemists': 'Medical Stores',
+  'chemist': 'Medical Stores',
+  'chemist-shops': 'Medical Stores',
 
   // CA & Tax Consultants (Single canonical category)
   'ca': 'CA Consultants',
   'ca-consultants': 'CA Consultants',
   'ca-tax-consultants': 'CA Consultants',
   'tax-consultants': 'CA Consultants',
+  'chartered-accountants': 'CA Consultants',
 
   // Doctors & Clinics
   'doctors': 'Doctors',
+  'doctor': 'Doctors',
+  'clinics': 'Doctors',
+  'clinic': 'Doctors',
   'doctors-specialists': 'Doctors',
+  'skin-clinics': 'Doctors',
+  'ayurvedic-doctors': 'Doctors',
+  'homeopathic-doctors': 'Doctors',
 
   // Hospitals
   'hospitals': 'Hospitals',
+  'hospital': 'Hospitals',
   'hospitals-emergency': 'Hospitals',
+  'emergency-hospitals': 'Hospitals',
+  'eye-hospitals': 'Hospitals',
+  'cancer-hospitals': 'Hospitals',
 
   // Dentists
   'dentists': 'Dentists',
+  'dentist': 'Dentists',
   'dentists-dental-clinics': 'Dentists',
+  'dental-clinics': 'Dentists',
+  'dental-labs': 'Dentists',
 
   // Pathology Labs
   'pathology': 'Pathology Labs',
   'pathology-labs': 'Pathology Labs',
   'pathology-diagnostic-labs': 'Pathology Labs',
+  'diagnostic-labs': 'Pathology Labs',
+  'diagnostic-centers': 'Pathology Labs',
 
   // Eye Opticians
   'eye-opticians': 'Eye Opticians',
   'opticians': 'Eye Opticians',
+  'optician': 'Eye Opticians',
+  'optical-stores': 'Eye Opticians',
+  'optical-store': 'Eye Opticians',
+  'optical-shops': 'Eye Opticians',
   'eye-care-opticians': 'Eye Opticians',
-
-  // Water Purifier
-  'water-purifier': 'Water Purifier',
-  'water-purifier-ro-service': 'Water Purifier',
+  'eye-care': 'Eye Opticians',
 
   // Schools & Education
   'schools': 'Schools',
+  'school': 'Schools',
   'schools-colleges': 'Schools',
   'colleges': 'Schools',
+  'college': 'Schools',
+  'play-schools': 'Schools',
+  'driving-schools': 'Schools',
 
   // Jobs
   'jobs': 'Jobs',
   'jobs-placement': 'Jobs',
+  'jobs-and-placement': 'Jobs',
+  'placement': 'Jobs',
+  'placements': 'Jobs',
+  'recruitment': 'Jobs',
+  'job-consultancy': 'Jobs',
+  'job-consultants': 'Jobs',
 
   // Digital Printing
   'digital-printing': 'Digital Printing',
   'digital-printing-arts': 'Digital Printing',
+  'radium-art': 'Digital Printing',
+  'flex-printing': 'Digital Printing',
+  'banner-printing': 'Digital Printing',
+  'printing-press': 'Digital Printing',
 
   // Dance & Music
   'dance-classes': 'Dance Classes',
   'dance': 'Dance Classes',
   'dance-class': 'Dance Classes',
+  'dance-academy': 'Dance Classes',
+  'dance-troupes': 'Dance Classes',
   'dance-music-classes': 'Dance Classes',
   'music-classes': 'Music Classes',
   'music': 'Music Classes',
+  'music-class': 'Music Classes',
+  'music-academy': 'Music Classes',
+  'musical-instrument-stores': 'Music Classes',
 
   // Food & Dining
   'restaurants': 'Restaurants',
+  'restaurant': 'Restaurants',
   'restaurants-dining': 'Restaurants',
   'food': 'Restaurants',
   'cafes': 'Cafes',
+  'cafe': 'Cafes',
   'bakeries': 'Bakeries',
+  'bakery': 'Bakeries',
+  'cake-shops': 'Bakeries',
+  'cake-shop': 'Bakeries',
   'street-food': 'Street Food',
   'street-food-snacks': 'Street Food',
 
@@ -180,30 +301,43 @@ export const CATEGORY_SLUG_MAP: Record<string, string> = {
   'grocery-stores': 'Grocery',
   'grocery-supermarkets': 'Grocery',
   'supermarkets': 'Grocery',
+  'supermarket': 'Grocery',
+  'kirana-stores': 'Grocery',
+  'kirana': 'Grocery',
 
   // Real Estate & Stays
   'real-estate': 'Real Estate',
   'real-estate-properties': 'Real Estate',
+  'real-estate-agents': 'Real Estate',
   'properties': 'Real Estate',
+  'property-dealers': 'Real Estate',
   'hotels': 'Hotels',
+  'hotel': 'Hotels',
   'hotels-lodging': 'Hotels',
   'resorts': 'Resorts',
+  'resort': 'Resorts',
   'resorts-villas': 'Resorts',
   'hostels': 'Hostels',
+  'hostel': 'Hostels',
   'hostels-pg': 'Hostels',
   'pg-hostels': 'Hostels',
   'pg': 'Hostels',
 
   // Home Services
   'electricians': 'Electricians',
+  'electrician': 'Electricians',
   'electricians-wiring': 'Electricians',
   'plumbers': 'Plumbers',
+  'plumber': 'Plumbers',
   'plumbers-sanitation': 'Plumbers',
   'carpenters': 'Carpenters',
+  'carpenter': 'Carpenters',
   'carpenters-furniture': 'Carpenters',
   'painters': 'Painters',
+  'painter': 'Painters',
   'painters-waterproofing': 'Painters',
   'ac-service': 'AC Service',
+  'ac-repair': 'AC Service',
   'ac-service-cooling': 'AC Service',
   'pest-control': 'Pest Control',
   'pest-control-services': 'Pest Control',
@@ -213,17 +347,25 @@ export const CATEGORY_SLUG_MAP: Record<string, string> = {
   'yoga-classes': 'Yoga Classes',
   'coaching': 'Coaching Classes',
   'coaching-classes': 'Coaching Classes',
+  'tuition-classes': 'Coaching Classes',
   'jewellery': 'Jewellery',
-  'footwear': 'Footwear',
+  'jewelry': 'Jewellery',
+  'jewellery-shops': 'Jewellery',
   'electronics': 'Electronics',
   'mobile-shops': 'Mobile Shops',
+  'mobile-stores': 'Mobile Shops',
+  'mobile-repair': 'Mobile Shops',
   'computer-repair': 'Computer Repair',
+  'laptop-repair': 'Computer Repair',
   'hardware': 'Hardware',
   'interior-designers': 'Interior Designers',
   'fabrication': 'Fabrication',
   'automobile-garages': 'Auto Garages',
+  'auto-garages': 'Auto Garages',
   'garages': 'Auto Garages',
+  'garage': 'Auto Garages',
   'car-rentals': 'Car Rentals',
+  'car-rental': 'Car Rentals',
   'packers-movers': 'Packers Movers',
   'event-organisers': 'Event Organisers',
   'catering': 'Catering',
@@ -233,6 +375,7 @@ export const CATEGORY_SLUG_MAP: Record<string, string> = {
   'pet-clinics': 'Pet Clinics',
   'baby-care': 'Baby Care',
   'spa': 'Spa Wellness',
+  'spa-wellness': 'Spa Wellness',
   'dairy': 'Dairy Products',
   'dairy-products': 'Dairy Products',
   'meat-poultry': 'Meat Poultry',
@@ -260,6 +403,7 @@ export function getCategorySlug(categoryName: string): string {
 
 /**
  * Returns the official display title for any category slug or name.
+ * Strictly guarantees that related industry sub-categories are unified into a single canonical category.
  */
 export function formatCategoryTitle(raw: string): string {
   if (!raw) return 'Local Businesses';
@@ -272,6 +416,98 @@ export function formatCategoryTitle(raw: string): string {
   const withoutAnd = slug.replace(/-and-/g, '-');
   if (CATEGORY_SLUG_MAP[withoutAnd]) {
     return CATEGORY_SLUG_MAP[withoutAnd];
+  }
+
+  // Smart pattern normalization: guarantee single canonical categories
+  if ((slug.includes('loan') || slug.includes('finance')) && !slug.includes('software')) {
+    return 'Loans';
+  }
+  if (slug.includes('footwear') || slug.includes('shoe') || slug.includes('chappal')) {
+    return 'Footwear';
+  }
+  if (slug.includes('purifier') || slug.includes('ro-service') || slug.includes('ro-filter') || slug === 'ro') {
+    return 'Water Purifier';
+  }
+  if (slug.includes('gym') || slug.includes('fitness')) {
+    return 'Gyms';
+  }
+  if (slug.includes('salon') || slug.includes('beauty-parlour') || slug.includes('beauty-parlor')) {
+    return 'Salons';
+  }
+  if (slug.includes('garment') || (slug.includes('clothing') || slug.includes('apparel'))) {
+    return 'Clothing';
+  }
+  if (slug.includes('optical') || slug.includes('optician')) {
+    return 'Eye Opticians';
+  }
+  if (slug.includes('pharmacy') || slug.includes('medical-store') || slug.includes('chemist')) {
+    return 'Medical Stores';
+  }
+  if (slug.includes('dance')) {
+    return 'Dance Classes';
+  }
+  if (slug.includes('music')) {
+    return 'Music Classes';
+  }
+  if (slug.includes('placement') || (slug.includes('job') && !slug.includes('card'))) {
+    return 'Jobs';
+  }
+  if (slug.includes('protein')) {
+    return 'Protein';
+  }
+  if (slug.includes('printing') || slug.includes('radium')) {
+    return 'Digital Printing';
+  }
+  if (slug.includes('school') || slug.includes('college')) {
+    return 'Schools';
+  }
+  if (slug.includes('dentist') || slug.includes('dental')) {
+    return 'Dentists';
+  }
+  if (slug.includes('hospital')) {
+    return 'Hospitals';
+  }
+  if (slug.includes('pathology') || slug.includes('diagnostic')) {
+    return 'Pathology Labs';
+  }
+  if (slug.includes('bakery') || slug.includes('cake')) {
+    return 'Bakeries';
+  }
+  if (slug.includes('grocery') || slug.includes('supermarket') || slug.includes('kirana')) {
+    return 'Grocery';
+  }
+  if (slug.includes('real-estate') || slug.includes('property') || slug.includes('builder')) {
+    return 'Real Estate';
+  }
+  if (slug.includes('hostel') || slug.includes('pg')) {
+    return 'Hostels';
+  }
+  if (slug.includes('electrician')) {
+    return 'Electricians';
+  }
+  if (slug.includes('plumber')) {
+    return 'Plumbers';
+  }
+  if (slug.includes('carpenter')) {
+    return 'Carpenters';
+  }
+  if (slug.includes('painter')) {
+    return 'Painters';
+  }
+  if (slug.includes('pest-control')) {
+    return 'Pest Control';
+  }
+  if (slug.includes('jewel')) {
+    return 'Jewellery';
+  }
+  if (slug.includes('coaching') || slug.includes('tuition')) {
+    return 'Coaching Classes';
+  }
+  if (slug.includes('yoga')) {
+    return 'Yoga Classes';
+  }
+  if (slug.includes('accounting') || slug.includes('software-dealer')) {
+    return 'Accounting Software Dealers';
   }
 
   return clean
@@ -291,41 +527,48 @@ export const CATEGORY_SEARCH_SYNONYMS: Record<string, string[]> = {
   'protein-shop': ['protein', 'protein shop', 'protein supplements', 'nutrition'],
   'protein-supplements': ['protein', 'protein shop', 'protein supplements', 'nutrition'],
 
-  // Loans (combines Loans, Loan Consultants, Finance)
-  'loans': ['loan', 'loans', 'loan consultant', 'loan consultants', 'finance', 'financial advisor', 'home loan', 'personal loan', 'business loan'],
-  'loan': ['loan', 'loans', 'loan consultant', 'finance'],
+  // Loans (combines Loans, Loan Consultants, Finance, Loans & Finance)
+  'loans': ['loan', 'loans', 'loan consultant', 'loan consultants', 'finance', 'financial', 'loans finance', 'loans & finance', 'financial advisor', 'financial services', 'finance companies', 'gold loan', 'home loan', 'personal loan', 'business loan', 'vehicle loan', 'swami samarth', 'grand capital', 'kirti enterprises'],
+  'loan': ['loan', 'loans', 'loan consultant', 'finance', 'financial'],
+  'loans-finance': ['loan', 'loans', 'loan consultant', 'finance', 'financial', 'loans finance', 'loans & finance'],
   'loan-consultants': ['loan', 'loans', 'loan consultant', 'finance'],
+  'finance': ['loan', 'loans', 'loan consultant', 'finance', 'financial'],
 
   // Gyms & Fitness (combines Gyms, Fitness Centers)
-  'gyms': ['gym', 'gyms', 'fitness', 'fitness center', 'fitness centers', 'workout', 'weight training', 'crossfit'],
+  'gyms': ['gym', 'gyms', 'fitness', 'fitness center', 'fitness centers', 'workout', 'weight training', 'crossfit', 'muscle factory'],
   'fitness-centers': ['gym', 'gyms', 'fitness', 'fitness center', 'fitness centers'],
 
   // Salons & Beauty (combines Salons, Beauty Parlours)
-  'salons': ['salon', 'salons', 'beauty parlour', 'hair salon', 'haircut'],
+  'salons': ['salon', 'salons', 'beauty parlour', 'hair salon', 'haircut', 'beauty parlours', 'beauty parlour & salon'],
   'beauty-parlours': ['beauty parlour', 'salon', 'haircut'],
 
   // Clothing
-  'clothing': ['clothing', 'fashion', 'garment', 'apparel', 'boutique', 'menswear', 'womenswear'],
+  'clothing': ['clothing', 'fashion', 'garment', 'garments', 'garment stores', 'apparel', 'boutique', 'menswear', 'womenswear', 'ethnic wear', 'bridal wear'],
   'fashion': ['clothing', 'fashion', 'boutique'],
 
   // Medical Stores & Pharmacies
-  'medical-stores': ['medical store', 'medical stores', 'pharmacy', 'pharmacies', 'chemist', 'medicine'],
+  'medical-stores': ['medical store', 'medical stores', 'pharmacy', 'pharmacies', 'chemist', 'medicine', 'online pharmacy'],
   'pharmacy': ['medical store', 'pharmacy', 'chemist'],
 
   // Eye Opticians
-  'eye-opticians': ['eye opticians', 'optician', 'opticians', 'optical', 'spectacles', 'care eyes'],
+  'eye-opticians': ['eye opticians', 'optician', 'opticians', 'optical', 'optical store', 'spectacles', 'care eyes'],
 
-  // Water Purifier
-  'water-purifier': ['water purifier', 'ro filter', 'ro service', 'filter service', 'sales in boisar'],
+  // Water Purifier (combines Water Purifier, RO Service, Filter)
+  'water-purifier': ['water purifier', 'water purifiers', 'ro service', 'ro services', 'ro filter', 'ro filter service', 'lavany aqua', 'filter service', 'sales in boisar', 'aquaguard', 'kent ro'],
+  'ro-service': ['water purifier', 'ro service', 'ro services', 'ro filter', 'lavany aqua'],
+
+  // Footwear (combines Footwear, Footwear Stores, Shoes)
+  'footwear': ['footwear', 'footwear store', 'footwear stores', 'footwear shop', 'footwear shops', 'shoes', 'shoe store', 'shoe stores', 'sandals', 'slippers', 'chitralaya footwear'],
+  'footwear-stores': ['footwear', 'footwear store', 'footwear stores', 'shoes', 'chitralaya footwear'],
 
   // Schools
-  'schools': ['school', 'schools', 'vidyalaya', 'english medium school', 'ctes'],
+  'schools': ['school', 'schools', 'vidyalaya', 'english medium school', 'ctes', 'colleges', 'college'],
 
   // Digital Printing
   'digital-printing': ['digital printing', 'radium art', 'banner printing', 'flex printing', 'boisar radium art'],
 
   // Jobs
-  'jobs': ['jobs', 'placement', 'recruitment', 'job consultancy', 'jobs & placement', 'musclefactoryhub'],
+  'jobs': ['jobs', 'placement', 'recruitment', 'job consultancy', 'jobs & placement', 'musclefactoryhub', 'placement services'],
 
   // Dance & Music
   'dance-classes': ['dance', 'dance class', 'dance classes', 'dance academy', 'dance studio'],
@@ -359,7 +602,6 @@ export const CATEGORY_SEARCH_SYNONYMS: Record<string, string[]> = {
   'yoga-classes': ['yoga', 'yoga class', 'meditation'],
   'coaching-classes': ['coaching', 'tuition', 'coaching classes'],
   'jewellery': ['jewellery', 'jewelry', 'gold'],
-  'footwear': ['footwear', 'shoes'],
   'electronics': ['electronics', 'home appliances'],
   'mobile-shops': ['mobile shop', 'smartphones', 'mobile repair'],
   'computer-repair': ['computer repair', 'laptop repair'],

@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { 
   MapPin, Phone, MessageSquare, Star, ShieldCheck, 
-  CheckCircle, Mail, HelpCircle, Truck, ShoppingBag 
+  CheckCircle, Mail, HelpCircle, Truck, ShoppingBag,
+  ChevronDown, Percent
 } from 'lucide-react';
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 import { formatCategoryTitle, buildCategoryPrismaFilter } from '@/lib/categories';
+import BackButton from '@/components/BackButton';
 
 const CATEGORY_STOCK_GALLERY: Record<string, string[]> = {
   gym: [
@@ -177,15 +179,18 @@ export default async function BoisarCategoryPage({ params }: Props) {
       {/* Main Body - EXACT Search Layout */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-3 sm:mt-4">
 
-        {/* Metadata & Header */}
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">
-              Palghar &gt; Boisar &gt; {categoryTitle}
-            </p>
-            <h1 className="text-xs sm:text-sm md:text-base font-black text-slate-800 tracking-tight truncate leading-snug">
-              {categoryTitle} in Boisar
-            </h1>
+        {/* Metadata & Header with Back Button */}
+        <div className="flex items-center justify-between gap-2.5 mb-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <BackButton variant="pill" label="Back" fallbackUrl="/" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">
+                Palghar &gt; Boisar &gt; {categoryTitle}
+              </p>
+              <h1 className="text-xs sm:text-sm md:text-base font-black text-slate-800 tracking-tight truncate leading-snug">
+                {categoryTitle} in Boisar
+              </h1>
+            </div>
           </div>
           <div className="shrink-0">
             <span className="text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs whitespace-nowrap">
@@ -194,30 +199,25 @@ export default async function BoisarCategoryPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Filters Row */}
-        <div className="flex items-center gap-1.5 mb-2.5 border-b border-slate-200/60 pb-1.5 overflow-x-auto whitespace-nowrap scrollbar-hide scroll-smooth">
-          <div className="px-2.5 py-1 rounded-md border text-[10px] font-bold flex items-center gap-1 shrink-0 bg-emerald-50 border-emerald-300 text-emerald-800">
-            <MapPin className="w-3 h-3 text-emerald-700" />
-            <span>Near Me (1 km)</span>
+        {/* Filters Row - Clean, uniform h-8 height, no awkward sizing */}
+        <div className="flex items-center gap-2 mb-2.5 border-b border-slate-200/60 pb-2 overflow-x-auto whitespace-nowrap scrollbar-hide scroll-smooth">
+          <div className="h-8 px-3 rounded-lg border border-slate-200/90 bg-white text-slate-700 text-[11px] font-bold shadow-2xs inline-flex items-center gap-1 shrink-0">
+            <span>Sort by</span>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
           </div>
 
-          <div className="relative shrink-0">
-            <span className="bg-white border border-slate-200 text-slate-700 text-[10px] font-bold px-2 py-1 rounded-md shadow-2xs">
-              Sort by ▾
-            </span>
-          </div>
-
-          <div className="px-2 py-1 rounded-md border text-[10px] font-bold flex items-center gap-1 shrink-0 bg-white border-slate-200 text-slate-600">
-            <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+          <div className="h-8 px-3 rounded-lg border border-slate-200/90 bg-white text-slate-700 text-[11px] font-bold shadow-2xs inline-flex items-center gap-1.5 shrink-0">
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
             <span>4.5+ Rated</span>
           </div>
 
-          <div className="px-2 py-1 rounded-md border text-[10px] font-bold flex items-center gap-1 shrink-0 bg-white border-slate-200 text-slate-600">
-            <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />
+          <div className="h-8 px-3 rounded-lg border border-slate-200/90 bg-white text-slate-700 text-[11px] font-bold shadow-2xs inline-flex items-center gap-1.5 shrink-0">
+            <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
             <span>MB Verified</span>
           </div>
 
-          <div className="px-2 py-1 rounded-md border bg-white border-slate-200 text-slate-600 text-[10px] font-bold flex items-center gap-1 shrink-0">
+          <div className="h-8 px-3 rounded-lg border border-slate-200/90 bg-white text-slate-700 text-[11px] font-bold shadow-2xs inline-flex items-center gap-1.5 shrink-0">
+            <Percent className="w-3.5 h-3.5 text-teal-600 shrink-0" />
             <span>% Deals</span>
           </div>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
@@ -204,11 +204,131 @@ export default function BusinessDetailsPage({ initialBusiness, businessSlug }: B
       e.stopPropagation();
     }
     if (typeof window !== 'undefined') {
+      const startHref = window.location.href;
+      const targetCategoryUrl = business?.category 
+        ? `/category/${encodeURIComponent(business.category.toLowerCase())}` 
+        : '/';
       const hasAppReferrer = Boolean(document.referrer && document.referrer.includes(window.location.host));
-      if (hasAppReferrer) {
-        router.back();
+      const hasHistory = window.history && window.history.length > 1;
+
+      if (hasAppReferrer || hasHistory) {
+        try {
+          router.back();
+        } catch {
+          window.history.back();
+        }
+
+        setTimeout(() => {
+          if (window.location.href === startHref) {
+            try {
+              router.push(targetCategoryUrl);
+            } catch {
+              window.location.href = targetCategoryUrl;
+            }
+          }
+        }, 150);
       } else {
-        router.push(`/category/${encodeURIComponent((business?.category || '').toLowerCase())}`);
+        try {
+          router.push(targetCategoryUrl);
+        } catch {
+          window.location.href = targetCategoryUrl;
+        }
+      }
+    }
+  };
+
+  // Touch swipe handling for Lightbox
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const [touchTranslateX, setTouchTranslateX] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+
+  // Open lightbox with history state so phone back button closes ONLY the lightbox
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.pushState({ modal: 'image-lightbox' }, '');
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  // Close lightbox and cleanly pop the pushed history state
+  const closeLightbox = () => {
+    setLightboxIndex(null);
+    if (typeof window !== 'undefined' && window.history.state?.modal === 'image-lightbox') {
+      try {
+        window.history.back();
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  // Hardware / System / Gesture Back button handler for Lightbox
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+
+    const handlePopState = (e: PopStateEvent) => {
+      // User pressed phone's back button: close lightbox only, stay on business page!
+      setLightboxIndex(null);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [lightboxIndex]);
+
+  // Touch handlers for mobile swipe navigation & swipe-down to dismiss
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        time: Date.now()
+      };
+      setIsSwiping(true);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || e.touches.length !== 1) return;
+    const deltaX = e.touches[0].clientX - touchStartRef.current.x;
+    const deltaY = e.touches[0].clientY - touchStartRef.current.y;
+
+    if (Math.abs(deltaX) > Math.abs(deltaY) && allImages.length > 1) {
+      setTouchTranslateX(deltaX * 0.7);
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    const deltaTime = Date.now() - touchStartRef.current.time;
+
+    touchStartRef.current = null;
+    setIsSwiping(false);
+    setTouchTranslateX(0);
+
+    // 1. Vertical swipe down to close
+    if (deltaY > 80 && Math.abs(deltaY) > Math.abs(deltaX) * 1.3) {
+      closeLightbox();
+      return;
+    }
+
+    // 2. Horizontal swipe (left = next, right = prev)
+    const isFastSwipe = deltaTime < 250 && Math.abs(deltaX) > 25;
+    if (Math.abs(deltaX) > 40 || isFastSwipe) {
+      if (allImages.length > 1) {
+        if (deltaX < 0) {
+          // Next photo
+          setLightboxIndex(prev => prev !== null ? (prev + 1) % allImages.length : 0);
+        } else {
+          // Previous photo
+          setLightboxIndex(prev => prev !== null ? (prev - 1 + allImages.length) % allImages.length : 0);
+        }
       }
     }
   };
@@ -222,7 +342,7 @@ export default function BusinessDetailsPage({ initialBusiness, businessSlug }: B
       } else if (e.key === 'ArrowRight') {
         setLightboxIndex(prev => prev !== null ? (prev + 1) % allImages.length : 0);
       } else if (e.key === 'Escape') {
-        setLightboxIndex(null);
+        closeLightbox();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -918,7 +1038,7 @@ _Please confirm order acceptance & delivery time._`;
           
           {/* Cover Photo Banner (Displays shop photo with dark gradient overlay, or default Boisar header banner) */}
           <div
-            onClick={() => coverPhoto && setLightboxIndex(allImages.indexOf(coverPhoto) >= 0 ? allImages.indexOf(coverPhoto) : 0)}
+            onClick={() => coverPhoto && openLightbox(allImages.indexOf(coverPhoto) >= 0 ? allImages.indexOf(coverPhoto) : 0)}
             className={`h-32 sm:h-44 w-full relative overflow-hidden bg-slate-900 ${coverPhoto ? 'cursor-pointer group' : ''}`}
             title={coverPhoto ? "Click to view full photo" : undefined}
           >
@@ -1005,7 +1125,7 @@ _Please confirm order acceptance & delivery time._`;
               <div className="flex items-end justify-between -mt-12 sm:-mt-14 mb-2.5">
               {/* Store Avatar */}
               <div
-                onClick={() => allImages.length > 0 && setLightboxIndex(0)}
+                onClick={() => allImages.length > 0 && openLightbox(0)}
                 className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-white bg-white shadow-md overflow-hidden shrink-0 cursor-pointer relative group flex items-center justify-center z-20"
                 title="Click to zoom photo"
               >
@@ -1318,7 +1438,7 @@ _Please confirm order acceptance & delivery time._`;
                               onClick={() => {
                                 if (prod.image) {
                                   const idx = allImages.indexOf(prod.image);
-                                  if (idx >= 0) setLightboxIndex(idx);
+                                  if (idx >= 0) openLightbox(idx);
                                 }
                               }}
                               className={`relative w-full aspect-square rounded-lg sm:rounded-xl overflow-hidden bg-slate-50 border border-slate-100 mb-1.5 sm:mb-2 flex items-center justify-center ${prod.image ? 'cursor-pointer hover:opacity-95' : ''}`}
@@ -1659,7 +1779,7 @@ Hi ${business.name}, I want to book/enquire about this service listed on Majh Bo
                     {allImages.map((url, index) => (
                       <div
                         key={index}
-                        onClick={() => setLightboxIndex(index)}
+                        onClick={() => openLightbox(index)}
                         className="aspect-square rounded-2xl overflow-hidden border border-slate-200 cursor-pointer shadow-2xs relative group bg-slate-100 flex items-center justify-center transition-all hover:shadow-md hover:border-teal-500"
                       >
                         <img
@@ -2006,54 +2126,102 @@ Hi ${business.name}, I want to book/enquire about this service listed on Majh Bo
 
       </div>
 
-      {/* 4. LIGHTBOX IMAGE VIEWER MODAL */}
+      {/* 4. LIGHTBOX IMAGE VIEWER MODAL WITH SWIPE & HISTORY BACK INTEGRATION */}
       {lightboxIndex !== null && allImages[lightboxIndex] && (
         <div
-          onClick={() => setLightboxIndex(null)}
-          className="fixed inset-0 h-screen w-screen bg-slate-950/95 backdrop-blur-md z-[9999] cursor-zoom-out select-none flex items-center justify-center"
+          onClick={closeLightbox}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          className="fixed inset-0 h-screen w-screen bg-slate-950/95 backdrop-blur-md z-[9999] select-none flex items-center justify-center touch-pan-y"
         >
-          <button
-            onClick={() => setLightboxIndex(null)}
-            className="absolute top-4 right-4 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer transition-colors z-50"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {/* Top Bar with Close / Back Button */}
+          <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-50 pointer-events-none">
+            {/* Top Left Back Button (Very intuitive for mobile users) */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                closeLightbox();
+              }}
+              className="h-10 px-3.5 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 text-white flex items-center gap-1.5 cursor-pointer transition-all border border-white/20 backdrop-blur-md shadow-md pointer-events-auto"
+              aria-label="Back to business"
+              title="Close and go back"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-xs font-bold">Back</span>
+            </button>
 
+            {/* Top Right Close 'X' Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                closeLightbox();
+              }}
+              className="h-10 w-10 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 text-white flex items-center justify-center cursor-pointer transition-all border border-white/20 backdrop-blur-md shadow-md pointer-events-auto"
+              aria-label="Close"
+              title="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Left Arrow Button */}
           {allImages.length > 1 && (
             <>
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setLightboxIndex(prev => prev !== null ? (prev - 1 + allImages.length) % allImages.length : 0);
                 }}
-                className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer z-50"
+                className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-white/15 hover:bg-white/25 active:scale-90 text-white flex items-center justify-center cursor-pointer z-50 border border-white/20 backdrop-blur-md transition-all shadow-lg"
+                aria-label="Previous photo"
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
 
               <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation();
                   setLightboxIndex(prev => prev !== null ? (prev + 1) % allImages.length : 0);
                 }}
-                className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer z-50"
+                className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-white/15 hover:bg-white/25 active:scale-90 text-white flex items-center justify-center cursor-pointer z-50 border border-white/20 backdrop-blur-md transition-all shadow-lg"
+                aria-label="Next photo"
               >
                 <ChevronRight className="w-6 h-6" />
               </button>
             </>
           )}
 
+          {/* Main Image Container with Touch Drag Transition */}
           <div
             onClick={(e) => e.stopPropagation()}
-            className="max-w-4xl max-h-[80vh] p-4 flex flex-col items-center justify-center cursor-default"
+            style={{
+              transform: touchTranslateX ? `translateX(${touchTranslateX}px)` : undefined,
+              transition: isSwiping ? 'none' : 'transform 0.22s ease-out'
+            }}
+            className="max-w-4xl max-h-[82vh] p-4 flex flex-col items-center justify-center cursor-default relative w-full"
           >
             <img
               src={allImages[lightboxIndex]}
-              alt="Store Gallery"
-              className="max-w-full max-h-[75vh] object-contain rounded-2xl border border-white/10 shadow-2xl"
+              alt={`${business.name} photo`}
+              className="max-w-full max-h-[72vh] object-contain rounded-2xl border border-white/10 shadow-2xl select-none pointer-events-none"
+              draggable={false}
             />
-            <div className="mt-3 bg-black/70 text-white text-[11px] font-black px-3.5 py-1 rounded-full uppercase tracking-wider">
-              {lightboxIndex + 1} / {allImages.length}
+
+            {/* Bottom Counter Pill & Mobile Swipe Tip */}
+            <div className="mt-3.5 flex flex-col sm:flex-row items-center gap-1.5 sm:gap-2 text-center">
+              <div className="bg-black/80 border border-white/15 text-white text-[11px] font-black px-4 py-1 rounded-full uppercase tracking-wider shadow-md">
+                {lightboxIndex + 1} / {allImages.length}
+              </div>
+              {allImages.length > 1 && (
+                <span className="text-[10px] text-white/60 font-medium">
+                  👈 Swipe left/right to view more photos
+                </span>
+              )}
             </div>
           </div>
         </div>

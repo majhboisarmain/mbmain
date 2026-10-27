@@ -9,6 +9,7 @@ import {
   ChevronRight, Sparkles, Navigation, Fuel
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import BackButton from '@/components/BackButton';
 
 export interface VehicleListing {
   id: string;
@@ -324,7 +325,8 @@ function HireVehicleContent() {
       {/* 1. Breadcrumbs Header */}
       <div className="bg-white border-b border-slate-200 py-2.5 px-3 sm:px-6 lg:px-8 shadow-2xs">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-left">
-          <div className="flex items-center gap-2 text-xs truncate min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 text-xs truncate min-w-0">
+            <BackButton variant="pill" label="Back" fallbackUrl="/" />
             <Link href="/" className="text-slate-500 hover:text-teal-900 font-bold transition-colors shrink-0">
               Home
             </Link>

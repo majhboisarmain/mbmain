@@ -1,11 +1,21 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { LRUCache } from 'lru-cache';
 import { prisma } from '@/lib/db';
 import { 
   MapPin, Phone, MessageSquare, Star, ShieldCheck, 
-  CheckCircle, Mail, HelpCircle, Truck, ShoppingBag, Sparkles
+  CheckCircle, Mail, HelpCircle, Truck, ShoppingBag, Sparkles,
+  ChevronDown, Percent
 } from 'lucide-react';
 import { formatCategoryTitle, buildCategoryPrismaFilter } from '@/lib/categories';
+import BackButton from '@/components/BackButton';
+
+// In-memory cache for category listings (60s TTL)
+const categoryListingsCache = new LRUCache<string, any[]>({
+  max: 100,
+  ttl: 1000 * 60, // 60 seconds
+});
+
 
 interface Props {
   params: Promise<{ cat: string }>;
@@ -170,34 +180,41 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
   const searchKeyword = resolvedParams.cat.replace(/-/g, ' ');
   const selectedArea = resolvedSearchParams.area || 'All';
 
-  // Fetch matching businesses from DB using comprehensive synonyms
-  let businesses: any[] = [];
-  try {
-    const filterConditions = buildCategoryPrismaFilter(resolvedParams.cat, selectedArea);
+  // Fetch matching businesses with in-memory caching
+  const cacheKey = `${resolvedParams.cat.toLowerCase()}_${selectedArea.toLowerCase()}`;
+  let businesses: any[] = categoryListingsCache.get(cacheKey) || [];
 
-    businesses = await prisma.business.findMany({
-      where: filterConditions,
-      orderBy: [
-        { premium: 'desc' },
-        { verified: 'desc' },
-        { rating: 'desc' },
-        { views: 'desc' }
-      ],
-      take: 50
-    });
+  if (businesses.length === 0) {
+    try {
+      const filterConditions = buildCategoryPrismaFilter(resolvedParams.cat, selectedArea);
 
-    // Ensure businesses with premium or active subscription are strictly ranked on top
-    const isFeatured = (b: any) => Boolean(b.premium || (b.subscription && b.subscription !== 'Free'));
-    businesses.sort((a, b) => {
-      const featA = isFeatured(a);
-      const featB = isFeatured(b);
-      if (featA && !featB) return -1;
-      if (!featA && featB) return 1;
-      return (b.rating || 0) - (a.rating || 0) || (b.views || 0) - (a.views || 0);
-    });
-  } catch (e) {
-    console.error('Error loading businesses for category:', e);
+      businesses = await prisma.business.findMany({
+        where: filterConditions,
+        orderBy: [
+          { premium: 'desc' },
+          { verified: 'desc' },
+          { rating: 'desc' },
+          { views: 'desc' }
+        ],
+        take: 50
+      });
+
+      // Ensure businesses with premium or active subscription are strictly ranked on top
+      const isFeatured = (b: any) => Boolean(b.premium || (b.subscription && b.subscription !== 'Free'));
+      businesses.sort((a, b) => {
+        const featA = isFeatured(a);
+        const featB = isFeatured(b);
+        if (featA && !featB) return -1;
+        if (!featA && featB) return 1;
+        return (b.rating || 0) - (a.rating || 0) || (b.views || 0) - (a.views || 0);
+      });
+
+      categoryListingsCache.set(cacheKey, businesses);
+    } catch (e) {
+      console.error('Error loading businesses for category:', e);
+    }
   }
+
 
   // Schema.org Structured Data
   const jsonLd = {
@@ -298,15 +315,18 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
       {/* Main Body - EXACT Search Layout */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-3 sm:mt-4">
 
-        {/* Metadata & Header */}
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">
-              Palghar &gt; Boisar &gt; {categoryName}
-            </p>
-            <h1 className="text-xs sm:text-sm md:text-base font-black text-slate-800 tracking-tight truncate leading-snug">
-              {categoryName} in Boisar
-            </h1>
+        {/* Metadata & Header with Back Button */}
+        <div className="flex items-center justify-between gap-2.5 mb-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <BackButton variant="pill" label="Back" fallbackUrl="/" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">
+                Palghar &gt; Boisar &gt; {categoryName}
+              </p>
+              <h1 className="text-xs sm:text-sm md:text-base font-black text-slate-800 tracking-tight truncate leading-snug">
+                {categoryName} in Boisar
+              </h1>
+            </div>
           </div>
           <div className="shrink-0">
             <span className="text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs whitespace-nowrap">
@@ -315,30 +335,25 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
           </div>
         </div>
 
-        {/* Filters Row */}
-        <div className="flex items-center gap-1.5 mb-2.5 border-b border-slate-200/60 pb-1.5 overflow-x-auto whitespace-nowrap scrollbar-hide scroll-smooth">
-          <div className="px-2.5 py-1 rounded-md border text-[10px] font-bold flex items-center gap-1 shrink-0 bg-emerald-50 border-emerald-300 text-emerald-800">
-            <MapPin className="w-3 h-3 text-emerald-700" />
-            <span>Near Me (1 km)</span>
+        {/* Filters Row - Clean, uniform h-8 height, no awkward sizing */}
+        <div className="flex items-center gap-2 mb-2.5 border-b border-slate-200/60 pb-2 overflow-x-auto whitespace-nowrap scrollbar-hide scroll-smooth">
+          <div className="h-8 px-3 rounded-lg border border-slate-200/90 bg-white text-slate-700 text-[11px] font-bold shadow-2xs inline-flex items-center gap-1 shrink-0">
+            <span>Sort by</span>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
           </div>
 
-          <div className="relative shrink-0">
-            <span className="bg-white border border-slate-200 text-slate-700 text-[10px] font-bold px-2 py-1 rounded-md shadow-2xs">
-              Sort by ▾
-            </span>
-          </div>
-
-          <div className="px-2 py-1 rounded-md border text-[10px] font-bold flex items-center gap-1 shrink-0 bg-white border-slate-200 text-slate-600">
-            <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+          <div className="h-8 px-3 rounded-lg border border-slate-200/90 bg-white text-slate-700 text-[11px] font-bold shadow-2xs inline-flex items-center gap-1.5 shrink-0">
+            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400 shrink-0" />
             <span>4.5+ Rated</span>
           </div>
 
-          <div className="px-2 py-1 rounded-md border text-[10px] font-bold flex items-center gap-1 shrink-0 bg-white border-slate-200 text-slate-600">
-            <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />
+          <div className="h-8 px-3 rounded-lg border border-slate-200/90 bg-white text-slate-700 text-[11px] font-bold shadow-2xs inline-flex items-center gap-1.5 shrink-0">
+            <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
             <span>MB Verified</span>
           </div>
 
-          <div className="px-2 py-1 rounded-md border bg-white border-slate-200 text-slate-600 text-[10px] font-bold flex items-center gap-1 shrink-0">
+          <div className="h-8 px-3 rounded-lg border border-slate-200/90 bg-white text-slate-700 text-[11px] font-bold shadow-2xs inline-flex items-center gap-1.5 shrink-0">
+            <Percent className="w-3.5 h-3.5 text-teal-600 shrink-0" />
             <span>% Deals</span>
           </div>
         </div>
@@ -373,6 +388,7 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
                     {/* Entire upper + middle area is a single Link so clicking anywhere on the box opens the business */}
                     <Link
                       href={bizHref}
+                      prefetch={true}
                       className="block flex-1 flex flex-col cursor-pointer text-left focus:outline-none no-underline group/card"
                     >
                       {/* Top Section: Clean Photo Grid (3 Side-by-Side Photos) */}
