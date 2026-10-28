@@ -48,6 +48,7 @@ interface Service {
   name: string;
   price: number | null;
   duration: string | null;
+  description?: string | null;
 }
 
 interface Lead {
@@ -639,7 +640,23 @@ function DashboardContent() {
   const [srvName, setSrvName] = useState('');
   const [srvPrice, setSrvPrice] = useState('');
   const [srvDuration, setSrvDuration] = useState('');
+  const [srvDesc, setSrvDesc] = useState('');
   const [addingService, setAddingService] = useState(false);
+
+  // Edit states for products & services
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editProdName, setEditProdName] = useState('');
+  const [editProdPrice, setEditProdPrice] = useState('');
+  const [editProdDesc, setEditProdDesc] = useState('');
+  const [editProdImage, setEditProdImage] = useState('');
+  const [savingProduct, setSavingProduct] = useState(false);
+
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [editSrvName, setEditSrvName] = useState('');
+  const [editSrvPrice, setEditSrvPrice] = useState('');
+  const [editSrvDuration, setEditSrvDuration] = useState('');
+  const [editSrvDesc, setEditSrvDesc] = useState('');
+  const [savingService, setSavingService] = useState(false);
 
   // Special Offers & Category Rates Manager state
   const [specialOffersList, setSpecialOffersList] = useState<any[]>(() => {
@@ -3604,21 +3621,31 @@ _Powered by Majh Boisar (majhboisar.com)_`
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           businessId: selectedId,
-          name: prodName,
+          name: prodName.trim(),
           price: parseFloat(prodPrice),
-          description: prodDesc || undefined,
+          description: prodDesc.trim() || undefined,
           image: prodImage || undefined
         })
       });
       if (res.ok) {
+        const newProduct = await res.json();
+        setBusiness((prev: any) => prev ? ({
+          ...prev,
+          products: [...(prev.products || []), newProduct]
+        }) : prev);
         setProdName('');
         setProdPrice('');
         setProdDesc('');
         setProdImage('');
+        showToast('✓ Product added to catalog', 'success');
         fetchBusinessData();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || 'Failed to add product', 'error');
       }
     } catch (err) {
       console.error(err);
+      showToast('Error adding product', 'error');
     } finally {
       setAddingProduct(false);
     }
@@ -3635,19 +3662,31 @@ _Powered by Majh Boisar (majhboisar.com)_`
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           businessId: selectedId,
-          name: srvName,
+          name: srvName.trim(),
           price: srvPrice ? parseFloat(srvPrice) : undefined,
-          duration: srvDuration || undefined
+          duration: srvDuration.trim() || undefined,
+          description: srvDesc.trim() || undefined
         })
       });
       if (res.ok) {
+        const newService = await res.json();
+        setBusiness((prev: any) => prev ? ({
+          ...prev,
+          services: [...(prev.services || []), newService]
+        }) : prev);
         setSrvName('');
         setSrvPrice('');
         setSrvDuration('');
+        setSrvDesc('');
+        showToast('✓ Service added to catalog', 'success');
         fetchBusinessData();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || 'Failed to add service', 'error');
       }
     } catch (err) {
       console.error(err);
+      showToast('Error adding service', 'error');
     } finally {
       setAddingService(false);
     }
@@ -3660,6 +3699,11 @@ _Powered by Majh Boisar (majhboisar.com)_`
         method: 'DELETE'
       });
       if (res.ok) {
+        setBusiness((prev: any) => prev ? ({
+          ...prev,
+          products: (prev.products || []).filter((p: any) => p.id !== prodId)
+        }) : prev);
+        showToast('Product removed', 'info');
         fetchBusinessData();
       }
     } catch (e) {
@@ -3674,10 +3718,117 @@ _Powered by Majh Boisar (majhboisar.com)_`
         method: 'DELETE'
       });
       if (res.ok) {
+        setBusiness((prev: any) => prev ? ({
+          ...prev,
+          services: (prev.services || []).filter((s: any) => s.id !== srvId)
+        }) : prev);
+        showToast('Service removed', 'info');
         fetchBusinessData();
       }
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handleOpenEditProduct = (prod: Product) => {
+    setEditingProduct(prod);
+    setEditProdName(prod.name || '');
+    setEditProdPrice(prod.price !== undefined && prod.price !== null ? String(prod.price) : '');
+    setEditProdDesc(prod.description || '');
+    setEditProdImage(prod.image || '');
+  };
+
+  const handleUpdateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    if (!editProdName.trim() || !editProdPrice.trim()) {
+      showToast('Please provide both product name and price.', 'error');
+      return;
+    }
+
+    setSavingProduct(true);
+    try {
+      const res = await fetch('/api/products', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingProduct.id,
+          name: editProdName.trim(),
+          price: parseFloat(editProdPrice),
+          description: editProdDesc.trim() || null,
+          image: editProdImage || ''
+        })
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setBusiness((prev: any) => prev ? ({
+          ...prev,
+          products: (prev.products || []).map((p: any) => p.id === updated.id ? updated : p)
+        }) : prev);
+        showToast('🎉 Product updated successfully!', 'success');
+        setEditingProduct(null);
+        fetchBusinessData();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || 'Failed to update product', 'error');
+      }
+    } catch (err) {
+      console.error('Error updating product:', err);
+      showToast('Error updating product', 'error');
+    } finally {
+      setSavingProduct(false);
+    }
+  };
+
+  const handleOpenEditService = (srv: Service) => {
+    setEditingService(srv);
+    setEditSrvName(srv.name || '');
+    setEditSrvPrice(srv.price !== undefined && srv.price !== null ? String(srv.price) : '');
+    setEditSrvDuration(srv.duration || '');
+    setEditSrvDesc(srv.description || '');
+  };
+
+  const handleUpdateService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingService) return;
+    if (!editSrvName.trim()) {
+      showToast('Please provide service name.', 'error');
+      return;
+    }
+
+    setSavingService(true);
+    try {
+      const res = await fetch('/api/services', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingService.id,
+          name: editSrvName.trim(),
+          price: editSrvPrice ? parseFloat(editSrvPrice) : null,
+          duration: editSrvDuration.trim() || null,
+          description: editSrvDesc.trim() || null
+        })
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setBusiness((prev: any) => prev ? ({
+          ...prev,
+          services: (prev.services || []).map((s: any) => s.id === updated.id ? updated : s)
+        }) : prev);
+        showToast('🎉 Service updated successfully!', 'success');
+        setEditingService(null);
+        fetchBusinessData();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || 'Failed to update service', 'error');
+      }
+    } catch (err) {
+      console.error('Error updating service:', err);
+      showToast('Error updating service', 'error');
+    } finally {
+      setSavingService(false);
     }
   };
 
@@ -4604,11 +4755,58 @@ _Powered by Majh Boisar (majhboisar.com)_`
 
                 {/* WORKING HOURS */}
                 <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-2.5">
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-[10px] text-slate-700 font-extrabold uppercase tracking-wider">
-                      🕐 Working Hours (Daily)
-                    </label>
-                    <span className="text-[10px] text-slate-400 font-bold">Set open & close timings</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-1">
+                    <div>
+                      <label className="block text-[10px] text-slate-700 font-extrabold uppercase tracking-wider">
+                        🕐 Working Hours (Daily)
+                      </label>
+                      <span className="text-[10px] text-slate-400 font-bold">Set open & close timings</span>
+                    </div>
+
+                    {/* Quick batch copy buttons */}
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const mon = newBizSchedule['Mon'];
+                          if (!mon) return;
+                          setNewBizSchedule(prev => ({
+                            ...prev,
+                            Tue: { open: mon.open, close: mon.close, closed: mon.closed },
+                            Wed: { open: mon.open, close: mon.close, closed: mon.closed },
+                            Thu: { open: mon.open, close: mon.close, closed: mon.closed },
+                            Fri: { open: mon.open, close: mon.close, closed: mon.closed },
+                            Sat: { open: mon.open, close: mon.close, closed: mon.closed },
+                          }));
+                          showToast('⚡ Monday timings applied to Tue–Sat!', 'success');
+                        }}
+                        className="text-[9.5px] font-black bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 px-2.5 py-1 rounded-lg transition-all active:scale-95 flex items-center gap-1 cursor-pointer shadow-2xs"
+                        title="Copy Monday's open/close timings to Tuesday through Saturday"
+                      >
+                        <span>⚡ Same for Tue–Sat</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const mon = newBizSchedule['Mon'];
+                          if (!mon) return;
+                          setNewBizSchedule(prev => ({
+                            ...prev,
+                            Tue: { open: mon.open, close: mon.close, closed: mon.closed },
+                            Wed: { open: mon.open, close: mon.close, closed: mon.closed },
+                            Thu: { open: mon.open, close: mon.close, closed: mon.closed },
+                            Fri: { open: mon.open, close: mon.close, closed: mon.closed },
+                            Sat: { open: mon.open, close: mon.close, closed: mon.closed },
+                            Sun: { open: mon.open, close: mon.close, closed: mon.closed },
+                          }));
+                          showToast('⚡ Monday timings applied to All Week (Mon–Sun)!', 'success');
+                        }}
+                        className="text-[9.5px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 px-2 py-1 rounded-lg transition-all active:scale-95 cursor-pointer"
+                        title="Copy Monday's timing to all 7 days"
+                      >
+                        <span>All Week</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-1.5">
@@ -4617,13 +4815,55 @@ _Powered by Majh Boisar (majhboisar.com)_`
                         key={day}
                         className="bg-white border border-slate-200/80 rounded-xl p-2 sm:p-2.5 shadow-2xs space-y-1.5 sm:space-y-0 sm:flex sm:items-center sm:gap-2"
                       >
-                        <div className="flex items-center justify-between sm:justify-start gap-2">
+                        <div className="flex items-center justify-between sm:justify-start gap-1.5">
                           <span className="text-[11px] font-black text-slate-800 w-8 shrink-0">{day}</span>
+
+                          {/* Quick 'Same as Mon' button for individual days */}
+                          {day !== 'Mon' ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const mon = newBizSchedule['Mon'];
+                                if (!mon) return;
+                                setNewBizSchedule(prev => ({
+                                  ...prev,
+                                  [day]: { open: mon.open, close: mon.close, closed: false }
+                                }));
+                                showToast(`Set ${day} same as Mon (${mon.open} - ${mon.close})`, 'info');
+                              }}
+                              className="text-[8.5px] sm:text-[9px] font-bold text-teal-700 hover:text-teal-900 bg-teal-50/80 hover:bg-teal-100 border border-teal-200/80 px-1.5 sm:px-2 py-0.5 rounded-md transition-colors cursor-pointer shrink-0"
+                              title="Set timing same as Monday"
+                            >
+                              <span>Same as Mon</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const mon = newBizSchedule['Mon'];
+                                if (!mon) return;
+                                setNewBizSchedule(prev => ({
+                                  ...prev,
+                                  Tue: { open: mon.open, close: mon.close, closed: mon.closed },
+                                  Wed: { open: mon.open, close: mon.close, closed: mon.closed },
+                                  Thu: { open: mon.open, close: mon.close, closed: mon.closed },
+                                  Fri: { open: mon.open, close: mon.close, closed: mon.closed },
+                                  Sat: { open: mon.open, close: mon.close, closed: mon.closed },
+                                }));
+                                showToast('⚡ Monday timing applied to Tue–Sat!', 'success');
+                              }}
+                              className="text-[8.5px] sm:text-[9px] font-black text-teal-800 bg-teal-100 hover:bg-teal-200 border border-teal-300 px-1.5 sm:px-2 py-0.5 rounded-md transition-all active:scale-95 cursor-pointer shrink-0 flex items-center gap-0.5"
+                              title="Apply Monday timing to Tue–Sat"
+                            >
+                              <span>⚡ Copy to Tue–Sat</span>
+                            </button>
+                          )}
+
                           {/* Mobile toggle button */}
                           <button
                             type="button"
                             onClick={() => setNewBizSchedule(prev => ({ ...prev, [day]: { ...prev[day], closed: !prev[day].closed } }))}
-                            className={`sm:hidden text-[9px] font-black px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ${
+                            className={`sm:hidden text-[9px] font-black px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ml-auto ${
                               slot.closed
                                 ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
                                 : 'bg-slate-100 border-slate-200 text-slate-600'
@@ -9031,14 +9271,11 @@ _Powered by Majh Boisar (majhboisar.com)_`
                     <div className="bg-white border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-sm space-y-4">
                       {/* Leads Header */}
                       <div className="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2 text-left">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider">Customer Inquiries &amp; Leads</h3>
-                            <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
-                              <span>✓ Direct Customer Leads</span>
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-500 font-medium mt-0.5">Manage customer quotations, callbacks and requests.</p>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xs sm:text-sm font-black text-slate-900 uppercase tracking-wider">Customer Leads</h3>
+                          <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span>✓ Direct</span>
+                          </span>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -9077,10 +9314,9 @@ _Powered by Majh Boisar (majhboisar.com)_`
                       )}
 
                       {filteredBizLeads.length === 0 && relevantHotelBookings.length === 0 ? (
-                        <div className="text-center py-10 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
-                          <ClipboardCheck className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                          <p className="text-xs text-slate-600 font-bold">No verified enquiries received yet.</p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">Enquiries from WhatsApp &amp; your business listing will appear here.</p>
+                        <div className="text-center py-8 bg-slate-50/60 rounded-2xl border border-dashed border-slate-200">
+                          <ClipboardCheck className="w-8 h-8 text-slate-400 mx-auto mb-1.5" />
+                          <p className="text-xs font-bold text-slate-600">No leads yet</p>
                         </div>
                       ) : (
                         <div className="space-y-3 text-left">
@@ -9348,11 +9584,21 @@ _Powered by Majh Boisar (majhboisar.com)_`
                                   {prod.description && <p className="text-[10px] text-slate-500 leading-relaxed truncate max-w-sm mt-0.5">{prod.description}</p>}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-3 shrink-0">
+                              <div className="flex items-center gap-2 shrink-0">
                                 <span className="font-extrabold text-teal-605">₹{prod.price}</span>
                                 <button
+                                  type="button"
+                                  onClick={() => handleOpenEditProduct(prod)}
+                                  className="p-1.5 rounded bg-white text-slate-500 hover:text-teal-600 transition-colors border border-slate-200 cursor-pointer shadow-sm hover:border-teal-300"
+                                  title="Edit Product"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
                                   onClick={() => handleDeleteProduct(prod.id)}
                                   className="p-1.5 rounded bg-white text-slate-455 hover:text-rose-500 transition-colors border border-slate-200 cursor-pointer shadow-sm"
+                                  title="Delete Product"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
@@ -9426,6 +9672,16 @@ _Powered by Majh Boisar (majhboisar.com)_`
                               />
                             </div>
                           </div>
+                          <div>
+                            <label className="block text-[9px] text-slate-405 font-bold uppercase tracking-wider mb-1.5">Service Description (Optional)</label>
+                            <textarea
+                              rows={2}
+                              value={srvDesc}
+                              onChange={(e) => setSrvDesc(e.target.value)}
+                              placeholder="Describe what is included in this service (scope, terms, deliverables)..."
+                              className="w-full bg-white border border-slate-250 rounded-lg px-2.5 py-2 text-xs focus:outline-none resize-none"
+                            />
+                          </div>
                           <button
                             type="submit"
                             disabled={addingService}
@@ -9446,13 +9702,26 @@ _Powered by Majh Boisar (majhboisar.com)_`
                             <div key={srv.id} className="bg-slate-50 border border-slate-200 p-3 rounded-xl flex items-center justify-between gap-4 text-xs shadow-sm">
                               <div>
                                 <h4 className="font-bold text-slate-800">{srv.name}</h4>
+                                {srv.description && (
+                                  <p className="text-[10px] text-slate-500 leading-relaxed truncate max-w-sm mt-0.5">{srv.description}</p>
+                                )}
                                 {srv.duration && <p className="text-[10px] text-slate-550 mt-0.5">Est. Duration: {srv.duration}</p>}
                               </div>
-                              <div className="flex items-center gap-3 shrink-0">
+                              <div className="flex items-center gap-2 shrink-0">
                                 <span className="font-bold text-slate-600">{srv.price ? `₹${srv.price}` : 'Free/Ask'}</span>
                                 <button
+                                  type="button"
+                                  onClick={() => handleOpenEditService(srv)}
+                                  className="p-1.5 rounded bg-white text-slate-500 hover:text-teal-600 transition-colors border border-slate-200 cursor-pointer shadow-sm hover:border-teal-300"
+                                  title="Edit Service"
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
                                   onClick={() => handleDeleteService(srv.id)}
                                   className="p-1.5 rounded bg-white text-slate-455 hover:text-rose-500 transition-colors border border-slate-200 cursor-pointer shadow-sm"
+                                  title="Delete Service"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
@@ -10050,21 +10319,81 @@ _Powered by Majh Boisar (majhboisar.com)_`
 
                       {/* Working Hours Day Builder */}
                       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 sm:p-4 space-y-2 overflow-hidden">
-                        <div className="flex items-center justify-between mb-1 sm:mb-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1 sm:mb-2">
                           <label className="text-[10px] sm:text-xs text-slate-600 font-black uppercase tracking-wider">🕐 Working Hours (per day)</label>
-                          <button
-                            type="button"
-                            onClick={() => setEditSchedule(defaultEditSchedule())}
-                            className="text-[8px] sm:text-[9px] text-slate-400 hover:text-teal-600 font-bold cursor-pointer shrink-0 ml-1"
-                          >
-                            Reset default
-                          </button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const mon = editSchedule['Mon'];
+                                if (!mon) return;
+                                setEditSchedule(prev => ({
+                                  ...prev,
+                                  Tue: { open: mon.open, close: mon.close, closed: mon.closed },
+                                  Wed: { open: mon.open, close: mon.close, closed: mon.closed },
+                                  Thu: { open: mon.open, close: mon.close, closed: mon.closed },
+                                  Fri: { open: mon.open, close: mon.close, closed: mon.closed },
+                                  Sat: { open: mon.open, close: mon.close, closed: mon.closed },
+                                }));
+                                showToast('⚡ Monday timing applied to Tue–Sat!', 'success');
+                              }}
+                              className="text-[8px] sm:text-[9px] text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2 py-0.5 rounded font-black cursor-pointer shadow-2xs"
+                              title="Copy Monday's open & close time to Tue–Sat"
+                            >
+                              ⚡ Same for Tue–Sat
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditSchedule(defaultEditSchedule())}
+                              className="text-[8px] sm:text-[9px] text-slate-400 hover:text-teal-600 font-bold cursor-pointer shrink-0 ml-1"
+                            >
+                              Reset
+                            </button>
+                          </div>
                         </div>
 
                         <div className="overflow-x-auto no-scrollbar space-y-1.5 -mx-1 px-1">
                           {Object.entries(editSchedule).map(([day, slot]) => (
                             <div key={day} className="flex items-center gap-1 sm:gap-2 min-w-[280px]">
                               <span className="text-[9px] sm:text-[10px] font-black text-slate-600 w-7 sm:w-8 shrink-0">{day}</span>
+                              {day !== 'Mon' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const mon = editSchedule['Mon'];
+                                    if (!mon) return;
+                                    setEditSchedule(prev => ({
+                                      ...prev,
+                                      [day]: { open: mon.open, close: mon.close, closed: false }
+                                    }));
+                                  }}
+                                  className="text-[8px] text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-1.5 py-0.5 rounded font-bold cursor-pointer shrink-0"
+                                  title="Copy Monday's timing"
+                                >
+                                  Same as Mon
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const mon = editSchedule['Mon'];
+                                    if (!mon) return;
+                                    setEditSchedule(prev => ({
+                                      ...prev,
+                                      Tue: { open: mon.open, close: mon.close, closed: mon.closed },
+                                      Wed: { open: mon.open, close: mon.close, closed: mon.closed },
+                                      Thu: { open: mon.open, close: mon.close, closed: mon.closed },
+                                      Fri: { open: mon.open, close: mon.close, closed: mon.closed },
+                                      Sat: { open: mon.open, close: mon.close, closed: mon.closed },
+                                    }));
+                                    showToast('⚡ Monday timing applied to Tue–Sat!', 'success');
+                                  }}
+                                  className="text-[8px] text-teal-800 bg-teal-100 hover:bg-teal-200 border border-teal-300 px-1.5 py-0.5 rounded font-black cursor-pointer shrink-0"
+                                  title="Apply to Tue–Sat"
+                                >
+                                  ⚡ All Tue–Sat
+                                </button>
+                              )}
                               {slot.closed ? (
                                 <span className="flex-1 text-[9px] sm:text-[10px] font-bold text-rose-500 bg-rose-50 border border-rose-200 rounded-lg px-2.5 py-1 sm:py-1.5">Closed</span>
                               ) : (
@@ -11615,11 +11944,71 @@ _Powered by Majh Boisar (majhboisar.com)_`
 
                   {/* Working Hours Day Builder */}
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 sm:p-4 space-y-2 overflow-hidden">
-                    <label className="block text-[10px] sm:text-xs text-slate-600 font-black uppercase tracking-wider mb-1 sm:mb-2">🕐 Working Hours (per day)</label>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1 sm:mb-2">
+                      <label className="text-[10px] sm:text-xs text-slate-600 font-black uppercase tracking-wider">🕐 Working Hours (per day)</label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const mon = newBizSchedule['Mon'];
+                          if (!mon) return;
+                          setNewBizSchedule(prev => ({
+                            ...prev,
+                            Tue: { open: mon.open, close: mon.close, closed: mon.closed },
+                            Wed: { open: mon.open, close: mon.close, closed: mon.closed },
+                            Thu: { open: mon.open, close: mon.close, closed: mon.closed },
+                            Fri: { open: mon.open, close: mon.close, closed: mon.closed },
+                            Sat: { open: mon.open, close: mon.close, closed: mon.closed },
+                          }));
+                          showToast('⚡ Monday timing applied to Tue–Sat!', 'success');
+                        }}
+                        className="text-[8px] sm:text-[9px] text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2 py-0.5 rounded font-black cursor-pointer shadow-2xs"
+                        title="Copy Monday's open & close time to Tue–Sat"
+                      >
+                        ⚡ Same for Tue–Sat
+                      </button>
+                    </div>
                     <div className="overflow-x-auto no-scrollbar space-y-1.5 -mx-1 px-1">
                       {Object.entries(newBizSchedule).map(([day, slot]) => (
                         <div key={day} className="flex items-center gap-1 sm:gap-2 min-w-[280px]">
                           <span className="text-[9px] sm:text-[10px] font-black text-slate-600 w-7 sm:w-8 shrink-0">{day}</span>
+                          {day !== 'Mon' ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const mon = newBizSchedule['Mon'];
+                                if (!mon) return;
+                                setNewBizSchedule(prev => ({
+                                  ...prev,
+                                  [day]: { open: mon.open, close: mon.close, closed: false }
+                                }));
+                              }}
+                              className="text-[8px] text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-1.5 py-0.5 rounded font-bold cursor-pointer shrink-0"
+                              title="Copy Monday's timing"
+                            >
+                              Same as Mon
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const mon = newBizSchedule['Mon'];
+                                if (!mon) return;
+                                setNewBizSchedule(prev => ({
+                                  ...prev,
+                                  Tue: { open: mon.open, close: mon.close, closed: mon.closed },
+                                  Wed: { open: mon.open, close: mon.close, closed: mon.closed },
+                                  Thu: { open: mon.open, close: mon.close, closed: mon.closed },
+                                  Fri: { open: mon.open, close: mon.close, closed: mon.closed },
+                                  Sat: { open: mon.open, close: mon.close, closed: mon.closed },
+                                }));
+                                showToast('⚡ Monday timing applied to Tue–Sat!', 'success');
+                              }}
+                              className="text-[8px] text-teal-800 bg-teal-100 hover:bg-teal-200 border border-teal-300 px-1.5 py-0.5 rounded font-black cursor-pointer shrink-0"
+                              title="Apply to Tue–Sat"
+                            >
+                              ⚡ All Tue–Sat
+                            </button>
+                          )}
                           {slot.closed ? (
                             <span className="flex-1 text-[9px] sm:text-[10px] font-bold text-rose-500 bg-rose-50 border border-rose-200 rounded-lg px-2.5 py-1 sm:py-1.5">Closed</span>
                           ) : (
@@ -12611,6 +13000,231 @@ _Powered by Majh Boisar (majhboisar.com)_`
                     <span>Submit Deletion Request</span>
                   </button>
                 </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ✏️ EDIT PRODUCT MODAL */}
+      {editingProduct && (
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-200 text-left">
+          <div className="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-4 relative">
+            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+              <div>
+                <h3 className="font-black text-sm text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <Edit className="w-4 h-4 text-teal-600" />
+                  <span>Edit Product</span>
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium">Update pricing, title, description, or photo.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingProduct(null)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateProduct} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Product Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={editProdName}
+                  onChange={(e) => setEditProdName(e.target.value)}
+                  placeholder="e.g. Copper Pipe"
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Price (₹) *</label>
+                <input
+                  type="number"
+                  step="any"
+                  required
+                  value={editProdPrice}
+                  onChange={(e) => setEditProdPrice(e.target.value)}
+                  placeholder="e.g. 1500"
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Description (Optional)</label>
+                <textarea
+                  rows={2}
+                  value={editProdDesc}
+                  onChange={(e) => setEditProdDesc(e.target.value)}
+                  placeholder="e.g. Premium copper pipe, 1/2 inch thickness"
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Product Photo */}
+              <div>
+                <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Product Photo</label>
+                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
+                    {editProdImage ? (
+                      <img src={editProdImage} alt="Product" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xl">📸</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="edit-prod-img-upload"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const compressed = await compressImage(file, 800, 800, 0.75);
+                          if (compressed) setEditProdImage(compressed);
+                        } catch {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            if (reader.result) setEditProdImage(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                        e.target.value = '';
+                      }}
+                      className="hidden"
+                    />
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="edit-prod-img-upload"
+                        className="text-[10px] font-black text-teal-800 bg-teal-50 hover:bg-teal-100 px-2.5 py-1.5 rounded-lg cursor-pointer border border-teal-200 transition-colors inline-block"
+                      >
+                        {editProdImage ? '✓ Change Photo' : '📁 Upload Photo'}
+                      </label>
+                      {editProdImage && (
+                        <button
+                          type="button"
+                          onClick={() => setEditProdImage('')}
+                          className="text-[10px] font-bold text-rose-600 hover:underline cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingProduct(null)}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingProduct}
+                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-black text-xs py-2.5 rounded-xl transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{savingProduct ? 'Saving...' : 'Save Changes'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ✏️ EDIT SERVICE MODAL */}
+      {editingService && (
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-200 text-left">
+          <div className="bg-white rounded-3xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-4 relative">
+            <div className="flex items-center justify-between border-b pb-3 border-slate-100">
+              <div>
+                <h3 className="font-black text-sm text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <Edit className="w-4 h-4 text-teal-600" />
+                  <span>Edit Service</span>
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium">Update service title, consultation fee, or duration.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingService(null)}
+                className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateService} className="space-y-3.5 text-xs">
+              <div>
+                <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Service Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={editSrvName}
+                  onChange={(e) => setEditSrvName(e.target.value)}
+                  placeholder="e.g. General leakage consulting"
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Price (₹) (Optional)</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={editSrvPrice}
+                    onChange={(e) => setEditSrvPrice(e.target.value)}
+                    placeholder="e.g. 500"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Est. Duration (Optional)</label>
+                  <input
+                    type="text"
+                    value={editSrvDuration}
+                    onChange={(e) => setEditSrvDuration(e.target.value)}
+                    placeholder="e.g. 45 mins"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Description (Optional)</label>
+                <textarea
+                  rows={3}
+                  value={editSrvDesc}
+                  onChange={(e) => setEditSrvDesc(e.target.value)}
+                  placeholder="Describe what is included in this service (scope, terms, deliverables)..."
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:border-teal-500 resize-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingService(null)}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-2.5 rounded-xl transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingService}
+                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-black text-xs py-2.5 rounded-xl transition-all cursor-pointer shadow-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{savingService ? 'Saving...' : 'Save Changes'}</span>
+                </button>
               </div>
             </form>
           </div>

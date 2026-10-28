@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next';
 import { prisma } from '@/lib/db';
 import { BOISAR_HOTELS } from '@/lib/hotelsData';
 import { resortsData, ResortVilla } from '@/lib/resortsData';
+import { BOISAR_ICONIC_PLACES } from '@/lib/placesData';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -160,6 +161,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
+  // 7. Iconic Tourist Places & Scenic Spots in Boisar
+  const placeRoutes: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/places`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.95,
+    },
+    ...BOISAR_ICONIC_PLACES.map((place) => ({
+      url: `${baseUrl}/places/${place.slug}`,
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.9,
+    })),
+  ];
+
   return [
     ...coreRoutes,
     ...businessRoutes,
@@ -167,5 +184,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...categoryRoutes,
     ...hotelRoutes,
     ...resortRoutes,
+    ...placeRoutes,
   ];
 }

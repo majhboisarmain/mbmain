@@ -69,6 +69,37 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, name, price, duration, description } = body;
+
+    if (!id || !name) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const srvId = parseInt(id);
+    if (isNaN(srvId)) {
+      return NextResponse.json({ error: 'Invalid service ID' }, { status: 400 });
+    }
+
+    const updated = await prisma.service.update({
+      where: { id: srvId },
+      data: {
+        name: name.trim(),
+        price: price !== undefined && price !== null && price !== '' ? parseFloat(price) : null,
+        duration: duration !== undefined ? (duration?.trim() || null) : undefined,
+        description: description !== undefined ? (description?.trim() || null) : undefined,
+      },
+    });
+
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    console.error('Error updating service:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

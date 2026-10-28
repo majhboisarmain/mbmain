@@ -13,7 +13,7 @@ import {
   Search, MapPin, User, Shield, ChevronDown, Check,
   Menu, X, LogOut, Building, Layers, HelpCircle, MessageSquare, ChevronRight, Smartphone, Download, Ticket, Plus,
   Sparkles, Heart, Utensils, Car, Stethoscope, Building2, ArrowLeft, Receipt, FileText, ShieldCheck, Settings,
-  Home, Wrench, Compass, Hotel, PhoneCall
+  Home, Wrench, Compass, Hotel, PhoneCall, LayoutDashboard
 } from 'lucide-react';
 
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
@@ -60,6 +60,64 @@ export default function Navbar() {
       window.removeEventListener('majh_boisar_hotel_bookings_updated', handleUpdate);
     };
   }, [isLoggedIn, loggedInUser?.phone]);
+
+  // Check if logged-in user owns any registered business, hotel, or property
+  const [hasUserListing, setHasUserListing] = useState(false);
+
+  useEffect(() => {
+    const checkOwnership = () => {
+      if (!isLoggedIn) {
+        setHasUserListing(false);
+        return;
+      }
+      if (hasRegisteredBusiness || currentRole === 'BusinessOwner' || isUserAdmin) {
+        setHasUserListing(true);
+        return;
+      }
+      if (typeof window !== 'undefined') {
+        const hasBizStorage = localStorage.getItem('majh_boisar_has_business') === 'true';
+        const roleStorage = localStorage.getItem('majh_boisar_role');
+        if (hasBizStorage || roleStorage === 'BusinessOwner' || roleStorage === 'Admin') {
+          setHasUserListing(true);
+          return;
+        }
+        try {
+          const userHotels = JSON.parse(localStorage.getItem('majh_boisar_user_hotels') || '[]');
+          if (Array.isArray(userHotels) && userHotels.length > 0) {
+            setHasUserListing(true);
+            return;
+          }
+        } catch (e) {}
+        try {
+          const userProps = JSON.parse(localStorage.getItem('majh_boisar_user_properties') || '[]');
+          if (Array.isArray(userProps) && userProps.length > 0) {
+            setHasUserListing(true);
+            return;
+          }
+        } catch (e) {}
+        try {
+          const phoneClean = (loggedInUser?.phone || '').replace(/\D/g, '').slice(-10);
+          const myBizIdsKey = phoneClean ? `majh_boisar_my_biz_ids_${phoneClean}` : 'majh_boisar_my_biz_ids';
+          const myBizIds = JSON.parse(localStorage.getItem(myBizIdsKey) || '[]');
+          if (Array.isArray(myBizIds) && myBizIds.length > 0) {
+            setHasUserListing(true);
+            return;
+          }
+        } catch (e) {}
+      }
+      setHasUserListing(false);
+    };
+
+    checkOwnership();
+    window.addEventListener('storage', checkOwnership);
+    window.addEventListener('majh_boisar_has_business_updated', checkOwnership);
+    window.addEventListener('majh_boisar_user_hotels_updated', checkOwnership);
+    return () => {
+      window.removeEventListener('storage', checkOwnership);
+      window.removeEventListener('majh_boisar_has_business_updated', checkOwnership);
+      window.removeEventListener('majh_boisar_user_hotels_updated', checkOwnership);
+    };
+  }, [isLoggedIn, hasRegisteredBusiness, currentRole, isUserAdmin, loggedInUser?.phone]);
 
   const [navSearchQuery, setNavSearchQuery] = useState('');
   const [navLocation, setNavLocation] = useState('All');
@@ -294,7 +352,9 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={`sticky top-0 z-[150] bg-white transition-transform duration-300 ease-out will-change-transform overflow-visible pt-[env(safe-area-inset-top,0px)] ${
+      <header
+        style={{ backgroundColor: '#ffffff' }}
+        className={`sticky top-0 z-[150] bg-white transition-transform duration-300 ease-out will-change-transform overflow-visible pt-[env(safe-area-inset-top,0px)] ${
         isHeaderShown ? 'translate-y-0' : '-translate-y-full shadow-none pointer-events-none'
       } ${
         isScrolled
@@ -516,6 +576,19 @@ export default function Navbar() {
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>{isLoggedIn ? 'Register Your Business' : t('nav.free_listing')}</span>
+              </Link>
+            )}
+
+            {/* Quick Dashboard shortcut for registered business/hotel owners */}
+            {mounted && hasUserListing && (
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-teal-600 via-teal-700 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white border border-teal-500/30 text-xs font-black shadow-sm shadow-teal-700/25 transition-all hover:shadow-md active:scale-95 cursor-pointer"
+                title="Business & Hotel Dashboard"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5 text-white shrink-0" />
+                <span>Dashboard</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse ml-0.5"></span>
               </Link>
             )}
 
@@ -825,7 +898,19 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Profile / Menu Button */}
-          <div className="flex md:hidden items-center shrink-0 relative z-30 ml-auto">
+          <div className="flex md:hidden items-center gap-2 shrink-0 relative z-30 ml-auto">
+            {mounted && hasUserListing && (
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-teal-600 via-teal-700 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white border border-teal-500/30 text-xs font-black shadow-sm shadow-teal-700/25 transition-all active:scale-95 shrink-0"
+                title="Business & Hotel Dashboard"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5 text-white shrink-0" />
+                <span>Dashboard</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse ml-0.5"></span>
+              </Link>
+            )}
+
             <button
               type="button"
               onClick={() => {
@@ -863,19 +948,19 @@ export default function Navbar() {
             style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
             className="fixed inset-y-0 right-0 w-full sm:w-[420px] max-w-full bg-[#F4F5F7] shadow-2xl overflow-y-auto overscroll-contain touch-pan-y z-[100000] flex flex-col justify-between animate-in slide-in-from-right duration-250"
           >
-            <div className="w-full space-y-3 p-4 sm:p-5 pt-[max(14px,env(safe-area-inset-top))] pb-[max(32px,calc(2rem+env(safe-area-inset-bottom)))]">
+            <div className="w-full space-y-3.5 p-4 sm:p-5 pt-[max(14px,env(safe-area-inset-top))] pb-[max(32px,calc(2rem+env(safe-area-inset-bottom)))]">
               {/* Header Title with Back Arrow & Close Button */}
-              <div className="flex items-center justify-between pb-2 pt-0.5 border-b border-slate-200/80 mb-1">
+              <div className="flex items-center justify-between pb-2.5 pt-0.5 border-b border-slate-200/80 mb-1">
                 <div className="flex items-center gap-2.5">
                   <button
                     type="button"
                     onClick={() => setMobileMenuOpen(false)}
                     aria-label="Back"
-                    className="p-1.5 -ml-1 rounded-full hover:bg-slate-200/80 active:bg-slate-300 transition-colors cursor-pointer text-slate-900"
+                    className="p-2 -ml-1 rounded-full hover:bg-slate-200/80 active:bg-slate-300 transition-colors cursor-pointer text-slate-900"
                   >
-                    <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
+                    <ArrowLeft className="w-5 h-5 stroke-[2.4]" />
                   </button>
-                  <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
+                  <h2 className="text-lg font-black text-slate-900 tracking-tight">
                     {isLoggedIn ? 'Profile & Menu' : 'Menu'}
                   </h2>
                 </div>
@@ -883,22 +968,22 @@ export default function Navbar() {
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
                   aria-label="Close"
-                  className="p-1.5 rounded-full hover:bg-slate-200/80 active:bg-slate-300 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                  className="p-2 rounded-full hover:bg-slate-200/80 active:bg-slate-300 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
                 >
-                  <X className="w-5 h-5 stroke-[2.2]" />
+                  <X className="w-5 h-5 stroke-[2.4]" />
                 </button>
               </div>
 
               {/* 1. User Header or Guest Sign-In Card */}
               {isLoggedIn ? (
-                <div className="flex items-center justify-between py-1.5 px-1">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-[#E0D7FE] text-[#6C47FF] flex items-center justify-center font-black text-base shrink-0 shadow-2xs">
+                <div className="flex items-center justify-between py-2 px-1">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-13 h-13 rounded-full bg-[#E0D7FE] text-[#6C47FF] flex items-center justify-center font-black text-xl shrink-0 shadow-xs border border-[#CDBEFE]">
                       {userName ? userName.charAt(0).toUpperCase() : 'U'}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-sm font-extrabold text-slate-900 leading-tight truncate">{userName || 'User'}</h3>
-                      <p className="text-[11px] text-slate-500 font-semibold truncate mt-0.5">{loggedInUser?.phone || '+91 9307294733'}</p>
+                      <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight truncate">{userName || 'User'}</h3>
+                      <p className="text-xs sm:text-[13px] text-slate-500 font-bold truncate mt-0.5">{loggedInUser?.phone || '+91 9307294733'}</p>
                     </div>
                   </div>
                   <button
@@ -910,20 +995,20 @@ export default function Navbar() {
                       setSettingsModalOpen(true);
                       setMobileMenuOpen(false);
                     }}
-                    className="text-[11px] font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200/90 px-2.5 py-1 rounded-lg shadow-2xs transition-colors shrink-0 cursor-pointer"
+                    className="text-xs sm:text-[13px] font-black text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 px-3.5 py-1.5 rounded-xl shadow-xs transition-colors shrink-0 cursor-pointer"
                   >
                     Edit
                   </button>
                 </div>
               ) : (
-                <div className="bg-white rounded-xl p-3 border border-slate-200/80 shadow-2xs flex items-center justify-between">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-full bg-[#E0D7FE] text-[#6C47FF] flex items-center justify-center shrink-0 font-black text-sm">
-                      <User className="w-5 h-5 stroke-[2]" />
+                <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-12 h-12 rounded-full bg-[#E0D7FE] text-[#6C47FF] flex items-center justify-center shrink-0 font-black text-base border border-[#CDBEFE]">
+                      <User className="w-6 h-6 stroke-[2]" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-extrabold text-slate-900 leading-tight">Welcome to Majh Boisar</p>
-                      <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5">Sign in to manage bookings &amp; listings</p>
+                      <p className="text-sm sm:text-base font-black text-slate-900 leading-tight">Welcome to Majh Boisar</p>
+                      <p className="text-xs text-slate-500 font-semibold truncate mt-0.5">Sign in to manage bookings &amp; listings</p>
                     </div>
                   </div>
                   <button
@@ -932,7 +1017,7 @@ export default function Navbar() {
                       setMobileMenuOpen(false);
                       setLoginModalOpen(true);
                     }}
-                    className="bg-slate-900 hover:bg-black text-white text-[11px] font-extrabold px-3 py-1.5 rounded-lg shadow-xs transition-colors shrink-0 cursor-pointer"
+                    className="bg-slate-900 hover:bg-black text-white text-xs font-black px-4 py-2 rounded-xl shadow-xs transition-colors shrink-0 cursor-pointer"
                   >
                     Sign In
                   </button>
@@ -946,44 +1031,44 @@ export default function Navbar() {
                   setMobileMenuOpen(false);
                   setIsHotelPassesModalOpen(true);
                 }}
-                className="w-full bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all flex items-center justify-between cursor-pointer group text-left"
+                className="w-full bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all flex items-center justify-between cursor-pointer group text-left"
               >
-                <div className="flex items-center gap-2.5">
-                  <Receipt className="w-4 h-4 text-slate-700 stroke-[1.8]" />
-                  <span className="text-xs sm:text-[13px] font-bold text-slate-900">View all bookings</span>
+                <div className="flex items-center gap-3">
+                  <Receipt className="w-5 h-5 text-slate-700 stroke-[2]" />
+                  <span className="text-sm sm:text-base font-extrabold text-slate-900">View all bookings</span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   {userHotelPassCount > 0 && (
-                    <span className="text-[9.5px] font-black bg-teal-600 text-white px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-black bg-teal-600 text-white px-2.5 py-0.5 rounded-full shadow-2xs">
                       {userHotelPassCount} active
                     </span>
                   )}
-                  <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </button>
 
               {/* 3. For Business & Shop Owners */}
               <div>
-                <h3 className="text-[10.5px] font-black uppercase tracking-wider text-slate-400 mb-1.5 px-1">For Business &amp; Shop Owners</h3>
-                <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2 px-1">For Business &amp; Shop Owners</h3>
+                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
                   <Link
                     href={hasRegisteredBusiness ? "/dashboard" : "/dashboard?register=true"}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-2.5 sm:p-3 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Building2 className="w-4 h-4 text-teal-700 stroke-[1.8]" />
-                      <span className="text-xs sm:text-[13px] font-bold text-slate-900">
+                    <div className="flex items-center gap-3">
+                      <Building2 className="w-5 h-5 text-teal-700 stroke-[2]" />
+                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">
                         {hasRegisteredBusiness ? 'My Business Dashboard' : 'Register Your Business'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[8.5px] bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-black px-1.5 py-0.5 rounded-md">FREE</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-black px-2 py-0.5 rounded-md">FREE</span>
+                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                     </div>
                   </Link>
 
-                  <div className="h-px bg-slate-100 mx-3" />
+                  <div className="h-px bg-slate-100 mx-3.5" />
 
                   <Link
                     href="/properties?postProperty=true"
@@ -993,45 +1078,45 @@ export default function Navbar() {
                         window.dispatchEvent(new CustomEvent('majh_boisar_open_post_property'));
                       }
                     }}
-                    className="w-full flex items-center justify-between p-2.5 sm:p-3 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Home className="w-4 h-4 text-amber-600 stroke-[1.8]" />
-                      <span className="text-xs sm:text-[13px] font-bold text-slate-900">Post a Property</span>
+                    <div className="flex items-center gap-3">
+                      <Home className="w-5 h-5 text-amber-600 stroke-[2]" />
+                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Post a Property</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[8.5px] bg-amber-50 text-amber-700 border border-amber-200/80 font-black px-1.5 py-0.5 rounded-md">Sell / Rent</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] bg-amber-50 text-amber-700 border border-amber-200/80 font-black px-2 py-0.5 rounded-md">Sell / Rent</span>
+                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                     </div>
                   </Link>
 
-                  <div className="h-px bg-slate-100 mx-3" />
+                  <div className="h-px bg-slate-100 mx-3.5" />
 
                   <Link
                     href="/advertise"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-2.5 sm:p-3 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Sparkles className="w-4 h-4 text-purple-600 stroke-[1.8]" />
-                      <span className="text-xs sm:text-[13px] font-bold text-slate-900">Advertise With Us</span>
+                    <div className="flex items-center gap-3">
+                      <Sparkles className="w-5 h-5 text-purple-600 stroke-[2]" />
+                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Advertise With Us</span>
                     </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                   </Link>
 
                   {isLoggedIn && isUserAdmin && (
                     <>
-                      <div className="h-px bg-slate-100 mx-3" />
+                      <div className="h-px bg-slate-100 mx-3.5" />
                       <Link
                         href="/adminmb"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="w-full flex items-center justify-between p-2.5 sm:p-3 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                        className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                       >
-                        <div className="flex items-center gap-2.5">
-                          <Shield className="w-4 h-4 text-rose-600 stroke-[1.8]" />
-                          <span className="text-xs sm:text-[13px] font-bold text-rose-700">Admin Control Panel</span>
+                        <div className="flex items-center gap-3">
+                          <Shield className="w-5 h-5 text-rose-600 stroke-[2]" />
+                          <span className="text-sm sm:text-[15px] font-bold text-rose-700">Admin Control Panel</span>
                         </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                       </Link>
                     </>
                   )}
@@ -1040,23 +1125,23 @@ export default function Navbar() {
 
               {/* 4. Support */}
               <div>
-                <h3 className="text-[10.5px] font-black uppercase tracking-wider text-slate-400 mb-1.5 px-1">Support</h3>
-                <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2 px-1">Support</h3>
+                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
                   <a
                     href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar%20Support,"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-2.5 sm:p-3 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <MessageSquare className="w-4 h-4 text-emerald-600 stroke-[1.8]" />
-                      <span className="text-xs sm:text-[13px] font-bold text-slate-900">Chat with us on WhatsApp</span>
+                    <div className="flex items-center gap-3">
+                      <MessageSquare className="w-5 h-5 text-emerald-600 stroke-[2]" />
+                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Chat with us on WhatsApp</span>
                     </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                   </a>
 
-                  <div className="h-px bg-slate-100 mx-3" />
+                  <div className="h-px bg-slate-100 mx-3.5" />
 
                   <button
                     type="button"
@@ -1064,78 +1149,78 @@ export default function Navbar() {
                       setMobileMenuOpen(false);
                       setHelpModalOpen(true);
                     }}
-                    className="w-full flex items-center justify-between p-2.5 sm:p-3 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <HelpCircle className="w-4 h-4 text-slate-700 stroke-[1.8]" />
-                      <span className="text-xs sm:text-[13px] font-bold text-slate-900">Help &amp; FAQs</span>
+                    <div className="flex items-center gap-3">
+                      <HelpCircle className="w-5 h-5 text-slate-700 stroke-[2]" />
+                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Help &amp; FAQs</span>
                     </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                   </button>
                 </div>
               </div>
 
               {/* 5. More */}
               <div>
-                <h3 className="text-[10.5px] font-black uppercase tracking-wider text-slate-400 mb-1.5 px-1">More</h3>
-                <div className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2 px-1">More</h3>
+                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
                   <Link
                     href="/download-app"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-2.5 sm:p-3 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Smartphone className="w-4 h-4 text-teal-600 stroke-[1.8]" />
-                      <span className="text-xs sm:text-[13px] font-bold text-slate-900">Install Mobile App (PWA)</span>
+                    <div className="flex items-center gap-3">
+                      <Smartphone className="w-5 h-5 text-teal-600 stroke-[2]" />
+                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Install Mobile App (PWA)</span>
                     </div>
-                    <span className="text-[8.5px] bg-teal-50 text-teal-800 border border-teal-200 font-extrabold px-1.5 py-0.5 rounded-md">iOS / Android</span>
+                    <span className="text-[11px] bg-teal-50 text-teal-800 border border-teal-200 font-extrabold px-2 py-0.5 rounded-md">iOS / Android</span>
                   </Link>
 
-                  <div className="h-px bg-slate-100 mx-3" />
+                  <div className="h-px bg-slate-100 mx-3.5" />
 
                   <Link
                     href="/terms"
                     rel="nofollow"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-2.5 sm:p-3 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <HelpCircle className="w-4 h-4 text-slate-700 stroke-[1.8]" />
-                      <span className="text-xs sm:text-[13px] font-bold text-slate-900">Terms &amp; Conditions</span>
+                    <div className="flex items-center gap-3">
+                      <HelpCircle className="w-5 h-5 text-slate-700 stroke-[2]" />
+                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Terms &amp; Conditions</span>
                     </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                   </Link>
 
-                  <div className="h-px bg-slate-100 mx-3" />
+                  <div className="h-px bg-slate-100 mx-3.5" />
 
                   <Link
                     href="/privacy"
                     rel="nofollow"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-2.5 sm:p-3 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
+                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <FileText className="w-4 h-4 text-slate-700 stroke-[1.8]" />
-                      <span className="text-xs sm:text-[13px] font-bold text-slate-900">Privacy Policy</span>
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-slate-700 stroke-[2]" />
+                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Privacy Policy</span>
                     </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                   </Link>
                 </div>
               </div>
 
               {/* 6. Logout Button (if logged in) */}
               {isLoggedIn && (
-                <div className="pt-0.5">
+                <div className="pt-1">
                   <button
                     type="button"
                     onClick={() => {
                       logout();
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full bg-white rounded-xl p-2.5 sm:p-3 border border-slate-200/80 shadow-2xs hover:bg-rose-50/50 hover:border-rose-200 transition-all flex items-center gap-2.5 cursor-pointer text-left group"
+                    className="w-full bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-2xs hover:bg-rose-50/50 hover:border-rose-200 transition-all flex items-center gap-3 cursor-pointer text-left group"
                   >
-                    <LogOut className="w-4 h-4 text-slate-600 group-hover:text-rose-600 stroke-[1.8] transition-colors" />
-                    <span className="text-xs sm:text-[13px] font-bold text-slate-800 group-hover:text-rose-600 transition-colors">Logout</span>
+                    <LogOut className="w-5 h-5 text-slate-600 group-hover:text-rose-600 stroke-[2] transition-colors" />
+                    <span className="text-sm sm:text-base font-bold text-slate-800 group-hover:text-rose-600 transition-colors">Logout</span>
                   </button>
                 </div>
               )}

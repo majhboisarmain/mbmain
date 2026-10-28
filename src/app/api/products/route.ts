@@ -72,6 +72,44 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, name, price, description, image } = body;
+
+    if (!id || !name || price === undefined) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const prodId = parseInt(id);
+    if (isNaN(prodId)) {
+      return NextResponse.json({ error: 'Invalid product ID' }, { status: 400 });
+    }
+
+    const uploadedImage = image ? await uploadImage(image) : (image === '' ? null : undefined);
+
+    const updateData: any = {
+      name: name.trim(),
+      price: parseFloat(price),
+      description: description !== undefined ? (description?.trim() || null) : undefined,
+    };
+
+    if (uploadedImage !== undefined) {
+      updateData.image = uploadedImage;
+    }
+
+    const updated = await prisma.product.update({
+      where: { id: prodId },
+      data: updateData,
+    });
+
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    console.error('Error updating product:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);

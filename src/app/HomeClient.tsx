@@ -38,6 +38,7 @@ import ReportModal from '@/components/ReportModal';
 import ExitAppModal from '@/components/ExitAppModal';
 import MMTCategoryIcon from '@/components/MMTCategoryIcon';
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
+import { BOISAR_ICONIC_PLACES, IconicPlace } from '@/lib/placesData';
 import { getCategorySlug, formatCategoryTitle, getCategorySearchTerms } from '@/lib/categories';
 
 const toTitleCase = (str: string) => {
@@ -574,97 +575,6 @@ function getCategoryImage(name: string): string {
   }
   return "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=360&q=80";
 }
-
-const BOISAR_ICONIC_PLACES = [
-  {
-    id: 'chinchani-beach',
-    name: 'Chinchani, Boisar',
-    category: 'Beach & Sunset',
-    distance: '15 mins from Boisar',
-    travelTime: '12 km • ~20 mins',
-    image: '/places/chinchani-beach.jpg',
-    description: 'Serene black-sand coastline famous for mesmerizing Arabian Sea sunsets, local street food & family beach outings.',
-    highlights: ['Breathtaking Sunsets', 'Beach Snacks & Coconut Water', 'Horse Cart & ATV Rides', 'Peaceful Shoreline'],
-    mapQuery: 'Chinchani Beach Boisar Maharashtra',
-  },
-  {
-    id: 'kelve-beach',
-    name: 'Kelve Beach, Palghar',
-    category: 'Sea Coast & Fort',
-    distance: '25 mins from Boisar',
-    travelTime: '22 km • ~35 mins',
-    image: '/places/kelve-beach.jpg',
-    description: 'One of the longest beaches in Palghar district with fragrant Suru pine tree forests and an ancient Portuguese water fort.',
-    highlights: ['Historic Kelve Fort', 'Dense Casuarina (Suru) Grove', 'Water Sports & Camel Rides', 'Beachside Resorts'],
-    mapQuery: 'Kelve Beach Palghar Maharashtra',
-  },
-  {
-    id: 'shirgaon-fort',
-    name: 'Shirgaon Fort, Boisar',
-    category: 'Historic Sea Fort',
-    distance: '18 mins from Boisar',
-    travelTime: '14 km • ~25 mins',
-    image: '/places/shirgaon-fort.jpg',
-    description: 'Well-preserved 16th-century Maratha stone fortress perched beside palm-fringed coast with commanding panoramic ocean views.',
-    highlights: ['Chhatrapati Shivaji Maharaj Era Fort', 'Ocean View Bastions', 'Quiet Coastal Beach', 'Photography Hotspot'],
-    mapQuery: 'Shirgaon Fort Palghar Maharashtra',
-  },
-  {
-    id: 'tarapur-fort',
-    name: 'Tarapur Fort & Light',
-    category: 'Lighthouse & History',
-    distance: '12 mins from Boisar',
-    travelTime: '10 km • ~15 mins',
-    image: '/places/tarapur-fort.jpg',
-    description: 'Ancient 13th-century coastal fortress near Tarapur harbour and the historic lighthouse guiding maritime vessels.',
-    highlights: ['13th-Century Heritage Ramparts', 'Coastal Lighthouse Views', 'Fishing Village Culture', 'Fresh Sea Breeze'],
-    mapQuery: 'Tarapur Fort Boisar Maharashtra',
-  },
-  {
-    id: 'dahanu-beach',
-    name: 'Dahanu Coast, Dahanu',
-    category: 'Chikoo & Beach',
-    distance: '30 mins from Boisar',
-    travelTime: '28 km • ~40 mins',
-    image: '/places/dahanu-beach.jpg',
-    description: 'Sprawling clean beach lined with world-famous lush Chikoo (sapodilla) orchards, Parsi heritage villas, and tranquil shores.',
-    highlights: ['Chikoo Orchards', 'Bordi Coastal Drive', 'Parsi Heritage Cuisine', 'Tranquil Clean Water'],
-    mapQuery: 'Dahanu Beach Maharashtra',
-  },
-  {
-    id: 'asava-fort',
-    name: 'Asava Fort Trek, Manor',
-    category: 'Nature & Trekking',
-    distance: '25 mins from Boisar',
-    travelTime: '20 km • ~30 mins',
-    image: '/places/asava-fort.jpg',
-    description: 'Scenic hill fort trek offering breathtaking 360-degree vistas of the green Sahyadri ranges and Surya River valley.',
-    highlights: ['Beginner Friendly Trek', 'Ancient Water Cisterns', 'Lush Green Vistas', 'Monsoon Cloud Walks'],
-    mapQuery: 'Asava Fort Palghar Maharashtra',
-  },
-  {
-    id: 'vandri-lake',
-    name: 'Vandri Lake, Palghar',
-    category: 'Lake & Camping',
-    distance: '35 mins from Boisar',
-    travelTime: '30 km • ~45 mins',
-    image: '/places/vandri-lake.jpg',
-    description: 'Serene freshwater reservoir nested amidst green hills, popular for weekend camping, stargazing, and nature picnics.',
-    highlights: ['Lakeside Camping', 'Misty Morning Views', 'Peaceful Picnic Spots', 'Birdwatching'],
-    mapQuery: 'Vandri Lake Palghar Maharashtra',
-  },
-  {
-    id: 'mahalaxmi-temple',
-    name: 'Mahalaxmi Temple, Dahanu',
-    category: 'Pilgrimage Shrine',
-    distance: '40 mins from Boisar',
-    travelTime: '35 km • ~50 mins',
-    image: '/places/mahalaxmi-temple.jpg',
-    description: 'Sacred ancient shrine of Goddess Mahalaxmi situated along the highway, visited by thousands of pilgrims every week.',
-    highlights: ['Ancient Sacred Shrine', 'Hilltop Temple Setting', 'Temple Prasad & Bazaar', 'Spiritual Atmosphere'],
-    mapQuery: 'Mahalaxmi Temple Charoti Dahanu Maharashtra',
-  }
-];
 
 export default function HomeClient({ initialSpecialCategory }: { initialSpecialCategory?: 'influencers' | 'properties' | 'helpers' | 'caterers' | null } = {}) {
   const { userName, currentRole, isLoggedIn, loggedInUser, loginModalOpen, setLoginModalOpen, adModalOpen, setAdModalOpen, showToast } = useApp();
@@ -2220,7 +2130,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   };
 
   // Filter lists dynamically based on category selection (Top 8 curated business categories by default)
-  const displayedCategories = isCategoriesExpanded ? categories : categories.slice(0, 8);
+  const displayedCategories = isCategoriesExpanded ? categories : categories.slice(0, 16);
 
   return (
     <div className="min-h-screen pb-2 sm:pb-3 text-slate-800 font-sans bg-white">
@@ -2676,12 +2586,14 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
             {/* Exactly 4 Columns on Mobile & Responsive Grid, Clean Unboxed Items */}
             <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-y-5 sm:gap-y-6 gap-x-2 sm:gap-x-4">
-              {displayedCategories.map((cat) => (
+              {displayedCategories.map((cat, idx) => {
+                const isSecondRowOnLaptop = idx >= 8 && !isCategoriesExpanded;
+                return (
                 <Link
                   key={cat.name}
                   href={`/category/${getCategorySlug(cat.name)}`}
                   prefetch={true}
-                  className="group flex flex-col items-center justify-start text-center cursor-pointer active:scale-95 transition-transform"
+                  className={`group flex-col items-center justify-start text-center cursor-pointer active:scale-95 transition-transform ${isSecondRowOnLaptop ? "hidden lg:flex" : "flex"}`}
                 >
                   {/* Clean 3D Isometric Icon (MMT Style) */}
                   <div className="relative w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
@@ -2698,7 +2610,8 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     {cat.name}
                   </p>
                 </Link>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -2780,25 +2693,25 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                       id: 'vehicle-loan',
                       title: 'Vehicle Loan',
                       subtitle: '100% On-road • Fast Approval',
-                      image: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80'
+                      image: '/loans/vehicle-loan.jpg'
                     },
                     {
                       id: 'education-loan',
                       title: 'Education Loan',
                       subtitle: 'Global & India • Low Margin',
-                      image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600&q=80'
+                      image: '/loans/education-loan.jpg'
                     },
                     {
                       id: 'property-loan',
                       title: 'Loan Against Property',
                       subtitle: 'Up to ₹5 Cr • Low Interest',
-                      image: 'https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=600&q=80'
+                      image: '/loans/loan-against-property.jpg'
                     },
                     {
                       id: 'commercial-loan',
                       title: 'Commercial Loan',
                       subtitle: 'Tarapur MIDC & Boisar Hub',
-                      image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=600&q=80'
+                      image: '/loans/commercial-loan.jpg'
                     }
                   ]
                 ].map((slide, slideIdx) => (
@@ -3019,7 +2932,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                       id: 'influencer-marketing',
                       title: 'Creator Collaborations',
                       subtitle: 'Boisar & Palghar Influencers',
-                      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
+                      image: '/marketing/creator-collaborations.jpg',
                       targetUrl: '/creators'
                     },
                     {
@@ -3392,12 +3305,30 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-5 sm:mt-6 mb-2 sm:mb-3">
         <div className="flex items-center justify-between mb-3.5 sm:mb-4">
           <div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#064e3b] tracking-tight">
-              Iconic places you need to see
-            </h2>
-            <p className="text-[11px] sm:text-xs text-slate-500 font-semibold mt-0.5">
-              Must-visit beaches, sea forts &amp; scenic spots in &amp; around Boisar
-            </p>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#064e3b] tracking-tight">
+                Iconic places you need to see
+              </h2>
+              <Link
+                href="/places"
+                className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2.5 py-1 rounded-full transition-colors"
+              >
+                <span>Explore All ({BOISAR_ICONIC_PLACES.length})</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            <div className="flex items-center justify-between gap-2 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500 font-semibold">
+                Must-visit beaches, sea forts &amp; scenic spots in &amp; around Boisar
+              </p>
+              <Link
+                href="/places"
+                className="sm:hidden text-[11px] font-bold text-teal-700 hover:underline flex items-center gap-0.5 shrink-0"
+              >
+                <span>View All</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
 
           {/* Carousel Arrow Controls */}

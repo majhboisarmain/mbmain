@@ -265,13 +265,13 @@ button, input, select, textarea {
 
 
 /* ============================================================
-   NAVBAR — frosted glass look
+   NAVBAR — Solid opaque background (never transparent)
 ============================================================ */
 header.sticky {
-  background: rgba(255, 255, 255, .88) !important;
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
-  border-bottom: 1px solid rgba(226, 232, 240, .7) !important;
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 1) !important;
 }
 
 /* ============================================================
