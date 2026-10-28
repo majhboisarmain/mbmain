@@ -3,6 +3,15 @@ import type { NextRequest } from 'next/server';
 import { authRateLimiter, generalRateLimiter, uploadRateLimiter, aiRateLimiter } from '@/lib/rateLimit';
 
 export function middleware(request: NextRequest) {
+  // 0. Canonical WWW Redirect (Consolidate majhboisar.in to www.majhboisar.in for Google SEO)
+  const host = request.headers.get('host') || '';
+  if (host === 'majhboisar.in') {
+    const url = request.nextUrl.clone();
+    url.host = 'www.majhboisar.in';
+    url.protocol = 'https';
+    return NextResponse.redirect(url, 301);
+  }
+
   const response = NextResponse.next();
   const { pathname } = request.nextUrl;
   const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || request.headers.get('x-real-ip') || '127.0.0.1';

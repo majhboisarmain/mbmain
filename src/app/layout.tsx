@@ -29,13 +29,15 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Majh Boisar — Boisar's #1 City Directory, Hotels & Local Search",
+    default: "Majh Boisar — Boisar & Palghar #1 City Website, Directory & Local Search",
     template: "%s | Majh Boisar",
   },
-  description: "Boisar's #1 All-in-One City Portal — Yahan sab milega! 1000+ verified shops, hotels, flats on rent/sale, home services, doctors, Tarapur MIDC jobs & cabs in Boisar.",
+  description: "Boisar and Palghar district's #1 local city website and directory — Yahan sab milega! 1000+ verified shops, hotels, flats on rent/sale, home services, doctors, Tarapur MIDC jobs & cabs.",
   keywords: [
+    "boisar website", "palghar website", "boisar city website", "palghar portal", "palghar district website", "boisar online portal", "boisar official website",
     "majh boisar", "majha boisar", "maza boisar", "majhe boisar", "maze boisar", "majhboisar", "majhaboisar", "mazaboisar", "boisar majh", "boisar maza", "boisar majha", "boisar city",
     "माझं बोईसर", "माझा बोईसर", "माझे बोईसर", "बोईसर माझं", "बोईसर", "boisar portal", "boisar city directory", "boisar info", "boisar local search",
+    "palghar directory", "palghar local search", "palghar business directory", "palghar city guide",
     "gym near me", "gym in boisar", "best gym in boisar", "fitness center boisar", "protein shop in boisar", "protein and supplements boisar",
     "resorts in boisar", "resorts near boisar", "kelwa beach resort", "kelve beach resort", "dahanu resort", "private pool villa boisar", "palghar resorts", "day picnic resorts near boisar", "weekend resorts near mumbai", "farmhouse on rent in boisar", "waterpark resort near boisar",
     "boisar hotel", "hotels in boisar", "best hotel in boisar", "couple friendly hotel in boisar", "hourly hotels in boisar", "rooms in boisar", "hotel near boisar railway station", "hotel in tarapur midc", "budget hotel boisar", "lodge in boisar",
@@ -138,7 +140,12 @@ const websiteJsonLd = {
     "Boisar Majha",
     "Boisar City Directory", 
     "Boisar Local Search",
-    "Boisar Portal"
+    "Boisar Portal",
+    "Boisar Website",
+    "Palghar Website",
+    "Boisar City Website",
+    "Palghar Directory",
+    "Palghar Portal"
   ],
   "url": "https://www.majhboisar.in",
   "potentialAction": {

@@ -105,11 +105,15 @@ export async function GET(request: NextRequest) {
       const lowerCat = cleanCat.toLowerCase();
       if (lowerCat.includes('dance') || lowerCat.includes('music')) {
         andClauses.push({
-          category: { notIn: ['Loans', 'Loan Consultants', 'Finance', 'Insurance', 'Real Estate', 'Properties', 'Hardware'] }
+          category: { notIn: ['Loans', 'Loan Consultants', 'Finance', 'Insurance', 'Real Estate', 'Properties', 'Hardware', 'Water Purifier', 'RO Service'] }
         });
       } else if (lowerCat.includes('loan') || lowerCat.includes('finance')) {
         andClauses.push({
-          category: { notIn: ['Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants'] }
+          category: { notIn: ['Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop', 'Water Purifier', 'RO Service', 'Digital Printing', 'Schools', 'Footwear', 'Eye Opticians'] }
+        });
+      } else if (lowerCat.includes('water') || lowerCat.includes('purifier') || lowerCat.includes('ro')) {
+        andClauses.push({
+          category: { notIn: ['Loans', 'Loan Consultants', 'Finance', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop'] }
         });
       }
     }
@@ -503,9 +507,8 @@ export async function POST(request: NextRequest) {
           longitude: parsedLng,
           subscription: subPlan,
           hasHomeDelivery: body.hasHomeDelivery === true || body.hasHomeDelivery === 'true',
-          verified: body.verified !== undefined 
-            ? body.verified 
-            : (category?.toLowerCase().includes('maid') || category?.toLowerCase().includes('helper') ? false : true),
+          verified: body.verified !== undefined ? Boolean(body.verified) : true,
+          isIndexable: body.isIndexable !== undefined ? Boolean(body.isIndexable) : true,
           premium: body.premium !== undefined ? body.premium : (subPlan !== 'Free' || body.createdBy === 'Admin'),
           rating: body.rating !== undefined ? parseFloat(body.rating) : 5.0,
           createdBy: cleanOwnerPhone || (body.createdBy === 'Admin' ? 'Admin' : null)
@@ -538,9 +541,8 @@ export async function POST(request: NextRequest) {
           longitude: parsedLng,
           workingHours: workingHours || '9:00 AM - 9:00 PM',
           subscription: subPlan,
-          verified: body.verified !== undefined 
-            ? body.verified 
-            : (category?.toLowerCase().includes('maid') || category?.toLowerCase().includes('helper') ? false : true),
+          verified: body.verified !== undefined ? Boolean(body.verified) : true,
+          isIndexable: body.isIndexable !== undefined ? Boolean(body.isIndexable) : true,
           premium: body.premium !== undefined ? body.premium : (subPlan !== 'Free' || body.createdBy === 'Admin'),
           rating: body.rating !== undefined ? parseFloat(body.rating) : 5.0
         }

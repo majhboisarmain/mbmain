@@ -3895,6 +3895,8 @@ _Powered by Majh Boisar (majhboisar.com)_`
           hasHomeDelivery: newBizHasHomeDelivery,
           subscription: tierToSet,
           premium: isPaidPlan,
+          verified: true,
+          isIndexable: true,
           // Save the login phone of the user so we can reliably find their businesses later
           ownerPhone: (loggedInUser?.phone || newBizPhone || newBizWhatsapp || '').replace(/\D/g, '').slice(-10) || undefined
         })

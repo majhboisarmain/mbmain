@@ -1,69 +1,14 @@
-import { Metadata } from 'next';
-import { formatCategoryTitle } from '@/lib/categories';
+import { formatCategoryTitle, getCategorySlug } from '@/lib/categories';
 
 interface Props {
   params: Promise<{ cat: string }>;
   children: React.ReactNode;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { cat: rawCat } = await params;
-  const category = formatCategoryTitle(rawCat || '');
-
-  if (!category) {
-    return {
-      title: 'Categories & Services in Boisar | Majh Boisar',
-      description: 'Explore 800+ business categories in Boisar, Tarapur MIDC and surrounding local areas.',
-    };
-  }
-
-  const title = `${category} in Boisar | Verified Contacts & Reviews — Majh Boisar`;
-  const description = `Find verified ${category.toLowerCase()} in Boisar, Palghar. Browse verified contact numbers, shop addresses, customer ratings, and direct WhatsApp enquiry on Majh Boisar directory.`;
-  const canonicalUrl = `https://www.majhboisar.in/category/${encodeURIComponent(category)}`;
-
-  return {
-    title,
-    description,
-    keywords: [
-      `${category.toLowerCase()} in boisar`,
-      `best ${category.toLowerCase()} in boisar`,
-      `top ${category.toLowerCase()} near me`,
-      `${category.toLowerCase()} contact number boisar`,
-      `${category.toLowerCase()} tarapur midc`,
-      `boisar ${category.toLowerCase()} list`,
-      'majh boisar directory',
-    ],
-    alternates: {
-      canonical: canonicalUrl,
-    },
-    openGraph: {
-      title,
-      description,
-      url: canonicalUrl,
-      siteName: 'Majh Boisar',
-      locale: 'en_IN',
-      type: 'website',
-      images: [
-        {
-          url: '/hero-bg.png',
-          width: 1200,
-          height: 630,
-          alt: `Best ${category} in Boisar - Majh Boisar`,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: ['/hero-bg.png'],
-    },
-  };
-}
-
 export default async function CategoryLayout({ children, params }: Props) {
   const { cat: rawCat } = await params;
   const category = formatCategoryTitle(rawCat || '');
+  const slug = getCategorySlug(rawCat || '') || (rawCat || '').toLowerCase();
 
   const breadcrumbSchema = {
     '@context': 'https://schema.org',
@@ -85,7 +30,7 @@ export default async function CategoryLayout({ children, params }: Props) {
         '@type': 'ListItem',
         position: 3,
         name: category || 'Category',
-        item: `https://www.majhboisar.in/category/${encodeURIComponent(category)}`,
+        item: `https://www.majhboisar.in/category/${slug}`,
       },
     ],
   };
@@ -95,7 +40,7 @@ export default async function CategoryLayout({ children, params }: Props) {
     '@type': 'CollectionPage',
     name: `Best ${category} in Boisar`,
     description: `Find top verified ${category} in Boisar, Tarapur MIDC, and Palghar area with phone numbers and addresses.`,
-    url: `https://www.majhboisar.in/category/${encodeURIComponent(category)}`,
+    url: `https://www.majhboisar.in/category/${slug}`,
     isPartOf: {
       '@type': 'WebSite',
       name: 'Majh Boisar',

@@ -125,14 +125,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const activeSlug = business.slug || business.id.toString();
-  const locationLabel = business.locality || business.location || 'Boisar';
+  const rawLoc = (business.locality || business.location || 'Boisar').trim();
+  const cleanLoc = rawLoc.toLowerCase() === 'boisar' ? 'Boisar' : `${rawLoc}, Boisar`;
   
-  // SEO Title Template: {Business Name} in {Location}, Boisar — Phone, Address & Reviews
-  const pageTitle = business.seoTitle || `${business.name} in ${locationLabel}, Boisar — Phone, Address & Reviews`;
+  // Google Top Ranking SEO Title Template: e.g. "Protein World Boisar — Contact Number, Address & Reviews | Majh Boisar"
+  const pageTitle = business.seoTitle || `${business.name.trim()} ${cleanLoc} — Contact Number, Address & Reviews | Majh Boisar`;
   
   // SEO Meta Description Template
   const pageDesc = business.seoDescription || 
-    `Find ${business.name} in ${locationLabel}, Boisar (${business.category}). Contact phone: ${business.phone || 'Available'}, address, verified opening hours, services and authentic customer details on Majh Boisar directory.`;
+    `Find ${business.name.trim()} in ${cleanLoc} (${business.category}). Contact phone: ${business.phone || 'Available'}, address, verified opening hours, services and authentic customer details on Majh Boisar directory.`;
 
   const coverImage = business.image?.split('||gallery_sep||')[0];
   const imageUrl = coverImage?.startsWith('http')
@@ -187,7 +188,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       `${business.name} address`,
       `${business.category} in Boisar`,
       `${business.category} near Boisar`,
-      `${business.category} in ${locationLabel}`,
+      `${business.category} in ${cleanLoc}`,
       'Boisar local business directory',
       'Majh Boisar',
     ],

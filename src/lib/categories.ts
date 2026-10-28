@@ -694,15 +694,19 @@ export function buildCategoryPrismaFilter(categorySlugOrTitle: string, selectedA
   const lowerSlug = getCategorySlug(categorySlugOrTitle);
   if (lowerSlug.includes('dance') || lowerSlug.includes('music')) {
     whereClause.NOT = [
-      { category: { in: ['Loans', 'Loan Consultants', 'Finance', 'Insurance', 'Real Estate', 'Properties', 'Hardware', 'Protein', 'Protein Shop'] } }
+      { category: { in: ['Loans', 'Loan Consultants', 'Finance', 'Insurance', 'Real Estate', 'Properties', 'Hardware', 'Protein', 'Protein Shop', 'Water Purifier', 'RO Service'] } }
     ];
   } else if (lowerSlug.includes('loan') || lowerSlug.includes('finance')) {
     whereClause.NOT = [
-      { category: { in: ['Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop'] } }
+      { category: { in: ['Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop', 'Water Purifier', 'RO Service', 'Digital Printing', 'Schools', 'Footwear', 'Eye Opticians'] } }
     ];
   } else if (lowerSlug.includes('protein')) {
     whereClause.NOT = [
-      { category: { in: ['Loans', 'Loan Consultants', 'Dance Classes', 'Music Classes'] } }
+      { category: { in: ['Loans', 'Loan Consultants', 'Dance Classes', 'Music Classes', 'Water Purifier', 'RO Service'] } }
+    ];
+  } else if (lowerSlug.includes('water') || lowerSlug.includes('purifier') || lowerSlug.includes('ro')) {
+    whereClause.NOT = [
+      { category: { in: ['Loans', 'Loan Consultants', 'Finance', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop'] } }
     ];
   }
 

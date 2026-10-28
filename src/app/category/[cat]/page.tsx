@@ -123,9 +123,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const categoryName = formatCategoryTitle(rawCat);
   const slugKeyword = rawCat.replace(/-/g, ' ');
 
-  // Front-load the exact keyword for Google ranking
-  const title = `${categoryName} in Boisar — Contact Number, Address & Reviews`;
-  const description = `Find verified ${slugKeyword} and ${categoryName.toLowerCase()} in Boisar, Palghar. Direct phone numbers, addresses, customer ratings, and WhatsApp enquiry on Majh Boisar directory.`;
+  const currentYear = new Date().getFullYear();
+  // Front-load high CTR keywords ("Top Best ... in Boisar (2026)") for #1 Google ranking
+  const title = `Top Best ${categoryName} in Boisar (${currentYear}) — Verified Contact & Reviews | Majh Boisar`;
+  const description = `Find top verified ${categoryName.toLowerCase()} and ${slugKeyword} in Boisar, Palghar (${currentYear}). Direct phone numbers, shop addresses, customer ratings, and instant WhatsApp enquiry on Majh Boisar directory.`;
+  const cleanSlug = rawCat.toLowerCase().trim();
+  const canonicalUrl = `https://www.majhboisar.in/category/${cleanSlug}`;
 
   return {
     title,
@@ -154,7 +157,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      url: `https://www.majhboisar.in/category/${encodeURIComponent(resolvedParams.cat)}`,
+      url: canonicalUrl,
       siteName: 'Majh Boisar Local Directory',
       images: [
         {
@@ -168,7 +171,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'website',
     },
     alternates: {
-      canonical: `https://www.majhboisar.in/category/${encodeURIComponent(resolvedParams.cat)}`,
+      canonical: canonicalUrl,
     },
   };
 }

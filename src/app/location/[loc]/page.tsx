@@ -94,8 +94,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     desc: `Browse top verified local businesses, shops, and services in ${loc.replace(/-/g, ' ')}, Boisar.`
   };
 
-  const title = `Top Businesses & Services in ${locationInfo.title}`;
-  const description = locationInfo.desc;
+  const isCityRoot = locLower === 'boisar' || locLower === 'palghar';
+  const title = isCityRoot
+    ? `${locationInfo.title} Website — #1 City Directory, Shops & Services | Majh Boisar`
+    : `Top Businesses & Services in ${locationInfo.title} | Majh Boisar`;
+  const description = `${locationInfo.title} local website and directory. ${locationInfo.desc}`;
   const canonicalUrl = `https://www.majhboisar.in/location/${locLower}`;
 
   return {
@@ -135,6 +138,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
     },
     keywords: [
+      `${locationInfo.title.toLowerCase()} website`,
+      `${locationInfo.title.toLowerCase()} city website`,
+      `${locationInfo.title.toLowerCase()} portal`,
+      `${locationInfo.title.toLowerCase()} directory`,
       `businesses in ${locationInfo.title.toLowerCase()}`,
       `shops in ${locationInfo.title.toLowerCase()}`,
       `services in ${locationInfo.title.toLowerCase()}`,

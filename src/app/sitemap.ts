@@ -144,15 +144,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.88,
   }));
 
-  // 5. Boisar Category Pages (/boisar/{cat})
-  const boisarCategoryRoutes: MetadataRoute.Sitemap = BOISAR_CATEGORY_SLUGS.map((cat) => ({
-    url: `${baseUrl}/boisar/${cat}`,
-    lastModified: now,
-    changeFrequency: 'weekly' as const,
-    priority: 0.88,
-  }));
-
-  // 6. Hotel Individual Pages
+  // 5. Hotel Individual Pages
   const hotelRoutes: MetadataRoute.Sitemap = BOISAR_HOTELS.map((hotel) => ({
     url: `${baseUrl}/hotels/${hotel.slug || hotel.id}`,
     lastModified: now,
@@ -160,7 +152,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
-  // 7. Resort Individual Pages
+  // 6. Resort Individual Pages
   const resortRoutes: MetadataRoute.Sitemap = (resortsData || []).map((resort: ResortVilla) => ({
     url: `${baseUrl}/resorts#${resort.slug || resort.id}`,
     lastModified: now,
@@ -172,7 +164,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...coreRoutes,
     ...businessRoutes,
     ...locationRoutes,
-    ...boisarCategoryRoutes,
     ...categoryRoutes,
     ...hotelRoutes,
     ...resortRoutes,
