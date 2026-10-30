@@ -2839,28 +2839,24 @@ _Powered by Majh Boisar (majhboisar.com)_`
       if (loggedInUser.name && !newBizContactPerson) {
         setNewBizContactPerson(loggedInUser.name);
       }
-      if (loggedInUser.phone && !newBizPhone) {
-        if (loggedInUser.phone) {
-          const clean = loggedInUser.phone.replace(/\D/g, '').slice(-10);
-          setNewBizPhone(clean);
-          setNewBizWhatsapp(clean);
-          if (clean) {
-            if (currentRole !== 'Admin') {
-              if (newBizPhone !== clean) setNewBizPhone(clean);
-            } else if (!newBizPhone) {
-              setNewBizPhone(clean);
-            }
-            if (!newBizWhatsapp) {
-              setNewBizWhatsapp(clean);
-            }
+      if (loggedInUser.phone) {
+        const clean = loggedInUser.phone.replace(/\D/g, '').slice(-10);
+        if (clean) {
+          if (currentRole !== 'Admin') {
+            if (newBizPhone !== clean) setNewBizPhone(clean);
+          } else if (!newBizPhone) {
+            setNewBizPhone(clean);
+          }
+          if (!newBizWhatsapp) {
+            setNewBizWhatsapp(clean);
           }
         }
-        if (loggedInUser.email && !newBizEmail) {
-          setNewBizEmail(loggedInUser.email);
-        }
       }
-    }, [loggedInUser, newBizContactPerson, newBizPhone, newBizEmail]);
-}, [loggedInUser, newBizContactPerson, newBizPhone, newBizWhatsapp, newBizEmail, currentRole]);
+      if (loggedInUser.email && !newBizEmail) {
+        setNewBizEmail(loggedInUser.email);
+      }
+    }
+  }, [loggedInUser, newBizContactPerson, newBizPhone, newBizWhatsapp, newBizEmail, currentRole]);
 
 // Step 3: Timings, Category, cover
 const [newBizCategory, setNewBizCategory] = useState('Doctors');
@@ -4051,7 +4047,6 @@ const handleCreateBusinessFinal = async (chosenTier?: 'Free' | 'Starter' | 'Pro'
         description: newBizDescription.trim() || `${toTitleCase(newBizName)} - Local Business in Boisar`,
         address: addressBlock,
         location: newBizLocation,
-        phone: newBizPhone,
         phone: (currentRole !== 'Admin' && loggedInUser?.phone)
           ? loggedInUser.phone.replace(/\D/g, '').slice(-10)
           : newBizPhone,
@@ -4552,7 +4547,6 @@ if (shouldShowRegistrationWizard || (isLoggedIn && !isAdminAuth && businessesLis
                       required
                       maxLength={10}
                       value={newBizPhone}
-                      onChange={(e) => setNewBizPhone(e.target.value.replace(/\D/g, ''))}
                       readOnly={currentRole !== 'Admin' && Boolean(loggedInUser?.phone)}
                       onChange={(e) => {
                         if (currentRole === 'Admin' || !loggedInUser?.phone) {
@@ -4560,11 +4554,11 @@ if (shouldShowRegistrationWizard || (isLoggedIn && !isAdminAuth && businessesLis
                         }
                       }}
                       placeholder="10-digit number"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-14 pr-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold shadow-2xs transition-all font-mono"
-                      className={`w-full border rounded-xl pl-14 pr-3.5 py-2.5 text-xs font-mono font-bold shadow-2xs transition-all ${currentRole !== 'Admin' && loggedInUser?.phone
+                      className={`w-full border rounded-xl pl-14 pr-3.5 py-2.5 text-xs font-mono font-bold shadow-2xs transition-all ${
+                        currentRole !== 'Admin' && loggedInUser?.phone
                           ? 'bg-slate-100 border-slate-300 text-slate-600 cursor-not-allowed select-none'
                           : 'bg-slate-50 border border-slate-200 focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800'
-                        }`}
+                      }`}
                     />
                   </div>
                   {currentRole !== 'Admin' && loggedInUser?.phone && (
@@ -9405,8 +9399,6 @@ return (
                         <span>Product Inventory Catalog</span>
                         <span className="text-[10px] bg-slate-50 px-2 py-0.5 border border-slate-200 rounded text-teal-655 font-bold">{(business.products || []).length} listed</span>
                       </h3>
-                      <span cl
-... [truncated for diff preview]
                       <span className="text-[9px] font-bold text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full">
                         Plan limit: {(business.products || []).length}/{catalogLimit} products
                       </span>
