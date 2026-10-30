@@ -13,6 +13,8 @@ interface Props {
   params: Promise<{ loc: string }>;
 }
 
+export const revalidate = 60;
+
 const KNOWN_LOCATIONS: Record<string, { title: string; areaKeywords: string[]; desc: string }> = {
   'boisar': {
     title: 'Boisar',

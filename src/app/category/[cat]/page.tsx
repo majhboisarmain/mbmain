@@ -22,6 +22,8 @@ interface Props {
   searchParams: Promise<{ area?: string }>;
 }
 
+export const revalidate = 60;
+
 const CATEGORY_STOCK_GALLERY: Record<string, string[]> = {
   gym: [
     'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=700&auto=format&fit=crop&q=80',

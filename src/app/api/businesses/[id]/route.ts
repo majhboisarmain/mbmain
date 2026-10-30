@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { uploadImage, uploadGallery } from '@/lib/cloudinary';
 import { specialProfiles } from '@/lib/mockProfiles';
+import { apiBusinessesCache } from '../route';
 
 export async function GET(
   request: NextRequest,
@@ -58,6 +59,12 @@ export async function GET(
           totalServicesCount: (business.services || []).length,
           catalogLimit: allowedCatalogLimit,
           isPaidActive
+        }, {
+          headers: {
+            'Cache-Control': isManage 
+              ? 'no-store, no-cache, must-revalidate' 
+              : 'public, s-maxage=60, stale-while-revalidate=300'
+          }
         });
       }
     } catch (dbErr) {
@@ -297,6 +304,7 @@ export async function PUT(
       image: parts[0],
       gallery: parts.slice(1)
     };
+    apiBusinessesCache.clear();
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('Error updating business:', error);
@@ -334,6 +342,7 @@ export async function DELETE(
     // Delete the business itself
     await prisma.business.delete({ where: { id: businessId } });
 
+    apiBusinessesCache.clear();
     return NextResponse.json({ message: 'Business deleted successfully' });
   } catch (error: any) {
     console.error('Error deleting business:', error);

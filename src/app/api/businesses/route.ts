@@ -1,5 +1,4 @@
 export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { LRUCache } from 'lru-cache';
@@ -42,14 +41,16 @@ export async function GET(request: NextRequest) {
     const showAll = searchParams.get('showAll') === 'true' || isAdmin;
     const premium = searchParams.get('premium') === 'true';
     const minRating = searchParams.get('rating') ? parseFloat(searchParams.get('rating')!) : null;
+    const hasTimestamp = Boolean(searchParams.get('_t'));
+    const isDirectBypass = isAdmin || hasTimestamp;
 
     // Fast memory cache check for public visitors
     const cacheKey = request.url;
-    if (!isAdmin && apiBusinessesCache.has(cacheKey)) {
+    if (!isDirectBypass && apiBusinessesCache.has(cacheKey)) {
       const cached = apiBusinessesCache.get(cacheKey);
       return NextResponse.json(cached, {
         headers: {
-          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120',
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
           'X-Cache': 'HIT',
         },
       });
@@ -380,11 +381,11 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const cacheControlHeader = showAll 
+    const cacheControlHeader = isDirectBypass 
       ? 'no-store, no-cache, must-revalidate, proxy-revalidate'
-      : 'public, s-maxage=30, stale-while-revalidate=120';
+      : 'public, s-maxage=60, stale-while-revalidate=300';
 
-    if (!isAdmin) {
+    if (!isDirectBypass) {
       apiBusinessesCache.set(cacheKey, result);
     }
 

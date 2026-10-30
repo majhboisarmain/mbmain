@@ -11,6 +11,8 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+export const revalidate = 60;
+
 // In-memory cache for ultra-fast business retrieval across visitor navigations (60s TTL)
 const businessCache = new LRUCache<string, any>({
   max: 300,

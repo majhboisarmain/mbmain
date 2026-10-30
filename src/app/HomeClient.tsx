@@ -899,7 +899,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   useEffect(() => {
     const fetchBusinesses = async () => {
       try {
-        const res = await fetch('/api/businesses?showAll=true', { next: { revalidate: 30 } });
+        const res = await fetch('/api/businesses', { next: { revalidate: 60 } });
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) {
@@ -1756,7 +1756,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       try {
         let activeAds: any[] = [];
         try {
-          const res = await fetch('/api/ad-orders', { cache: 'no-store' });
+          const res = await fetch('/api/ad-orders', { next: { revalidate: 60 } });
           if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data)) {

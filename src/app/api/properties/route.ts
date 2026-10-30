@@ -69,7 +69,12 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json(result);
+    const isPublic = !phone && !all;
+    return NextResponse.json(result, {
+      headers: isPublic
+        ? { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' }
+        : { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+    });
   } catch (error: any) {
     return internalServerErrorResponse('/api/properties GET', error);
   }
