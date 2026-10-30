@@ -5418,7 +5418,6 @@ export function expandCategorySearchTerms(query: string): string[] {
     // If query matches category (e.g. "jcb")
     else if (catLower.includes(q)) {
       terms.add(item.category);
-      terms.add(item.parent);
     }
   });
 

@@ -2842,11 +2842,7 @@ _Powered by Majh Boisar (majhboisar.com)_`
       if (loggedInUser.phone) {
         const clean = loggedInUser.phone.replace(/\D/g, '').slice(-10);
         if (clean) {
-          if (currentRole !== 'Admin') {
-            if (newBizPhone !== clean) setNewBizPhone(clean);
-          } else if (!newBizPhone) {
-            setNewBizPhone(clean);
-          }
+          if (newBizPhone !== clean) setNewBizPhone(clean);
           if (!newBizWhatsapp) {
             setNewBizWhatsapp(clean);
           }
@@ -4002,7 +3998,7 @@ const validateStep2 = () => {
     setCreateBizError('Please enter a valid 10-digit Phone Number.');
     return false;
   }
-  if (currentRole !== 'Admin' && loggedInUser?.phone) {
+  if (loggedInUser?.phone) {
     const userPhone10 = loggedInUser.phone.replace(/\D/g, '').slice(-10);
     if (userPhone10 && newBizPhone.trim().replace(/\D/g, '').slice(-10) !== userPhone10) {
       setCreateBizError(`Business registration phone number (${newBizPhone}) aapke login number (+91 ${userPhone10}) se match hona chahiye. Dusra number allow nahi hai.`);
@@ -4047,7 +4043,7 @@ const handleCreateBusinessFinal = async (chosenTier?: 'Free' | 'Starter' | 'Pro'
         description: newBizDescription.trim() || `${toTitleCase(newBizName)} - Local Business in Boisar`,
         address: addressBlock,
         location: newBizLocation,
-        phone: (currentRole !== 'Admin' && loggedInUser?.phone)
+        phone: loggedInUser?.phone
           ? loggedInUser.phone.replace(/\D/g, '').slice(-10)
           : newBizPhone,
         whatsapp: newBizWhatsapp,
@@ -4531,10 +4527,9 @@ if (shouldShowRegistrationWizard || (isLoggedIn && !isAdminAuth && businessesLis
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1.5">Calling Phone Number *</label>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider">Calling Phone Number *</label>
-                    {currentRole !== 'Admin' && loggedInUser?.phone && (
+                    {Boolean(loggedInUser?.phone) && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                         🔒 Registered Login Number
                       </span>
@@ -4547,21 +4542,21 @@ if (shouldShowRegistrationWizard || (isLoggedIn && !isAdminAuth && businessesLis
                       required
                       maxLength={10}
                       value={newBizPhone}
-                      readOnly={currentRole !== 'Admin' && Boolean(loggedInUser?.phone)}
+                      readOnly={Boolean(loggedInUser?.phone)}
                       onChange={(e) => {
-                        if (currentRole === 'Admin' || !loggedInUser?.phone) {
+                        if (!loggedInUser?.phone) {
                           setNewBizPhone(e.target.value.replace(/\D/g, ''));
                         }
                       }}
                       placeholder="10-digit number"
                       className={`w-full border rounded-xl pl-14 pr-3.5 py-2.5 text-xs font-mono font-bold shadow-2xs transition-all ${
-                        currentRole !== 'Admin' && loggedInUser?.phone
+                        loggedInUser?.phone
                           ? 'bg-slate-100 border-slate-300 text-slate-600 cursor-not-allowed select-none'
                           : 'bg-slate-50 border border-slate-200 focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800'
                       }`}
                     />
                   </div>
-                  {currentRole !== 'Admin' && loggedInUser?.phone && (
+                  {Boolean(loggedInUser?.phone) && (
                     <p className="text-[10px] text-slate-400 mt-1">
                       Business registration sirf aapke login mobile number se ho sakti hai.
                     </p>
@@ -4593,6 +4588,9 @@ if (shouldShowRegistrationWizard || (isLoggedIn && !isAdminAuth && businessesLis
                       className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-14 pr-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 font-bold shadow-2xs transition-all font-mono"
                     />
                   </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    WhatsApp number alag ho sakta hai (editable).
+                  </p>
                 </div>
               </div>
 
@@ -11461,7 +11459,7 @@ return (
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider">Mobile Number *</label>
-                      {currentRole !== 'Admin' && loggedInUser?.phone && (
+                      {Boolean(loggedInUser?.phone) && (
                         <span className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
                           🔒 Login Number
                         </span>
@@ -11474,17 +11472,18 @@ return (
                         required
                         maxLength={10}
                         value={newBizPhone}
-                        readOnly={currentRole !== 'Admin' && Boolean(loggedInUser?.phone)}
+                        readOnly={Boolean(loggedInUser?.phone)}
                         onChange={(e) => {
-                          if (currentRole === 'Admin' || !loggedInUser?.phone) {
+                          if (!loggedInUser?.phone) {
                             setNewBizPhone(e.target.value.replace(/\D/g, ''));
                           }
                         }}
                         placeholder="10-digit number"
-                        className={`w-full border rounded-xl pl-14 pr-3.5 py-2.5 text-xs font-mono font-bold ${currentRole !== 'Admin' && loggedInUser?.phone
+                        className={`w-full border rounded-xl pl-14 pr-3.5 py-2.5 text-xs font-mono font-bold ${
+                          loggedInUser?.phone
                             ? 'bg-slate-100 border-slate-300 text-slate-600 cursor-not-allowed select-none'
                             : 'bg-slate-50 border border-slate-250 focus:outline-none focus:border-teal-500/50 text-slate-800'
-                          }`}
+                        }`}
                       />
                     </div>
                   </div>

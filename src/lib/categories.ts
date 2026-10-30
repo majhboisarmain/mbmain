@@ -122,6 +122,21 @@ export const CATEGORY_SLUG_MAP: Record<string, string> = {
   'chappal': 'Footwear',
   'sandals': 'Footwear',
 
+  // Furniture (Single canonical category - all furniture stores unified)
+  'furniture': 'Furniture',
+  'furnitures': 'Furniture',
+  'furniture-stores': 'Furniture',
+  'furniture-store': 'Furniture',
+  'furniture-shops': 'Furniture',
+  'furniture-shop': 'Furniture',
+  'furniture-dealers': 'Furniture',
+  'furniture-dealer': 'Furniture',
+  'furniture-living': 'Furniture',
+  'furniture-and-living': 'Furniture',
+  'office-furniture': 'Furniture',
+  'office-furniture-stores': 'Furniture',
+  'wholesale-furniture': 'Furniture',
+
   // Water Purifier & RO Service (Single canonical category)
   'water-purifier': 'Water Purifier',
   'water-purifiers': 'Water Purifier',
@@ -425,6 +440,9 @@ export function formatCategoryTitle(raw: string): string {
   if (slug.includes('footwear') || slug.includes('shoe') || slug.includes('chappal')) {
     return 'Footwear';
   }
+  if (slug.includes('furniture')) {
+    return 'Furniture';
+  }
   if (slug.includes('purifier') || slug.includes('ro-service') || slug.includes('ro-filter') || slug === 'ro') {
     return 'Water Purifier';
   }
@@ -560,6 +578,10 @@ export const CATEGORY_SEARCH_SYNONYMS: Record<string, string[]> = {
   // Footwear (combines Footwear, Footwear Stores, Shoes)
   'footwear': ['footwear', 'footwear store', 'footwear stores', 'footwear shop', 'footwear shops', 'shoes', 'shoe store', 'shoe stores', 'sandals', 'slippers', 'chitralaya footwear'],
   'footwear-stores': ['footwear', 'footwear store', 'footwear stores', 'shoes', 'chitralaya footwear'],
+
+  // Furniture (combines Furniture, Furniture Stores, Wooden Furniture)
+  'furniture': ['furniture', 'furniture store', 'furniture stores', 'furniture shop', 'sofa', 'wooden furniture', 'bed', 'wardrobe', 'dining table'],
+  'furniture-stores': ['furniture', 'furniture store', 'furniture stores', 'sofa', 'wooden furniture', 'bed', 'wardrobe', 'dining table'],
 
   // Schools
   'schools': ['school', 'schools', 'vidyalaya', 'english medium school', 'ctes', 'colleges', 'college'],
@@ -707,6 +729,14 @@ export function buildCategoryPrismaFilter(categorySlugOrTitle: string, selectedA
   } else if (lowerSlug.includes('water') || lowerSlug.includes('purifier') || lowerSlug.includes('ro')) {
     whereClause.NOT = [
       { category: { in: ['Loans', 'Loan Consultants', 'Finance', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop'] } }
+    ];
+  } else if (lowerSlug.includes('furniture')) {
+    whereClause.NOT = [
+      { category: { in: ['Footwear', 'Footwear Stores', 'Shoes', 'Shoe Stores', 'Loans', 'Loan Consultants', 'Finance', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop', 'Water Purifier', 'Schools'] } }
+    ];
+  } else if (lowerSlug.includes('footwear') || lowerSlug.includes('shoe')) {
+    whereClause.NOT = [
+      { category: { in: ['Furniture', 'Furniture Stores', 'Carpenters', 'Loans', 'Finance', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants'] } }
     ];
   }
 

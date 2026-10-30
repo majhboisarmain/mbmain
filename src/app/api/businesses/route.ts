@@ -116,6 +116,14 @@ export async function GET(request: NextRequest) {
         andClauses.push({
           category: { notIn: ['Loans', 'Loan Consultants', 'Finance', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop'] }
         });
+      } else if (lowerCat.includes('furniture')) {
+        andClauses.push({
+          category: { notIn: ['Footwear', 'Footwear Stores', 'Shoes', 'Shoe Stores', 'Loans', 'Loan Consultants', 'Finance', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop', 'Water Purifier', 'Schools'] }
+        });
+      } else if (lowerCat.includes('footwear') || lowerCat.includes('shoe')) {
+        andClauses.push({
+          category: { notIn: ['Furniture', 'Furniture Stores', 'Carpenters', 'Loans', 'Finance', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants'] }
+        });
       }
     }
 
