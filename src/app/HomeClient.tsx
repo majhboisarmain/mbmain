@@ -2586,14 +2586,13 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
             {/* Exactly 4 Columns on Mobile & Responsive Grid, Clean Unboxed Items */}
             <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-y-5 sm:gap-y-6 gap-x-2 sm:gap-x-4">
-              {displayedCategories.map((cat, idx) => {
-                const isSecondRowOnLaptop = idx >= 8 && !isCategoriesExpanded;
+              {displayedCategories.map((cat) => {
                 return (
                 <Link
                   key={cat.name}
                   href={`/category/${getCategorySlug(cat.name)}`}
                   prefetch={true}
-                  className={`group flex-col items-center justify-start text-center cursor-pointer active:scale-95 transition-transform ${isSecondRowOnLaptop ? "hidden lg:flex" : "flex"}`}
+                  className="group flex flex-col items-center justify-start text-center cursor-pointer active:scale-95 transition-transform"
                 >
                   {/* Clean 3D Isometric Icon (MMT Style) */}
                   <div className="relative w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
@@ -3305,30 +3304,12 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-5 sm:mt-6 mb-2 sm:mb-3">
         <div className="flex items-center justify-between mb-3.5 sm:mb-4">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#064e3b] tracking-tight">
-                Iconic places you need to see
-              </h2>
-              <Link
-                href="/places"
-                className="hidden sm:inline-flex items-center gap-1 text-xs font-bold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2.5 py-1 rounded-full transition-colors"
-              >
-                <span>Explore All ({BOISAR_ICONIC_PLACES.length})</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-            <div className="flex items-center justify-between gap-2 mt-0.5">
-              <p className="text-[11px] sm:text-xs text-slate-500 font-semibold">
-                Must-visit beaches, sea forts &amp; scenic spots in &amp; around Boisar
-              </p>
-              <Link
-                href="/places"
-                className="sm:hidden text-[11px] font-bold text-teal-700 hover:underline flex items-center gap-0.5 shrink-0"
-              >
-                <span>View All</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#064e3b] tracking-tight">
+              Iconic places you need to see
+            </h2>
+            <p className="text-[11px] sm:text-xs text-slate-500 font-semibold mt-0.5">
+              Must-visit beaches, sea forts &amp; scenic spots in &amp; around Boisar
+            </p>
           </div>
 
           {/* Carousel Arrow Controls */}
@@ -5636,7 +5617,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                               <div className="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-slate-100">
                                 <a
                                   href={`tel:${profile.phone || '7769947217'}`}
-                                  className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10px] sm:text-[11px] py-2 px-1 rounded-xl transition-all shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+                                  className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-[10px] sm:text-[11px] py-2 px-1 rounded-xl transition-all shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
                                 >
                                   <Phone className="w-3 h-3" />
                                   <span>Call</span>
@@ -5782,7 +5763,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
                       <a
                         href={`tel:${selectedProfile.phone || '7769947217'}`}
-                        className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-3 px-3 rounded-xl transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs py-3 px-3 rounded-xl transition-all shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <Phone className="w-3.5 h-3.5" />
                         <span>Call Directly</span>

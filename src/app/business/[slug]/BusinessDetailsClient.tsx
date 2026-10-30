@@ -1232,9 +1232,9 @@ _Please confirm order acceptance & delivery time._`;
               <a
                 href={business.phone ? `tel:${business.phone.replace(/\D/g, '')}` : '#'}
                 onClick={() => trackClick('phoneClicks')}
-                className="py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer shadow-xs"
+                className="py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all text-center cursor-pointer shadow-xs"
               >
-                <Phone className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                <Phone className="w-3.5 h-3.5 text-white shrink-0" />
                 <span>Call</span>
               </a>
 
@@ -1371,9 +1371,9 @@ _Please confirm order acceptance & delivery time._`;
                         <a
                           href={business.phone ? `tel:${business.phone.replace(/\D/g, '')}` : '#'}
                           onClick={() => trackClick('phoneClicks')}
-                          className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer"
+                          className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-xs cursor-pointer transition-all"
                         >
-                          <Phone className="w-3.5 h-3.5 text-teal-400" />
+                          <Phone className="w-3.5 h-3.5 text-white" />
                           <span>Call Store</span>
                         </a>
                         <a
@@ -1624,12 +1624,6 @@ Hi ${business.name}, I want to inquire about "${prod.name}" listed on Majh Boisa
                                   {srv.description}
                                 </p>
                               )}
-
-                              {srv.duration && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-100">
-                                  ⏱️ {srv.duration}
-                                </span>
-                              )}
                             </div>
 
                             <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between gap-2">
@@ -1653,7 +1647,7 @@ Hi ${business.name}, I want to inquire about "${prod.name}" listed on Majh Boisa
 ━━━━━━━━━━━━━━━━━━━━
 🏬 *Provider:* ${business.name}
 🔧 *Service:* ${srv.name}
-${priceNum > 0 ? `💰 *Starting Price:* ₹${priceNum.toLocaleString('en-IN')}\n` : '💰 *Price:* On Request / Quotation\n'}${srv.duration ? `⏱️ *Duration:* ${srv.duration}\n` : ''}${srv.description ? `📝 *Details:* ${srv.description}\n` : ''}━━━━━━━━━━━━━━━━━━━━
+${priceNum > 0 ? `💰 *Starting Price:* ₹${priceNum.toLocaleString('en-IN')}\n` : '💰 *Price:* On Request / Quotation\n'}${srv.description ? `📝 *Details:* ${srv.description}\n` : ''}━━━━━━━━━━━━━━━━━━━━
 Hi ${business.name}, I want to book/enquire about this service listed on Majh Boisar. Please share your availability & quotation.`)}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -2431,33 +2425,19 @@ Hi ${business.name}, I want to book/enquire about this service listed on Majh Bo
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10.5px] font-black text-slate-600 uppercase tracking-wider block mb-1">
-                    Price (₹) (Optional)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    placeholder="e.g. 500"
-                    value={newServicePrice}
-                    onChange={(e) => setNewServicePrice(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-teal-500"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10.5px] font-black text-slate-600 uppercase tracking-wider block mb-1">
-                    Duration (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 45 Mins, 1 Hour"
-                    value={newServiceDuration}
-                    onChange={(e) => setNewServiceDuration(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-teal-500"
-                  />
-                </div>
+              <div>
+                <label className="text-[10.5px] font-black text-slate-600 uppercase tracking-wider block mb-1">
+                  Price (₹) (Optional)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  placeholder="e.g. 500 (Leave blank for Price on Request)"
+                  value={newServicePrice}
+                  onChange={(e) => setNewServicePrice(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold focus:outline-none focus:border-teal-500"
+                />
               </div>
 
               <div>

@@ -476,6 +476,42 @@ export async function POST(request: NextRequest) {
     const cleanWhatsapp = (whatsapp || phone || '9307294733').toString().trim();
     const cleanAddress = (address || location || 'Boisar, Maharashtra').toString().trim();
     const cleanOwnerPhone = (body.ownerPhone || body.phone || body.whatsapp || body.createdBy || '').toString().replace(/\D/g, '').slice(-10);
+
+    // Enforce strict 1-Business per Mobile Number rule (except Admin created)
+    if (body.createdBy !== 'Admin') {
+      const phoneDigits = cleanPhone.replace(/\D/g, '').slice(-10);
+      const whatsappDigits = cleanWhatsapp.replace(/\D/g, '').slice(-10);
+      const ownerDigits = cleanOwnerPhone.replace(/\D/g, '').slice(-10);
+
+      // Verify business phone strictly matches the logged-in user's phone
+      if (ownerDigits && ownerDigits.length === 10 && phoneDigits !== ownerDigits) {
+        return badRequestResponse(
+          `Business registration phone number (${phoneDigits}) aapke login number (${ownerDigits}) se match nahi karta. Sirf apne login number se hi business register ho sakta hai.`
+        );
+      }
+
+      const checkPhones = Array.from(new Set([phoneDigits, whatsappDigits, ownerDigits].filter(p => p && p.length === 10)));
+
+      if (checkPhones.length > 0) {
+        const existingBiz = await prisma.business.findFirst({
+          where: {
+            OR: checkPhones.flatMap(p => [
+              { phone: { contains: p } },
+              { whatsapp: { contains: p } },
+              { createdBy: p }
+            ])
+          },
+          select: { id: true, name: true, phone: true }
+        });
+
+        if (existingBiz) {
+          return badRequestResponse(
+            `Is mobile number (${checkPhones[0]}) se already ek business ("${existingBiz.name}") registered hai. Ek mobile number se sirf ek hi business list ho sakta hai.`
+          );
+        }
+      }
+    }
+
     const parsedLat = (body.latitude != null && !isNaN(parseFloat(body.latitude))) ? parseFloat(body.latitude) : null;
     const parsedLng = (body.longitude != null && !isNaN(parseFloat(body.longitude))) ? parseFloat(body.longitude) : null;
     const subPlan = body.subscription || (body.createdBy === 'Admin' ? 'Admin Created' : 'Free');
