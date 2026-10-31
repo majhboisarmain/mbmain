@@ -281,13 +281,23 @@ export default function AdminPanelPage() {
   const [adminPasscode, setAdminPasscode] = useState('');
   const [adminPasscodeError, setAdminPasscodeError] = useState('');
 
-  // Require admin passcode every time the admin panel is visited
+  // Require admin passcode every time the admin panel is visited, and immediately lock when leaving
   useEffect(() => {
     if (typeof window !== 'undefined') {
       sessionStorage.removeItem('majh_boisar_adminmb_auth');
     }
     setIsAdminPageUnlocked(false);
     setCheckingAuth(false);
+
+    return () => {
+      // When leaving adminmb, immediately wipe auth cookie and lock
+      try {
+        fetch('/api/auth/admin-logout', { method: 'POST', keepalive: true }).catch(() => {});
+      } catch {}
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('majh_boisar_adminmb_auth');
+      }
+    };
   }, []);
 
   // Security Modal States (Change Admin Passcode & Authorized Mobile)
@@ -3616,6 +3626,7 @@ export default function AdminPanelPage() {
               <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Console Password</label>
               <input
                 type="password"
+                autoComplete="new-password"
                 required
                 disabled={isVerifyingPasscode}
                 value={adminPasscode}

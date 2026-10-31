@@ -147,6 +147,10 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         showToast(errMsg, 'error');
         return;
       }
+
+      if (verifyData.sessionId && typeof window !== 'undefined') {
+        localStorage.setItem('majh_boisar_session_id', verifyData.sessionId);
+      }
     } catch (err) {
       setIsLoading(false);
       setOtpError('Connection error while verifying OTP. Please try again.');
@@ -285,6 +289,9 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         sessionStorage.setItem('majh_boisar_adminmb_auth', 'unlocked');
         localStorage.setItem('majh_boisar_role', 'Admin');
         localStorage.setItem('majh_boisar_phone', effectivePhone);
+        if (data.sessionId) {
+          localStorage.setItem('majh_boisar_session_id', data.sessionId);
+        }
       }
       const adminName = 'Admin (9307294733)';
       login(adminName, effectivePhone, 'majhboisar@gmail.com');

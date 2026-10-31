@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
+import { prisma } from '@/lib/db';
+import { parseDeviceFromUA } from '../sessions/route';
 import {
   signJwtToken,
   isAccountLocked,
@@ -87,10 +90,41 @@ export async function POST(request: NextRequest) {
       720 // 12 hours
     );
 
+    // Generate active session record
+    const sessionId = crypto.randomUUID();
+    const ua = request.headers.get('user-agent') || '';
+    const parsedUA = parseDeviceFromUA(ua);
+    const now = Date.now();
+
+    const newSession = {
+      id: sessionId,
+      phone: adminPhone,
+      deviceType: parsedUA.deviceType,
+      deviceBrand: parsedUA.deviceBrand,
+      browser: parsedUA.browser,
+      ip,
+      createdAt: now,
+      lastActive: now,
+    };
+
+    const settingKey = `sessions_${adminPhone}`;
+    const setting = await prisma.systemSetting.findUnique({ where: { key: settingKey } });
+    let sessions: any[] = [];
+    if (setting?.value) {
+      try { sessions = JSON.parse(setting.value); } catch {}
+    }
+    const updatedSessions = [newSession, ...sessions.filter((s: any) => s.id !== sessionId)].slice(0, 5);
+    await prisma.systemSetting.upsert({
+      where: { key: settingKey },
+      update: { value: JSON.stringify(updatedSessions) },
+      create: { key: settingKey, value: JSON.stringify(updatedSessions) }
+    }).catch(() => {});
+
     // 6. Set secure HttpOnly cookie
     const response = NextResponse.json({
       success: true,
       message: 'Admin authenticated successfully',
+      sessionId,
       user: {
         name: adminDisplayName,
         phone: adminPhone,

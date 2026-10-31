@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic';
 import { createPortal } from 'react-dom';
 import LoginModal from './LoginModal';
 const MyHotelPassesModal = dynamic(() => import('./MyHotelPassesModal'), { ssr: false });
+const ActiveDevicesModal = dynamic(() => import('./ActiveDevicesModal'), { ssr: false });
 import {
   Search, MapPin, User, Shield, ChevronDown, Check,
   Menu, X, LogOut, Building, Layers, HelpCircle, MessageSquare, ChevronRight, Smartphone, Download, Ticket, Plus,
@@ -27,6 +28,7 @@ export default function Navbar() {
   const router = useRouter();
 
   const [isHotelPassesModalOpen, setIsHotelPassesModalOpen] = useState(false);
+  const [isDevicesModalOpen, setIsDevicesModalOpen] = useState(false);
   const [userHotelPassCount, setUserHotelPassCount] = useState(0);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
 
@@ -860,6 +862,24 @@ export default function Navbar() {
                             </div>
                           </Link>
 
+                          {/* Logged-in Devices */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsDevicesModalOpen(true);
+                              setProfileDropdownOpen(false);
+                            }}
+                            className="w-full text-left flex items-center justify-between rounded-xl px-3 py-2 text-xs text-slate-800 hover:bg-slate-50 transition-colors font-bold cursor-pointer"
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <Smartphone className="w-4 h-4 text-emerald-600 stroke-[1.8]" />
+                              <span>Logged-in Devices</span>
+                            </div>
+                            <span className="text-[9px] bg-emerald-50 text-emerald-700 font-extrabold px-1.5 py-0.5 rounded border border-emerald-200">
+                              Active
+                            </span>
+                          </button>
+
                           {/* Settings */}
                           <button
                             type="button"
@@ -1046,6 +1066,32 @@ export default function Navbar() {
                   <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </button>
+
+              {/* 2.5 Logged-in Devices (Security) */}
+              {isLoggedIn && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setIsDevicesModalOpen(true);
+                  }}
+                  className="w-full bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all flex items-center justify-between cursor-pointer group text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <Smartphone className="w-5 h-5 text-emerald-600 stroke-[2]" />
+                    <div>
+                      <span className="text-sm sm:text-base font-extrabold text-slate-900 block leading-tight">Logged-in Devices</span>
+                      <span className="text-[11px] text-slate-500 font-medium">Kaha-Kaha account active hai</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
+                      Active
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
+              )}
 
               {/* 3. For Business & Shop Owners */}
               <div>
@@ -1507,6 +1553,12 @@ export default function Navbar() {
       <MyHotelPassesModal
         isOpen={isHotelPassesModalOpen}
         onClose={() => setIsHotelPassesModalOpen(false)}
+      />
+
+      {/* Logged-in Devices Security Modal */}
+      <ActiveDevicesModal
+        isOpen={isDevicesModalOpen}
+        onClose={() => setIsDevicesModalOpen(false)}
       />
     </>
   );

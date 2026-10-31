@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import crypto from 'crypto';
+import { parseDeviceFromUA } from '../sessions/route';
 
 export const dynamic = 'force-dynamic';
 
@@ -89,10 +91,43 @@ export async function POST(request: NextRequest) {
       where: { key: `otp_${cleanPhone}` }
     }).catch(() => {});
 
+    // Create a new unique session for this device
+    const sessionId = crypto.randomUUID();
+    const ua = request.headers.get('user-agent') || '';
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || '';
+    const parsedUA = parseDeviceFromUA(ua);
+    const now = Date.now();
+
+    const newSession = {
+      id: sessionId,
+      phone: cleanPhone,
+      deviceType: parsedUA.deviceType,
+      deviceBrand: parsedUA.deviceBrand,
+      browser: parsedUA.browser,
+      ip,
+      createdAt: now,
+      lastActive: now,
+    };
+
+    const settingKey = `sessions_${cleanPhone}`;
+    const sessionSetting = await prisma.systemSetting.findUnique({ where: { key: settingKey } });
+    let sessions: any[] = [];
+    if (sessionSetting?.value) {
+      try { sessions = JSON.parse(sessionSetting.value); } catch {}
+    }
+    const updatedSessions = [newSession, ...sessions.filter((s: any) => s.id !== sessionId)].slice(0, 5);
+    await prisma.systemSetting.upsert({
+      where: { key: settingKey },
+      update: { value: JSON.stringify(updatedSessions) },
+      create: { key: settingKey, value: JSON.stringify(updatedSessions) }
+    }).catch(() => {});
+
     return NextResponse.json({
       success: true,
       message: 'OTP verified successfully',
-      phone: cleanPhone
+      phone: cleanPhone,
+      sessionId,
+      session: newSession
     });
   } catch (error: any) {
     console.error('Error verifying OTP:', error);
