@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
+import { prisma } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,8 +16,51 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const cleanPhone = phone.toString().replace(/\D/g, '');
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const cleanPhone = phone.toString().replace(/\D/g, '').slice(-10);
+
+    // Rate Limiting: Prevent SMS spamming (minimum 30 seconds cooldown between OTP requests for the same number)
+    try {
+      const existingSetting = await prisma.systemSetting.findUnique({
+        where: { key: `otp_${cleanPhone}` }
+      });
+      if (existingSetting) {
+        const record = JSON.parse(existingSetting.value);
+        if (record?.createdAt && Date.now() - record.createdAt < 30 * 1000) {
+          const waitSecs = Math.ceil((30 * 1000 - (Date.now() - record.createdAt)) / 1000);
+          return NextResponse.json(
+            { success: false, error: `Kripya naya OTP mangwane ke liye ${waitSecs} seconds wait karein.` },
+            { status: 429 }
+          );
+        }
+      }
+    } catch (e) {
+      console.warn('Rate limit check warning:', e);
+    }
+
+    // Cryptographically secure 6-digit OTP
+    const otpCode = crypto.randomInt(100000, 999999).toString();
+
+    // Store OTP securely on server with 5 minutes expiration and 0 attempts
+    await prisma.systemSetting.upsert({
+      where: { key: `otp_${cleanPhone}` },
+      update: {
+        value: JSON.stringify({
+          code: otpCode,
+          expiresAt: Date.now() + 5 * 60 * 1000,
+          attempts: 0,
+          createdAt: Date.now()
+        })
+      },
+      create: {
+        key: `otp_${cleanPhone}`,
+        value: JSON.stringify({
+          code: otpCode,
+          expiresAt: Date.now() + 5 * 60 * 1000,
+          attempts: 0,
+          createdAt: Date.now()
+        })
+      }
+    });
 
     // Spring Edge SMS Credentials & Approved Jio DLT Template
     const apiKey = process.env.SPRING_EDGE_API_KEY || '15391s51i071ueju468t1598a14p17c1pb2';
@@ -21,7 +68,7 @@ export async function POST(request: NextRequest) {
     const dltTemplateId = process.env.SPRING_EDGE_DLT_TEMPLATE_ID || '1277178644966258377';
     const dltEntityId = process.env.SPRING_EDGE_DLT_ENTITY_ID || '1201178573478115376';
     
-    // Support custom message format (Exact Jio Approved: "Your MajhBoisar OTP: {#number#}. Do not share.")
+    // Exact Jio Approved Message: "Your MajhBoisar OTP: {#number#}. Do not share."
     const customTemplate = process.env.SPRING_EDGE_MESSAGE_TEMPLATE;
     const message = customTemplate 
       ? customTemplate
@@ -31,9 +78,7 @@ export async function POST(request: NextRequest) {
           .replace('{%var%}', otpCode)
       : `Your MajhBoisar OTP: ${otpCode}. Do not share.`;
 
-
     let smsDispatched = false;
-    let smsResponse: any = null;
 
     if (apiKey) {
       try {
@@ -42,7 +87,7 @@ export async function POST(request: NextRequest) {
           sender: senderId,
           to: cleanPhone,
           message: message,
-          flash: '1',
+          flash: '0',
           format: 'json'
         };
 
@@ -69,35 +114,24 @@ export async function POST(request: NextRequest) {
         });
 
         const textRes = await response.text();
-        try {
-          smsResponse = JSON.parse(textRes);
-        } catch {
-          smsResponse = { raw: textRes };
-        }
-
+        console.log(`[Spring Edge SMS] Dispatched to ${cleanPhone}:`, textRes);
         smsDispatched = true;
-        console.log(`[Spring Edge SMS] Dispatched to ${cleanPhone} via Header ${senderId}:`, smsResponse);
       } catch (smsError: any) {
         console.error('[Spring Edge SMS Dispatch Error]:', smsError);
       }
     }
 
+    // STRICT SECURITY: NEVER SEND THE OTP IN THE RESPONSE!
     return NextResponse.json({
       success: true,
-      message: `OTP sent successfully to +91${cleanPhone}`,
-      otp: otpCode,
-      smsDispatched,
-      smsResponse
+      message: `OTP sent successfully via SMS to +91 ${cleanPhone}`,
+      smsDispatched
     });
   } catch (error: any) {
     console.error('Error sending OTP:', error);
-    // Fallback safe 6-digit OTP so flow never blocks
-    const fallbackOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    return NextResponse.json({
-      success: true,
-      message: 'OTP generated',
-      otp: fallbackOtp
-    });
+    return NextResponse.json(
+      { success: false, error: 'Server error sending OTP. Please try again.' },
+      { status: 500 }
+    );
   }
 }
-

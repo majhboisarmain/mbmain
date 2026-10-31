@@ -22,7 +22,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   // Registration and OTP states
   const [mobileNumber, setMobileNumber] = useState('');
   const [otpCode, setOtpCode] = useState('');
-  const [simulatedOtp, setSimulatedOtp] = useState('');
   const [otpError, setOtpError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -73,63 +72,86 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     setOtpError('');
     setIsLoading(true);
     
-    // Default fallback 6-digit OTP
-    let code = Math.floor(100000 + Math.random() * 900000).toString();
     try {
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: mobileNumber })
       });
-      const data = await res.json();
-      if (data?.otp) {
-        code = data.otp.toString();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        const errMsg = data?.error || 'Failed to send OTP via SMS. Please try again.';
+        setOtpError(errMsg);
+        showToast(errMsg, 'error');
+        return;
       }
+      setResendTimer(60);
+      setStep('otp');
+      showToast(`📱 OTP sent via SMS to +91 ${mobileNumber}`, 'success', 5000);
     } catch (err) {
-      console.warn('Live SMS API call failed, using local OTP dispatch fallback:', err);
+      const errMsg = 'Network error sending OTP. Please check your connection.';
+      setOtpError(errMsg);
+      showToast(errMsg, 'error');
     } finally {
       setIsLoading(false);
     }
-
-    setSimulatedOtp(code);
-    setResendTimer(60);
-    setStep('otp');
-    showToast(`📱 OTP sent via SMS to +91 ${mobileNumber}`, 'success', 5000);
   };
 
   const handleResendOtp = async () => {
     if (resendTimer > 0 || isLoading) return;
     setOtpError('');
     setIsLoading(true);
-    let code = Math.floor(100000 + Math.random() * 900000).toString();
     try {
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: mobileNumber })
       });
-      const data = await res.json();
-      if (data?.otp) {
-        code = data.otp.toString();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        const errMsg = data?.error || 'Failed to resend OTP. Please wait before trying again.';
+        setOtpError(errMsg);
+        showToast(errMsg, 'error');
+        return;
       }
+      setResendTimer(60);
+      showToast(`📱 New OTP sent via SMS to +91 ${mobileNumber}`, 'success', 5000);
     } catch (err) {
-      console.warn('Live SMS API call failed:', err);
+      setOtpError('Failed to resend OTP. Please try again.');
     } finally {
       setIsLoading(false);
     }
-    setSimulatedOtp(code);
-    setResendTimer(60);
-    showToast(`📱 New OTP sent via SMS to +91 ${mobileNumber}`, 'success', 5000);
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (otpCode !== simulatedOtp) {
-      setOtpError('Invalid OTP. Please enter the 6-digit code received on your mobile via SMS.');
+    if (!otpCode || otpCode.trim().length !== 6) {
+      setOtpError('Please enter the 6-digit OTP code received on your mobile via SMS.');
       return;
     }
     setOtpError('');
     setIsLoading(true);
+
+    try {
+      const verifyRes = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: mobileNumber, otp: otpCode.trim() })
+      });
+      const verifyData = await verifyRes.json().catch(() => ({}));
+
+      if (!verifyRes.ok || !verifyData.success) {
+        setIsLoading(false);
+        const errMsg = verifyData?.error || 'Invalid OTP. Please enter the correct 6-digit code received via SMS.';
+        setOtpError(errMsg);
+        showToast(errMsg, 'error');
+        return;
+      }
+    } catch (err) {
+      setIsLoading(false);
+      setOtpError('Connection error while verifying OTP. Please try again.');
+      return;
+    }
 
     const cleanInputPhone = mobileNumber.replace(/\D/g, '');
     const clean10 = cleanInputPhone.slice(-10);
@@ -317,7 +339,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const resetForm = () => {
     setMobileNumber('');
     setOtpCode('');
-    setSimulatedOtp('');
     setOtpError('');
     setIsLoading(false);
     setFullName('');
