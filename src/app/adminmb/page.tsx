@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { BOISAR_HOTELS } from '@/lib/hotelsData';
 import { resortsData, ResortVilla } from '@/lib/resortsData';
@@ -274,6 +275,7 @@ interface AdOrder {
 }
 
 export default function AdminPanelPage() {
+  const router = useRouter();
   const { currentRole, setRole, login, isLoggedIn, loggedInUser, setLoginModalOpen, showToast } = useApp();
   const [isAdminPageUnlocked, setIsAdminPageUnlocked] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(false);
@@ -290,10 +292,13 @@ export default function AdminPanelPage() {
     setCheckingAuth(false);
 
     return () => {
-      // When leaving adminmb, immediately wipe auth cookie and lock
-      try {
-        fetch('/api/auth/admin-logout', { method: 'POST', keepalive: true }).catch(() => {});
-      } catch {}
+      // When leaving adminmb, immediately wipe auth cookie and lock UNLESS delegating to dashboard
+      const isDelegated = typeof window !== 'undefined' && sessionStorage.getItem('majh_admin_dashboard_delegated') === 'granted';
+      if (!isDelegated) {
+        try {
+          fetch('/api/auth/admin-logout', { method: 'POST', keepalive: true }).catch(() => {});
+        } catch {}
+      }
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem('majh_boisar_adminmb_auth');
       }
@@ -3709,14 +3714,20 @@ export default function AdminPanelPage() {
               <span>Add Business</span>
             </button>
 
-            {/* View Dashboard */}
-            <Link
-              href="/dashboard"
+            {/* View Dashboard (Admin Delegated Mode) */}
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  sessionStorage.setItem('majh_admin_dashboard_delegated', 'granted');
+                }
+                router.push('/dashboard');
+              }}
               className="h-9 px-3.5 inline-flex items-center justify-center gap-1.5 rounded-lg bg-teal-800 hover:bg-teal-900 text-white font-bold text-xs shadow-xs transition-all cursor-pointer whitespace-nowrap shrink-0 select-none active:scale-95"
+              title="Open Business Dashboard with Super Admin access"
             >
               <BarChart2 className="w-3.5 h-3.5 shrink-0" />
-              <span>Dashboard</span>
-            </Link>
+              <span>Business Dashboard</span>
+            </button>
 
             {/* Refresh Data */}
             <button

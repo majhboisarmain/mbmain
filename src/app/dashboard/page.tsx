@@ -104,40 +104,44 @@ function DashboardContent() {
   const bizIdParam = searchParams?.get('bizId') || searchParams?.get('id') || searchParams?.get('businessId');
   const registerParam = searchParams?.get('register') === 'true' || searchParams?.get('action') === 'register' || modeParam === 'register';
 
-  // Admin auth verified via server-side JWT cookie, AppContext admin role, or verified admin phone
-  const [isAdminAuth, setIsAdminAuth] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const auth = sessionStorage.getItem('majh_boisar_adminmb_auth');
-      const role = localStorage.getItem('majh_boisar_role');
-      if (auth === 'unlocked' || role === 'Admin') return true;
-    }
-    return false;
-  });
+  // User strict rule: Admin Dashboard ONLY unlocks when explicitly opened from Admin Control Panel (/adminmb)!
+  // Direct navigation to /dashboard will NEVER grant Admin powers.
+  const [isAdminAuth, setIsAdminAuth] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    async function verifyAdminSession() {
-      // 1. If currently logged in as verified platform admin phone or admin role, unlock immediately
-      if (isPlatformAdminPhone(loggedInUser?.phone) || (loggedInUser as any)?.role === 'Admin' || currentRole === 'Admin') {
-        setIsAdminAuth(true);
-        if (currentRole !== 'Admin') setRole('Admin');
+    async function verifyAdminDelegation() {
+      // 1. Check if explicitly opened from Admin Control Panel
+      const isDelegated = typeof window !== 'undefined' && sessionStorage.getItem('majh_admin_dashboard_delegated') === 'granted';
+      if (!isDelegated) {
+        if (mounted) setIsAdminAuth(false);
         return;
       }
-      // 2. Check server-side admin JWT session
+
+      // 2. Verify server-side admin JWT session
       try {
         const res = await fetch('/api/auth/admin-verify');
         const data = await res.json().catch(() => ({}));
         if (mounted && data?.authenticated) {
           setIsAdminAuth(true);
-          setRole('Admin');
+        } else {
+          if (mounted) setIsAdminAuth(false);
         }
       } catch {
-        // Not admin
+        if (mounted) setIsAdminAuth(false);
       }
     }
-    verifyAdminSession();
-    return () => { mounted = false; };
-  }, [setRole, loggedInUser?.phone, currentRole, isPlatformAdminPhone]);
+
+    verifyAdminDelegation();
+
+    return () => {
+      mounted = false;
+      // Revoke delegation when leaving dashboard so direct access requires visiting /adminmb again
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('majh_admin_dashboard_delegated');
+      }
+    };
+  }, []);
 
   // If guest arrives to register business, open the login modal automatically so they log in first
   useEffect(() => {
@@ -5508,6 +5512,27 @@ return (
         </div>
       ) : (
         <>
+          {/* Admin Mode Notice & Return Button */}
+          {isAdminAuth && (
+            <div className="mb-3 p-3 rounded-2xl bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-md border border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-400">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-black tracking-wide text-white">Super Admin Mode Active</p>
+                  <p className="text-[10.5px] text-slate-400">Opened from Admin Control Panel (/adminmb)</p>
+                </div>
+              </div>
+              <Link
+                href="/adminmb"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs transition-colors shrink-0"
+              >
+                <span>← Back to Admin Panel</span>
+              </Link>
+            </div>
+          )}
+
           {/* Unified 3-Way Portal Header Bar (Always accessible to Admin & multi-entity owners) */}
           <div className="bg-white border border-slate-200 rounded-2xl p-2.5 sm:p-3 shadow-2xs mb-3 space-y-2 text-left">
             {/* Row 1: Dashboard Switcher + Add Business */}
