@@ -74,9 +74,8 @@ export async function POST(request: NextRequest) {
     resetFailedAttempts(lockIdentifier);
 
     // 5. Generate secure JWT token (valid for 12 hours)
-    const rawPhone = body.phone || '';
-    const adminPhone = typeof rawPhone === 'string' && rawPhone.replace(/\D/g, '').endsWith('9307294733') ? '9307294733' : '7769947217';
-    const adminDisplayName = adminPhone === '9307294733' ? 'Admin (9307294733)' : 'Super Admin (7769947217)';
+    const adminPhone = '9307294733';
+    const adminDisplayName = 'Admin (9307294733)';
 
     const token = signJwtToken(
       {

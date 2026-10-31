@@ -6,7 +6,7 @@ import ToastContainer, { ToastItem, ToastType } from '@/components/ToastContaine
 
 export type Role = 'Guest' | 'User' | 'BusinessOwner' | 'Admin';
 
-export const ADMIN_PHONE_NUMBERS = ['9307294733', '7769947217'];
+export const ADMIN_PHONE_NUMBERS = ['9307294733'];
 
 export function isPlatformAdminPhone(phone?: string | null): boolean {
   if (!phone) return false;

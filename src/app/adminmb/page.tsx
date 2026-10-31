@@ -281,35 +281,14 @@ export default function AdminPanelPage() {
   const [adminPasscode, setAdminPasscode] = useState('');
   const [adminPasscodeError, setAdminPasscodeError] = useState('');
 
-  // Verify existing admin session or unlocked state on mount
+  // Require admin passcode every time the admin panel is visited
   useEffect(() => {
-    let mounted = true;
-    async function checkExistingAuth() {
-      const sessionUnlocked = typeof window !== 'undefined' && sessionStorage.getItem('majh_boisar_adminmb_auth') === 'unlocked';
-      if (currentRole === 'Admin' || sessionUnlocked) {
-        setIsAdminPageUnlocked(true);
-      }
-      try {
-        setCheckingAuth(true);
-        const res = await fetch('/api/auth/admin-verify');
-        const data = await res.json().catch(() => ({}));
-        if (mounted && data?.authenticated) {
-          setIsAdminPageUnlocked(true);
-          setRole('Admin');
-          if (typeof window !== 'undefined') {
-            sessionStorage.setItem('majh_boisar_adminmb_auth', 'unlocked');
-            localStorage.setItem('majh_boisar_role', 'Admin');
-          }
-        }
-      } catch {
-        // Fallback to lock screen if unverified
-      } finally {
-        if (mounted) setCheckingAuth(false);
-      }
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('majh_boisar_adminmb_auth');
     }
-    checkExistingAuth();
-    return () => { mounted = false; };
-  }, [currentRole, setRole]);
+    setIsAdminPageUnlocked(false);
+    setCheckingAuth(false);
+  }, []);
 
   // Security Modal States (Change Admin Passcode & Authorized Mobile)
   const [adminSecurityModalOpen, setAdminSecurityModalOpen] = useState(false);
@@ -2049,10 +2028,10 @@ export default function AdminPanelPage() {
   };
 
   useEffect(() => {
-    if (currentRole === 'Admin' || isAdminPageUnlocked) {
+    if (isAdminPageUnlocked) {
       fetchAdminData();
     }
-  }, [currentRole, isAdminPageUnlocked]);
+  }, [isAdminPageUnlocked]);
 
   const handleOpenAssignHotel = (hotel: any) => {
     setAssigningHotel(hotel);
@@ -2869,7 +2848,7 @@ export default function AdminPanelPage() {
       const finalCat = newBizCategory === 'Other'
         ? (newBizCustomCat.trim() || 'General Store')
         : (newBizCategory || 'Doctors');
-      const finalPhone = newBizPhone.replace(/\D/g, '') || "7769947217";
+      const finalPhone = newBizPhone.replace(/\D/g, '') || "9307294733";
       const finalWhatsapp = newBizWhatsapp.replace(/\D/g, '') || finalPhone;
 
       // Construct address block from structured inputs
@@ -3023,7 +3002,7 @@ export default function AdminPanelPage() {
     try {
       const finalName = newSpecName.trim() ? toTitleCase(newSpecName) : 'New Specialist Profile';
       const finalCat = newSpecCategory.trim() || (newSpecCategoryKey === 'helpers' ? 'Home Services' : newSpecCategoryKey === 'caterers' ? 'Catering & Food' : newSpecCategoryKey === 'influencers' ? 'Content Creator' : 'Real Estate');
-      const cleanPhone = newSpecPhone.replace(/\D/g, '') || '7769947217';
+      const cleanPhone = newSpecPhone.replace(/\D/g, '') || '9307294733';
       const finalPrice = newSpecPrice.trim() ? (newSpecPrice.startsWith('₹') ? newSpecPrice : `₹${newSpecPrice}`) : '₹500';
       const finalServices = newSpecServices.trim()
         ? newSpecServices.split(',').map(s => s.trim()).filter(Boolean)
@@ -3601,12 +3580,11 @@ export default function AdminPanelPage() {
           return;
         }
 
-        // Auth is server-side JWT cookie + client session flag
+        // Authenticated in memory for this page session only; entering password is required each visit
         setRole('Admin');
         setIsAdminPageUnlocked(true);
         setAdminPasscodeError('');
         if (typeof window !== 'undefined') {
-          sessionStorage.setItem('majh_boisar_adminmb_auth', 'unlocked');
           localStorage.setItem('majh_boisar_role', 'Admin');
         }
         showToast('🛡️ Admin Authenticated! Welcome to Admin Panel', 'success');
@@ -11838,7 +11816,7 @@ export default function AdminPanelPage() {
                     required
                     value={adminTechForm.phone}
                     onChange={e => setAdminTechForm(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="e.g. 7769947217"
+                    placeholder="e.g. 98XXXXXXXX"
                     className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
                   />
                 </div>
