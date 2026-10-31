@@ -226,14 +226,11 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     // 3. If not found locally in browser, check backend database for cross-device sync
     if (!foundUser) {
       try {
-        const res = await fetch('/api/users');
+        const res = await fetch(`/api/users?phone=${encodeURIComponent(cleanInputPhone)}`);
         if (res.ok) {
           const data = await res.json();
-          if (data && Array.isArray(data.users)) {
-            const match = data.users.find((u: any) => u.phone && u.phone.replace(/\D/g, '').endsWith(cleanInputPhone.slice(-10)));
-            if (match && match.name) {
-              foundUser = { name: match.name, phone: match.phone, email: match.email };
-            }
+          if (data && data.user && data.user.name) {
+            foundUser = data.user;
           }
         }
       } catch (apiErr) {

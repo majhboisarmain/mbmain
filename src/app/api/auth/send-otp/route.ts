@@ -4,8 +4,39 @@ import { prisma } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
+// In-memory IP rate limiter to block automated SMS bombing and wallet drainage
+interface IpRateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+const ipRateLimitMap = new Map<string, IpRateLimitEntry>();
+const MAX_OTP_PER_IP = 5;
+const IP_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+
 export async function POST(request: NextRequest) {
   try {
+    // 1. IP-level rate limiting (defense against automated SMS bombing / rotating phone numbers)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
+    const now = Date.now();
+    const ipEntry = ipRateLimitMap.get(ip);
+
+    if (ipEntry) {
+      if (now < ipEntry.resetAt) {
+        if (ipEntry.count >= MAX_OTP_PER_IP) {
+          const waitMins = Math.ceil((ipEntry.resetAt - now) / 60000);
+          return NextResponse.json(
+            { success: false, error: `Too many OTP requests from your network. Please wait ${waitMins} minute(s).` },
+            { status: 429 }
+          );
+        }
+        ipEntry.count += 1;
+      } else {
+        ipRateLimitMap.set(ip, { count: 1, resetAt: now + IP_WINDOW_MS });
+      }
+    } else {
+      ipRateLimitMap.set(ip, { count: 1, resetAt: now + IP_WINDOW_MS });
+    }
+
     const body = await request.json().catch(() => ({}));
     const phone = body?.phone || body?.mobileNumber;
 

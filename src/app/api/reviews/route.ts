@@ -29,8 +29,32 @@ export async function GET(request: NextRequest) {
   }
 }
 
+export const dynamic = 'force-dynamic';
+
+// Anti-review bombing rate limiter (max 2 reviews per 2 minutes per IP)
+const reviewRateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
+    const now = Date.now();
+    const entry = reviewRateLimitMap.get(ip);
+    if (entry) {
+      if (now < entry.resetAt) {
+        if (entry.count >= 2) {
+          return NextResponse.json(
+            { error: 'Please wait a couple of minutes before submitting another review.' },
+            { status: 429 }
+          );
+        }
+        entry.count += 1;
+      } else {
+        reviewRateLimitMap.set(ip, { count: 1, resetAt: now + 2 * 60 * 1000 });
+      }
+    } else {
+      reviewRateLimitMap.set(ip, { count: 1, resetAt: now + 2 * 60 * 1000 });
+    }
+
     const body = await request.json();
     const { businessId, userName, rating, comment } = body;
 
@@ -43,13 +67,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Rating must be an integer between 1 and 5' }, { status: 400 });
     }
 
+    // Sanitize user inputs to prevent stored XSS
+    const sanitizedUser = String(userName).replace(/<[^>]*>?/gm, '').trim().slice(0, 50);
+    const sanitizedComment = String(comment).replace(/<[^>]*>?/gm, '').trim().slice(0, 500);
+
     // 1. Create the review
     const review = await prisma.review.create({
       data: {
         businessId: parseInt(businessId),
-        userName,
+        userName: sanitizedUser,
         rating: ratingVal,
-        comment
+        comment: sanitizedComment
       }
     });
 

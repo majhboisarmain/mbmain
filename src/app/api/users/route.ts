@@ -17,8 +17,59 @@ interface RegisteredUserRecord {
 
 import { DUMMY_REGISTERED_USERS_245 } from '@/lib/dummyUsers';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const targetPhone = searchParams.get('phone');
+
+    // Safe single user profile sync (returns ONLY name/email for the caller's specific phone)
+    if (targetPhone) {
+      const cleanTarget = targetPhone.replace(/\D/g, '').slice(-10);
+      if (!cleanTarget) {
+        return NextResponse.json({ user: null });
+      }
+
+      let matchedUser = null;
+      try {
+        const setting = await prisma.systemSetting.findUnique({ where: { key: 'registered_users' } });
+        if (setting?.value) {
+          const list = JSON.parse(setting.value);
+          if (Array.isArray(list)) {
+            matchedUser = list.find((u: any) => u.phone && u.phone.replace(/\D/g, '').endsWith(cleanTarget));
+          }
+        }
+      } catch {}
+
+      if (!matchedUser) {
+        const biz = await prisma.business.findFirst({
+          where: { OR: [{ phone: { contains: cleanTarget } }, { createdBy: { contains: cleanTarget } }] },
+          select: { name: true, phone: true }
+        });
+        if (biz) {
+          matchedUser = { name: `${biz.name} (Owner)`, phone: biz.phone, email: '' };
+        }
+      }
+
+      if (matchedUser) {
+        return NextResponse.json({
+          user: {
+            name: matchedUser.name,
+            phone: cleanTarget,
+            email: matchedUser.email || ''
+          }
+        });
+      }
+      return NextResponse.json({ user: null });
+    }
+
+    // FULL REGISTRY: Strictly requires Super Admin authentication to prevent user harvesting!
+    if (!isAdminRequest(request)) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Admin privileges required to view user directory.' },
+        { status: 401 }
+      );
+    }
+
     let storedUsers: RegisteredUserRecord[] = [];
     try {
       const setting = await prisma.systemSetting.findUnique({

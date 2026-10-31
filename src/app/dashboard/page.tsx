@@ -3569,7 +3569,8 @@ const handleUpdateProfileSubmit = async (e: React.FormEvent) => {
         workingHours: finalHours,
         image: editImage,
         gallery: editGalleryPhotos,
-        hasHomeDelivery: editHasHomeDelivery
+        hasHomeDelivery: editHasHomeDelivery,
+        callerPhone: loggedInUser?.phone
       })
     });
 

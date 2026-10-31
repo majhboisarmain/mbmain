@@ -181,7 +181,32 @@ export async function PUT(
       'Shop & Commercial Insurance'
     ];
 
-    const isAdmin = body.isAdmin === true;
+    const isAdmin = isAdminRequest(request);
+
+    // Ownership verification: Prevent IDOR (only business owner or admin can update listing)
+    const isClickOnly = (phoneClicks !== undefined || whatsappClicks !== undefined || directionClicks !== undefined || websiteClicks !== undefined) &&
+      name === undefined && phone === undefined && category === undefined && description === undefined && address === undefined;
+
+    if (!isClickOnly && !isAdmin) {
+      const existingBiz = await prisma.business.findUnique({
+        where: { id: businessId },
+        select: { id: true, phone: true, createdBy: true }
+      });
+
+      if (!existingBiz) {
+        return NextResponse.json({ error: 'Business not found' }, { status: 404 });
+      }
+
+      const existingPhoneDigits = (existingBiz.createdBy || existingBiz.phone || '').replace(/\D/g, '').slice(-10);
+      const callerPhone = (body.callerPhone || body.ownerPhone || request.headers.get('x-user-phone') || '').replace(/\D/g, '').slice(-10);
+
+      if (!callerPhone || !existingPhoneDigits || callerPhone !== existingPhoneDigits) {
+        return NextResponse.json(
+          { error: 'Forbidden: You do not have permission to modify this business listing.' },
+          { status: 403 }
+        );
+      }
+    }
 
     // Build update object based on what was passed
     const data: any = {};
@@ -235,17 +260,19 @@ export async function PUT(
 
       data.image = assembled.filter(Boolean).join('||gallery_sep||');
     }
-    if (subscription !== undefined) {
-      data.subscription = subscription;
-      // Auto toggle premium if subscription is upgraded (any tier other than 'Free')
-      const isPaidSub = Boolean(subscription && subscription !== 'Free');
-      data.premium = isPaidSub;
+    // Privilege Escalation Guard: Only Admin can grant premium, verified, or change subscription tier directly
+    if (isAdmin) {
+      if (subscription !== undefined) {
+        data.subscription = subscription;
+        const isPaidSub = Boolean(subscription && subscription !== 'Free');
+        data.premium = isPaidSub;
+      }
+      if (premium !== undefined) data.premium = premium;
+      if (data.subscription && data.subscription !== 'Free') {
+        data.premium = true;
+      }
+      if (verified !== undefined) data.verified = verified;
     }
-    if (premium !== undefined) data.premium = premium;
-    if (data.subscription && data.subscription !== 'Free') {
-      data.premium = true;
-    }
-    if (verified !== undefined) data.verified = verified;
     if (body.hasHomeDelivery !== undefined) data.hasHomeDelivery = body.hasHomeDelivery === true || body.hasHomeDelivery === 'true';
     
     // Support setting or incrementing clicks & views
