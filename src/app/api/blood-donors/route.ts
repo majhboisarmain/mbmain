@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
-import { internalServerErrorResponse, badRequestResponse } from '@/lib/authGuard';
+import { internalServerErrorResponse, badRequestResponse, unauthorizedResponse } from '@/lib/authGuard';
+import { isAdminRequest } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -132,6 +133,10 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    if (!isAdminRequest(request)) {
+      return unauthorizedResponse('Super Admin permission required to delete blood donor profiles');
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const phone = searchParams.get('phone');

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { isAdminRequest } from '@/lib/auth';
 
 export async function PUT(
   req: Request,
@@ -39,6 +40,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!isAdminRequest(req)) {
+      return NextResponse.json({ error: 'Unauthorized: Admin privileges required' }, { status: 401 });
+    }
+
     const { id } = await params;
     await prisma.adOrder.delete({
       where: { id: Number(id) }

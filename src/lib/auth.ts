@@ -105,3 +105,24 @@ export const HTTP_ONLY_COOKIE_OPTIONS = {
   path: '/',
   maxAge: 7 * 24 * 60 * 60, // 7 days
 };
+
+/**
+ * Checks if the incoming request has a valid Admin JWT token in cookies
+ */
+export function isAdminRequest(request: any): boolean {
+  try {
+    let token: string | undefined;
+    if (request?.cookies && typeof request.cookies.get === 'function') {
+      token = request.cookies.get('majh_admin_token')?.value;
+    } else if (request?.headers) {
+      const cookieHeader = typeof request.headers.get === 'function' ? request.headers.get('cookie') || '' : '';
+      const match = cookieHeader.match(/majh_admin_token=([^;]+)/);
+      if (match) token = match[1];
+    }
+    if (!token) return false;
+    const payload = verifyJwtToken<{ role?: string }>(token);
+    return payload?.role === 'Admin';
+  } catch {
+    return false;
+  }
+}

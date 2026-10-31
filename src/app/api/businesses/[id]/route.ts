@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { uploadImage, uploadGallery } from '@/lib/cloudinary';
 import { specialProfiles } from '@/lib/mockProfiles';
 import { apiBusinessesCache } from '../route';
+import { isAdminRequest } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
@@ -317,6 +318,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    if (!isAdminRequest(request)) {
+      return NextResponse.json({ error: 'Unauthorized: Admin privileges required' }, { status: 401 });
+    }
+
     const { id } = await params;
     let targetId = parseInt(id);
     if (isNaN(targetId)) {

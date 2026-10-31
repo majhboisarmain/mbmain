@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pool } from '@/lib/db';
 import { uploadImage } from '@/lib/cloudinary';
-import { internalServerErrorResponse, badRequestResponse } from '@/lib/authGuard';
+import { internalServerErrorResponse, badRequestResponse, unauthorizedResponse } from '@/lib/authGuard';
+import { isAdminRequest } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -205,6 +206,10 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    if (!isAdminRequest(request)) {
+      return unauthorizedResponse('Super Admin permission required to delete technician profiles');
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) return badRequestResponse('Technician ID is required');
