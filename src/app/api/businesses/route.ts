@@ -11,10 +11,10 @@ import { expandCategorySearchTerms } from '@/lib/categoryMapping';
 import { formatCategoryTitle, getCategorySearchTerms } from '@/lib/categories';
 import { generateBusinessSlug } from '@/lib/slugify';
 
-// In-memory cache for fast search queries and listing summaries (30s TTL)
+// In-memory cache for fast search queries and listing summaries (3m TTL)
 export const apiBusinessesCache = new LRUCache<string, any[]>({
   max: 100,
-  ttl: 1000 * 30, // 30 seconds
+  ttl: 1000 * 60 * 3, // 3 minutes
 });
 
 function getHaversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       const cached = apiBusinessesCache.get(cacheKey);
       return NextResponse.json(cached, {
         headers: {
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
           'X-Cache': 'HIT',
         },
       });
@@ -91,15 +91,6 @@ export async function GET(request: NextRequest) {
         { services: { some: { name: { contains: formattedTitle, mode: 'insensitive' } } } }
       ];
 
-      const genericExclusions = [
-        'centers', 'services', 'stores', 'shops', 'market', 'classes', 'agencies', 
-        'consultants', 'repairs', 'repair', 'care', 'tours', 'point', 'hub', 'dealers', 'class', 'agency', 'store', 'shop'
-      ];
-      const distinctTerms = candidateTerms.filter(t => t.length >= 4 && !genericExclusions.includes(t.toLowerCase()));
-      distinctTerms.forEach(t => {
-        categoryOrConditions.push({ name: { contains: t, mode: 'insensitive' } });
-      });
-
       andClauses.push({ OR: categoryOrConditions });
 
       // Category Isolation: Prevent cross-category bleed
@@ -110,7 +101,7 @@ export async function GET(request: NextRequest) {
         });
       } else if (lowerCat.includes('loan') || lowerCat.includes('finance')) {
         andClauses.push({
-          category: { notIn: ['Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop', 'Water Purifier', 'RO Service', 'Digital Printing', 'Schools', 'Footwear', 'Eye Opticians'] }
+          category: { notIn: ['Sports Shops', 'Sports', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop', 'Water Purifier', 'RO Service', 'Digital Printing', 'Schools', 'Footwear', 'Eye Opticians', 'Clothing', 'Medical Stores', 'Grocery', 'Electronics', 'Mobile Shops'] }
         });
       } else if (lowerCat.includes('water') || lowerCat.includes('purifier') || lowerCat.includes('ro')) {
         andClauses.push({
@@ -391,7 +382,7 @@ export async function GET(request: NextRequest) {
 
     const cacheControlHeader = isDirectBypass 
       ? 'no-store, no-cache, must-revalidate, proxy-revalidate'
-      : 'public, s-maxage=60, stale-while-revalidate=300';
+      : 'public, s-maxage=300, stale-while-revalidate=600';
 
     if (!isDirectBypass) {
       apiBusinessesCache.set(cacheKey, result);

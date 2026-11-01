@@ -61,7 +61,8 @@ export const EXPLORE_CATEGORIES = [
   "Spa Wellness",
   "Dairy Products",
   "Meat Poultry",
-  "Fruits Vegetables"
+  "Fruits Vegetables",
+  "Sports Shops"
 ];
 
 // Normalized Slug to Official Title Mapping (Canonical single names - no duplicates)
@@ -397,7 +398,15 @@ export const CATEGORY_SLUG_MAP: Record<string, string> = {
   'fruits-vegetables': 'Fruits Vegetables',
   'accounting-software-dealers': 'Accounting Software Dealers',
   'accounting-software': 'Accounting Software Dealers',
-  'software-dealers': 'Accounting Software Dealers'
+  'software-dealers': 'Accounting Software Dealers',
+
+  // Sports Shops
+  'sports': 'Sports Shops',
+  'sports-shops': 'Sports Shops',
+  'sports-shop': 'Sports Shops',
+  'sports-stores': 'Sports Shops',
+  'sports-store': 'Sports Shops',
+  'sports-goods': 'Sports Shops'
 };
 
 /**
@@ -546,14 +555,14 @@ export const CATEGORY_SEARCH_SYNONYMS: Record<string, string[]> = {
   'protein-supplements': ['protein', 'protein shop', 'protein supplements', 'nutrition'],
 
   // Loans (combines Loans, Loan Consultants, Finance, Loans & Finance)
-  'loans': ['loan', 'loans', 'loan consultant', 'loan consultants', 'finance', 'financial', 'loans finance', 'loans & finance', 'financial advisor', 'financial services', 'finance companies', 'gold loan', 'home loan', 'personal loan', 'business loan', 'vehicle loan', 'swami samarth', 'grand capital', 'kirti enterprises'],
-  'loan': ['loan', 'loans', 'loan consultant', 'finance', 'financial'],
+  'loans': ['loan', 'loans', 'loan consultant', 'loan consultants', 'finance', 'financial', 'loans finance', 'loans & finance', 'financial advisor', 'financial services', 'finance companies', 'gold loan', 'home loan', 'personal loan', 'business loan', 'vehicle loan', 'microfinance', 'money lending', 'mortgage'],
+  'loan': ['loan', 'loans', 'loan consultant', 'finance', 'financial', 'gold loan', 'home loan', 'personal loan', 'business loan'],
   'loans-finance': ['loan', 'loans', 'loan consultant', 'finance', 'financial', 'loans finance', 'loans & finance'],
-  'loan-consultants': ['loan', 'loans', 'loan consultant', 'finance'],
-  'finance': ['loan', 'loans', 'loan consultant', 'finance', 'financial'],
+  'loan-consultants': ['loan', 'loans', 'loan consultant', 'finance', 'financial'],
+  'finance': ['loan', 'loans', 'loan consultant', 'finance', 'financial', 'loans & finance'],
 
   // Gyms & Fitness (combines Gyms, Fitness Centers)
-  'gyms': ['gym', 'gyms', 'fitness', 'fitness center', 'fitness centers', 'workout', 'weight training', 'crossfit', 'muscle factory'],
+  'gyms': ['gym', 'gyms', 'fitness', 'fitness center', 'fitness centers', 'workout', 'weight training', 'crossfit'],
   'fitness-centers': ['gym', 'gyms', 'fitness', 'fitness center', 'fitness centers'],
 
   // Salons & Beauty (combines Salons, Beauty Parlours)
@@ -569,15 +578,15 @@ export const CATEGORY_SEARCH_SYNONYMS: Record<string, string[]> = {
   'pharmacy': ['medical store', 'pharmacy', 'chemist'],
 
   // Eye Opticians
-  'eye-opticians': ['eye opticians', 'optician', 'opticians', 'optical', 'optical store', 'spectacles', 'care eyes'],
+  'eye-opticians': ['eye opticians', 'optician', 'opticians', 'optical', 'optical store', 'spectacles', 'eyewear', 'glasses', 'lenses'],
 
   // Water Purifier (combines Water Purifier, RO Service, Filter)
-  'water-purifier': ['water purifier', 'water purifiers', 'ro service', 'ro services', 'ro filter', 'ro filter service', 'lavany aqua', 'filter service', 'sales in boisar', 'aquaguard', 'kent ro'],
-  'ro-service': ['water purifier', 'ro service', 'ro services', 'ro filter', 'lavany aqua'],
+  'water-purifier': ['water purifier', 'water purifiers', 'ro service', 'ro services', 'ro filter', 'ro filter service', 'aquaguard', 'kent ro', 'water purification'],
+  'ro-service': ['water purifier', 'ro service', 'ro services', 'ro filter'],
 
   // Footwear (combines Footwear, Footwear Stores, Shoes)
-  'footwear': ['footwear', 'footwear store', 'footwear stores', 'footwear shop', 'footwear shops', 'shoes', 'shoe store', 'shoe stores', 'sandals', 'slippers', 'chitralaya footwear'],
-  'footwear-stores': ['footwear', 'footwear store', 'footwear stores', 'shoes', 'chitralaya footwear'],
+  'footwear': ['footwear', 'footwear store', 'footwear stores', 'footwear shop', 'footwear shops', 'shoes', 'shoe store', 'shoe stores', 'sandals', 'slippers', 'chappal'],
+  'footwear-stores': ['footwear', 'footwear store', 'footwear stores', 'shoes'],
 
   // Furniture (combines Furniture, Furniture Stores, Wooden Furniture)
   'furniture': ['furniture', 'furniture store', 'furniture stores', 'furniture shop', 'sofa', 'wooden furniture', 'bed', 'wardrobe', 'dining table'],
@@ -587,10 +596,14 @@ export const CATEGORY_SEARCH_SYNONYMS: Record<string, string[]> = {
   'schools': ['school', 'schools', 'vidyalaya', 'english medium school', 'ctes', 'colleges', 'college'],
 
   // Digital Printing
-  'digital-printing': ['digital printing', 'radium art', 'banner printing', 'flex printing', 'boisar radium art'],
+  'digital-printing': ['digital printing', 'radium art', 'banner printing', 'flex printing', 'offset printing', 'visiting card printing'],
 
   // Jobs
-  'jobs': ['jobs', 'placement', 'recruitment', 'job consultancy', 'jobs & placement', 'musclefactoryhub', 'placement services'],
+  'jobs': ['jobs', 'placement', 'recruitment', 'job consultancy', 'jobs & placement', 'placement services', 'employment agency', 'staffing'],
+
+  // Sports & Sports Shops
+  'sports-shops': ['sports', 'sports shop', 'sports shops', 'sports goods', 'cricket kit', 'badminton', 'football', 'sports equipment', 'trophies', 'sports wear'],
+  'sports': ['sports', 'sports shop', 'sports shops', 'sports goods', 'cricket kit', 'badminton', 'sports equipment'],
 
   // Dance & Music
   'dance-classes': ['dance', 'dance class', 'dance classes', 'dance academy', 'dance studio'],
@@ -693,18 +706,8 @@ export function buildCategoryPrismaFilter(categorySlugOrTitle: string, selectedA
     categoryConditions.push({ subcategory: { contains: term, mode: 'insensitive' } });
   });
 
-  const genericExclusions = [
-    'centers', 'services', 'stores', 'shops', 'market', 'classes', 'agencies', 
-    'consultants', 'repairs', 'repair', 'care', 'tours', 'point', 'hub', 'dealers', 'class', 'agency', 'store', 'shop'
-  ];
-  const distinctTerms = terms.filter(t => t.length >= 4 && !genericExclusions.includes(t.toLowerCase()));
-  const nameConditions = distinctTerms.map(t => ({
-    name: { contains: t, mode: 'insensitive' }
-  }));
-
   const orConditions: any[] = [
-    ...categoryConditions,
-    ...nameConditions
+    ...categoryConditions
   ];
 
   const whereClause: any = {
@@ -720,7 +723,7 @@ export function buildCategoryPrismaFilter(categorySlugOrTitle: string, selectedA
     ];
   } else if (lowerSlug.includes('loan') || lowerSlug.includes('finance')) {
     whereClause.NOT = [
-      { category: { in: ['Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop', 'Water Purifier', 'RO Service', 'Digital Printing', 'Schools', 'Footwear', 'Eye Opticians'] } }
+      { category: { in: ['Sports Shops', 'Sports', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop', 'Water Purifier', 'RO Service', 'Digital Printing', 'Schools', 'Footwear', 'Eye Opticians', 'Clothing', 'Medical Stores', 'Grocery', 'Electronics', 'Mobile Shops'] } }
     ];
   } else if (lowerSlug.includes('protein')) {
     whereClause.NOT = [

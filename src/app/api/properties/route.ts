@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     const isPublic = !phone && !all;
     return NextResponse.json(result, {
       headers: isPublic
-        ? { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' }
+        ? { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' }
         : { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
     });
   } catch (error: any) {
