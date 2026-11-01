@@ -815,7 +815,7 @@ export default function Navbar() {
                           </button>
 
                           {/* Business Dashboard or Register */}
-                          {isLoggedIn && !hasRegisteredBusiness && !isUserAdmin && currentRole !== 'BusinessOwner' && (loggedInUser as any)?.role !== 'BusinessOwner' ? (
+                          {isLoggedIn && !hasRegisteredBusiness && !isUserAdmin && currentRole !== 'BusinessOwner' && (loggedInUser as any)?.role !== 'BusinessOwner' && !hasUserListing ? (
                             <Link
                               href="/dashboard?register=true"
                               onClick={() => setProfileDropdownOpen(false)}
@@ -1072,14 +1072,14 @@ export default function Navbar() {
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2 px-1">For Business &amp; Shop Owners</h3>
                 <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
                   <Link
-                    href={hasRegisteredBusiness ? "/dashboard" : "/dashboard?register=true"}
+                    href={hasRegisteredBusiness || isUserAdmin || hasUserListing ? "/dashboard" : "/dashboard?register=true"}
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
                   >
                     <div className="flex items-center gap-3">
                       <Building2 className="w-5 h-5 text-teal-700 stroke-[2]" />
                       <span className="text-sm sm:text-[15px] font-bold text-slate-900">
-                        {hasRegisteredBusiness ? 'My Business Dashboard' : 'Register Your Business'}
+                        {hasRegisteredBusiness || isUserAdmin || hasUserListing ? 'My Business Dashboard' : 'Register Your Business'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">

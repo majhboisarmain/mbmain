@@ -102,7 +102,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const phoneDigits = phone.replace(/\D/g, '');
       if (!phoneDigits) return;
 
-      const res = await fetch('/api/businesses?showAll=true');
+      const res = await fetch(`/api/businesses?showAll=true&_t=${Date.now()}`, { cache: 'no-store' });
       if (!res.ok) return;
       const data = await res.json();
       if (!Array.isArray(data)) return;

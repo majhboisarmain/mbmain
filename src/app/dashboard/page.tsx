@@ -3149,8 +3149,9 @@ const fetchBusinessesList = async () => {
       return;
     }
 
-    // Strict Security: ONLY true Admin session or admin credentials get admin powers
-    const isAdmin = isAdminAuth;
+    // Strict Security: True Admin session or Super Admin phone gets admin powers
+    const isSuperAdmin = Boolean(isLoggedIn && isPlatformAdminPhone(loggedInUser?.phone));
+    const isAdmin = isAdminAuth || isSuperAdmin;
 
     if (!isLoggedIn && !isAdmin) {
       setBusinessesList([]);
@@ -4151,7 +4152,7 @@ const handleCreateBusinessFinal = async (chosenTier?: 'Free' | 'Starter' | 'Pro'
     // Save ID to localStorage for instant lookup across browser reloads
     if (typeof window !== 'undefined') {
       try {
-        const userP = (loggedInUser?.phone || newBizPhone || '').replace(/\D/g, '');
+        const userP = (loggedInUser?.phone || newBizPhone || '').replace(/\D/g, '').slice(-10);
         const key = userP ? `majh_boisar_my_biz_ids_${userP}` : 'majh_boisar_my_biz_ids';
         const raw = localStorage.getItem(key);
         const existing = raw ? JSON.parse(raw) : [];
@@ -4232,12 +4233,14 @@ const isDetectedHotel = Boolean(
 
 // Business registration wizard is strictly accessible:
 // Triggered when user explicitly requests registration (registerParam=true or modeParam=register)
+const isSuperAdminUser = Boolean(isLoggedIn && isPlatformAdminPhone(loggedInUser?.phone));
+const isAnyAdmin = isAdminAuth || isSuperAdminUser;
 const isRegisterIntent = registerParam || modeParam === 'register';
-const shouldShowRegistrationWizard = (isLoggedIn || isAdminAuth) && isRegisterIntent;
+const shouldShowRegistrationWizard = (isLoggedIn || isAnyAdmin) && isRegisterIntent;
 
 // 1. Mandatory Owner Login Gate (Styled like Login Modal)
 // Shows login screen if user is not logged in
-if (!isLoggedIn && !isAdminAuth) {
+if (!isLoggedIn && !isAnyAdmin) {
 
   return (
     <div className="min-h-[75vh] bg-[#f8fafc] py-10 sm:py-14 px-4 flex items-center justify-center text-slate-800">
@@ -4319,7 +4322,7 @@ if (!isLoggedIn && !isAdminAuth) {
 // 2. Business Registration Wizard:
 //    Triggered whenever user clicks "List Your Business" (registerParam === true)
 //    OR when user has NO registered business yet.
-if (shouldShowRegistrationWizard || (isLoggedIn && !isAdminAuth && businessesList.length === 0 && !specialProfile)) {
+if (shouldShowRegistrationWizard || (isLoggedIn && !isAnyAdmin && businessesList.length === 0 && !specialProfile)) {
   return (
     <div className="min-h-screen bg-slate-50/70 py-5 sm:py-8 text-slate-800 font-sans">
       <div className="max-w-2xl mx-auto px-4">

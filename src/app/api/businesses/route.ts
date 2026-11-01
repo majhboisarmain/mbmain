@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const premium = searchParams.get('premium') === 'true';
     const minRating = searchParams.get('rating') ? parseFloat(searchParams.get('rating')!) : null;
     const hasTimestamp = Boolean(searchParams.get('_t'));
-    const isDirectBypass = isAdmin || hasTimestamp;
+    const isDirectBypass = isAdmin || hasTimestamp || showAll;
 
     // Fast memory cache check for public visitors
     const cacheKey = request.url;
