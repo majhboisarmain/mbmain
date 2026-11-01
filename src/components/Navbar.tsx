@@ -68,40 +68,32 @@ export default function Navbar() {
 
   useEffect(() => {
     const checkOwnership = () => {
+      // If user is not logged in, they are a normal visitor -> NEVER show Dashboard shortcut
       if (!isLoggedIn) {
         setHasUserListing(false);
         return;
       }
-      if (hasRegisteredBusiness || currentRole === 'BusinessOwner' || isUserAdmin) {
+      // Super Admin or explicitly verified business owner
+      if (isUserAdmin || hasRegisteredBusiness || currentRole === 'BusinessOwner') {
         setHasUserListing(true);
         return;
       }
+      // Check phone-specific business ownership
       if (typeof window !== 'undefined') {
-        const hasBizStorage = localStorage.getItem('majh_boisar_has_business') === 'true';
-        const roleStorage = localStorage.getItem('majh_boisar_role');
-        if (hasBizStorage || roleStorage === 'BusinessOwner' || roleStorage === 'Admin') {
-          setHasUserListing(true);
-          return;
+        const phoneClean = (loggedInUser?.phone || '').replace(/\D/g, '').slice(-10);
+        if (phoneClean) {
+          const myBizIdsKey = `majh_boisar_my_biz_ids_${phoneClean}`;
+          try {
+            const myBizIds = JSON.parse(localStorage.getItem(myBizIdsKey) || '[]');
+            if (Array.isArray(myBizIds) && myBizIds.length > 0) {
+              setHasUserListing(true);
+              return;
+            }
+          } catch (e) {}
         }
         try {
           const userHotels = JSON.parse(localStorage.getItem('majh_boisar_user_hotels') || '[]');
           if (Array.isArray(userHotels) && userHotels.length > 0) {
-            setHasUserListing(true);
-            return;
-          }
-        } catch (e) {}
-        try {
-          const userProps = JSON.parse(localStorage.getItem('majh_boisar_user_properties') || '[]');
-          if (Array.isArray(userProps) && userProps.length > 0) {
-            setHasUserListing(true);
-            return;
-          }
-        } catch (e) {}
-        try {
-          const phoneClean = (loggedInUser?.phone || '').replace(/\D/g, '').slice(-10);
-          const myBizIdsKey = phoneClean ? `majh_boisar_my_biz_ids_${phoneClean}` : 'majh_boisar_my_biz_ids';
-          const myBizIds = JSON.parse(localStorage.getItem(myBizIdsKey) || '[]');
-          if (Array.isArray(myBizIds) && myBizIds.length > 0) {
             setHasUserListing(true);
             return;
           }
@@ -570,28 +562,27 @@ export default function Navbar() {
               {t('nav.advertise')}
             </Link>
 
-            {/* Register Your Business CTA — only for users without a registered business */}
-            {mounted && !hasRegisteredBusiness && currentRole !== 'BusinessOwner' && !isUserAdmin && (loggedInUser as any)?.role !== 'BusinessOwner' && (
-              <Link
-                href="/dashboard?register=true"
-                className="btn-teal text-xs font-black px-3 py-1.5 rounded-lg hover:shadow-md transition-shadow flex items-center gap-1.5 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>{isLoggedIn ? 'Register Your Business' : t('nav.free_listing')}</span>
-              </Link>
-            )}
-
-            {/* Quick Dashboard shortcut for registered business/hotel owners */}
-            {mounted && hasUserListing && (
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-teal-600 via-teal-700 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white border border-teal-500/30 text-xs font-black shadow-sm shadow-teal-700/25 transition-all hover:shadow-md active:scale-95 cursor-pointer"
-                title="Business & Hotel Dashboard"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5 text-white shrink-0" />
-                <span>Dashboard</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse ml-0.5"></span>
-              </Link>
+            {/* CTA Button: Dashboard for registered business owners, List Your Business for normal users */}
+            {mounted && (
+              hasUserListing ? (
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-teal-600 via-teal-700 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white border border-teal-500/30 text-xs font-black shadow-sm shadow-teal-700/25 transition-all hover:shadow-md active:scale-95 cursor-pointer"
+                  title="Business Dashboard"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-white shrink-0" />
+                  <span>Dashboard</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse ml-0.5"></span>
+                </Link>
+              ) : (
+                <Link
+                  href="/dashboard?register=true"
+                  className="btn-teal text-xs font-black px-3.5 py-1.5 rounded-lg hover:shadow-md transition-shadow flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>List Your Business</span>
+                </Link>
+              )
             )}
 
             {/* Help Dropdown */}
@@ -815,26 +806,26 @@ export default function Navbar() {
                           </button>
 
                           {/* Business Dashboard or Register */}
-                          {isLoggedIn && !hasRegisteredBusiness && !isUserAdmin && currentRole !== 'BusinessOwner' && (loggedInUser as any)?.role !== 'BusinessOwner' && !hasUserListing ? (
+                          {hasUserListing ? (
+                            <Link
+                              href="/dashboard"
+                              onClick={() => setProfileDropdownOpen(false)}
+                              className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs text-slate-800 hover:bg-slate-50 transition-colors font-bold group"
+                            >
+                              <LayoutDashboard className="w-4 h-4 text-teal-700 stroke-[1.8]" />
+                              <span>My Business Dashboard</span>
+                            </Link>
+                          ) : (
                             <Link
                               href="/dashboard?register=true"
                               onClick={() => setProfileDropdownOpen(false)}
                               className="flex items-center justify-between rounded-xl px-3 py-2 text-xs text-slate-800 hover:bg-slate-50 transition-colors font-bold group"
                             >
                               <div className="flex items-center gap-2.5">
-                                <Building2 className="w-4 h-4 text-slate-600 stroke-[1.8]" />
-                                <span>Register Your Business</span>
+                                <Plus className="w-4 h-4 text-teal-600 stroke-[2.2]" />
+                                <span className="text-teal-700 font-extrabold">List Your Business</span>
                               </div>
                               <span className="bg-emerald-100 text-emerald-700 text-[9px] font-extrabold px-1.5 py-0.5 rounded">FREE</span>
-                            </Link>
-                          ) : (
-                            <Link
-                              href="/dashboard"
-                              onClick={() => setProfileDropdownOpen(false)}
-                              className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs text-slate-800 hover:bg-slate-50 transition-colors font-bold group"
-                            >
-                              <Building2 className="w-4 h-4 text-slate-600 stroke-[1.8]" />
-                              <span>My Business Dashboard</span>
                             </Link>
                           )}
 
@@ -919,16 +910,26 @@ export default function Navbar() {
 
           {/* Mobile Profile / Menu Button */}
           <div className="flex md:hidden items-center gap-2 shrink-0 relative z-30 ml-auto">
-            {mounted && hasUserListing && (
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-teal-600 via-teal-700 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white border border-teal-500/30 text-xs font-black shadow-sm shadow-teal-700/25 transition-all active:scale-95 shrink-0"
-                title="Business & Hotel Dashboard"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5 text-white shrink-0" />
-                <span>Dashboard</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse ml-0.5"></span>
-              </Link>
+            {mounted && (
+              hasUserListing ? (
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-teal-600 via-teal-700 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white border border-teal-500/30 text-xs font-black shadow-sm shadow-teal-700/25 transition-all active:scale-95 shrink-0"
+                  title="Business Dashboard"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-white shrink-0" />
+                  <span>Dashboard</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse ml-0.5"></span>
+                </Link>
+              ) : (
+                <Link
+                  href="/dashboard?register=true"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-xs font-black shadow-2xs transition-all active:scale-95 shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>List Business</span>
+                </Link>
+              )
             )}
 
             <button
@@ -962,48 +963,48 @@ export default function Navbar() {
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          {/* Slide-over Right Panel */}
+          {/* Slide-over Right Panel (Matching clean rounded card design) */}
           <div
             id="profile-nav-drawer"
             style={{ overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}
-            className="fixed inset-y-0 right-0 w-full sm:w-[420px] max-w-full bg-[#F4F5F7] shadow-2xl overflow-y-auto overscroll-contain touch-pan-y z-[100000] flex flex-col justify-between animate-in slide-in-from-right duration-250"
+            className="fixed inset-y-0 right-0 w-full sm:w-[380px] max-w-[92vw] sm:max-w-full bg-[#FAFAFA] rounded-l-[32px] shadow-2xl overflow-y-auto overscroll-contain touch-pan-y z-[100000] flex flex-col justify-between animate-in slide-in-from-right duration-250"
           >
-            <div className="w-full space-y-3.5 p-4 sm:p-5 pt-[max(14px,env(safe-area-inset-top))] pb-[max(32px,calc(2rem+env(safe-area-inset-bottom)))]">
+            <div className="w-full space-y-3.5 p-4 sm:p-5 pt-[max(16px,env(safe-area-inset-top))] pb-[max(32px,calc(2rem+env(safe-area-inset-bottom)))]">
               {/* Header Title with Back Arrow & Close Button */}
-              <div className="flex items-center justify-between pb-2.5 pt-0.5 border-b border-slate-200/80 mb-1">
+              <div className="flex items-center justify-between pb-2 pt-0.5 border-b border-slate-200/60 mb-2">
                 <div className="flex items-center gap-2.5">
                   <button
                     type="button"
                     onClick={() => setMobileMenuOpen(false)}
                     aria-label="Back"
-                    className="p-2 -ml-1 rounded-full hover:bg-slate-200/80 active:bg-slate-300 transition-colors cursor-pointer text-slate-900"
+                    className="p-1.5 -ml-1 rounded-full hover:bg-slate-200/70 transition-colors cursor-pointer text-slate-800"
                   >
-                    <ArrowLeft className="w-5 h-5 stroke-[2.4]" />
+                    <ArrowLeft className="w-5 h-5 stroke-[2.2]" />
                   </button>
-                  <h2 className="text-lg font-black text-slate-900 tracking-tight">
-                    {isLoggedIn ? 'Profile & Menu' : 'Menu'}
+                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                    Menu
                   </h2>
                 </div>
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
                   aria-label="Close"
-                  className="p-2 rounded-full hover:bg-slate-200/80 active:bg-slate-300 text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-full hover:bg-slate-200/70 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
                 >
-                  <X className="w-5 h-5 stroke-[2.4]" />
+                  <X className="w-5 h-5 stroke-[2]" />
                 </button>
               </div>
 
-              {/* 1. User Header or Guest Sign-In Card */}
+              {/* 1. Welcome Card / User Header */}
               {isLoggedIn ? (
-                <div className="flex items-center justify-between py-2 px-1">
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-13 h-13 rounded-full bg-[#E0D7FE] text-[#6C47FF] flex items-center justify-center font-black text-xl shrink-0 shadow-xs border border-[#CDBEFE]">
+                <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-11 h-11 rounded-full bg-teal-50 text-teal-700 flex items-center justify-center font-black text-base shrink-0 border border-teal-200 shadow-2xs">
                       {userName ? userName.charAt(0).toUpperCase() : 'U'}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="text-base sm:text-lg font-black text-slate-900 leading-tight truncate">{userName || 'User'}</h3>
-                      <p className="text-xs sm:text-[13px] text-slate-500 font-bold truncate mt-0.5">{loggedInUser?.phone || '+91 9307294733'}</p>
+                      <p className="text-sm font-bold text-slate-900 leading-tight truncate">{userName || 'User'}</p>
+                      <p className="text-xs text-slate-500 font-medium truncate mt-0.5">{loggedInUser?.phone || '+91 9307294733'}</p>
                     </div>
                   </div>
                   <button
@@ -1015,21 +1016,16 @@ export default function Navbar() {
                       setSettingsModalOpen(true);
                       setMobileMenuOpen(false);
                     }}
-                    className="text-xs sm:text-[13px] font-black text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 px-3.5 py-1.5 rounded-xl shadow-xs transition-colors shrink-0 cursor-pointer"
+                    className="text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3.5 py-1.5 rounded-xl transition-colors shrink-0 cursor-pointer"
                   >
                     Edit
                   </button>
                 </div>
               ) : (
                 <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-12 h-12 rounded-full bg-[#E0D7FE] text-[#6C47FF] flex items-center justify-center shrink-0 font-black text-base border border-[#CDBEFE]">
-                      <User className="w-6 h-6 stroke-[2]" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm sm:text-base font-black text-slate-900 leading-tight">Welcome to Majh Boisar</p>
-                      <p className="text-xs text-slate-500 font-semibold truncate mt-0.5">Sign in to manage bookings &amp; listings</p>
-                    </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-slate-900 leading-tight">Welcome to Majh Boisar</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">Sign in to manage your listings</p>
                   </div>
                   <button
                     type="button"
@@ -1037,239 +1033,191 @@ export default function Navbar() {
                       setMobileMenuOpen(false);
                       setLoginModalOpen(true);
                     }}
-                    className="bg-slate-900 hover:bg-black text-white text-xs font-black px-4 py-2 rounded-xl shadow-xs transition-colors shrink-0 cursor-pointer"
+                    className="bg-[#005B52] hover:bg-[#004740] active:scale-95 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-2xs transition-all shrink-0 cursor-pointer"
                   >
                     Sign In
                   </button>
                 </div>
               )}
 
-              {/* 2. View All Bookings Box */}
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setIsHotelPassesModalOpen(true);
-                }}
-                className="w-full bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all flex items-center justify-between cursor-pointer group text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <Receipt className="w-5 h-5 text-slate-700 stroke-[2]" />
-                  <span className="text-sm sm:text-base font-extrabold text-slate-900">View all bookings</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {userHotelPassCount > 0 && (
-                    <span className="text-xs font-black bg-teal-600 text-white px-2.5 py-0.5 rounded-full shadow-2xs">
-                      {userHotelPassCount} active
-                    </span>
-                  )}
-                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                </div>
-              </button>
-
-              {/* 3. For Business & Shop Owners */}
-              <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2 px-1">For Business &amp; Shop Owners</h3>
-                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-                  <Link
-                    href={hasRegisteredBusiness || isUserAdmin || hasUserListing ? "/dashboard" : "/dashboard?register=true"}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Building2 className="w-5 h-5 text-teal-700 stroke-[2]" />
-                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">
-                        {hasRegisteredBusiness || isUserAdmin || hasUserListing ? 'My Business Dashboard' : 'Register Your Business'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-black px-2 py-0.5 rounded-md">FREE</span>
-                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                    </div>
-                  </Link>
-
-                  <div className="h-px bg-slate-100 mx-3.5" />
-
-                  <Link
-                    href="/properties?postProperty=true"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      if (typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent('majh_boisar_open_post_property'));
-                      }
-                    }}
-                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Home className="w-5 h-5 text-amber-600 stroke-[2]" />
-                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Post a Property</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] bg-amber-50 text-amber-700 border border-amber-200/80 font-black px-2 py-0.5 rounded-md">Sell / Rent</span>
-                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                    </div>
-                  </Link>
-
-                  <div className="h-px bg-slate-100 mx-3.5" />
-
-                  <Link
-                    href="/advertise"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Sparkles className="w-5 h-5 text-purple-600 stroke-[2]" />
-                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Advertise With Us</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-
-                  {isLoggedIn && isUserAdmin && (
-                    <>
-                      <div className="h-px bg-slate-100 mx-3.5" />
-                      <Link
-                        href="/adminmb"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Shield className="w-5 h-5 text-rose-600 stroke-[2]" />
-                          <span className="text-sm sm:text-[15px] font-bold text-rose-700">Admin Control Panel</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                      </Link>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* 4. Support */}
-              <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2 px-1">Support</h3>
-                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-                  <a
-                    href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar%20Support,"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <MessageSquare className="w-5 h-5 text-emerald-600 stroke-[2]" />
-                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Chat with us on WhatsApp</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </a>
-
-                  <div className="h-px bg-slate-100 mx-3.5" />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      setHelpModalOpen(true);
-                    }}
-                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <HelpCircle className="w-5 h-5 text-slate-700 stroke-[2]" />
-                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Help &amp; FAQs</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                </div>
-              </div>
-
-              {/* 5. More */}
-              <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-2 px-1">More</h3>
-                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
-                  <Link
-                    href="/download-app"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Smartphone className="w-5 h-5 text-teal-600 stroke-[2]" />
-                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Install Mobile App (PWA)</span>
-                    </div>
-                    <span className="text-[11px] bg-teal-50 text-teal-800 border border-teal-200 font-extrabold px-2 py-0.5 rounded-md">iOS / Android</span>
-                  </Link>
-
-                  <div className="h-px bg-slate-100 mx-3.5" />
-
-                  <Link
-                    href="/terms"
-                    rel="nofollow"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <HelpCircle className="w-5 h-5 text-slate-700 stroke-[2]" />
-                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Terms &amp; Conditions</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-
-                  <div className="h-px bg-slate-100 mx-3.5" />
-
-                  <Link
-                    href="/privacy"
-                    rel="nofollow"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full flex items-center justify-between p-3.5 sm:p-4 hover:bg-slate-50 transition-colors cursor-pointer group text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-slate-700 stroke-[2]" />
-                      <span className="text-sm sm:text-[15px] font-bold text-slate-900">Privacy Policy</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-                </div>
-              </div>
-
-              {/* Logged-in Devices (Security) - Niche Last Me */}
-              {isLoggedIn && (
+              {/* 2. Primary Navigation Group (Bookings, Dashboard/Register, Property, Advertise) */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden divide-y divide-slate-100">
+                {/* View all bookings */}
                 <button
                   type="button"
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    setIsDevicesModalOpen(true);
+                    setIsHotelPassesModalOpen(true);
                   }}
-                  className="w-full bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all flex items-center justify-between cursor-pointer group text-left"
+                  className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors text-left group cursor-pointer"
                 >
-                  <div className="flex items-center gap-3">
-                    <Smartphone className="w-5 h-5 text-emerald-600 stroke-[2]" />
-                    <div>
-                      <span className="text-sm sm:text-base font-extrabold text-slate-900 block leading-tight">Logged-in Devices</span>
-                      <span className="text-[11px] text-slate-500 font-medium">Kaha-Kaha account active hai</span>
-                    </div>
+                  <div className="flex items-center gap-3.5">
+                    <Receipt className="w-5 h-5 text-slate-600 stroke-[1.8]" />
+                    <span className="text-sm font-medium text-slate-800">View all bookings</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full">
-                      Active
-                    </span>
+                    {userHotelPassCount > 0 && (
+                      <span className="text-[10px] font-black bg-teal-600 text-white px-2 py-0.5 rounded-full">
+                        {userHotelPassCount} active
+                      </span>
+                    )}
                     <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </button>
-              )}
 
-              {/* 6. Logout Button (if logged in) */}
+                {/* My Business Dashboard / List Your Business */}
+                <Link
+                  href={hasUserListing ? "/dashboard" : "/dashboard?register=true"}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors text-left group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3.5">
+                    {hasUserListing ? (
+                      <LayoutDashboard className="w-5 h-5 text-[#00897B] stroke-[1.8]" />
+                    ) : (
+                      <Building2 className="w-5 h-5 text-[#00897B] stroke-[1.8]" />
+                    )}
+                    <span className="text-sm font-medium text-slate-800">
+                      {hasUserListing ? 'My Business Dashboard' : 'List Your Business'}
+                    </span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+
+                {/* Post a Property */}
+                <Link
+                  href="/properties?postProperty=true"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('majh_boisar_open_post_property'));
+                    }
+                  }}
+                  className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors text-left group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <Home className="w-5 h-5 text-[#E65100] stroke-[1.8]" />
+                    <span className="text-sm font-medium text-slate-800">Post a Property</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+
+                {/* Advertise With Us */}
+                <Link
+                  href="/advertise"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors text-left group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <Sparkles className="w-5 h-5 text-[#7B1FA2] stroke-[1.8]" />
+                    <span className="text-sm font-medium text-slate-800">Advertise With Us</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+
+                {/* Admin Control Panel (Visible strictly to Super Admin) */}
+                {isLoggedIn && isUserAdmin && (
+                  <Link
+                    href="/adminmb"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-rose-50 transition-colors text-left group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <Shield className="w-5 h-5 text-rose-600 stroke-[1.8]" />
+                      <span className="text-sm font-medium text-rose-700">Admin Control Panel</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                )}
+              </div>
+
+              {/* 3. Support & Application Group */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden divide-y divide-slate-100">
+                {/* Chat on WhatsApp */}
+                <a
+                  href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar%20Support,"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors text-left group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <MessageSquare className="w-5 h-5 text-[#00C853] stroke-[1.8]" />
+                    <span className="text-sm font-medium text-slate-800">Chat on WhatsApp</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                </a>
+
+                {/* Help & FAQs */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setHelpModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors text-left group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <HelpCircle className="w-5 h-5 text-slate-600 stroke-[1.8]" />
+                    <span className="text-sm font-medium text-slate-800">Help &amp; FAQs</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+
+                {/* Install Mobile App */}
+                <Link
+                  href="/download-app"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors text-left group cursor-pointer"
+                >
+                  <div className="flex items-center gap-3.5">
+                    <Smartphone className="w-5 h-5 text-teal-600 stroke-[1.8]" />
+                    <span className="text-sm font-medium text-slate-800">Install Mobile App</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
+
+              {/* 4. Logout & Account Security (if logged in) */}
               {isLoggedIn && (
-                <div className="pt-1">
+                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden divide-y divide-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setIsDevicesModalOpen(true);
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors text-left group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <Smartphone className="w-5 h-5 text-slate-600 stroke-[1.8]" />
+                      <span className="text-sm font-medium text-slate-800">Logged-in Devices</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => {
                       logout();
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-2xs hover:bg-rose-50/50 hover:border-rose-200 transition-all flex items-center gap-3 cursor-pointer text-left group"
+                    className="w-full flex items-center gap-3.5 px-4 py-3.5 text-slate-700 hover:text-red-600 hover:bg-rose-50/40 transition-colors text-left cursor-pointer group font-medium text-sm"
                   >
-                    <LogOut className="w-5 h-5 text-slate-600 group-hover:text-rose-600 stroke-[2] transition-colors" />
-                    <span className="text-sm sm:text-base font-bold text-slate-800 group-hover:text-rose-600 transition-colors">Logout</span>
+                    <LogOut className="w-5 h-5 stroke-[1.8]" />
+                    <span>Logout</span>
                   </button>
                 </div>
               )}
+
+              {/* Subtle Footer Links */}
+              <div className="text-center pt-3 pb-1 text-[11px] text-slate-400 flex items-center justify-center gap-3">
+                <Link href="/terms" rel="nofollow" onClick={() => setMobileMenuOpen(false)} className="hover:underline">Terms</Link>
+                <span>•</span>
+                <Link href="/privacy" rel="nofollow" onClick={() => setMobileMenuOpen(false)} className="hover:underline">Privacy</Link>
+                <span>•</span>
+                <span>© {new Date().getFullYear()} Majh Boisar</span>
+              </div>
 
             </div>
           </div>

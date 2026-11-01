@@ -2000,7 +2000,7 @@ export default function AdminPanelPage() {
       }
 
       try {
-        const donorRes = await fetch('/api/blood-donors?showAll=true', { cache: 'no-store' });
+        const donorRes = await fetch(`/api/blood-donors?showAll=true&_t=${Date.now()}`, { cache: 'no-store' });
         if (donorRes.ok) {
           const dataDonors = await donorRes.json();
           if (Array.isArray(dataDonors)) {

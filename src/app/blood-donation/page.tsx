@@ -107,9 +107,12 @@ export default function BloodDonationPage() {
   const fetchDonors = async () => {
     setLoadingDonors(true);
     try {
-      const res = await fetch('/api/blood-donors', {
+      const res = await fetch(`/api/blood-donors?_t=${Date.now()}`, {
         cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' }
+        headers: { 
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        }
       });
       if (res.ok) {
         const data = await res.json();
@@ -163,13 +166,13 @@ export default function BloodDonationPage() {
 
       if (res.ok) {
         const newDonor = await res.json();
+        if (typeof window !== 'undefined' && newDonor?.id) {
+          localStorage.setItem('majh_boisar_my_donor_id', String(newDonor.id));
+          localStorage.setItem('majh_boisar_my_donor_phone', String(newDonor.phone || ''));
+          setLocalMyDonorId(String(newDonor.id));
+        }
         if (newDonor.verified) {
           setDonors(prev => [newDonor, ...prev.filter(d => d.id !== newDonor.id)]);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('majh_boisar_my_donor_id', String(newDonor.id));
-            localStorage.setItem('majh_boisar_my_donor_phone', String(newDonor.phone));
-            setLocalMyDonorId(String(newDonor.id));
-          }
           alert("🎉 Thank you! Your voluntary donor profile is live in the Boisar Blood Donors list.");
         } else {
           alert("⏳ Thank you for volunteering! Your registration has been submitted. Admin will verify and activate your donor listing shortly.");
@@ -177,6 +180,7 @@ export default function BloodDonationPage() {
         setRegisterModalOpen(false);
         setNewName("");
         setNewPhone("");
+        fetchDonors();
       } else {
         const errData = await res.json().catch(() => ({}));
         alert(errData.error || "Failed to register donor. Please try again.");
@@ -214,12 +218,15 @@ export default function BloodDonationPage() {
 
   const filteredDonors = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
+    const cleanTargetGroup = selectedGroup.trim().toUpperCase().replace(/\s+/g, '');
+
     return donors.filter(d => {
-      const matchGroup = selectedGroup === "All" || d.bloodGroup.toUpperCase() === selectedGroup.toUpperCase();
+      const rawGroup = (d.bloodGroup || (d as any).bloodgroup || '').toString().trim().toUpperCase().replace(/\s+/g, '');
+      const matchGroup = selectedGroup === "All" || rawGroup === cleanTargetGroup || rawGroup.startsWith(cleanTargetGroup);
       const matchSearch = !query || 
-        d.name.toLowerCase().includes(query) || 
-        d.location.toLowerCase().includes(query) ||
-        d.bloodGroup.toLowerCase().includes(query);
+        (d.name || '').toLowerCase().includes(query) || 
+        (d.location || '').toLowerCase().includes(query) ||
+        rawGroup.toLowerCase().includes(query);
       return matchGroup && matchSearch;
     });
   }, [donors, selectedGroup, searchQuery]);
