@@ -271,7 +271,10 @@ export async function PUT(
       if (data.subscription && data.subscription !== 'Free') {
         data.premium = true;
       }
-      if (verified !== undefined) data.verified = verified;
+      if (verified !== undefined) {
+        data.verified = verified;
+        data.isIndexable = verified; // Auto-sync Google indexing with verified/hold status
+      }
     }
     if (body.hasHomeDelivery !== undefined) data.hasHomeDelivery = body.hasHomeDelivery === true || body.hasHomeDelivery === 'true';
     

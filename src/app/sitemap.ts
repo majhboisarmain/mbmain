@@ -57,6 +57,14 @@ const CANONICAL_CATEGORY_SLUGS = [
   'lawyers-legal-advisors',
   'dairy-milk-products',
   'grocery-supermarkets',
+  'supermarkets',
+  'sports-shops',
+  'sports',
+  'medical-stores',
+  'pharmacy',
+  'beauty-parlours',
+  'clothing',
+  'furniture',
 ];
 
 const BOISAR_LOCALITY_SLUGS = [

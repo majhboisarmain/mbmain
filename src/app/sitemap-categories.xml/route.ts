@@ -58,6 +58,14 @@ const CANONICAL_CATEGORY_SLUGS = [
   'protein',
   'protein-supplements',
   'protein-shop',
+  'sports-shops',
+  'sports',
+  'medical-stores',
+  'pharmacy',
+  'beauty-parlours',
+  'clothing',
+  'furniture',
+  'supermarkets',
 ];
 
 export async function GET() {

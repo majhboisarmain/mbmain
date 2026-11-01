@@ -143,6 +143,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : 'https://www.majhboisar.in/majh-boisar-mb-logo.png';
 
   const canonicalUrl = `https://www.majhboisar.in/business/${activeSlug}`;
+  const isGoogleRankable = Boolean(business.verified && business.isIndexable !== false);
 
   return {
     title: pageTitle,
@@ -151,11 +152,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       canonical: canonicalUrl,
     },
     robots: {
-      index: business.isIndexable !== false,
-      follow: true,
+      index: isGoogleRankable,
+      follow: isGoogleRankable,
       googleBot: {
-        index: business.isIndexable !== false,
-        follow: true,
+        index: isGoogleRankable,
+        follow: isGoogleRankable,
         'max-image-preview': 'large',
         'max-snippet': -1,
       },
