@@ -10,10 +10,10 @@ import {
 import { formatCategoryTitle, buildCategoryPrismaFilter } from '@/lib/categories';
 import BackButton from '@/components/BackButton';
 
-// In-memory cache for category listings (60s TTL)
+// In-memory cache for category listings (5 min TTL)
 const categoryListingsCache = new LRUCache<string, any[]>({
-  max: 100,
-  ttl: 1000 * 60, // 60 seconds
+  max: 200,
+  ttl: 1000 * 60 * 5, // 5 minutes
 });
 
 
@@ -22,7 +22,7 @@ interface Props {
   searchParams: Promise<{ area?: string }>;
 }
 
-export const revalidate = 60;
+export const revalidate = 300; // 5 minutes ISR cache
 
 const CATEGORY_STOCK_GALLERY: Record<string, string[]> = {
   gym: [
@@ -195,6 +195,25 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
 
       businesses = await prisma.business.findMany({
         where: filterConditions,
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          category: true,
+          subcategory: true,
+          address: true,
+          location: true,
+          rating: true,
+          reviewCount: true,
+          image: true,
+          phone: true,
+          whatsapp: true,
+          verified: true,
+          premium: true,
+          subscription: true,
+          hasHomeDelivery: true,
+          views: true,
+        },
         orderBy: [
           { premium: 'desc' },
           { verified: 'desc' },

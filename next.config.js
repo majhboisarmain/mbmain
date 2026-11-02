@@ -18,6 +18,17 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'majhboisar.in',
+          },
+        ],
+        destination: 'https://www.majhboisar.in/:path*',
+        permanent: true,
+      },
+      {
         source: '/home-services',
         destination: '/services',
         permanent: true,

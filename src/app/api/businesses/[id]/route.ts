@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { uploadImage, uploadGallery } from '@/lib/cloudinary';
 import { specialProfiles } from '@/lib/mockProfiles';
@@ -336,6 +337,12 @@ export async function PUT(
       gallery: parts.slice(1)
     };
     apiBusinessesCache.clear();
+    try {
+      revalidatePath(`/business/${updated.slug || updated.id}`);
+      if (updated.category) {
+        revalidatePath(`/category/${updated.category.toLowerCase().replace(/\s+/g, '-')}`);
+      }
+    } catch (_) {}
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('Error updating business:', error);

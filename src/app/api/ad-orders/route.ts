@@ -6,7 +6,8 @@ import { uploadImage } from '@/lib/cloudinary';
 export async function GET() {
   try {
     const orders = await prisma.adOrder.findMany({
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
+      take: 50
     });
 
     const now = new Date();

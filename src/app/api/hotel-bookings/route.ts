@@ -38,7 +38,7 @@ async function ensureBookingsTableExists() {
 
 export async function GET(request: NextRequest) {
   try {
-    await ensureBookingsTableExists();
+    // Table exists in production DB; DDL omitted on hot path for zero CPU overhead
     const { searchParams } = new URL(request.url);
     const guestPhone = searchParams.get('phone');
     const hotelId = searchParams.get('hotelId');
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await ensureBookingsTableExists();
+    // Table exists in production DB; DDL omitted on hot path for zero CPU overhead
     const body = await request.json().catch(() => ({}));
     const {
       hotelId,

@@ -7,9 +7,23 @@ export async function GET() {
       where: { key: 'total_platform_visitors' },
     });
     const total = setting ? parseInt(setting.value, 10) : 4666;
-    return NextResponse.json({ totalVisitors: isNaN(total) ? 4666 : total });
+    return NextResponse.json(
+      { totalVisitors: isNaN(total) ? 4666 : total },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+      }
+    );
   } catch (error: any) {
-    return NextResponse.json({ totalVisitors: 4666 });
+    return NextResponse.json(
+      { totalVisitors: 4666 },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+      }
+    );
   }
 }
 

@@ -11,7 +11,7 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-export const revalidate = 60;
+export const revalidate = 3600; // 1-hour Edge ISR cache (On-demand revalidated upon edit)
 
 // In-memory cache for ultra-fast business retrieval across visitor navigations (60s TTL)
 const businessCache = new LRUCache<string, any>({

@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
     const properties = await prisma.propertyListing.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: (all || phone) ? undefined : 100,
     });
 
     const result = properties.map(p => {

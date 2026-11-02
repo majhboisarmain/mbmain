@@ -218,7 +218,8 @@ export async function GET(request: NextRequest) {
         { premium: 'desc' },
         { rating: 'desc' },
         { views: 'desc' }
-      ]
+      ],
+      take: isDirectBypass ? undefined : 100,
     });
 
     let result: any[] = businesses.map(b => {
