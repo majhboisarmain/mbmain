@@ -605,57 +605,35 @@ export default async function CategorySEOPage({ params, searchParams }: Props) {
             )}
           </div>
 
-          {/* Right Column: Advertisement Stack (4 cols) */}
-          <div className="lg:col-span-4 space-y-4">
-            {/* Ad Card 1 */}
-            <div className="w-full aspect-[300/250] bg-white rounded-2xl border border-slate-200/90 hover:border-indigo-400/60 p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between text-left group">
-              <div>
-                <div className="flex items-center justify-between gap-1 mb-2">
-                  <span className="bg-indigo-50 text-indigo-700 text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded uppercase border border-indigo-100">
-                    Majh Boisar
-                  </span>
-                  <span className="bg-slate-100 text-slate-500 text-[7px] sm:text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider border border-slate-200 shrink-0">
-                    AD
-                  </span>
-                </div>
-                <h4 className="text-[12px] sm:text-base font-black text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug line-clamp-2">
-                  Get 5x More Local Customers!
-                </h4>
-              </div>
-              <div className="mt-auto pt-2">
-                <Link
-                  href="/advertise"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white font-bold text-[9px] sm:text-xs py-2 rounded-xl shadow-2xs transition-all cursor-pointer text-center uppercase tracking-wider block"
-                >
-                  Advertise Now ➔
-                </Link>
-              </div>
-            </div>
+          {/* Right Column: Advertisement Grid (2 cols on mobile, 1 col in desktop sidebar) */}
+          <div className="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-2.5 sm:gap-3.5">
+            {/* Ad Banner 1 - Direct Image Banner */}
+            <a
+              href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar!%20I%20want%20to%20advertise%20my%20business%20locally."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full aspect-square rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md relative overflow-hidden group block cursor-pointer transition-all hover:scale-[1.01]"
+            >
+              <img
+                src="/grow-your-business-locally.png"
+                alt="Grow Your Business Locally - Majh Boisar"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </a>
 
-            {/* Ad Card 2 */}
-            <div className="w-full aspect-[300/250] bg-white rounded-2xl border border-slate-200/90 hover:border-teal-400/60 p-3 sm:p-4 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between text-left group">
-              <div>
-                <div className="flex items-center justify-between gap-1 mb-2">
-                  <span className="bg-teal-50 text-teal-700 text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded uppercase border border-teal-100">
-                    Majh Boisar
-                  </span>
-                  <span className="bg-slate-100 text-slate-500 text-[7px] sm:text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider border border-slate-200 shrink-0">
-                    AD
-                  </span>
-                </div>
-                <h4 className="text-[12px] sm:text-base font-black text-slate-900 group-hover:text-teal-700 transition-colors leading-snug line-clamp-2">
-                  Grow Your Business Locally
-                </h4>
-              </div>
-              <div className="mt-auto pt-2">
-                <Link
-                  href="/advertise"
-                  className="w-full bg-teal-600 hover:bg-teal-700 active:scale-98 text-white font-bold text-[9px] sm:text-xs py-2 rounded-xl shadow-2xs transition-all cursor-pointer text-center uppercase tracking-wider block"
-                >
-                  Get Featured ➔
-                </Link>
-              </div>
-            </div>
+            {/* Ad Banner 2 - Direct Image Banner */}
+            <a
+              href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar!%20I%20want%20to%20get%20featured%20and%20grow%20my%20business."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full aspect-square rounded-xl sm:rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md relative overflow-hidden group block cursor-pointer transition-all hover:scale-[1.01]"
+            >
+              <img
+                src="/grow-your-business-locally.png"
+                alt="Grow Your Business Locally - Majh Boisar"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </a>
           </div>
 
         </div>

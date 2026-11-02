@@ -500,33 +500,19 @@ export default async function LocationPage({ params }: Props) {
           {/* Right Column: Local Ads & Nearby Locality Directory (4 cols) */}
           <div className="lg:col-span-4 space-y-4">
             
-            {/* Ad Card 1 */}
-            <div className="w-full bg-white rounded-2xl border border-slate-200/90 hover:border-indigo-400/60 p-4 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between text-left group">
-              <div>
-                <div className="flex items-center justify-between gap-1 mb-2">
-                  <span className="bg-indigo-50 text-indigo-700 text-[9px] font-black px-2 py-0.5 rounded uppercase border border-indigo-100">
-                    Majh Boisar
-                  </span>
-                  <span className="bg-slate-100 text-slate-500 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider border border-slate-200 shrink-0">
-                    AD
-                  </span>
-                </div>
-                <h4 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-indigo-600 transition-colors leading-snug">
-                  Get 5x More Local Customers in {locationInfo.title}!
-                </h4>
-                <p className="text-xs text-slate-500 mt-1">
-                  Promote your shop, clinic, or service with top spotlight placement.
-                </p>
-              </div>
-              <div className="mt-4 pt-2">
-                <Link
-                  href="/advertise"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white font-bold text-xs py-2 rounded-xl shadow-2xs transition-all cursor-pointer text-center uppercase tracking-wider block"
-                >
-                  Advertise Now ➔
-                </Link>
-              </div>
-            </div>
+            {/* Ad Banner 1 - Direct Image */}
+            <a
+              href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar!%20I%20want%20to%20advertise%20my%20business%20locally."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full aspect-square rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md relative overflow-hidden group block cursor-pointer transition-all hover:scale-[1.01]"
+            >
+              <img
+                src="/grow-your-business-locally.png"
+                alt="Grow Your Business Locally - Majh Boisar"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </a>
 
             {/* Other Boisar Localities Nav Card */}
             <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs text-left space-y-3">
@@ -550,33 +536,19 @@ export default async function LocationPage({ params }: Props) {
               </div>
             </div>
 
-            {/* Ad Card 2 */}
-            <div className="w-full bg-white rounded-2xl border border-slate-200/90 hover:border-teal-400/60 p-4 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between text-left group">
-              <div>
-                <div className="flex items-center justify-between gap-1 mb-2">
-                  <span className="bg-teal-50 text-teal-700 text-[9px] font-black px-2 py-0.5 rounded uppercase border border-teal-100">
-                    Majh Boisar
-                  </span>
-                  <span className="bg-slate-100 text-slate-500 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider border border-slate-200 shrink-0">
-                    AD
-                  </span>
-                </div>
-                <h4 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-teal-700 transition-colors leading-snug">
-                  Grow Your Business Locally
-                </h4>
-                <p className="text-xs text-slate-500 mt-1">
-                  Reach 10,000+ local citizens searching on Majh Boisar daily.
-                </p>
-              </div>
-              <div className="mt-4 pt-2">
-                <Link
-                  href="/advertise"
-                  className="w-full bg-teal-600 hover:bg-teal-700 active:scale-98 text-white font-bold text-xs py-2 rounded-xl shadow-2xs transition-all cursor-pointer text-center uppercase tracking-wider block"
-                >
-                  Get Featured ➔
-                </Link>
-              </div>
-            </div>
+            {/* Ad Banner 2 - Direct Image */}
+            <a
+              href="https://wa.me/917769947217?text=Hello%20Majh%20Boisar!%20I%20want%20to%20get%20featured%20and%20grow%20my%20business."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full aspect-square rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-md relative overflow-hidden group block cursor-pointer transition-all hover:scale-[1.01]"
+            >
+              <img
+                src="/grow-your-business-locally.png"
+                alt="Grow Your Business Locally - Majh Boisar"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </a>
 
           </div>
 

@@ -554,7 +554,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
                       <img 
                         src="/majh-boisar-full-logo.png" 
                         alt="Majh Boisar" 
-                        className="h-7 sm:h-8 w-auto object-contain brightness-0 invert drop-shadow-md select-none transition-transform duration-200 group-hover:scale-105" 
+                        className="h-10 sm:h-12 w-auto object-contain brightness-0 invert drop-shadow-md select-none transition-transform duration-200 group-hover:scale-105" 
                       />
                     </a>
 
