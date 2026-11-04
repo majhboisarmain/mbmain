@@ -198,10 +198,18 @@ export async function PUT(
         return NextResponse.json({ error: 'Business not found' }, { status: 404 });
       }
 
-      const existingPhoneDigits = (existingBiz.createdBy || existingBiz.phone || '').replace(/\D/g, '').slice(-10);
+      const createdByDigits = (existingBiz.createdBy || '').replace(/\D/g, '').slice(-10);
+      const phoneDigits = (existingBiz.phone || '').replace(/\D/g, '').slice(-10);
       const callerPhone = (body.callerPhone || body.ownerPhone || request.headers.get('x-user-phone') || '').replace(/\D/g, '').slice(-10);
 
-      if (!callerPhone || !existingPhoneDigits || callerPhone !== existingPhoneDigits) {
+      const isAuthorized = Boolean(
+        callerPhone && (
+          (createdByDigits && callerPhone === createdByDigits) ||
+          (phoneDigits && callerPhone === phoneDigits)
+        )
+      );
+
+      if (!isAuthorized) {
         return NextResponse.json(
           { error: 'Forbidden: You do not have permission to modify this business listing.' },
           { status: 403 }
@@ -239,27 +247,21 @@ export async function PUT(
       const existing = await prisma.business.findUnique({ where: { id: businessId } });
       const currentParts = existing?.image ? existing.image.split('||gallery_sep||') : [];
       
-      let currentLogo = currentParts[0] || '';
-      if (image !== undefined) {
-        currentLogo = (await uploadImage(image)) || currentLogo;
+      let mainLogo = currentParts[0] || '';
+      if (image !== undefined && image !== null) {
+        mainLogo = (await uploadImage(image)) || mainLogo;
+      } else if (body.coverImage !== undefined && body.coverImage !== null) {
+        mainLogo = (await uploadImage(body.coverImage)) || mainLogo;
       }
 
-      let currentCover = currentParts[1] || '';
-      if (body.coverImage !== undefined) {
-        currentCover = (await uploadImage(body.coverImage)) || currentCover;
-      }
-      
-      let currentGallery = currentParts.slice(2);
-      if (body.gallery !== undefined) {
+      let galleryPhotos = currentParts.slice(1);
+      if (body.gallery !== undefined && Array.isArray(body.gallery)) {
         const uploaded = await uploadGallery(body.gallery);
-        currentGallery = uploaded.filter((img: string) => img !== currentLogo && img !== currentCover);
+        galleryPhotos = uploaded.filter((img: string) => img && img !== mainLogo);
       }
-      
-      const assembled = [currentLogo];
-      if (currentCover) assembled.push(currentCover);
-      if (currentGallery.length > 0) assembled.push(...currentGallery);
 
-      data.image = assembled.filter(Boolean).join('||gallery_sep||');
+      const assembled = [mainLogo, ...galleryPhotos].filter(Boolean);
+      data.image = assembled.join('||gallery_sep||');
     }
     // Privilege Escalation Guard: Only Admin can grant premium, verified, or change subscription tier directly
     if (isAdmin) {

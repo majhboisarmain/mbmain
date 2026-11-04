@@ -3575,7 +3575,10 @@ const handleUpdateProfileSubmit = async (e: React.FormEvent) => {
       })
     });
 
-    if (!res.ok) throw new Error('Failed to save profile changes.');
+    if (!res.ok) {
+      const errData = await res.json().catch(() => null);
+      throw new Error(errData?.error || `Failed to save profile changes (Status: ${res.status})`);
+    }
 
     setUpdateProfileSuccess(true);
     await fetchBusinessData();
@@ -10247,15 +10250,21 @@ return (
                             type="file"
                             accept="image/*"
                             id="edit-profile-cover-upload"
-                            onChange={(e) => {
+                            onChange={async (e) => {
                               const file = e.target.files?.[0];
                               if (!file) return;
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                const base64 = reader.result as string;
-                                if (base64) setEditImage(base64);
-                              };
-                              reader.readAsDataURL(file);
+                              try {
+                                const compressed = await compressImage(file, 1200, 1200, 0.8);
+                                if (compressed) setEditImage(compressed);
+                              } catch (err) {
+                                console.error('Cover compression error, falling back to FileReader:', err);
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  const base64 = reader.result as string;
+                                  if (base64) setEditImage(base64);
+                                };
+                                reader.readAsDataURL(file);
+                              }
                               e.target.value = '';
                             }}
                             className="hidden"
@@ -10286,23 +10295,33 @@ return (
                       <input
                         type="file"
                         accept="image/*"
+                        multiple
                         id="edit-profile-gallery-upload"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
+                        onChange={async (e) => {
+                          const files = Array.from(e.target.files || []);
+                          if (files.length === 0) return;
                           const photosLimit = planLimits[currentPlan]?.photos ?? 3;
-                          if (editGalleryPhotos.length >= photosLimit) {
+                          const availableSlots = photosLimit - editGalleryPhotos.length;
+                          if (availableSlots <= 0) {
                             alert(`Gallery photo limit reached! Your ${currentPlan} Plan only allows up to ${photosLimit} photos. Please upgrade to Pro for more space.`);
+                            e.target.value = '';
                             return;
                           }
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            const base64 = reader.result as string;
-                            if (base64 && !editGalleryPhotos.includes(base64)) {
-                              setEditGalleryPhotos(prev => [...prev, base64]);
+                          const filesToProcess = files.slice(0, availableSlots);
+                          const compressedList: string[] = [];
+                          for (const file of filesToProcess) {
+                            try {
+                              const compressed = await compressImage(file, 1200, 1200, 0.8);
+                              if (compressed && !editGalleryPhotos.includes(compressed)) {
+                                compressedList.push(compressed);
+                              }
+                            } catch (err) {
+                              console.error('Gallery compression error:', err);
                             }
-                          };
-                          reader.readAsDataURL(file);
+                          }
+                          if (compressedList.length > 0) {
+                            setEditGalleryPhotos(prev => [...prev, ...compressedList]);
+                          }
                           e.target.value = '';
                         }}
                         className="hidden"
