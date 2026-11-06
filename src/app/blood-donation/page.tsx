@@ -81,10 +81,11 @@ export default function BloodDonationPage() {
           fetchDonors();
         }
       };
-      window.addEventListener('visibilitychange', handleVisibility);
+      fetchDonors();
+      document.addEventListener('visibilitychange', handleVisibility);
       window.addEventListener('focus', fetchDonors);
       return () => {
-        window.removeEventListener('visibilitychange', handleVisibility);
+        document.removeEventListener('visibilitychange', handleVisibility);
         window.removeEventListener('focus', fetchDonors);
       };
     }

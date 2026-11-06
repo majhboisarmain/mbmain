@@ -899,7 +899,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   useEffect(() => {
     const fetchBusinesses = async () => {
       try {
-        const res = await fetch('/api/businesses', { next: { revalidate: 60 } });
+        const res = await fetch('/api/businesses?summary=true');
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) {
@@ -2134,11 +2134,16 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
   return (
     <div className="min-h-screen pb-2 sm:pb-3 text-slate-800 font-sans bg-white">
-      
+      <div
+        className="w-full"
+        style={{
+          backgroundImage:
+            "linear-gradient(105deg, #7100bd 0%, #a02cdb 52%, #e5b5f7 100%)",
+        }}
+      >
       {/* 1. Hero Search Panel */}
       <div 
-        className="relative border-b border-slate-150 pt-2.5 pb-3 sm:pt-4 sm:pb-5 overflow-visible bg-cover bg-no-repeat bg-center z-40"
-        style={{ backgroundImage: "url('/hero-bg.png')" }}
+        className="relative border-b border-slate-150 pt-2.5 pb-3 sm:pt-4 sm:pb-5 overflow-visible z-40"
       >
         {/* Large watermark MB Logo centered in the background - clear and prominent */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0 overflow-hidden">
@@ -2362,7 +2367,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       </div>
 
       {/* 2. Quick Services & Hubs — NoBroker 8 Cards Grid Style */}
-      <div className="w-full bg-gradient-to-b from-[#f0f7f7] via-[#f5f9f9] to-[#fafbfb] border-b border-slate-200/70 py-3 sm:py-4.5">
+      <div className="w-full border-b border-slate-200/70 py-3 sm:py-4.5">
         <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
           <div className="grid grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3.5 items-stretch">
 
@@ -2477,7 +2482,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 height={88}
                 decoding="async"
                 className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
-                loading="eager"
+                loading="lazy"
               />
             </div>
           </div>
@@ -2500,7 +2505,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 height={88}
                 decoding="async"
                 className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
-                loading="eager"
+                loading="lazy"
               />
             </div>
           </div>
@@ -2523,7 +2528,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 height={88}
                 decoding="async"
                 className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
-                loading="eager"
+                loading="lazy"
               />
             </div>
           </div>
@@ -2546,7 +2551,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                 height={88}
                 decoding="async"
                 className="w-14 h-14 sm:w-18 sm:h-18 lg:w-20 lg:h-20 object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-sm"
-                loading="eager"
+                loading="lazy"
               />
             </div>
           </div>
@@ -2554,17 +2559,17 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           </div>
         </div>
       </div>
+      </div>
 
       {/* 3. Grid of Category Blocks (MakeMyTrip Style Single Card with 4 Columns on Mobile) */}
-      <div className="w-full py-2.5 sm:py-5">
-        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
-          {/* Unified White Card Container (MakeMyTrip Style) */}
-          <div className="bg-white rounded-3xl border border-slate-200/90 shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4 sm:p-6 transition-all">
+      <div className="w-full bg-gradient-to-br from-teal-50/70 via-white to-rose-50/40 py-3 sm:py-5">
+        <div className="mx-auto max-w-[1720px] px-3 sm:px-6 lg:px-8">
+          <div className="p-3 sm:p-4 transition-all">
             {/* Header inside the card */}
-            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
+            <div className="flex items-center justify-between pb-3 mb-4">
               <div className="flex items-center gap-2">
-                <span className="h-4 w-1 rounded-full bg-[#008080] shrink-0"></span>
-                <h2 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
+                <span className="h-6 w-1.5 rounded-full bg-[#008080] shrink-0"></span>
+                <h2 className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight">
                   Explore Categories
                 </h2>
               </div>
@@ -2585,7 +2590,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
             </div>
 
             {/* Exactly 4 Columns on Mobile & Responsive Grid, Clean Unboxed Items */}
-            <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-y-5 sm:gap-y-6 gap-x-2 sm:gap-x-4">
+            <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-y-6 sm:gap-y-7 gap-x-2 sm:gap-x-4">
               {displayedCategories.map((cat) => {
                 return (
                 <Link
@@ -2595,8 +2600,10 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                   className="group flex flex-col items-center justify-start text-center cursor-pointer active:scale-95 transition-transform"
                 >
                   {/* Clean 3D Isometric Icon (MMT Style) */}
-                  <div className="relative w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
-                    {cat.icon}
+                  <div className="relative w-[66px] h-[66px] sm:w-20 sm:h-20 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-[22px] sm:rounded-[26px] border border-slate-200 bg-white shadow-[4px_5px_0_rgba(15,23,42,0.10)] flex items-center justify-center transition-all duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[5px_7px_0_rgba(13,148,136,0.14)]">
+                    <div className="flex items-center justify-center scale-110 md:scale-110">
+                      {cat.icon}
+                    </div>
                     {cat.count > 0 && (
                       <span className="absolute -top-1 -right-1 bg-teal-800 text-white text-[8px] sm:text-[8.5px] font-black px-1.5 py-0.2 rounded-full shadow-xs pointer-events-none border border-white">
                         {cat.count}
@@ -2620,7 +2627,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-7 sm:mt-10">
         <div className="space-y-7 sm:space-y-10">
           {/* Loans in Boisar Section - 2x2 Grid with Swipe */}
-          <div className="py-2 sm:py-4">
+          <div className="rounded-3xl border border-purple-200/70 bg-gradient-to-br from-[#f3e8ff] via-[#ede9fe] to-[#e9d5ff] px-3 py-4 shadow-[0_8px_24px_rgba(126,34,206,0.08)] sm:px-5 sm:py-6">
             {/* Left-Aligned Section Header with Amber Underline */}
             <div className="text-left mb-3.5 sm:mb-4 px-1">
               <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight inline-block">
@@ -2753,7 +2760,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           </div>
 
           {/* Insurance Plans Section - 2x2 Grid with Swipe */}
-          <div className="py-2 sm:py-4">
+          <div className="rounded-3xl border border-purple-200/70 bg-gradient-to-br from-[#f3e8ff] via-[#ede9fe] to-[#e9d5ff] px-3 py-4 shadow-[0_8px_24px_rgba(126,34,206,0.08)] sm:px-5 sm:py-6">
             {/* Left-Aligned Section Header with Emerald Underline */}
             <div className="text-left mb-3.5 sm:mb-4 px-1">
               <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight inline-block">
@@ -2886,7 +2893,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           </div>
 
           {/* Digital Marketing Services Section - 2x2 Grid with Swipe */}
-          <div className="py-2 sm:py-4">
+          <div className="rounded-3xl border border-purple-200/70 bg-gradient-to-br from-[#f3e8ff] via-[#ede9fe] to-[#e9d5ff] px-3 py-4 shadow-[0_8px_24px_rgba(126,34,206,0.08)] sm:px-5 sm:py-6">
             {/* Left-Aligned Section Header with Red Underline */}
             <div className="text-left mb-3.5 sm:mb-4 px-1">
               <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight inline-block">
@@ -3028,7 +3035,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           </div>
 
           {/* Stores & Shopping Section - 2x2 Grid with Swipe */}
-          <div className="py-2 sm:py-4">
+          <div className="rounded-3xl border border-purple-200/70 bg-gradient-to-br from-[#f3e8ff] via-[#ede9fe] to-[#e9d5ff] px-3 py-4 shadow-[0_8px_24px_rgba(126,34,206,0.08)] sm:px-5 sm:py-6">
             {/* Left-Aligned Section Header with Indigo Underline */}
             <div className="text-left mb-3.5 sm:mb-4 px-1">
               <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight inline-block">
@@ -3192,7 +3199,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
 
       {/* 8. Iconic Places You Need to See (Boisar & Palghar Travel Destinations placed at the bottom of the page) */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-5 sm:mt-6 mb-2 sm:mb-3">
+      <div className="mx-auto max-w-7xl px-4 sm:mt-6 sm:px-6 lg:px-8 mt-5 mb-2 sm:mb-3">
         <div className="flex items-center justify-between mb-3.5 sm:mb-4">
           <div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#064e3b] tracking-tight">
@@ -7885,4 +7892,3 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
     </div>
   );
 }
-

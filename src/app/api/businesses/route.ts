@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     const location = searchParams.get('location');
     const isAdmin = searchParams.get('admin') === 'true';
     const showAll = searchParams.get('showAll') === 'true' || isAdmin;
+    const summary = searchParams.get('summary') === 'true';
     const premium = searchParams.get('premium') === 'true';
     const minRating = searchParams.get('rating') ? parseFloat(searchParams.get('rating')!) : null;
     const hasTimestamp = Boolean(searchParams.get('_t'));
@@ -203,24 +204,53 @@ export async function GET(request: NextRequest) {
       where.AND = andClauses;
     }
 
-    const businesses = await prisma.business.findMany({
-      where,
-      include: {
-        reviews: {
-          orderBy: { createdAt: 'desc' },
-          take: 5
+    const orderBy = [
+      { premium: 'desc' as const },
+      { rating: 'desc' as const },
+      { views: 'desc' as const }
+    ];
+    const businesses = summary
+      ? (await prisma.business.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          category: true,
+          subcategory: true,
+          description: true,
+          address: true,
+          location: true,
+          verified: true,
+          premium: true,
+          subscription: true,
+          rating: true,
+          image: true,
+          views: true,
+          latitude: true,
+          longitude: true,
         },
-        services: true,
-        products: true,
-        faqs: true
-      },
-      orderBy: [
-        { premium: 'desc' },
-        { rating: 'desc' },
-        { views: 'desc' }
-      ],
-      take: isDirectBypass ? undefined : 100,
-    });
+        orderBy,
+        take: isDirectBypass ? undefined : 100,
+      })).map(business => ({
+        ...business,
+        reviews: [] as { rating: number }[],
+        services: [],
+        products: [],
+      }))
+      : await prisma.business.findMany({
+        where,
+        include: {
+          reviews: {
+            orderBy: { createdAt: 'desc' },
+            take: 5
+          },
+          services: true,
+          products: true,
+          faqs: true
+        },
+        orderBy,
+        take: isDirectBypass ? undefined : 100,
+      });
 
     let result: any[] = businesses.map(b => {
       const parts = (b.image || '').split('||gallery_sep||');
