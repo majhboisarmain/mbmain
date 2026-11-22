@@ -39,7 +39,7 @@ import ExitAppModal from '@/components/ExitAppModal';
 import MMTCategoryIcon from '@/components/MMTCategoryIcon';
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
 import { BOISAR_ICONIC_PLACES, IconicPlace } from '@/lib/placesData';
-import { getCategorySlug, formatCategoryTitle, getCategorySearchTerms } from '@/lib/categories';
+import { getCategorySlug, formatCategoryTitle, getCategorySearchTerms, getCategoryMatchingVariants } from '@/lib/categories';
 
 const toTitleCase = (str: string) => {
   return str
@@ -1955,7 +1955,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
   const getCategoryBusinessCount = (catName: string, bizList: Business[]): number => {
     const canonicalTarget = formatCategoryTitle(catName).toLowerCase();
     const slug = getCategorySlug(catName);
-    const searchTerms = getCategorySearchTerms(catName).map(t => t.toLowerCase());
+    const variants = getCategoryMatchingVariants(catName).map(v => v.toLowerCase());
 
     return bizList.filter(b => {
       if (!b || !b.verified) return false;
@@ -1970,8 +1970,10 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       // 2. Direct Slug match
       if (bSlug === slug) return true;
 
-      // 3. Synonym Match
-      return searchTerms.some(term => term.length >= 4 && (bCat.includes(term) || bSub.includes(term)));
+      // 3. Known variant match (e.g. "Automobile Garages", "RO Service")
+      if (variants.includes(bCat) || variants.includes(bSub)) return true;
+
+      return false;
     }).length;
   };
 

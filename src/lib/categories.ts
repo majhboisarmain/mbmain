@@ -380,12 +380,39 @@ export const CATEGORY_SLUG_MAP: Record<string, string> = {
   'auto-garages': 'Auto Garages',
   'garages': 'Auto Garages',
   'garage': 'Auto Garages',
+  'car-repair': 'Auto Garages',
+  'bike-repair': 'Auto Garages',
+  'car-service': 'Auto Garages',
+  'bike-service': 'Auto Garages',
+  'car-service-centers': 'Auto Garages',
+  'bike-service-centers': 'Auto Garages',
   'car-rentals': 'Car Rentals',
   'car-rental': 'Car Rentals',
   'packers-movers': 'Packers Movers',
   'event-organisers': 'Event Organisers',
   'catering': 'Catering',
   'digital-marketing': 'Digital Marketing',
+  'digital-marketing-agencies': 'Digital Marketing',
+  'digital-marketing-agency': 'Digital Marketing',
+  'digital-marketing-services': 'Digital Marketing',
+  'business-automation': 'Business Automation',
+  'automation': 'Business Automation',
+  'web-developers': 'Web Developers',
+  'web-developer': 'Web Developers',
+  'website-development': 'Web Developers',
+  'web-development': 'Web Developers',
+  'mobile-app-developers': 'Mobile App Developers',
+  'app-developers': 'Mobile App Developers',
+  'contractors': 'Contractors',
+  'contractor': 'Contractors',
+  'cctv-installation': 'CCTV Installation',
+  'cctv': 'CCTV Installation',
+  '3d-printing': '3D Printing',
+  'civil-construction-estimator': 'Civil Construction Estimator',
+  'hyperlocal-delivery': 'Hyperlocal Delivery',
+  'astrologers': 'Astrologers',
+  'astrologer': 'Astrologers',
+  'computer-institutes': 'Computer Institutes',
   'insurance': 'Insurance',
   'lawyers': 'Lawyers',
   'pet-clinics': 'Pet Clinics',
@@ -482,8 +509,26 @@ export function formatCategoryTitle(raw: string): string {
   if (slug.includes('protein')) {
     return 'Protein';
   }
+  if (slug.includes('automation')) {
+    return 'Business Automation';
+  }
+  if (slug.includes('digital-marketing') || (slug.includes('marketing') && !slug.includes('printing'))) {
+    return 'Digital Marketing';
+  }
+  if (slug.includes('3d-printing')) {
+    return '3D Printing';
+  }
   if (slug.includes('printing') || slug.includes('radium')) {
     return 'Digital Printing';
+  }
+  if (slug.includes('garage') || slug.includes('mechanic') || (slug.includes('auto') && !slug.includes('automation') && !slug.includes('software'))) {
+    return 'Auto Garages';
+  }
+  if (slug.includes('web-dev') || slug.includes('website-dev')) {
+    return 'Web Developers';
+  }
+  if (slug.includes('app-dev')) {
+    return 'Mobile App Developers';
   }
   if (slug.includes('school') || slug.includes('college')) {
     return 'Schools';
@@ -643,12 +688,18 @@ export const CATEGORY_SEARCH_SYNONYMS: Record<string, string[]> = {
   'hardware': ['hardware', 'building material'],
   'interior-designers': ['interior designer', 'home decor'],
   'fabrication': ['fabrication', 'aluminium fabrication'],
-  'automobile-garages': ['garage', 'car repair', 'bike repair'],
+  'automobile-garages': ['auto garages', 'automobile garages', 'car repair', 'bike repair', 'car service', 'bike service', 'motor garage', 'mechanic'],
+  'auto-garages': ['auto garages', 'automobile garages', 'car repair', 'bike repair', 'car service', 'bike service', 'motor garage', 'mechanic'],
+  'business-automation': ['business automation', 'crm software', 'automation software', 'process automation', 'workflow automation'],
   'car-rentals': ['car rental', 'bike rental', 'taxi service'],
   'packers-movers': ['packers movers', 'shifting service'],
   'event-organisers': ['event organiser', 'event decorator'],
   'catering': ['catering', 'tiffin service'],
-  'digital-marketing': ['digital marketing', 'web development', 'seo'],
+  'digital-marketing': ['digital marketing', 'digital marketing agencies', 'digital marketing agency', 'seo services', 'social media marketing', 'digital ad agency'],
+  'digital-marketing-agencies': ['digital marketing', 'digital marketing agencies', 'digital marketing agency', 'seo services', 'social media marketing'],
+  'web-developers': ['web developers', 'web developer', 'website development', 'web development', 'software development'],
+  'mobile-app-developers': ['mobile app developers', 'app developer', 'android developer', 'ios developer', 'app development'],
+  'contractors': ['contractors', 'contractor', 'civil contractor', 'building contractor', 'flooring contractor'],
   'insurance': ['insurance', 'lic', 'life insurance'],
   'lawyers': ['lawyer', 'advocate', 'legal advisor'],
   'pet-clinics': ['pet clinic', 'veterinary'],
@@ -658,7 +709,45 @@ export const CATEGORY_SEARCH_SYNONYMS: Record<string, string[]> = {
 };
 
 /**
- * Returns broad search keywords for a category to capture variants in the database.
+ * Returns distinct category variants for strict, canonical matching in DB queries.
+ * Guarantees zero cross-category bleeding.
+ */
+export function getCategoryMatchingVariants(categorySlugOrTitle: string): string[] {
+  const canonical = formatCategoryTitle(categorySlugOrTitle);
+  const targetSlug = getCategorySlug(canonical);
+  const variants = new Set<string>();
+
+  variants.add(canonical);
+  variants.add(categorySlugOrTitle.trim());
+
+  // Collect all known slugs from CATEGORY_SLUG_MAP that map to this canonical title
+  for (const [slugKey, mappedCanonical] of Object.entries(CATEGORY_SLUG_MAP)) {
+    if (mappedCanonical.toLowerCase() === canonical.toLowerCase()) {
+      variants.add(slugKey.replace(/-/g, ' '));
+      variants.add(
+        slugKey
+          .split('-')
+          .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ')
+      );
+    }
+  }
+
+  // Add specific multi-word synonyms if defined
+  const syns = CATEGORY_SEARCH_SYNONYMS[targetSlug] || CATEGORY_SEARCH_SYNONYMS[getCategorySlug(categorySlugOrTitle)];
+  if (syns) {
+    syns.forEach(s => {
+      if (s.length >= 4 && !['auto', 'car', 'bus', 'pro', 'art'].includes(s.toLowerCase())) {
+        variants.add(s);
+      }
+    });
+  }
+
+  return Array.from(variants).filter(Boolean);
+}
+
+/**
+ * Returns search keywords for a category.
  */
 export function getCategorySearchTerms(rawSlugOrTitle: string): string[] {
   const slug = getCategorySlug(rawSlugOrTitle);
@@ -686,58 +775,73 @@ export function getCategorySearchTerms(rawSlugOrTitle: string): string[] {
 
 /**
  * Builds Prisma where filter conditions for a category page.
- * Strictly checks category & subcategory, plus distinctive name conditions.
- * Enforces category isolation so unrelated categories never cross.
+ * Strictly guarantees that ONLY businesses truly belonging to the category are returned.
  */
 export function buildCategoryPrismaFilter(categorySlugOrTitle: string, selectedArea?: string) {
-  const title = formatCategoryTitle(categorySlugOrTitle);
-  const terms = getCategorySearchTerms(categorySlugOrTitle);
+  const canonical = formatCategoryTitle(categorySlugOrTitle);
+  const variants = getCategoryMatchingVariants(categorySlugOrTitle);
 
-  // Exact or containment conditions strictly on category and subcategory
+  // Exact or in-variant conditions strictly on category and subcategory
   const categoryConditions: any[] = [
-    { category: { equals: title, mode: 'insensitive' } },
-    { category: { contains: title, mode: 'insensitive' } },
-    { subcategory: { contains: title, mode: 'insensitive' } },
+    { category: { equals: canonical, mode: 'insensitive' } },
+    { category: { in: variants, mode: 'insensitive' } },
+    { subcategory: { equals: canonical, mode: 'insensitive' } },
+    { subcategory: { in: variants, mode: 'insensitive' } }
   ];
 
-  terms.forEach(term => {
-    if (!term || term.length < 3) return;
-    categoryConditions.push({ category: { contains: term, mode: 'insensitive' } });
-    categoryConditions.push({ subcategory: { contains: term, mode: 'insensitive' } });
-  });
-
-  const orConditions: any[] = [
-    ...categoryConditions
-  ];
+  // For multi-word canonical phrases (e.g. "Auto Garages", "Water Purifier"), also allow exact phrase match
+  if (canonical.includes(' ') && canonical.length >= 6) {
+    categoryConditions.push({ category: { contains: canonical, mode: 'insensitive' } });
+  }
 
   const whereClause: any = {
     verified: true,
-    OR: orConditions
+    OR: categoryConditions
   };
 
-  // CATEGORY ISOLATION RULES
-  const lowerSlug = getCategorySlug(categorySlugOrTitle);
-  if (lowerSlug.includes('dance') || lowerSlug.includes('music')) {
+  // STRICT CATEGORY ISOLATION RULES: Ensure completely clean separation
+  const lowerTarget = canonical.toLowerCase();
+  if (lowerTarget.includes('garage') || lowerTarget.includes('auto garage')) {
+    whereClause.NOT = [
+      { category: { contains: 'automation', mode: 'insensitive' } },
+      { category: { contains: 'software', mode: 'insensitive' } }
+    ];
+  } else if (lowerTarget.includes('automation')) {
+    whereClause.NOT = [
+      { category: { contains: 'garage', mode: 'insensitive' } },
+      { category: { contains: 'repair', mode: 'insensitive' } }
+    ];
+  } else if (lowerTarget.includes('digital marketing')) {
+    whereClause.NOT = [
+      { category: { contains: 'printing', mode: 'insensitive' } },
+      { category: { contains: 'radium', mode: 'insensitive' } }
+    ];
+  } else if (lowerTarget.includes('digital printing') || lowerTarget.includes('printing')) {
+    whereClause.NOT = [
+      { category: { contains: 'marketing', mode: 'insensitive' } },
+      { category: { contains: 'developer', mode: 'insensitive' } }
+    ];
+  } else if (lowerTarget.includes('dance') || lowerTarget.includes('music')) {
     whereClause.NOT = [
       { category: { in: ['Loans', 'Loan Consultants', 'Finance', 'Insurance', 'Real Estate', 'Properties', 'Hardware', 'Protein', 'Protein Shop', 'Water Purifier', 'RO Service'] } }
     ];
-  } else if (lowerSlug.includes('loan') || lowerSlug.includes('finance')) {
+  } else if (lowerTarget.includes('loan') || lowerTarget.includes('finance')) {
     whereClause.NOT = [
       { category: { in: ['Sports Shops', 'Sports', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop', 'Water Purifier', 'RO Service', 'Digital Printing', 'Schools', 'Footwear', 'Eye Opticians', 'Clothing', 'Medical Stores', 'Grocery', 'Electronics', 'Mobile Shops'] } }
     ];
-  } else if (lowerSlug.includes('protein')) {
+  } else if (lowerTarget.includes('protein')) {
     whereClause.NOT = [
       { category: { in: ['Loans', 'Loan Consultants', 'Dance Classes', 'Music Classes', 'Water Purifier', 'RO Service'] } }
     ];
-  } else if (lowerSlug.includes('water') || lowerSlug.includes('purifier') || lowerSlug.includes('ro')) {
+  } else if (lowerTarget.includes('water') || lowerTarget.includes('purifier') || lowerTarget.includes('ro')) {
     whereClause.NOT = [
       { category: { in: ['Loans', 'Loan Consultants', 'Finance', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop'] } }
     ];
-  } else if (lowerSlug.includes('furniture')) {
+  } else if (lowerTarget.includes('furniture')) {
     whereClause.NOT = [
       { category: { in: ['Footwear', 'Footwear Stores', 'Shoes', 'Shoe Stores', 'Loans', 'Loan Consultants', 'Finance', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants', 'Protein', 'Protein Shop', 'Water Purifier', 'Schools'] } }
     ];
-  } else if (lowerSlug.includes('footwear') || lowerSlug.includes('shoe')) {
+  } else if (lowerTarget.includes('footwear') || lowerTarget.includes('shoe')) {
     whereClause.NOT = [
       { category: { in: ['Furniture', 'Furniture Stores', 'Carpenters', 'Loans', 'Finance', 'Dance Classes', 'Music Classes', 'Gyms', 'Salons', 'Restaurants'] } }
     ];

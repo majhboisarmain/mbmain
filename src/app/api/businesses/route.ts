@@ -8,7 +8,7 @@ import { specialProfiles } from '@/lib/mockProfiles'; // Clean HMR
 import { businessSchema } from '@/lib/validations';
 import { badRequestResponse, internalServerErrorResponse } from '@/lib/authGuard';
 import { expandCategorySearchTerms } from '@/lib/categoryMapping';
-import { formatCategoryTitle, getCategorySearchTerms } from '@/lib/categories';
+import { formatCategoryTitle, getCategorySearchTerms, getCategoryMatchingVariants } from '@/lib/categories';
 import { generateBusinessSlug } from '@/lib/slugify';
 
 // In-memory cache for fast search queries and listing summaries (3m TTL)
@@ -75,30 +75,42 @@ export async function GET(request: NextRequest) {
     if (category && category !== 'All') {
       const cleanCat = category.trim();
       const formattedTitle = formatCategoryTitle(cleanCat);
-      const categoryTerms = getCategorySearchTerms(cleanCat);
-
-      const candidateTerms = Array.from(new Set([
-        cleanCat,
-        formattedTitle,
-        ...categoryTerms
-      ])).filter(Boolean);
+      const variants = getCategoryMatchingVariants(cleanCat);
 
       const categoryOrConditions: any[] = [
         { category: { equals: formattedTitle, mode: 'insensitive' } },
-        { category: { contains: formattedTitle, mode: 'insensitive' } },
-        { subcategory: { contains: formattedTitle, mode: 'insensitive' } },
-        ...candidateTerms.map(t => ({ category: { contains: t, mode: 'insensitive' } })),
-        ...candidateTerms.map(t => ({ subcategory: { contains: t, mode: 'insensitive' } })),
-        { services: { some: { name: { contains: formattedTitle, mode: 'insensitive' } } } }
+        { category: { in: variants, mode: 'insensitive' } },
+        { subcategory: { equals: formattedTitle, mode: 'insensitive' } },
+        { subcategory: { in: variants, mode: 'insensitive' } }
       ];
+
+      if (formattedTitle.includes(' ') && formattedTitle.length >= 6) {
+        categoryOrConditions.push({ category: { contains: formattedTitle, mode: 'insensitive' } });
+      }
 
       andClauses.push({ OR: categoryOrConditions });
 
       // Category Isolation: Prevent cross-category bleed
-      const lowerCat = cleanCat.toLowerCase();
-      if (lowerCat.includes('dance') || lowerCat.includes('music')) {
+      const lowerCat = formattedTitle.toLowerCase();
+      if (lowerCat.includes('garage') || lowerCat.includes('auto garage')) {
         andClauses.push({
-          category: { notIn: ['Loans', 'Loan Consultants', 'Finance', 'Insurance', 'Real Estate', 'Properties', 'Hardware', 'Water Purifier', 'RO Service'] }
+          category: { notIn: ['Business Automation', 'Accounting Software Dealers'] }
+        });
+      } else if (lowerCat.includes('automation')) {
+        andClauses.push({
+          category: { notIn: ['Auto Garages', 'Car Rentals'] }
+        });
+      } else if (lowerCat.includes('digital marketing')) {
+        andClauses.push({
+          category: { notIn: ['Digital Printing', '3D Printing'] }
+        });
+      } else if (lowerCat.includes('digital printing') || lowerCat.includes('printing')) {
+        andClauses.push({
+          category: { notIn: ['Digital Marketing', 'Digital Marketing Agencies', 'Web Developers'] }
+        });
+      } else if (lowerCat.includes('dance') || lowerCat.includes('music')) {
+        andClauses.push({
+          category: { notIn: ['Loans', 'Loan Consultants', 'Finance', 'Insurance', 'Real Estate', 'Properties', 'Hardware', 'Protein', 'Protein Shop', 'Water Purifier', 'RO Service'] }
         });
       } else if (lowerCat.includes('loan') || lowerCat.includes('finance')) {
         andClauses.push({
@@ -513,13 +525,6 @@ export async function POST(request: NextRequest) {
       const phoneDigits = cleanPhone.replace(/\D/g, '').slice(-10);
       const whatsappDigits = cleanWhatsapp.replace(/\D/g, '').slice(-10);
       const ownerDigits = cleanOwnerPhone.replace(/\D/g, '').slice(-10);
-
-      // Verify business phone strictly matches the logged-in user's phone
-      if (ownerDigits && ownerDigits.length === 10 && phoneDigits !== ownerDigits) {
-        return badRequestResponse(
-          `Business registration phone number (${phoneDigits}) aapke login number (${ownerDigits}) se match nahi karta. Sirf apne login number se hi business register ho sakta hai.`
-        );
-      }
 
       const checkPhones = Array.from(new Set([phoneDigits, whatsappDigits, ownerDigits].filter(p => p && p.length === 10)));
 

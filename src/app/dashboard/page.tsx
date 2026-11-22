@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
@@ -2837,26 +2837,26 @@ _Powered by Majh Boisar (majhboisar.com)_`
   const [newBizWhatsapp, setNewBizWhatsapp] = useState('');
   const [newBizEmail, setNewBizEmail] = useState('');
 
-  // Auto-prefill contact details from logged-in user
+  // Auto-prefill contact details from logged-in user ONCE on initial load
+  const hasPrefilledContactRef = useRef(false);
   useEffect(() => {
-    if (loggedInUser) {
-      if (loggedInUser.name && !newBizContactPerson) {
+    if (loggedInUser && !hasPrefilledContactRef.current) {
+      hasPrefilledContactRef.current = true;
+      if (loggedInUser.name) {
         setNewBizContactPerson(loggedInUser.name);
       }
       if (loggedInUser.phone) {
         const clean = loggedInUser.phone.replace(/\D/g, '').slice(-10);
         if (clean) {
-          if (newBizPhone !== clean) setNewBizPhone(clean);
-          if (!newBizWhatsapp) {
-            setNewBizWhatsapp(clean);
-          }
+          setNewBizPhone(clean);
+          setNewBizWhatsapp(clean);
         }
       }
-      if (loggedInUser.email && !newBizEmail) {
+      if (loggedInUser.email) {
         setNewBizEmail(loggedInUser.email);
       }
     }
-  }, [loggedInUser, newBizContactPerson, newBizPhone, newBizWhatsapp, newBizEmail, currentRole]);
+  }, [loggedInUser]);
 
 // Step 3: Timings, Category, cover
 const [newBizCategory, setNewBizCategory] = useState('Doctors');
@@ -4007,13 +4007,6 @@ const validateStep2 = () => {
     setCreateBizError('Please enter a valid 10-digit Phone Number.');
     return false;
   }
-  if (loggedInUser?.phone) {
-    const userPhone10 = loggedInUser.phone.replace(/\D/g, '').slice(-10);
-    if (userPhone10 && newBizPhone.trim().replace(/\D/g, '').slice(-10) !== userPhone10) {
-      setCreateBizError(`Business registration phone number (${newBizPhone}) aapke login number (+91 ${userPhone10}) se match hona chahiye. Dusra number allow nahi hai.`);
-      return false;
-    }
-  }
   if (newBizWhatsapp.trim().length !== 10 || isNaN(Number(newBizWhatsapp))) {
     setCreateBizError('Please enter a valid 10-digit WhatsApp Number.');
     return false;
@@ -4209,6 +4202,7 @@ const handleCreateBusinessFinal = async (chosenTier?: 'Free' | 'Starter' | 'Pro'
     setNewBizSvcInput({ name: '', price: '', duration: '', desc: '' });
     setNewBizSchedule(defaultSchedule());
     setWizardStep(1);
+    hasPrefilledContactRef.current = false;
     setNewBizModalOpen(false);
 
     // Fetch the user's businesses and switch to their new listing
@@ -4540,11 +4534,6 @@ if (shouldShowRegistrationWizard || (isLoggedIn && !isAnyAdmin && businessesList
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-[10px] text-slate-500 font-bold uppercase tracking-wider">Calling Phone Number *</label>
-                    {Boolean(loggedInUser?.phone) && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                        🔒 Registered Login Number
-                      </span>
-                    )}
                   </div>
                   <div className="relative flex items-center">
                     <span className="absolute left-3 text-xs text-slate-500 font-bold pr-2 border-r border-slate-200">+91</span>
@@ -4553,25 +4542,11 @@ if (shouldShowRegistrationWizard || (isLoggedIn && !isAnyAdmin && businessesList
                       required
                       maxLength={10}
                       value={newBizPhone}
-                      readOnly={Boolean(loggedInUser?.phone)}
-                      onChange={(e) => {
-                        if (!loggedInUser?.phone) {
-                          setNewBizPhone(e.target.value.replace(/\D/g, ''));
-                        }
-                      }}
+                      onChange={(e) => setNewBizPhone(e.target.value.replace(/\D/g, ''))}
                       placeholder="10-digit number"
-                      className={`w-full border rounded-xl pl-14 pr-3.5 py-2.5 text-xs font-mono font-bold shadow-2xs transition-all ${
-                        loggedInUser?.phone
-                          ? 'bg-slate-100 border-slate-300 text-slate-600 cursor-not-allowed select-none'
-                          : 'bg-slate-50 border border-slate-200 focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800'
-                      }`}
+                      className="w-full bg-slate-50 border border-slate-200 focus:outline-none focus:border-teal-500 focus:bg-white text-slate-800 rounded-xl pl-14 pr-3.5 py-2.5 text-xs font-mono font-bold shadow-2xs transition-all"
                     />
                   </div>
-                  {Boolean(loggedInUser?.phone) && (
-                    <p className="text-[10px] text-slate-400 mt-1">
-                      Business registration sirf aapke login mobile number se ho sakti hai.
-                    </p>
-                  )}
                 </div>
 
                 <div>
@@ -11507,11 +11482,6 @@ return (
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="block text-[10px] text-slate-405 font-bold uppercase tracking-wider">Mobile Number *</label>
-                      {Boolean(loggedInUser?.phone) && (
-                        <span className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                          🔒 Login Number
-                        </span>
-                      )}
                     </div>
                     <div className="relative flex items-center">
                       <div className="absolute left-3 text-xs text-slate-405 font-semibold pr-2 border-r border-slate-200">+91</div>
@@ -11520,18 +11490,9 @@ return (
                         required
                         maxLength={10}
                         value={newBizPhone}
-                        readOnly={Boolean(loggedInUser?.phone)}
-                        onChange={(e) => {
-                          if (!loggedInUser?.phone) {
-                            setNewBizPhone(e.target.value.replace(/\D/g, ''));
-                          }
-                        }}
+                        onChange={(e) => setNewBizPhone(e.target.value.replace(/\D/g, ''))}
                         placeholder="10-digit number"
-                        className={`w-full border rounded-xl pl-14 pr-3.5 py-2.5 text-xs font-mono font-bold ${
-                          loggedInUser?.phone
-                            ? 'bg-slate-100 border-slate-300 text-slate-600 cursor-not-allowed select-none'
-                            : 'bg-slate-50 border border-slate-250 focus:outline-none focus:border-teal-500/50 text-slate-800'
-                        }`}
+                        className="w-full bg-slate-50 border border-slate-250 focus:outline-none focus:border-teal-500/50 text-slate-800 rounded-xl pl-14 pr-3.5 py-2.5 text-xs font-mono font-bold"
                       />
                     </div>
                   </div>

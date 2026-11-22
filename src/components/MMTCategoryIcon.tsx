@@ -417,8 +417,39 @@ export default function MMTCategoryIcon({ name, className = 'w-10 h-10 sm:w-12 s
     );
   }
 
+  // 11.5 BUSINESS AUTOMATION (MakeMyTrip Style: Indigo/Cyan AI & Automation Workflow)
+  if (lower.includes('automation')) {
+    return (
+      <svg viewBox="0 0 48 48" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="mmtAutoGrad" x1="8" y1="10" x2="40" y2="38" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#6366f1" />
+            <stop offset="1" stopColor="#4338ca" />
+          </linearGradient>
+          <linearGradient id="mmtGearGrad" x1="20" y1="20" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#06b6d4" />
+            <stop offset="1" stopColor="#0891b2" />
+          </linearGradient>
+        </defs>
+        {/* Robot / Automation Brain Screen */}
+        <rect x="8" y="10" width="32" height="26" rx="6" fill="url(#mmtAutoGrad)" stroke="#3730a3" strokeWidth="1.2" />
+        <rect x="12" y="14" width="24" height="14" rx="3" fill="#1e1b4b" />
+        {/* Glowing Circuit Screen Eyes */}
+        <circle cx="18" cy="21" r="2.5" fill="#38bdf8" />
+        <circle cx="30" cy="21" r="2.5" fill="#38bdf8" />
+        <path d="M21 24 Q24 26 27 24" stroke="#a5f3fc" strokeWidth="1.5" strokeLinecap="round" />
+        {/* Antenna */}
+        <line x1="24" y1="6" x2="24" y2="10" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="24" cy="5" r="2" fill="#38bdf8" />
+        {/* Automation Cog / Gear Floating */}
+        <circle cx="36" cy="34" r="8" fill="url(#mmtGearGrad)" stroke="#ffffff" strokeWidth="1.5" />
+        <circle cx="36" cy="34" r="3" fill="#ffffff" />
+      </svg>
+    );
+  }
+
   // 16. TRAVELS & VEHICLE RENTALS (MakeMyTrip Style: Luxury Passenger Bus / Airplane)
-  if (lower.includes('travel') || lower.includes('tour') || lower.includes('cab') || lower.includes('bus') || lower.includes('taxi')) {
+  if ((lower.includes('travel') || lower.includes('tour') || lower.includes('cab') || lower.includes('taxi') || /\b(bus|buses)\b/i.test(lower)) && !lower.includes('business')) {
     return (
       <svg viewBox="0 0 48 48" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
