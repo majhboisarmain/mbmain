@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import crypto from 'crypto';
-import { parseDeviceFromUA } from '../sessions/route';
+import { parseDeviceFromUA } from '@/lib/deviceUtils';
 
 export const dynamic = 'force-dynamic';
 

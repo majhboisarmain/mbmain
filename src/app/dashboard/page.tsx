@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { compressImage } from '@/lib/imageCompressor';
 import { CATEGORY_CATALOG } from '@/lib/categoryMapping';
+import { deduplicatePropertyList } from '@/lib/propertyUtils';
 import RazorpayCheckoutButton from '@/components/RazorpayCheckoutButton';
 const toTitleCase = (str: string) => {
   return str
@@ -364,7 +365,7 @@ function DashboardContent() {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) {
             const dummyIds = [1, 2, 3, 101, 102, 201, 202, 203, 204, 205];
-            const clean = parsed.filter((p: any) => !dummyIds.includes(p.id));
+            const clean = deduplicatePropertyList(parsed.filter((p: any) => !dummyIds.includes(p.id)));
             localStorage.setItem('majh_boisar_user_properties', JSON.stringify(clean));
             return clean;
           }
@@ -413,12 +414,7 @@ function DashboardContent() {
             }));
 
             setRawPropertyList(prev => {
-              const combined = [...mapped];
-              for (const item of prev) {
-                if (!combined.some(c => c.id === item.id)) {
-                  combined.push(item);
-                }
-              }
+              const combined = deduplicatePropertyList([...mapped, ...prev]);
               if (typeof window !== 'undefined') {
                 localStorage.setItem('majh_boisar_user_properties', JSON.stringify(combined));
               }

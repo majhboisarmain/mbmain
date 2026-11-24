@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/db';
-import { parseDeviceFromUA } from '../sessions/route';
+import { parseDeviceFromUA } from '@/lib/deviceUtils';
 import {
   signJwtToken,
   isAccountLocked,

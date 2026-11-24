@@ -10,13 +10,20 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const query = searchParams.get('query');
     const showAll = searchParams.get('showAll');
+    const userPhone = searchParams.get('userPhone');
 
     let sql = `SELECT * FROM "VehicleRental" WHERE 1=1`;
     const params: any[] = [];
 
-    // Public visitors only see admin-approved verified listings
+    // Public visitors only see admin-approved verified listings,
+    // but users can always see their own listed vehicle even if pending verification
     if (showAll !== 'true') {
-      sql += ` AND "verified" = true`;
+      if (userPhone && userPhone.trim()) {
+        params.push(`%${userPhone.replace(/\D/g, '').slice(-10)}%`);
+        sql += ` AND ("verified" = true OR "phone" LIKE $${params.length})`;
+      } else {
+        sql += ` AND "verified" = true`;
+      }
     }
 
     if (category && category !== 'All') {

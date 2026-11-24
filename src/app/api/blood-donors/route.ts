@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
     const location = searchParams.get('location');
     const query = searchParams.get('query');
     const showAll = searchParams.get('showAll') === 'true';
+    const userPhone = searchParams.get('userPhone');
 
     let rawDonors: any[] = [];
 
@@ -33,7 +34,15 @@ export async function GET(request: NextRequest) {
       // 1. Primary: Prisma query
       const where: any = {};
       if (!showAll) {
-        where.verified = true;
+        if (userPhone && userPhone.trim()) {
+          const cleanDigits = userPhone.replace(/\D/g, '').slice(-10);
+          where.OR = [
+            { verified: true },
+            { phone: { contains: cleanDigits } }
+          ];
+        } else {
+          where.verified = true;
+        }
       }
       if (bloodGroup && bloodGroup !== 'All') {
         where.bloodGroup = { equals: bloodGroup.trim(), mode: 'insensitive' };

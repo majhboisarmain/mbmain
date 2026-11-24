@@ -25,7 +25,7 @@ const relatedCache = new LRUCache<string, any[]>({
 });
 
 // React.cache deduplicates queries within the exact same SSR render pass (generateMetadata + BusinessProfilePage)
-export const getCachedBusiness = cache(async (slugOrId: string) => {
+const getCachedBusiness = cache(async (slugOrId: string) => {
   if (!slugOrId) return null;
   const cacheKey = slugOrId.toLowerCase().trim();
   const cached = businessCache.get(cacheKey);
@@ -51,7 +51,7 @@ export const getCachedBusiness = cache(async (slugOrId: string) => {
   return business;
 });
 
-export const getCachedRelatedBusinesses = cache(async (category: string, currentId: number) => {
+const getCachedRelatedBusinesses = cache(async (category: string, currentId: number) => {
   const cacheKey = `${category.toLowerCase()}_${currentId}`;
   const cached = relatedCache.get(cacheKey);
   if (cached) return cached;

@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   Car, Search, MapPin, Phone, MessageSquare, Plus, X, 
   CheckCircle, Camera, ShieldCheck, Clock, Users, ArrowRight,
-  ChevronRight, Sparkles, Navigation, Fuel
+  ChevronRight, Sparkles, Navigation, Fuel, Trash2, AlertTriangle, AlertCircle
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import BackButton from '@/components/BackButton';
@@ -141,15 +141,26 @@ function HireVehicleContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewModalImg, setPreviewModalImg] = useState<{ src: string; title: string; category?: string } | null>(null);
 
-  // Fetch vehicles from database
+  const [pendingDeletions, setPendingDeletions] = useState<string[]>([]);
+  const [requestingDeleteId, setRequestingDeleteId] = useState<string | null>(null);
+
+  const userPhoneClean = useMemo(() => {
+    const p = loggedInUser?.phone || (typeof window !== 'undefined' ? localStorage.getItem('majh_boisar_user_phone') : '');
+    return (p || '').replace(/\D/g, '').slice(-10);
+  }, [loggedInUser]);
+
+  // Fetch vehicles from database (with userPhone so user sees their own vehicle even if pending approval)
   const fetchDbVehicles = async () => {
     try {
-      const res = await fetch('/api/vehicles');
+      const uDigits = (loggedInUser?.phone || (typeof window !== 'undefined' ? localStorage.getItem('majh_boisar_user_phone') : '') || '').replace(/\D/g, '').slice(-10);
+      const url = uDigits ? `/api/vehicles?userPhone=${uDigits}` : '/api/vehicles';
+      const res = await fetch(url, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
           const formatted = data.map((d: any) => ({
             ...d,
+            id: String(d.id),
             features: typeof d.features === 'string' && d.features.startsWith('[')
               ? JSON.parse(d.features)
               : (d.features || ['Direct Owner Contact', 'Verified Boisar Listing'])
@@ -163,13 +174,69 @@ function HireVehicleContent() {
     }
   };
 
+  const fetchPendingDeletions = async () => {
+    if (!userPhoneClean) return;
+    try {
+      const res = await fetch(`/api/deletion-requests?phone=${userPhoneClean}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const pIds = data
+            .filter((d: any) => d.status === 'Pending' && d.type === 'vehicle')
+            .map((d: any) => String(d.itemId));
+          setPendingDeletions(pIds);
+        }
+      }
+    } catch (e) {}
+  };
+
   // Scroll to top on mount and load registered vehicles
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       fetchDbVehicles();
+      fetchPendingDeletions();
     }
-  }, []);
+  }, [userPhoneClean]);
+
+  const handleRequestVehicleDeletion = async (v: VehicleListing) => {
+    if (!confirm(`Are you sure you want to remove your listing "${v.vehicleModel}" (${v.name}) from Majh Boisar Travels?\n\nThis will send a deletion request to the Super Admin for verification and permanent removal.`)) {
+      return;
+    }
+
+    setRequestingDeleteId(v.id);
+    try {
+      const res = await fetch('/api/deletion-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'vehicle',
+          itemId: v.id,
+          itemName: `${v.vehicleModel} (${v.name})`,
+          userName: loggedInUser?.name || v.name,
+          userPhone: v.phone,
+          reason: 'Driver / Owner requested vehicle listing removal'
+        })
+      });
+
+      if (res.ok) {
+        setPendingDeletions(prev => [...prev, String(v.id)]);
+        showToast('✅ Deletion request sent! Admin will review and approve the removal shortly.', 'info', 5000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        if (data.alreadyPending) {
+          setPendingDeletions(prev => [...prev, String(v.id)]);
+          showToast('⚠️ Deletion request is already pending admin approval.', 'info', 4000);
+        } else {
+          showToast('Failed to submit deletion request. Please try again.', 'error');
+        }
+      }
+    } catch (e) {
+      showToast('Network error submitting deletion request.', 'error');
+    } finally {
+      setRequestingDeleteId(null);
+    }
+  };
 
   // Autofill form phone if logged in
   useEffect(() => {
@@ -299,6 +366,11 @@ function HireVehicleContent() {
     }
   };
 
+  const myVehicles = useMemo(() => {
+    if (!userPhoneClean) return [];
+    return vehicles.filter(v => (v.phone || '').replace(/\D/g, '').slice(-10) === userPhoneClean);
+  }, [vehicles, userPhoneClean]);
+
   const filteredVehicles = useMemo(() => {
     return vehicles
       .filter(v => {
@@ -318,6 +390,11 @@ function HireVehicleContent() {
         return 0;
       });
   }, [vehicles, selectedCategory, selectedArea, searchQuery]);
+
+  const otherVehicles = useMemo(() => {
+    if (!userPhoneClean) return filteredVehicles;
+    return filteredVehicles.filter(v => (v.phone || '').replace(/\D/g, '').slice(-10) !== userPhoneClean);
+  }, [filteredVehicles, userPhoneClean]);
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 pb-16 text-left">
@@ -390,10 +467,137 @@ function HireVehicleContent() {
             </div>
           </div>
 
+          {/* ── PINNED USER'S OWN LISTED VEHICLES ── */}
+          {myVehicles.length > 0 && (
+            <div className="mb-4 space-y-2.5 pb-4 border-b border-slate-200">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[11px] font-black uppercase tracking-wider text-teal-900 flex items-center gap-1.5 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200">
+                  <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+                  <span>Your Listed Vehicle (Aapki Listing)</span>
+                </span>
+                <span className="text-[10px] font-bold text-slate-500">
+                  Visible to you at the top
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {myVehicles.map((v) => {
+                  const isPendingDeletion = pendingDeletions.includes(String(v.id));
+
+                  return (
+                    <div
+                      key={`my-${v.id}`}
+                      className="bg-linear-to-b from-teal-50/70 to-white rounded-2xl overflow-hidden border-2 border-teal-500 shadow-sm flex flex-col justify-between text-left relative"
+                    >
+                      <div>
+                        {/* Top Badge Ribbon */}
+                        <div className="bg-teal-700 text-white px-3 py-1 text-[10px] font-black flex items-center justify-between">
+                          <span className="flex items-center gap-1">
+                            ⭐ Aapki Listed Vehicle
+                          </span>
+                          {isPendingDeletion ? (
+                            <span className="bg-rose-500 text-white text-[9px] px-2 py-0.5 rounded font-black flex items-center gap-1">
+                              <Clock className="w-2.5 h-2.5" /> Deletion Pending Approval
+                            </span>
+                          ) : v.verified ? (
+                            <span className="bg-emerald-500 text-white text-[9px] px-2 py-0.5 rounded font-black flex items-center gap-1">
+                              <CheckCircle className="w-2.5 h-2.5" /> Live &amp; Verified
+                            </span>
+                          ) : (
+                            <span className="bg-amber-400 text-slate-950 text-[9px] px-2 py-0.5 rounded font-black flex items-center gap-1">
+                              <Clock className="w-2.5 h-2.5" /> Pending Verification
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Vehicle Photo Container */}
+                        <div 
+                          onClick={() => setPreviewModalImg({ src: v.image, title: `${v.name} · ${v.vehicleModel}`, category: v.category })}
+                          className="relative w-full aspect-[16/10] bg-slate-950 overflow-hidden cursor-pointer group/img"
+                        >
+                          <img
+                            src={v.image}
+                            alt={v.name}
+                            className="w-full h-full object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
+                          />
+                          <div className="absolute top-2.5 left-2.5">
+                            <span className="bg-slate-900/90 text-white text-[9.5px] font-black px-2.5 py-1 rounded-lg">
+                              {v.category}
+                            </span>
+                          </div>
+                          <div className="absolute top-2.5 right-2.5">
+                            <span className="bg-blue-600 text-white text-xs font-black px-2.5 py-1 rounded-lg shadow-sm">
+                              {v.ratePerKm}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Info Block */}
+                        <div className="p-3.5 space-y-2">
+                          <div>
+                            <h3 className="text-sm font-black text-slate-900 leading-snug">{v.vehicleModel}</h3>
+                            <p className="text-xs font-bold text-slate-600 flex items-center gap-1 mt-0.5">
+                              <span>{v.name}</span>
+                              <span>•</span>
+                              <span className="text-teal-700 font-extrabold">{v.capacity}</span>
+                            </p>
+                          </div>
+
+                          <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2 text-[11px] space-y-1">
+                            <div className="flex items-center justify-between text-slate-600">
+                              <span className="flex items-center gap-1"><MapPin className="w-3 h-3 text-slate-400" /> Location:</span>
+                              <span className="font-bold text-slate-800 truncate max-w-[150px]">{v.location}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-slate-600">
+                              <span className="flex items-center gap-1"><Clock className="w-3 h-3 text-slate-400" /> Timing:</span>
+                              <span className="font-bold text-slate-800 truncate max-w-[150px]">{v.timing}</span>
+                            </div>
+                          </div>
+
+                          {isPendingDeletion && (
+                            <div className="bg-rose-50 border border-rose-200 rounded-xl p-2.5 text-[11px] text-rose-800 space-y-0.5">
+                              <p className="font-black flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                                <span>Deletion Request Under Review</span>
+                              </p>
+                              <p className="text-[10px] text-rose-700 leading-tight">
+                                Admin will verify and remove this listing. Once accepted, it will be deleted permanently.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Footer: Delete / Remove Request */}
+                      <div className="p-3 pt-0">
+                        {isPendingDeletion ? (
+                          <div className="w-full py-2 bg-slate-100 text-slate-500 rounded-xl text-center text-xs font-black flex items-center justify-center gap-1.5 border border-slate-200">
+                            <Clock className="w-3.5 h-3.5 text-amber-600" />
+                            <span>Removal Pending Admin Approval</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={requestingDeleteId === v.id}
+                            onClick={() => handleRequestVehicleDeletion(v)}
+                            className="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 active:scale-98 font-black text-xs py-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                            <span>{requestingDeleteId === v.id ? 'Submitting Request...' : 'Remove / Delete Vehicle'}</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Cards Grid */}
-          {filteredVehicles.length > 0 ? (
+          {otherVehicles.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-              {filteredVehicles.map((v) => (
+              {otherVehicles.map((v) => (
                 <div
                   key={v.id}
                   className={`bg-white rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group text-left ${
@@ -509,7 +713,7 @@ function HireVehicleContent() {
                 </div>
               ))}
             </div>
-          ) : (
+          ) : myVehicles.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 text-center space-y-2.5 shadow-2xs">
               <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-200">
                 <Car className="w-6 h-6" />
@@ -518,7 +722,7 @@ function HireVehicleContent() {
                 <h4 className="text-sm font-black text-slate-800">No Vehicles Listed in this Category</h4>
               </div>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* 5. Bottom Registration Banner (Slim & Compact) */}

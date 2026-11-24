@@ -40,6 +40,7 @@ import MMTCategoryIcon from '@/components/MMTCategoryIcon';
 import { CATEGORY_CATALOG, getCategorySearchSuggestions } from '@/lib/categoryMapping';
 import { BOISAR_ICONIC_PLACES, IconicPlace } from '@/lib/placesData';
 import { getCategorySlug, formatCategoryTitle, getCategorySearchTerms, getCategoryMatchingVariants } from '@/lib/categories';
+import { deduplicatePropertyList } from '@/lib/propertyUtils';
 
 const toTitleCase = (str: string) => {
   return str
@@ -1270,7 +1271,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           
           const cleanState = {
             influencers: (parsed.influencers || []).filter((p: any) => !dummyIds.includes(p.id)),
-            properties: (parsed.properties || []).filter((p: any) => !dummyIds.includes(p.id) && p.name !== 'ee' && p.contactName !== 'ee' && p.name !== 'Owner: ee' && p.title !== 'Owner: ee'),
+            properties: deduplicatePropertyList((parsed.properties || []).filter((p: any) => !dummyIds.includes(p.id) && p.name !== 'ee' && p.contactName !== 'ee' && p.name !== 'Owner: ee' && p.title !== 'Owner: ee')),
             helpers: (parsed.helpers || []).filter((p: any) => !dummyIds.includes(p.id)),
             caterers: (parsed.caterers || []).filter((p: any) => !dummyIds.includes(p.id)),
           };
@@ -1299,7 +1300,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
         if (res.ok) {
           const dbProperties = await res.json();
           if (Array.isArray(dbProperties)) {
-            const verifiedProps = dbProperties.filter((p: any) => p.verified !== false);
+            const verifiedProps = deduplicatePropertyList(dbProperties.filter((p: any) => p.verified !== false));
             setProfilesState(prev => {
               const nextState = {
                 ...prev,
@@ -3455,7 +3456,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                     const isShortlisted = shortlistedPropIds.includes(selectedProfile.id);
                     const propTitle = selectedProfile.category || selectedProfile.name || `${selectedProfile.bedrooms || 1} BHK Flat for ${selectedProfile.forAction || 'Sale'}`;
                     const propLocation = selectedProfile.address || selectedProfile.location || selectedProfile.addressLocality || 'Boisar, Maharashtra';
-                    const similarProps = (profilesState.properties || [])
+                    const similarProps = deduplicatePropertyList((profilesState.properties || [])
                       .filter((p: any) => {
                         if (p.listingType !== 'property') return false;
                         if (p.id === selectedProfile.id) return false;
@@ -3465,7 +3466,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                           p.status?.toLowerCase().includes('rented')
                         );
                         return !isSoldOrRented;
-                      })
+                      }))
                       .slice(0, 8);
                     const isPropertySold = Boolean(
                       selectedProfile.isSold || 
@@ -4047,11 +4048,11 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                               </div>
 
                               <div className="flex items-stretch gap-3 overflow-x-auto no-scrollbar pb-2 pt-1 select-none">
-                                {similarProps.map((simProp: any) => {
+                                {similarProps.map((simProp: any, idx: number) => {
                                   const simPhotos = simProp.gallery?.length ? simProp.gallery : [simProp.avatar || '/imagess/nobroker_3d_house.jpg'];
                                   return (
                                     <div
-                                      key={simProp.id}
+                                      key={`sim-${simProp.id || 'p'}-${idx}`}
                                       onClick={() => {
                                         setSelectedProfile(simProp);
                                         setActivePhotoIndex(0);
@@ -4265,7 +4266,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                   {/* Listings matching selected Tab & Search */}
                   <div className="max-w-5xl mx-auto w-full p-4 sm:p-6 space-y-3 text-left flex-1 bg-slate-50/50">
                     {(() => {
-                      const allProps = (profilesState.properties || []).filter((p: any) => p.listingType === 'property');
+                      const allProps = deduplicatePropertyList((profilesState.properties || []).filter((p: any) => p.listingType === 'property'));
                       const filteredListings = allProps.filter((p: any) => {
                         // 1. Tab filter (Buy vs Rent vs Commercial)
                         const isRentListing = p.forAction === 'Rent' || p.category?.toLowerCase().includes('rent') || p.transactionType === 'Lease';
@@ -4337,7 +4338,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
                           {filteredListings.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5">
-                              {filteredListings.slice(0, 8).map((property: any) => {
+                              {filteredListings.slice(0, 8).map((property: any, idx: number) => {
                                 const isSoldOut = Boolean(property.isSold || property.status?.toLowerCase().includes('sold') || property.status?.toLowerCase().includes('rented'));
                                 const isRentProp = property.forAction === 'Rent' || property.category?.toLowerCase().includes('rent') || property.transactionType === 'Lease';
                                 const isFeaturedProp = Boolean(property.isFeatured || property.featured) && !isSoldOut;
@@ -4351,7 +4352,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
                                 return (
                                 <div
-                                  key={property.id}
+                                  key={`prop-${property.id || 'p'}-${idx}`}
                                   onClick={() => {
                                     if (isSoldOut) {
                                       showToast(isRentProp ? '🔒 This property is rented out and closed.' : '🔒 This property is sold out and closed.', 'info');
@@ -4502,10 +4503,10 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                                       </div>
 
                                       {/* Row 2: Location with green return arrow ↳ (Single clean location row) */}
-                                      <p className="text-[11px] sm:text-xs text-slate-500 font-medium flex items-center gap-1.5 mt-2 line-clamp-1">
+                                      <div className="text-[11px] sm:text-xs text-slate-500 font-medium flex items-center gap-1.5 mt-2 min-w-0">
                                         <span className="text-emerald-600 font-bold text-sm leading-none shrink-0">↳</span>
                                         <span className="truncate">{property.addressLocality || property.address || property.location || 'Boisar, Palghar'}</span>
-                                      </p>
+                                      </div>
 
                                       {/* Row 3: Landmark ONLY if distinct from address */}
                                       {Boolean(property.landmark && property.landmark !== property.addressLocality && property.landmark !== property.location) && (
@@ -4807,7 +4808,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
                   {/* Listings Grid - Responsive 2-column grid on desktop */}
                   <div className="max-w-5xl mx-auto w-full p-2.5 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-5 text-left flex-1">
-                    {((profilesState.properties || []).filter((p: any) => p.listingType === 'property'))
+                    {(deduplicatePropertyList((profilesState.properties || []).filter((p: any) => p.listingType === 'property')))
                       .filter((p: any) => {
                         if (propertyMode === 'buy') {
                           const isRentOnly = p.category?.toLowerCase().includes('rent') || p.forAction === 'Rent' || p.transactionType === 'Lease';
@@ -4858,7 +4859,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         }
                         return 0;
                       })
-                      .map((profile: any) => {
+                      .map((profile: any, idx: number) => {
                         const isSoldOut = Boolean(profile.isSold || profile.status?.toLowerCase().includes('sold') || profile.status?.toLowerCase().includes('rented'));
                         const isRentProp = profile.forAction === 'Rent' || profile.category?.toLowerCase().includes('rent') || profile.transactionType === 'Lease';
                         const isFeaturedProp = Boolean(profile.isFeatured || profile.featured) && !isSoldOut;
@@ -4872,7 +4873,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
 
                         return (
                         <div 
-                          key={profile.id}
+                          key={`profile-${profile.id || 'p'}-${idx}`}
                           className={`rounded-2xl border transition-all flex flex-col group text-left relative overflow-hidden bg-white shadow-2xs hover:shadow-lg ${
                             isSoldOut
                               ? 'border-slate-300 opacity-75 grayscale-[25%] cursor-not-allowed select-none'
@@ -5038,11 +5039,11 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                               </div>
 
                               {/* Row 2: Location with green return arrow ↳ & Map Link */}
-                              <div className="flex items-center justify-between gap-1.5 mt-2">
-                                <p className="text-[11px] sm:text-xs text-slate-500 font-medium flex items-center gap-1.5 line-clamp-1 min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-1.5 mt-2 min-w-0">
+                                <div className="text-[11px] sm:text-xs text-slate-500 font-medium flex items-center gap-1.5 min-w-0 flex-1">
                                   <span className="text-emerald-600 font-bold text-sm leading-none shrink-0">↳</span>
                                   <span className="truncate">{profile.addressLocality || profile.address || profile.location || 'Boisar, Palghar'}</span>
-                                </p>
+                                </div>
                                 {(profile.mapUrl || hasDirectOwnerCall(profile)) && (
                                   <a
                                     href={profile.mapUrl || `https://maps.google.com/?q=${encodeURIComponent(`${profile.projectName || profile.category || 'Property'}, ${profile.addressLocality || profile.location || 'Boisar'}`)}`}
@@ -5132,8 +5133,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
                         </div>
                         );
                       })}
-                    {(profilesState.properties || [])
-                      .filter((p: any) => p.listingType === 'property')
+                    {(deduplicatePropertyList((profilesState.properties || []).filter((p: any) => p.listingType === 'property')))
                       .filter((p: any) => {
                         if (propertyMode === 'buy') {
                           const isRentOnly = p.category?.toLowerCase().includes('rent') || p.forAction === 'Rent' || p.transactionType === 'Lease';

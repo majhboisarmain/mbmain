@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { uploadGallery, uploadImage } from '@/lib/cloudinary';
 import { internalServerErrorResponse, badRequestResponse, unauthorizedResponse } from '@/lib/authGuard';
 import { isAdminRequest } from '@/lib/auth';
+import { deduplicatePropertyList } from '@/lib/propertyUtils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -72,7 +73,8 @@ export async function GET(request: NextRequest) {
     });
 
     const isPublic = !phone && !all;
-    return NextResponse.json(result, {
+    const cleanResult = deduplicatePropertyList(result);
+    return NextResponse.json(cleanResult, {
       headers: isPublic
         ? { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' }
         : { 'Cache-Control': 'no-store, no-cache, must-revalidate' }

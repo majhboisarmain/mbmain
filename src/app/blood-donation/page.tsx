@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, MapPin, Phone, Droplet, Clock, X, HeartPulse, 
-  ShieldCheck, Trash2, Building2, Heart
+  ShieldCheck, Trash2, Building2, Heart, Sparkles, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 
@@ -105,10 +105,15 @@ export default function BloodDonationPage() {
     });
   }, [donors, userPhoneDigits, localMyDonorId]);
 
+  const [isDonorPendingDeletion, setIsDonorPendingDeletion] = useState(false);
+  const [submittingRemoval, setSubmittingRemoval] = useState(false);
+
   const fetchDonors = async () => {
     setLoadingDonors(true);
     try {
-      const res = await fetch(`/api/blood-donors?_t=${Date.now()}`, {
+      const uDigits = userPhoneDigits ? userPhoneDigits.slice(-10) : '';
+      const uParam = uDigits ? `&userPhone=${uDigits}` : '';
+      const res = await fetch(`/api/blood-donors?_t=${Date.now()}${uParam}`, {
         cache: 'no-store',
         headers: { 
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -125,6 +130,24 @@ export default function BloodDonationPage() {
       setLoadingDonors(false);
     }
   };
+
+  useEffect(() => {
+    if (myDonorProfile) {
+      const checkPending = async () => {
+        try {
+          const phone = myDonorProfile.phone || userPhoneDigits;
+          const res = await fetch(`/api/deletion-requests?phone=${phone}&itemId=${myDonorProfile.id}`, { cache: 'no-store' });
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.some((d: any) => d.status === 'Pending' && d.type === 'blood_donor')) {
+              setIsDonorPendingDeletion(true);
+            }
+          }
+        } catch (e) {}
+      };
+      checkPending();
+    }
+  }, [myDonorProfile, userPhoneDigits]);
   
   const handleOpenRegisterModal = () => {
     if (!isLoggedIn) {
@@ -195,25 +218,40 @@ export default function BloodDonationPage() {
   };
 
   const handleRemoveDonor = async (donorId: number, donorName: string) => {
-    if (!confirm(`Are you sure you want to unlist and remove "${donorName}" from the Blood Donors list?`)) return;
+    if (!confirm(`Are you sure you want to request removal of your profile "${donorName}" from the Blood Donors list?\n\nThis will send a deletion request to the Super Admin for verification and permanent removal.`)) return;
+
+    setSubmittingRemoval(true);
     try {
-      const res = await fetch(`/api/blood-donors?id=${donorId}`, {
-        method: 'DELETE'
+      const res = await fetch('/api/deletion-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'blood_donor',
+          itemId: donorId,
+          itemName: `${donorName} (${myDonorProfile?.bloodGroup || 'Donor'})`,
+          userName: donorName,
+          userPhone: myDonorProfile?.phone || userPhoneDigits,
+          reason: 'Donor requested voluntary profile removal'
+        })
       });
+
       if (res.ok) {
-        setDonors(prev => prev.filter(d => d.id !== donorId));
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('majh_boisar_my_donor_id');
-          localStorage.removeItem('majh_boisar_my_donor_phone');
-          setLocalMyDonorId(null);
-        }
-        alert("✅ Your donor profile has been unlisted successfully.");
+        setIsDonorPendingDeletion(true);
+        alert("✅ Your deletion request has been submitted for Super Admin review. Once approved, your profile will be permanently removed.");
       } else {
-        alert("Failed to unlist profile. Please try again.");
+        const data = await res.json().catch(() => ({}));
+        if (data.alreadyPending) {
+          setIsDonorPendingDeletion(true);
+          alert("⚠️ Deletion request is already pending Super Admin approval.");
+        } else {
+          alert("Failed to submit deletion request. Please try again.");
+        }
       }
     } catch (err) {
       console.error(err);
       alert("Network error. Please try again.");
+    } finally {
+      setSubmittingRemoval(false);
     }
   };
 
@@ -261,13 +299,20 @@ export default function BloodDonationPage() {
             {myDonorProfile ? (
               <div className="bg-white text-slate-900 text-[11px] px-3 py-1 rounded-lg font-black flex items-center gap-2 shadow-xs">
                 <span>👤 Listed: <strong className="text-red-700">{myDonorProfile.name} ({myDonorProfile.bloodGroup})</strong></span>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveDonor(myDonorProfile.id, myDonorProfile.name)}
-                  className="bg-red-600 hover:bg-red-700 text-white text-[9px] px-2 py-0.5 rounded font-black cursor-pointer"
-                >
-                  Unlist
-                </button>
+                {isDonorPendingDeletion ? (
+                  <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] px-2 py-0.5 rounded font-black flex items-center gap-1">
+                    <Clock className="w-2.5 h-2.5" /> Deletion Pending Approval
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={submittingRemoval}
+                    onClick={() => handleRemoveDonor(myDonorProfile.id, myDonorProfile.name)}
+                    className="bg-red-600 hover:bg-red-700 text-white text-[9px] px-2 py-0.5 rounded font-black cursor-pointer"
+                  >
+                    {submittingRemoval ? 'Submitting...' : 'Unlist'}
+                  </button>
+                )}
               </div>
             ) : (
               <button 
@@ -350,9 +395,78 @@ export default function BloodDonationPage() {
           )}
         </div>
 
+        {/* ── PINNED USER'S OWN BLOOD DONOR PROFILE ── */}
+        {myDonorProfile && (
+          <div className="space-y-2 pb-3 border-b border-slate-200">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[11px] font-black uppercase tracking-wider text-rose-900 flex items-center gap-1.5 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                <Sparkles className="w-3.5 h-3.5 text-rose-600" />
+                <span>Your Voluntary Donor Profile (Aapki Listed Profile)</span>
+              </span>
+              <span className="text-[10px] font-bold text-slate-500">
+                Visible to you at the top
+              </span>
+            </div>
+
+            <div className="bg-linear-to-b from-rose-50/70 to-white rounded-2xl p-4 border-2 border-rose-400 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-left">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="w-12 h-12 rounded-xl bg-red-600 text-white flex items-center justify-center font-black text-lg shadow-sm shrink-0">
+                  {myDonorProfile.bloodGroup}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm sm:text-base font-black text-slate-900 truncate">
+                      {myDonorProfile.name}
+                    </h3>
+                    {isDonorPendingDeletion ? (
+                      <span className="bg-rose-100 text-rose-800 border border-rose-200 text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Clock className="w-2.5 h-2.5" /> Deletion Pending Admin Approval
+                      </span>
+                    ) : (
+                      <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <CheckCircle className="w-2.5 h-2.5" /> Active Voluntary Donor
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-600 font-bold flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3 h-3 text-slate-400" />
+                    <span>{myDonorProfile.location}</span>
+                    <span>•</span>
+                    <span>+91 {myDonorProfile.phone}</span>
+                  </p>
+                  {isDonorPendingDeletion && (
+                    <p className="text-[10.5px] text-rose-700 font-medium mt-1 leading-tight">
+                      ⏳ Your profile removal request is under admin review. Once approved, it will be permanently unlisted.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="shrink-0 flex items-center gap-2 pt-1 sm:pt-0">
+                {isDonorPendingDeletion ? (
+                  <div className="px-3 py-1.5 bg-slate-100 text-slate-500 rounded-xl text-xs font-bold border border-slate-200 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Removal Pending</span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={submittingRemoval}
+                    onClick={() => handleRemoveDonor(myDonorProfile.id, myDonorProfile.name)}
+                    className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 active:scale-95 text-xs font-black px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                    <span>{submittingRemoval ? 'Submitting...' : 'Request Removal / Unlist'}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── 3. Donors Grid ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filteredDonors.map(donor => {
+          {filteredDonors.filter(d => !myDonorProfile || d.id !== myDonorProfile.id).map(donor => {
             const isMyDonor = Boolean(
               myDonorProfile?.id === donor.id ||
               (localMyDonorId && String(donor.id) === String(localMyDonorId)) ||

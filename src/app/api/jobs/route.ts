@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     const businessId = searchParams.get('businessId');
     const status = searchParams.get('status');
     const showAll = searchParams.get('showAll') === 'true';
+    const userPhone = searchParams.get('userPhone');
     const includeApplications = searchParams.get('includeApplications') === 'true';
 
     const where: any = {};
@@ -18,8 +19,16 @@ export async function GET(request: NextRequest) {
     if (status && status !== 'All') {
       where.status = status;
     } else if (!showAll) {
-      // By default, only show approved 'Open' jobs to the public
-      where.status = 'Open';
+      if (userPhone && userPhone.trim()) {
+        const cleanDigits = userPhone.replace(/\D/g, '').slice(-10);
+        where.OR = [
+          { status: 'Open' },
+          { business: { phone: { contains: cleanDigits } } }
+        ];
+      } else {
+        // By default, only show approved 'Open' jobs to the public
+        where.status = 'Open';
+      }
     }
 
     if (businessId) {

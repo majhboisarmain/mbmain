@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import { 
   Search, Briefcase, Luggage, Bookmark, MapPin, Building2, Phone, MessageSquare, 
-  PlusCircle, CheckCircle2, ArrowRight, Sparkles
+  PlusCircle, CheckCircle2, ArrowRight, Sparkles, Trash2, Clock, AlertCircle
 } from 'lucide-react';
 
 interface Job {
@@ -156,11 +156,44 @@ export default function JobsBoard() {
     setShowPostModal(true);
   };
 
+  const [pendingDeletions, setPendingDeletions] = useState<number[]>([]);
+  const [requestingDeleteId, setRequestingDeleteId] = useState<number | null>(null);
+
+  const userPhoneClean = useMemo(() => {
+    const p = loggedInUser?.phone || (typeof window !== 'undefined' ? localStorage.getItem('majh_boisar_user_phone') : '');
+    return (p || '').replace(/\D/g, '').slice(-10);
+  }, [loggedInUser]);
+
+  const fetchPendingDeletions = async () => {
+    if (!userPhoneClean) return;
+    try {
+      const res = await fetch(`/api/deletion-requests?phone=${userPhoneClean}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const pIds = data
+            .filter((d: any) => d.status === 'Pending' && d.type === 'job')
+            .map((d: any) => parseInt(d.itemId, 10))
+            .filter((n: number) => !isNaN(n));
+          setPendingDeletions(pIds);
+        }
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (userPhoneClean) {
+      fetchPendingDeletions();
+    }
+  }, [userPhoneClean]);
+
   const fetchJobs = async () => {
     try {
       setLoading(true);
       const apiType = typeFilter === 'Saved' ? 'All' : typeFilter;
-      const res = await fetch(`/api/jobs?type=${encodeURIComponent(apiType)}&query=${encodeURIComponent(query)}&status=Open`);
+      const uDigits = (loggedInUser?.phone || (typeof window !== 'undefined' ? localStorage.getItem('majh_boisar_user_phone') : '') || '').replace(/\D/g, '').slice(-10);
+      const userParam = uDigits ? `&userPhone=${uDigits}` : '';
+      const res = await fetch(`/api/jobs?type=${encodeURIComponent(apiType)}&query=${encodeURIComponent(query)}&status=Open${userParam}`, { cache: 'no-store' });
       if (!res.ok) {
         setJobs([]);
         return;
@@ -188,6 +221,63 @@ export default function JobsBoard() {
     }
     return true;
   });
+
+  const myJobs = useMemo(() => {
+    if (!userPhoneClean) return [];
+    return displayedJobs.filter(j => {
+      const bPhone = (j.business?.phone || '').replace(/\D/g, '').slice(-10);
+      const bWa = (j.business?.whatsapp || '').replace(/\D/g, '').slice(-10);
+      return bPhone === userPhoneClean || bWa === userPhoneClean;
+    });
+  }, [displayedJobs, userPhoneClean]);
+
+  const otherJobs = useMemo(() => {
+    if (!userPhoneClean) return displayedJobs;
+    return displayedJobs.filter(j => {
+      const bPhone = (j.business?.phone || '').replace(/\D/g, '').slice(-10);
+      const bWa = (j.business?.whatsapp || '').replace(/\D/g, '').slice(-10);
+      return bPhone !== userPhoneClean && bWa !== userPhoneClean;
+    });
+  }, [displayedJobs, userPhoneClean]);
+
+  const handleRequestJobDeletion = async (job: Job) => {
+    if (!confirm(`Are you sure you want to remove your job opening "${job.title}" (${job.business?.name}) from Majh Boisar?\n\nThis will send a deletion request to the Super Admin for verification and permanent removal.`)) {
+      return;
+    }
+
+    setRequestingDeleteId(job.id);
+    try {
+      const res = await fetch('/api/deletion-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'job',
+          itemId: job.id,
+          itemName: `${job.title} (${job.business?.name || 'Company'})`,
+          userName: loggedInUser?.name || job.business?.name,
+          userPhone: job.business?.phone || loggedInUser?.phone,
+          reason: 'Employer requested job vacancy deletion'
+        })
+      });
+
+      if (res.ok) {
+        setPendingDeletions(prev => [...prev, job.id]);
+        showToast('✅ Job deletion request sent! Admin will review and remove the posting shortly.', 'info', 5000);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        if (data.alreadyPending) {
+          setPendingDeletions(prev => [...prev, job.id]);
+          showToast('⚠️ Deletion request is already pending admin approval.', 'info', 4000);
+        } else {
+          showToast('Failed to submit deletion request. Please try again.', 'error');
+        }
+      }
+    } catch (e) {
+      showToast('Network error submitting deletion request.', 'error');
+    } finally {
+      setRequestingDeleteId(null);
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -326,9 +416,104 @@ export default function JobsBoard() {
           </span>
         </div>
 
+        {/* ── PINNED USER'S OWN POSTED JOBS ── */}
+        {myJobs.length > 0 && (
+          <div className="space-y-3 pb-3 border-b border-slate-200">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[11px] font-black uppercase tracking-wider text-indigo-900 flex items-center gap-1.5 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-200">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Your Posted Jobs (Aapki Job Opening)</span>
+              </span>
+              <span className="text-[10px] font-bold text-slate-500">
+                Visible to you at the top
+              </span>
+            </div>
+
+            {myJobs.map((job) => {
+              const isPendingDeletion = pendingDeletions.includes(job.id);
+
+              return (
+                <div
+                  key={`my-${job.id}`}
+                  className="bg-linear-to-b from-indigo-50/70 to-white rounded-2xl sm:rounded-3xl border-2 border-indigo-400 p-4 sm:p-5 shadow-sm text-left space-y-3 relative"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="bg-indigo-600 text-white text-[10px] font-black px-2.5 py-0.5 rounded-md flex items-center gap-1 uppercase tracking-wider">
+                      ⭐ Your Posted Vacancy
+                    </span>
+                    {isPendingDeletion ? (
+                      <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> Deletion Pending Approval
+                      </span>
+                    ) : (
+                      <span className="bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Live &amp; Open
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                      <JobLogo image={job.business?.image} name={job.business?.name} />
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+                          {job.title}
+                        </h3>
+                        <p className="text-xs sm:text-sm font-semibold text-slate-700">
+                          {job.business?.name || 'Your Business'} • {job.location || 'Boisar'}
+                        </p>
+                        {job.salary && (
+                          <p className="text-xs font-bold text-emerald-700 mt-0.5">
+                            💰 {job.salary}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {isPendingDeletion && (
+                    <div className="bg-rose-50 border border-rose-200 rounded-xl p-2.5 text-xs text-rose-800 space-y-0.5">
+                      <p className="font-black flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                        <span>Deletion Request Under Review</span>
+                      </p>
+                      <p className="text-[11px] text-rose-700 leading-tight">
+                        Super Admin will review and delete this job opening from the platform.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Actions Row */}
+                  <div className="pt-2 border-t border-indigo-100 flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-semibold text-slate-500">
+                      Posted {timeAgo(job.createdAt)}
+                    </span>
+                    {isPendingDeletion ? (
+                      <span className="text-xs font-black text-rose-600 bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>Removal Pending Approval</span>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={requestingDeleteId === job.id}
+                        onClick={() => handleRequestJobDeletion(job)}
+                        className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 active:scale-95 text-xs font-black px-3.5 py-1.5 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                        <span>{requestingDeleteId === job.id ? 'Submitting...' : 'Request Removal / Delete Job'}</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Jobs List (Modern Reference Card Design) */}
         <div className="space-y-3">
-          {displayedJobs.map((job) => {
+          {otherJobs.map((job) => {
             const expTag = getExperienceTag(job.description);
             const isSaved = savedJobIds.includes(job.id);
 
@@ -432,7 +617,7 @@ export default function JobsBoard() {
             );
           })}
 
-          {displayedJobs.length === 0 && (
+          {myJobs.length === 0 && otherJobs.length === 0 && (
             <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-10 text-center space-y-2.5 shadow-2xs">
               <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 text-slate-400 flex items-center justify-center mx-auto text-xl">
                 💼
