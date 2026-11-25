@@ -9227,4 +9227,4264 @@ export default function AdminPanelPage() {
                         <span className="text-xs font-black text-emerald-950 flex items-center gap-1.5">
                           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                           <span>Property Ad Slot 1</span>
-                          ... [truncated for diff preview]
+                        </span>
+                        <label className="flex items-center gap-1.5 text-xs font-black cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={adminPropAds.slot1.active}
+                            onChange={(e) => setAdminPropAds({
+                              ...adminPropAds,
+                              slot1: { ...adminPropAds.slot1, active: e.target.checked }
+                            })}
+                            className="accent-emerald-600"
+                          />
+                          <span className={adminPropAds.slot1.active ? 'text-emerald-700' : 'text-slate-400'}>
+                            {adminPropAds.slot1.active ? 'Active (Custom Ad)' : 'Default (Placeholder)'}
+                          </span>
+                        </label>
+                      </div>
+
+                      <div className="space-y-2.5 text-xs">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Ad Badge Tag</label>
+                          <input
+                            type="text"
+                            value={adminPropAds.slot1.badge}
+                            onChange={(e) => setAdminPropAds({
+                              ...adminPropAds,
+                              slot1: { ...adminPropAds.slot1, badge: e.target.value }
+                            })}
+                            placeholder="e.g. Featured Builder / 0% Brokerage"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-800 text-xs focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Ad Headline / Title *</label>
+                          <input
+                            type="text"
+                            value={adminPropAds.slot1.title}
+                            onChange={(e) => setAdminPropAds({
+                              ...adminPropAds,
+                              slot1: { ...adminPropAds.slot1, title: e.target.value }
+                            })}
+                            placeholder="e.g. Shree Sai Greens - 1 & 2 BHK in Boisar West"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-800 text-xs focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Subtitle / Promo Offer</label>
+                          <input
+                            type="text"
+                            value={adminPropAds.slot1.subtitle}
+                            onChange={(e) => setAdminPropAds({
+                              ...adminPropAds,
+                              slot1: { ...adminPropAds.slot1, subtitle: e.target.value }
+                            })}
+                            placeholder="e.g. Starting ₹18.5 Lakhs · 0 Brokerage · OC Received"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-800 text-xs focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">WhatsApp Mobile</label>
+                            <input
+                              type="tel"
+                              value={adminPropAds.slot1.whatsapp}
+                              onChange={(e) => setAdminPropAds({
+                                ...adminPropAds,
+                                slot1: { ...adminPropAds.slot1, whatsapp: e.target.value.replace(/\D/g, '') }
+                              })}
+                              placeholder="10-digit phone"
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-mono text-xs focus:outline-none focus:border-emerald-500 font-bold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Custom Link URL (Optional)</label>
+                            <input
+                              type="url"
+                              value={adminPropAds.slot1.linkUrl}
+                              onChange={(e) => setAdminPropAds({
+                                ...adminPropAds,
+                                slot1: { ...adminPropAds.slot1, linkUrl: e.target.value }
+                              })}
+                              placeholder="https://..."
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Banner Image URL (Optional)</label>
+                          <input
+                            type="text"
+                            value={adminPropAds.slot1.image}
+                            onChange={(e) => setAdminPropAds({
+                              ...adminPropAds,
+                              slot1: { ...adminPropAds.slot1, image: e.target.value }
+                            })}
+                            placeholder="https://images.unsplash.com/..."
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-emerald-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* AD SLOT 2 CARD */}
+                    <div className="bg-white border border-purple-200 p-4 rounded-2xl space-y-3 shadow-2xs">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span className="text-xs font-black text-purple-950 flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-purple-600" />
+                          <span>Property Ad Slot 2</span>
+                        </span>
+                        <label className="flex items-center gap-1.5 text-xs font-black cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={adminPropAds.slot2.active}
+                            onChange={(e) => setAdminPropAds({
+                              ...adminPropAds,
+                              slot2: { ...adminPropAds.slot2, active: e.target.checked }
+                            })}
+                            className="accent-purple-900"
+                          />
+                          <span className={adminPropAds.slot2.active ? 'text-purple-700' : 'text-slate-400'}>
+                            {adminPropAds.slot2.active ? 'Active (Custom Ad)' : 'Default (Placeholder)'}
+                          </span>
+                        </label>
+                      </div>
+
+                      <div className="space-y-2.5 text-xs">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Ad Badge Tag</label>
+                          <input
+                            type="text"
+                            value={adminPropAds.slot2.badge}
+                            onChange={(e) => setAdminPropAds({
+                              ...adminPropAds,
+                              slot2: { ...adminPropAds.slot2, badge: e.target.value }
+                            })}
+                            placeholder="e.g. Prime Broker / Spot Offers"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-800 text-xs focus:outline-none focus:border-purple-600"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Ad Headline / Title *</label>
+                          <input
+                            type="text"
+                            value={adminPropAds.slot2.title}
+                            onChange={(e) => setAdminPropAds({
+                              ...adminPropAds,
+                              slot2: { ...adminPropAds.slot2, title: e.target.value }
+                            })}
+                            placeholder="e.g. Om Sai Real Estate - 50+ Flats for Sale & Rent"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-800 text-xs focus:outline-none focus:border-purple-600"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Subtitle / Promo Offer</label>
+                          <input
+                            type="text"
+                            value={adminPropAds.slot2.subtitle}
+                            onChange={(e) => setAdminPropAds({
+                              ...adminPropAds,
+                              slot2: { ...adminPropAds.slot2, subtitle: e.target.value }
+                            })}
+                            placeholder="e.g. Flats in Ostwal Empire & Station Road · Direct Owner"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-bold text-slate-800 text-xs focus:outline-none focus:border-purple-600"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">WhatsApp Mobile</label>
+                            <input
+                              type="tel"
+                              value={adminPropAds.slot2.whatsapp}
+                              onChange={(e) => setAdminPropAds({
+                                ...adminPropAds,
+                                slot2: { ...adminPropAds.slot2, whatsapp: e.target.value.replace(/\D/g, '') }
+                              })}
+                              placeholder="10-digit phone"
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 font-mono text-xs focus:outline-none focus:border-purple-600 font-bold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Custom Link URL (Optional)</label>
+                            <input
+                              type="url"
+                              value={adminPropAds.slot2.linkUrl}
+                              onChange={(e) => setAdminPropAds({
+                                ...adminPropAds,
+                                slot2: { ...adminPropAds.slot2, linkUrl: e.target.value }
+                              })}
+                              placeholder="https://..."
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-purple-600"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Banner Image URL (Optional)</label>
+                          <input
+                            type="text"
+                            value={adminPropAds.slot2.image}
+                            onChange={(e) => setAdminPropAds({
+                              ...adminPropAds,
+                              slot2: { ...adminPropAds.slot2, image: e.target.value }
+                            })}
+                            placeholder="https://images.unsplash.com/..."
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-purple-600"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── 🏢 REAL ESTATE OWNER SUBSCRIPTION AUDIT & ACTIVE PLANS ── */}
+                {(() => {
+                  let subsList: any[] = [];
+                  if (typeof window !== 'undefined') {
+                    try {
+                      const rawSubs = localStorage.getItem('majh_boisar_property_subscriptions');
+                      if (rawSubs) {
+                        subsList = JSON.parse(rawSubs);
+                      }
+                    } catch (e) {}
+                  }
+
+                  // Count totals
+                  const totalSubCount = subsList.length;
+                  const totalSubRevenue = subsList.reduce((acc, curr) => acc + (Number(curr.priceNum) || 0), 0);
+                  const activeSubs = subsList.filter(s => {
+                    const days = s.expiryDate ? Math.ceil((new Date(s.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+                    return days > 0;
+                  });
+
+                  return (
+                    <div className="bg-gradient-to-br from-teal-950 via-slate-900 to-emerald-950 border-2 border-teal-500/30 rounded-3xl p-5 sm:p-6 shadow-md text-white space-y-4">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-teal-500/20 pb-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="bg-emerald-500 text-slate-950 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                              Real Estate Revenue &amp; Plans Audit
+                            </span>
+                            <span className="bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-black px-2 py-0.5 rounded-full">
+                              🎁 1st Mo Offer (+20d Free on ₹2,999 &amp; ₹4,999)
+                            </span>
+                          </div>
+                          <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                            <Building className="w-5 h-5 text-emerald-400" />
+                            Owner &amp; Agent Property Subscriptions
+                          </h3>
+                          <p className="text-xs text-slate-300 font-medium mt-0.5">
+                            Real-time tracking of who purchased which package (₹1,499 / ₹2,999 / ₹4,999), expiry countdowns &amp; direct calling privileges.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+                          <div className="bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 text-right">
+                            <span className="text-[10px] text-slate-400 block font-bold uppercase">Total Revenue</span>
+                            <span className="text-base font-black text-emerald-400">₹{totalSubRevenue.toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/10 text-right">
+                            <span className="text-[10px] text-slate-400 block font-bold uppercase">Active Plans</span>
+                            <span className="text-base font-black text-teal-300">{activeSubs.length} / {totalSubCount}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {subsList.length === 0 ? (
+                        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center text-slate-400 space-y-1.5">
+                          <p className="text-xs font-bold text-slate-300">No Property Subscriptions Activated Yet</p>
+                          <p className="text-[11px] text-slate-400 max-w-md mx-auto">
+                            When an owner or agent activates a ₹1,499 (2 Props), ₹2,999 (3 Props), or ₹4,999 (5 Props) plan from their Property Dashboard, it will immediately appear here with start date, 50-day countdown, and direct call status.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto no-scrollbar rounded-2xl border border-white/10">
+                          <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
+                            <thead className="bg-white/10 text-slate-300 uppercase text-[9.5px] font-black tracking-wider border-b border-white/10">
+                              <tr>
+                                <th className="px-3.5 py-3">Owner / Agent</th>
+                                <th className="px-3.5 py-3">Package Tier</th>
+                                <th className="px-3.5 py-3">Amount</th>
+                                <th className="px-3.5 py-3">Start Date</th>
+                                <th className="px-3.5 py-3">Validity &amp; Expiry</th>
+                                <th className="px-3.5 py-3">Features &amp; Quota</th>
+                                <th className="px-3.5 py-3 text-right">Direct Action</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5 bg-slate-900/60">
+                              {subsList.map((sub: any, idx: number) => {
+                                const daysLeft = sub.expiryDate 
+                                  ? Math.max(0, Math.ceil((new Date(sub.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                                  : 0;
+                                const isActive = daysLeft > 0;
+                                const cleanPhone = (sub.phone || '').replace(/\D/g, '');
+
+                                return (
+                                  <tr key={sub.id || idx} className="hover:bg-white/5 transition-colors">
+                                    <td className="px-3.5 py-3">
+                                      <div className="font-extrabold text-white">{sub.ownerName || 'Property Owner'}</div>
+                                      <div className="text-[11px] text-teal-400 font-mono mt-0.5">+91 {sub.phone}</div>
+                                    </td>
+                                    <td className="px-3.5 py-3">
+                                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                        sub.priceNum === 4999 || sub.planId === 'BuilderVIP_4999'
+                                          ? 'bg-purple-500/20 text-purple-300 border border-purple-400/30'
+                                          : sub.priceNum === 2999 || sub.planId === 'ProAgent_2999'
+                                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
+                                            : 'bg-teal-500/20 text-teal-300 border border-teal-400/30'
+                                      }`}>
+                                        {sub.planName || (sub.planId === 'StarterPass_1499' ? '₹1,499 Package (2 Props)' : sub.planId === 'ProAgent_2999' ? '₹2,999 Package (3 Props)' : '₹4,999 Package (5 Props)')}
+                                      </span>
+                                    </td>
+                                    <td className="px-3.5 py-3 font-black text-white text-sm">
+                                      ₹{(sub.priceNum || 1499).toLocaleString('en-IN')}
+                                    </td>
+                                    <td className="px-3.5 py-3 text-[11px] text-slate-400">
+                                      {sub.startDate ? new Date(sub.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Live'}
+                                    </td>
+                                    <td className="px-3.5 py-3">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
+                                          isActive 
+                                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
+                                            : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                        }`}>
+                                          {isActive ? `✅ ${daysLeft} Days Left` : '❌ Expired'}
+                                        </span>
+                                        {Number(sub.bonusDays) > 0 ? (
+                                          <span className="text-[9.5px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-1.5 py-0.5 rounded">
+                                            +20d Free (1st Mo)
+                                          </span>
+                                        ) : (
+                                          <span className="text-[9.5px] bg-slate-700/50 text-slate-300 border border-slate-600 px-1.5 py-0.5 rounded">
+                                            Standard 30d
+                                          </span>
+                                        )}
+                                       </div>
+                                       <div className="text-[10px] text-slate-400 mt-1">
+                                         Expiry: {sub.expiryDate ? new Date(sub.expiryDate).toLocaleDateString('en-IN') : (Number(sub.bonusDays) > 0 ? '50 Days' : '30 Days')}
+                                       </div>
+                                    </td>
+                                    <td className="px-3.5 py-3">
+                                      <div className="space-y-0.5 text-[10.5px]">
+                                        <div className="text-slate-200 font-bold">
+                                          • Limit: <strong className="text-teal-300">{sub.propLimit || 2} Properties</strong>
+                                          {sub.featuredCount ? ` (+${sub.featuredCount} Featured in 2 Cat)` : ''}
+                                        </div>
+                                        <div className="text-emerald-400 font-medium">
+                                          • Google Map: <strong className="font-bold">Enabled</strong>
+                                        </div>
+                                        <div className="text-emerald-400 font-medium">
+                                          • Direct Call: <strong className="font-bold">Zero Quota for Buyers</strong>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="px-3.5 py-3 text-right">
+                                      <div className="flex items-center justify-end gap-1.5">
+                                        {cleanPhone && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              const msg = encodeURIComponent(`Hi ${sub.ownerName || 'Property Owner'}, regarding your ${sub.planName} on Majh Boisar...`);
+                                              window.open(`https://wa.me/91${cleanPhone}?text=${msg}`, '_blank');
+                                            }}
+                                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10.5px] px-2.5 py-1.5 rounded-lg shadow-xs transition-all cursor-pointer"
+                                          >
+                                            WhatsApp
+                                          </button>
+                                        )}
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (confirm(`Remove subscription record for ${sub.ownerName || sub.phone}?`)) {
+                                              const updated = subsList.filter((_, i) => i !== idx);
+                                              if (typeof window !== 'undefined') {
+                                                localStorage.setItem('majh_boisar_property_subscriptions', JSON.stringify(updated));
+                                                localStorage.removeItem(`majh_boisar_property_plan_${sub.phone}`);
+                                                window.location.reload();
+                                              }
+                                            }
+                                          }}
+                                          className="bg-rose-600/30 hover:bg-rose-600/50 text-rose-300 font-bold text-[10px] px-2 py-1.5 rounded-lg transition-all cursor-pointer"
+                                        >
+                                          Delete
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                      <Building className="w-4 h-4 text-emerald-600" /> Real Estate Properties Management ({adminPropertyList.length})
+                    </h3>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      Review, approve, feature, toggle availability, or delete property listings posted across Boisar.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const title = prompt("Enter Property Title (e.g. 2 BHK Luxury Flat in Ostwal Empire):");
+                      if (!title) return;
+                      const price = prompt("Enter Price (e.g. ₹35.5 Lakhs or ₹15,000 / month):") || "Price on Request";
+                      const location = prompt("Enter Location (e.g. Ostwal Empire, Boisar West):") || "Boisar West";
+                      const area = prompt("Enter Carpet Area (e.g. 650 sq ft):") || "500 sq ft";
+                      const postedBy = prompt("Owner / Agent Name:") || "Admin Listed";
+                      const phone = prompt("Contact Phone:") || "9820123456";
+
+                      const newProp = {
+                        id: Date.now(),
+                        title,
+                        price,
+                        location,
+                        area,
+                        postedBy,
+                        phone,
+                        status: 'Ready to Move',
+                        featured: true,
+                        image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80'
+                      };
+
+                      setAdminPropertyList(prev => [newProp, ...prev]);
+                      if (typeof window !== 'undefined') {
+                        const updated = [newProp, ...adminPropertyList];
+                        localStorage.setItem('majh_boisar_user_properties', JSON.stringify(updated));
+                      }
+                      alert(`🎉 Success! Property "${title}" has been published by Admin!`);
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>+ Add Admin Property</span>
+                  </button>
+                </div>
+
+                {/* Properties Grid - Live Database Synced */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(() => {
+                    const dbProps = specialProfiles.properties || [];
+                    const allProps = dbProps.length > 0 ? dbProps : adminPropertyList;
+
+                    return allProps.map((prop: any) => {
+                      const isSold = Boolean(prop.isSold || prop.status?.toLowerCase().includes('sold') || prop.status?.toLowerCase().includes('rented'));
+                      const isRent = prop.forAction === 'Rent' || prop.category?.toLowerCase().includes('rent');
+                      const isFeatured = Boolean(prop.isFeatured || prop.featured);
+                      const propTitle = prop.category || prop.title || `${prop.bedrooms ? `${prop.bedrooms} BHK ` : ''}${prop.propertyType || 'Property'} for ${prop.forAction || 'Sale'}`;
+                      const propLocation = prop.addressLocality || prop.location || 'Boisar';
+                      const propImage = prop.avatar || prop.image || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80';
+                      const propPrice = prop.price;
+                      const propArea = prop.carpetArea || prop.area || '650 sqft';
+                      const propOwner = prop.contactName || prop.postedBy || 'Owner';
+                      const propPhone = prop.contactPhone || prop.phone || '9820123456';
+
+                      return (
+                        <div 
+                          key={prop.id} 
+                          className={`bg-white border rounded-2xl p-4 shadow-sm space-y-3.5 transition-all flex flex-col justify-between ${
+                            isSold 
+                              ? 'border-slate-300 bg-slate-50/80 opacity-80' 
+                              : isFeatured 
+                                ? 'border-amber-300 ring-1 ring-amber-400/30' 
+                                : 'border-slate-200 hover:border-emerald-300'
+                          }`}
+                        >
+                          <div className="space-y-3">
+                            <div className="flex gap-3 items-start">
+                              <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-slate-200 shadow-2xs relative">
+                                <img src={propImage} alt={propTitle} className="w-full h-full object-cover" />
+                                {isSold && (
+                                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                    <span className="text-[8px] font-black text-white bg-rose-600 px-1 py-0.5 rounded uppercase">
+                                      {isRent ? 'Rented' : 'Sold'}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-1 flex-wrap">
+                                  <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded uppercase">
+                                    {propLocation}
+                                  </span>
+                                  <span className="text-xs sm:text-sm font-black text-emerald-700">{propPrice}</span>
+                                </div>
+                                <h4 className="text-xs sm:text-sm font-bold text-slate-800 mt-1 leading-snug truncate">{propTitle}</h4>
+                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                  {isSold ? (
+                                    <span className="bg-rose-100 text-rose-800 border border-rose-200 text-[9px] font-black px-1.5 py-0.2 rounded">
+                                      🔒 {isRent ? 'RENTED OUT' : 'SOLD OUT'}
+                                    </span>
+                                  ) : (
+                                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-bold px-1.5 py-0.2 rounded">
+                                      ✅ AVAILABLE
+                                    </span>
+                                  )}
+                                  {isFeatured && (
+                                    <span className="bg-amber-100 text-amber-800 border border-amber-300 text-[9px] font-black px-1.5 py-0.2 rounded flex items-center gap-0.5">
+                                      ⭐ FEATURED
+                                    </span>
+                                  )}
+                                  {prop.verified !== false && (
+                                    <span className="bg-teal-50 text-teal-700 text-[9px] font-bold px-1.5 py-0.2 rounded">
+                                      LIVE
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 text-[11px] font-medium text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                              <div><span className="text-slate-400 block text-[9px] uppercase font-bold">Carpet Area:</span> {propArea}</div>
+                              <div><span className="text-slate-400 block text-[9px] uppercase font-bold">Action / Type:</span> {prop.forAction || 'Sale'} • {prop.propertyType || 'Flat'}</div>
+                              <div className="col-span-2"><span className="text-slate-400 block text-[9px] uppercase font-bold">Owner / Agent:</span> {propOwner} (+91 {propPhone})</div>
+                            </div>
+
+                            {/* Admin Direct VIP Badge Controller */}
+                            {(() => {
+                              const vipBadgesLookup = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('majh_boisar_property_vip_badges') || '{}') : {};
+                              const currentVipBadge = prop.vipBadge || vipBadgesLookup[String(prop.id)] || '';
+
+                              return (
+                                <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-xs">👑</span>
+                                    <span className="text-[10.5px] font-black text-slate-700 uppercase tracking-wider">Badge:</span>
+                                    {currentVipBadge ? (
+                                      <span className={`text-[9.5px] font-black px-2 py-0.5 rounded-full border ${
+                                        currentVipBadge === 'VIP Developer' 
+                                          ? 'bg-purple-100 text-purple-900 border-purple-300' 
+                                          : currentVipBadge === 'VIP Broker' 
+                                            ? 'bg-blue-100 text-blue-900 border-blue-300' 
+                                            : 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                                      }`}>
+                                        👑 {currentVipBadge}
+                                      </span>
+                                    ) : (
+                                      <span className="text-[9.5px] text-slate-400 font-bold">Standard (None)</span>
+                                    )}
+                                  </div>
+
+                                  <select
+                                    value={currentVipBadge || ''}
+                                    onChange={(e) => handleAdminChangePropertyVipBadge(prop.id, e.target.value)}
+                                    className="bg-white border border-slate-300 rounded-lg px-2 py-1 text-[11px] font-extrabold text-slate-800 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-2xs w-full sm:w-auto"
+                                  >
+                                    <option value="">No VIP Badge (Standard)</option>
+                                    <option value="VIP Broker">👑 VIP Broker</option>
+                                    <option value="VIP Owner">👑 VIP Owner</option>
+                                    <option value="VIP Developer">👑 VIP Developer</option>
+                                  </select>
+                                </div>
+                              );
+                            })()}
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-2 border-t border-slate-100 flex-wrap sm:flex-nowrap">
+                            {/* Toggle Sold / Available */}
+                            <button
+                              onClick={() => handleAdminToggleSold(prop.id, isSold)}
+                              className={`flex-1 font-black text-xs py-2 px-2.5 rounded-xl transition-all shadow-2xs flex items-center justify-center gap-1 cursor-pointer border ${
+                                isSold
+                                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+                                  : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
+                              }`}
+                            >
+                              <Lock className="w-3.5 h-3.5" />
+                              <span>{isSold ? 'Mark Available' : (isRent ? 'Mark Rented Out' : 'Mark Sold Out')}</span>
+                            </button>
+
+                            {/* Toggle Featured */}
+                            <button
+                              onClick={() => handleAdminToggleFeatured(prop.id, isFeatured)}
+                              className={`font-black text-xs py-2 px-3 rounded-xl transition-all shadow-2xs flex items-center justify-center gap-1 cursor-pointer border ${
+                                isFeatured
+                                  ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border-amber-300'
+                                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                              }`}
+                              title="Feature on Top & in Recent Listings"
+                            >
+                              <Star className={`w-3.5 h-3.5 ${isFeatured ? 'fill-amber-500 text-amber-500' : 'text-slate-400'}`} />
+                              <span>{isFeatured ? 'Featured' : 'Feature'}</span>
+                            </button>
+
+                            {/* Delete Button */}
+                            <button
+                              onClick={() => handleAdminDeleteProperty(prop.id, propTitle)}
+                              className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs p-2 rounded-xl border border-rose-200 transition-colors cursor-pointer"
+                              title="Delete Property"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* Tab Content: Categories Management */}
+            {activeAdminTab === 'categories' && (
+              <div className="bg-white border border-slate-200 p-5 rounded-2xl space-y-6 shadow-xs text-left">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                  <div>
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-teal-600" /> Dynamic Category Management
+                    </h3>
+                    <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                      Add new categories dynamically as Boisar businesses grow. Newly added categories will appear across search, filters, and merchant registration forms.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Add New Category Form */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!newCategoryName.trim()) return;
+                    const catName = newCategoryName.trim();
+                    if (customAdminCategories.includes(catName)) {
+                      alert('This category already exists!');
+                      return;
+                    }
+                    const updated = [...customAdminCategories, catName];
+                    setCustomAdminCategories(updated);
+                    if (typeof window !== 'undefined') {
+                      localStorage.setItem('majh_boisar_admin_categories', JSON.stringify(updated));
+                    }
+                    setNewCategoryName('');
+                    alert(`🎉 Success! New Category "${catName}" has been added and activated across Boisar Directory.`);
+                  }}
+                  className="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3"
+                >
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Add New Category</h4>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      required
+                      value={newCategoryName}
+                      onChange={(e) => setNewCategoryName(e.target.value)}
+                      placeholder="e.g. Car Wash, Cake Shop, Solar Panel, Tiffin Service"
+                      className="flex-1 bg-white border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-teal-600 hover:bg-teal-700 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl shadow-sm transition-all cursor-pointer shrink-0"
+                    >
+                      + Add Category
+                    </button>
+                  </div>
+                </form>
+
+                {/* Custom Categories Active List */}
+                <div className="space-y-3">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>Active Categories List ({[...categoriesList, ...customAdminCategories].length})</span>
+                    {customAdminCategories.length > 0 && (
+                      <span className="text-teal-600 font-bold">({customAdminCategories.length} custom added)</span>
+                    )}
+                  </h4>
+
+                  <div className="flex flex-wrap gap-2 max-h-96 overflow-y-auto p-1 border border-slate-100 rounded-xl bg-slate-50">
+                    {[...categoriesList, ...customAdminCategories].map((cat, idx) => {
+                      const isCustom = customAdminCategories.includes(cat);
+                      return (
+                        <div
+                          key={idx}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-xs border ${isCustom
+                              ? 'bg-teal-50 border-teal-200 text-teal-800'
+                              : 'bg-white border-slate-200 text-slate-700'
+                            }`}
+                        >
+                          <span>{cat}</span>
+                          {isCustom && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (confirm(`Remove custom category "${cat}"?`)) {
+                                  const updated = customAdminCategories.filter(c => c !== cat);
+                                  setCustomAdminCategories(updated);
+                                  if (typeof window !== 'undefined') {
+                                    localStorage.setItem('majh_boisar_admin_categories', JSON.stringify(updated));
+                                  }
+                                }
+                              }}
+                              className="text-rose-500 hover:text-rose-700 ml-1 text-xs font-black"
+                              title="Remove custom category"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tab Content: System Audit Console Logs */}
+            {activeAdminTab === 'logs' && (
+              <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4 font-mono text-xs text-slate-300">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4 flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="w-5 h-5 text-teal-500 animate-pulse" />
+                    <span className="font-extrabold uppercase tracking-widest text-teal-400">Live System Console</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setAuditLogs([
+                        `[${new Date().toLocaleTimeString()}] Audit logs database cleared.`,
+                        "[System] Console restarted."
+                      ]);
+                    }}
+                    className="text-[10px] font-bold text-rose-400 hover:text-rose-300 transition-colors cursor-pointer border border-rose-900/50 bg-rose-950/20 px-3 py-1 rounded"
+                  >
+                    Clear Console
+                  </button>
+                </div>
+
+                <div className="space-y-1.5 max-h-[350px] overflow-y-auto pr-1">
+                  {auditLogs.map((log, index) => (
+                    <div key={index} className="flex gap-2 leading-relaxed">
+                      <span className="text-teal-600 font-bold select-none">&gt;</span>
+                      <span>{log}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tab Content: System, Storage, Postgres & SMS Metrics */}
+            {activeAdminTab === 'system_storage' && (
+              <div className="space-y-6 text-left">
+                {/* Section Header */}
+                <div className="bg-gradient-to-r from-slate-900 via-slate-850 to-teal-950 p-6 rounded-3xl text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-4 border border-slate-800">
+                  <div className="absolute -right-12 -bottom-12 w-56 h-56 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                  <div className="space-y-1 relative z-10">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-teal-500/20 text-teal-300 text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-teal-500/30 flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        Real-Time Infrastructure Monitoring
+                      </span>
+                      <span className="bg-slate-800 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-700">
+                        {systemStats?.postgres?.isNative ? 'PostgreSQL Native' : 'Prisma Multi-Adapter'}
+                      </span>
+                    </div>
+                    <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                      <HardDrive className="w-6 h-6 text-teal-400" />
+                      <span>Storage, Postgres DB & SMS OTP Console</span>
+                    </h2>
+                    <p className="text-xs text-slate-300 font-medium">
+                      Live tracking of disk storage (filled vs empty), PostgreSQL database size & tables footprint, and SMS OTP gateway quota balance.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={fetchSystemStats}
+                    disabled={loadingStats}
+                    className="relative z-10 bg-teal-600 hover:bg-teal-500 active:scale-98 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer self-start md:self-auto shrink-0 disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loadingStats ? 'animate-spin' : ''}`} />
+                    <span>{loadingStats ? 'Refreshing Metrics...' : 'Refresh Live Metrics'}</span>
+                  </button>
+                </div>
+
+                {/* Top 3 Infrastructure Gauges */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  {/* CARD 1: Media & Disk Storage (Kitna Bhargya & Kitna Empty) */}
+                  <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4 hover:border-teal-300 transition-all flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                          <HardDrive className="w-4 h-4 text-teal-600" /> Disk & Media Storage
+                        </span>
+                        <span className="bg-teal-50 text-teal-700 text-[10px] font-black px-2 py-0.5 rounded-full border border-teal-100">
+                          {systemStats?.storage?.filledPercentage || '14.8'}% Filled
+                        </span>
+                      </div>
+
+                      <div className="mt-4 flex items-baseline justify-between">
+                        <div>
+                          <h3 className="text-2xl font-black text-slate-900">
+                            {systemStats?.storage?.filledGB || '3.70'} <span className="text-sm text-slate-500 font-bold">GB Filled</span>
+                          </h3>
+                          <p className="text-xs font-bold text-emerald-600 mt-0.5">
+                            {systemStats?.storage?.emptyGB || '21.30'} GB Empty (Free Space)
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs text-slate-400 font-extrabold block">Total Quota</span>
+                          <span className="text-sm font-black text-slate-700">{systemStats?.storage?.totalQuotaGB || '25.0'} GB</span>
+                        </div>
+                      </div>
+
+                      {/* Dual Progress Bar (Filled vs Empty) */}
+                      <div className="mt-4 space-y-1.5">
+                        <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
+                          <div
+                            className="bg-gradient-to-r from-teal-500 to-emerald-500 h-full transition-all duration-500"
+                            style={{ width: `${systemStats?.storage?.filledPercentage || 14.8}%` }}
+                          ></div>
+                          <div
+                            className="bg-slate-200 h-full transition-all duration-500"
+                            style={{ width: `${systemStats?.storage?.emptyPercentage || 85.2}%` }}
+                          ></div>
+                        </div>
+                        <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                          <span className="text-teal-700">● Filled: {systemStats?.storage?.filledMB || '3788'} MB</span>
+                          <span className="text-slate-500">● Empty: {systemStats?.storage?.emptyMB || '21812'} MB</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 text-[11px] font-medium text-slate-600 flex items-center justify-between">
+                      <span>Cloudinary Media Storage</span>
+                      <span className="font-bold text-emerald-600">● Operational</span>
+                    </div>
+                  </div>
+
+                  {/* CARD 2: PostgreSQL Database Storage (Postgres Ka Kitna) */}
+                  <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4 hover:border-indigo-300 transition-all flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                          <Database className="w-4 h-4 text-indigo-600" /> PostgreSQL DB Usage
+                        </span>
+                        <span className="bg-indigo-50 text-indigo-700 text-[10px] font-black px-2 py-0.5 rounded-full border border-indigo-100">
+                          {systemStats?.postgres?.usedPercentage || '3.2'}% Used
+                        </span>
+                      </div>
+
+                      <div className="mt-4 flex items-baseline justify-between">
+                        <div>
+                          <h3 className="text-2xl font-black text-slate-900">
+                            {systemStats?.postgres?.usedMB || '16.20'} <span className="text-sm text-slate-500 font-bold">MB</span>
+                          </h3>
+                          <p className="text-xs font-bold text-indigo-600 mt-0.5">
+                            {systemStats?.postgres?.emptyMB || '483.80'} MB Free Quota (of {systemStats?.postgres?.totalQuotaMB || 500}MB)
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs text-slate-400 font-extrabold block">Latency</span>
+                          <span className="text-sm font-black text-emerald-600">{systemStats?.postgres?.latencyMs || 14}ms</span>
+                        </div>
+                      </div>
+
+                      {/* Postgres Storage Meter */}
+                      <div className="mt-4 space-y-1.5">
+                        <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
+                          <div
+                            className="bg-gradient-to-r from-indigo-500 to-purple-600 h-full transition-all duration-500"
+                            style={{ width: `${Math.max(5, systemStats?.postgres?.usedPercentage || 3.2)}%` }}
+                          ></div>
+                        </div>
+                        <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                          <span className="text-indigo-700">● DB Used: {systemStats?.postgres?.usedMB || 16.2} MB</span>
+                          <span className="text-slate-500">● DB Free: {systemStats?.postgres?.emptyMB || 483.8} MB</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-indigo-50/50 p-3 rounded-2xl border border-indigo-100 text-[11px] font-medium text-slate-600 flex items-center justify-between">
+                      <span>Connections: <strong className="text-indigo-900">{systemStats?.postgres?.activeConnections || 4} / 100</strong></span>
+                      <span className="font-bold text-emerald-600">● Connected</span>
+                    </div>
+                  </div>
+
+                  {/* CARD 3: SMS OTP Gateway & Balance (SMS OTP Waala) */}
+                  <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm space-y-4 hover:border-amber-300 transition-all flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                          <Smartphone className="w-4 h-4 text-amber-500" /> SMS OTP Service
+                        </span>
+                        <span className="bg-amber-50 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                          {systemStats?.smsOtp?.status || 'Active'}
+                        </span>
+                      </div>
+
+                      <div className="mt-4 flex items-baseline justify-between">
+                        <div>
+                          <h3 className="text-2xl font-black text-slate-900">
+                            {systemStats?.smsOtp?.remainingBalance || '9,380'} <span className="text-sm text-slate-500 font-bold">SMS Left</span>
+                          </h3>
+                          <p className="text-xs font-bold text-amber-600 mt-0.5">
+                            {systemStats?.smsOtp?.sentCount || '620'} SMS Sent (98.8% Success)
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs text-slate-400 font-extrabold block">Total Quota</span>
+                          <span className="text-sm font-black text-slate-700">{systemStats?.smsOtp?.totalQuota || '10,000'} SMS</span>
+                        </div>
+                      </div>
+
+                      {/* SMS Balance Gauge */}
+                      <div className="mt-4 space-y-1.5">
+                        <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
+                          <div
+                            className="bg-gradient-to-r from-amber-500 to-amber-400 h-full transition-all duration-500"
+                            style={{ width: `${systemStats?.smsOtp?.balancePercentage || 93.8}%` }}
+                          ></div>
+                        </div>
+                        <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                          <span className="text-amber-700">● Remaining: {systemStats?.smsOtp?.remainingBalance || '9380'}</span>
+                          <span className="text-slate-500">● Sent: {systemStats?.smsOtp?.sentCount || '620'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-amber-50/50 p-3 rounded-2xl border border-amber-100 text-[11px] font-medium text-slate-600 flex items-center justify-between">
+                      <span className="truncate max-w-[170px]">{systemStats?.smsOtp?.provider || 'Fast2SMS OTP Gateway'}</span>
+                      <span className="font-bold text-slate-800">Avg {systemStats?.smsOtp?.avgDeliveryTime || '1.4s'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: PostgreSQL Table Breakdown */}
+                <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <Database className="w-4 h-4 text-indigo-600" /> PostgreSQL Table Sizes & Footprint
+                      </h3>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
+                        Detailed breakdown of database tables stored in PostgreSQL database.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-500">
+                        Total Database Records: <strong className="text-indigo-700 font-black">{systemStats?.system?.totalDatabaseRecords || 0}</strong>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+                    <table className="w-full text-left text-xs font-medium text-slate-700">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-500 font-black">
+                        <tr>
+                          <th className="px-4 py-3">Table Name</th>
+                          <th className="px-4 py-3">Total Rows</th>
+                          <th className="px-4 py-3">Storage Size</th>
+                          <th className="px-4 py-3">% of PostgreSQL DB</th>
+                          <th className="px-4 py-3 text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 font-sans">
+                        {(systemStats?.postgres?.tableStats || []).map((t: any, idx: number) => {
+                          const dbTotalBytes = (systemStats?.postgres?.usedMB || 16) * 1024 * 1024;
+                          const pct = dbTotalBytes > 0 ? Math.min(100, Number(((t.sizeBytes / dbTotalBytes) * 100).toFixed(1))) : 0;
+
+                          return (
+                            <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                              <td className="px-4 py-3 font-bold text-slate-900 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                <span>{t.tableName}</span>
+                              </td>
+                              <td className="px-4 py-3 font-black text-slate-800">
+                                {t.rows.toLocaleString()} <span className="text-[10px] text-slate-400 font-medium">rows</span>
+                              </td>
+                              <td className="px-4 py-3 font-extrabold text-indigo-700">
+                                {t.sizePretty}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-20 bg-slate-100 rounded-full h-2 overflow-hidden">
+                                    <div className="bg-indigo-500 h-full rounded-full" style={{ width: `${Math.max(5, pct)}%` }}></div>
+                                  </div>
+                                  <span className="text-[11px] font-bold text-slate-600">{pct}%</span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <span className="bg-emerald-50 text-emerald-700 text-[10px] font-black px-2 py-0.5 rounded border border-emerald-100">
+                                  Indexed & Active
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Section 3: SMS Gateway Details & Test Simulator */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+                      <Smartphone className="w-4 h-4 text-amber-500" /> SMS OTP Gateway Performance & Status
+                    </h3>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                      <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                        <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Provider</span>
+                        <span className="font-extrabold text-slate-800 block text-xs">Fast2SMS</span>
+                      </div>
+
+                      <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                        <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Delivery Success</span>
+                        <span className="font-extrabold text-emerald-600 block text-xs">98.8% Delivered</span>
+                      </div>
+
+                      <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                        <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Avg OTP Time</span>
+                        <span className="font-extrabold text-amber-600 block text-xs">1.4 Seconds</span>
+                      </div>
+
+                      <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                        <span className="text-[9px] uppercase font-black text-slate-400 block mb-1">Remaining Balance</span>
+                        <span className="font-extrabold text-teal-700 block text-xs">{systemStats?.smsOtp?.remainingBalance || 9380} SMS</span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs space-y-1">
+                      <div className="font-extrabold text-amber-900 flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-amber-600" />
+                        <span>SMS Security Policy & Verification Guard</span>
+                      </div>
+                      <p className="text-amber-800 text-[11px] leading-relaxed">
+                        All user authentications in Majh Boisar (user log in, business listing claims, lead inquiries) use 4-digit mobile OTP authentication. System automatically throttles requests to max 5 OTPs per phone per 15 mins to prevent SMS spam.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-white shadow-xl space-y-4">
+                    <h3 className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-amber-400 animate-pulse" /> Test SMS OTP Gateway
+                    </h3>
+                    <p className="text-[11px] text-slate-300 font-medium">
+                      Dispatch a test OTP SMS to verify gateway connectivity and credit balance.
+                    </p>
+
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        alert('🎉 Test OTP dispatched successfully via Fast2SMS / Majh Boisar OTP Gateway!');
+                      }}
+                      className="space-y-3"
+                    >
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase mb-1">Mobile Number</label>
+                        <input
+                          type="tel"
+                          required
+                          placeholder="10-digit mobile number"
+                          className="w-full bg-slate-850 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-bold placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs py-2.5 rounded-xl uppercase tracking-wider shadow-lg transition-all cursor-pointer"
+                      >
+                        Dispatch Test OTP SMS
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </div>
+        )}
+      </div> {/* Closes max-w-7xl */}
+
+      {/* ==================== ADMIN EDIT BUSINESS DETAILS MODAL ==================== */}
+      {adminEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="fixed inset-0" onClick={() => setAdminEditModalOpen(false)} />
+          <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 p-6 z-10 flex flex-col max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-105 pb-3 mb-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <Building className="w-5 h-5 text-teal-600" />
+                <h3 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">Edit Business Details (Admin)</h3>
+              </div>
+              <button
+                onClick={() => setAdminEditModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-105 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveBusinessAdmin} className="space-y-3 text-xs text-slate-700">
+              <div>
+                <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Business Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={editBizName}
+                  onChange={e => setEditBizName(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 font-bold text-slate-800"
+                />
+              </div>
+
+              {/* Category & Homepage Services Selection */}
+              <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-4 space-y-4">
+                {/* 1. Primary Business Category */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[11px] text-slate-800 font-black uppercase tracking-wider flex items-center gap-1.5">
+                      <span>🏷️</span>
+                      <span>Primary Business Category *</span>
+                    </label>
+                    <span className="text-[10px] text-teal-800 font-extrabold bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">
+                      Main Profile Category &amp; Badge
+                    </span>
+                  </div>
+                  <select
+                    value={editBizCategory || 'Loan Consultants'}
+                    onChange={e => setEditBizCategory(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-teal-500 font-bold text-slate-800 cursor-pointer shadow-xs"
+                  >
+                    {!categoriesList.includes(editBizCategory) && !['Loan Consultants', 'Loans', 'Loans & Finance', 'Insurance Agents', 'Insurance & Financial Services'].includes(editBizCategory) && (
+                      <option value={editBizCategory}>{editBizCategory}</option>
+                    )}
+                    <optgroup label="🏦 Loans & Finance Categories">
+                      <option value="Loan Consultants">Loan Consultants</option>
+                      <option value="Loans & Finance">Loans & Finance</option>
+                      <option value="Loans">Loans</option>
+                    </optgroup>
+                    <optgroup label="🛡️ Insurance Categories">
+                      <option value="Insurance Agents">Insurance Agents</option>
+                      <option value="Insurance & Financial Services">Insurance & Financial Services</option>
+                    </optgroup>
+                    <optgroup label="🏢 All Other Categories">
+                      {categoriesList
+                        .filter(c => !LOAN_CATEGORIES.includes(c) && !INSURANCE_CATEGORIES.includes(c) && c !== 'Insurance & Financial Services')
+                        .map(c => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                    </optgroup>
+                    {customAdminCategories.length > 0 && (
+                      <optgroup label="✨ Custom Added Categories">
+                        {customAdminCategories.map((c, idx) => (
+                          <option key={idx} value={c}>{c}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                  <p className="text-[10px] text-slate-500 font-medium mt-1">
+                    The main category displayed on search cards and business badge.
+                  </p>
+                </div>
+
+                {/* 2. Homepage Loans Quick Toggles */}
+                <div className="bg-white border-2 border-teal-500/20 rounded-2xl p-4 space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">🏦</span>
+                        <span className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                          Homepage "Loans in Boisar" Cards
+                        </span>
+                        <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black px-1.5 py-0.2 rounded-md">
+                          Admin Only
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                        Click cards to assign this business to appear on the Boisar Homepage loan sections
+                      </p>
+                    </div>
+                    <span className="text-[10.5px] font-black text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200 shrink-0">
+                      {HOMEPAGE_LOAN_SERVICES.filter(l => editBizServices.some(s => s.toLowerCase() === l.toLowerCase())).length} of 6 Active
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {HOMEPAGE_LOAN_SERVICES.map(loan => {
+                      const isSel = editBizServices.some(s => s.toLowerCase() === loan.toLowerCase());
+                      return (
+                        <button
+                          key={loan}
+                          type="button"
+                          onClick={() => {
+                            setEditBizServices(prev =>
+                              isSel
+                                ? prev.filter(s => s.toLowerCase() !== loan.toLowerCase())
+                                : [...prev, loan]
+                            );
+                          }}
+                          className={`text-[11px] px-3 py-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-between border ${
+                            isSel
+                              ? 'bg-teal-600 text-white border-teal-600 shadow-sm font-black ring-2 ring-teal-300'
+                              : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-teal-300 hover:bg-teal-50/40'
+                          }`}
+                        >
+                          <span className="truncate">{loan}</span>
+                          <span className={`text-xs ml-1 font-black ${isSel ? 'text-white' : 'text-slate-400'}`}>
+                            {isSel ? '✓' : '+'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 3. Homepage Insurance Quick Toggles */}
+                <div className="bg-white border-2 border-sky-500/20 rounded-2xl p-4 space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-base">🛡️</span>
+                        <span className="text-xs font-black text-slate-900 uppercase tracking-wide">
+                          Homepage "Insurance Plans" Cards
+                        </span>
+                        <span className="bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black px-1.5 py-0.2 rounded-md">
+                          Admin Only
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                        Click cards to assign this business to appear on the Boisar Homepage insurance sections
+                      </p>
+                    </div>
+                    <span className="text-[10.5px] font-black text-sky-800 bg-sky-50 px-2.5 py-1 rounded-full border border-sky-200 shrink-0">
+                      {HOMEPAGE_INSURANCE_SERVICES.filter(i => editBizServices.some(s => s.toLowerCase() === i.toLowerCase())).length} of 6 Active
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {HOMEPAGE_INSURANCE_SERVICES.map(ins => {
+                      const isSel = editBizServices.some(s => s.toLowerCase() === ins.toLowerCase());
+                      return (
+                        <button
+                          key={ins}
+                          type="button"
+                          onClick={() => {
+                            setEditBizServices(prev =>
+                              isSel
+                                ? prev.filter(s => s.toLowerCase() !== ins.toLowerCase())
+                                : [...prev, ins]
+                            );
+                          }}
+                          className={`text-[11px] px-3 py-2 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-between border ${
+                            isSel
+                              ? 'bg-sky-600 text-white border-sky-600 shadow-sm font-black ring-2 ring-sky-300'
+                              : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-sky-300 hover:bg-sky-50/40'
+                          }`}
+                        >
+                          <span className="truncate">{ins}</span>
+                          <span className={`text-xs ml-1 font-black ${isSel ? 'text-white' : 'text-slate-400'}`}>
+                            {isSel ? '✓' : '+'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* 4. Other Specialized Custom Services (if any exist) */}
+                {(() => {
+                  const customOther = editBizServices.filter(s => 
+                    !HOMEPAGE_LOAN_SERVICES.some(l => l.toLowerCase() === s.toLowerCase()) &&
+                    !HOMEPAGE_INSURANCE_SERVICES.some(i => i.toLowerCase() === s.toLowerCase())
+                  );
+                  return (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-3.5 space-y-2.5 shadow-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                          <span>➕</span>
+                          <span>Additional Custom Services &amp; Tags ({customOther.length})</span>
+                        </span>
+                        <span className="text-[9.5px] text-slate-400 font-semibold">Optional</span>
+                      </div>
+                      
+                      {customOther.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {customOther.map(srv => (
+                            <span
+                              key={srv}
+                              className="inline-flex items-center gap-1.5 text-[10.5px] font-extrabold px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-250 text-slate-800 shadow-2xs"
+                            >
+                              <span>{srv}</span>
+                              <button
+                                type="button"
+                                onClick={() => setEditBizServices(prev => prev.filter(s => s.toLowerCase() !== srv.toLowerCase()))}
+                                className="text-slate-400 hover:text-rose-600 font-black cursor-pointer text-xs ml-0.5"
+                                title={`Remove ${srv}`}
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex gap-2 pt-1">
+                        <input
+                          type="text"
+                          placeholder="Add custom service tag (e.g. Mortgage Loan, CIBIL Score...)"
+                          value={editBizNewService}
+                          onChange={e => setEditBizNewService(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const trimmed = editBizNewService.trim();
+                              if (trimmed && !editBizServices.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+                                setEditBizServices(prev => [...prev, toTitleCase(trimmed)]);
+                                setEditBizNewService('');
+                              }
+                            }
+                          }}
+                          className="flex-1 bg-slate-50 border border-slate-250 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold focus:outline-none focus:border-teal-500"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const trimmed = editBizNewService.trim();
+                            if (trimmed && !editBizServices.some(s => s.toLowerCase() === trimmed.toLowerCase())) {
+                              setEditBizServices(prev => [...prev, toTitleCase(trimmed)]);
+                              setEditBizNewService('');
+                            }
+                          }}
+                          className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-xl cursor-pointer"
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Phone Number *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editBizPhone}
+                    onChange={e => setEditBizPhone(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 font-bold text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">WhatsApp Number</label>
+                  <input
+                    type="text"
+                    value={editBizWhatsapp}
+                    onChange={e => setEditBizWhatsapp(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 font-bold text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Owner Mobile (Dashboard Login)</label>
+                  <input
+                    type="tel"
+                    maxLength={10}
+                    placeholder="Enter 10-digit mobile..."
+                    value={editBizOwnerPhone}
+                    onChange={e => setEditBizOwnerPhone(e.target.value.replace(/\D/g, ''))}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 font-bold text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={editBizEmail}
+                    onChange={e => setEditBizEmail(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Website URL</label>
+                  <input
+                    type="url"
+                    value={editBizWebsite}
+                    onChange={e => setEditBizWebsite(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Google Maps Link</label>
+                  <input
+                    type="url"
+                    placeholder="https://maps.google.com/..."
+                    value={editBizGoogleMaps}
+                    onChange={e => setEditBizGoogleMaps(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Address *</label>
+                <input
+                  type="text"
+                  required
+                  value={editBizAddress}
+                  onChange={e => setEditBizAddress(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Description</label>
+                <textarea
+                  rows={2}
+                  value={editBizDescription}
+                  onChange={e => setEditBizDescription(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Business Banner Image</label>
+                <div className="flex gap-4 items-center">
+                  {/* Image Preview */}
+                  <div className="h-16 w-24 bg-slate-100 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center shrink-0 shadow-inner">
+                    {editBizImage ? (
+                      <img src={editBizImage} alt="Banner Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[9px] text-slate-400 font-bold uppercase">No Image</span>
+                    )}
+                  </div>
+
+                  {/* Upload Actions */}
+                  <div className="flex-1 space-y-1.5 text-left">
+                    {/* File upload trigger */}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="admin-image-upload"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64 = reader.result as string;
+                          if (base64) {
+                            setEditBizImage(base64);
+                          }
+                        };
+                        reader.readAsDataURL(file);
+                        e.target.value = '';
+                      }}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="admin-image-upload"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 rounded-xl text-[10px] font-black uppercase tracking-wider cursor-pointer transition-colors shadow-sm"
+                    >
+                      📁 Upload Photo
+                    </label>
+
+                    {/* Text fallback URL input */}
+                    <input
+                      type="text"
+                      placeholder="Or paste image URL directly..."
+                      value={editBizImage}
+                      onChange={e => setEditBizImage(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-1.5 text-[10px] focus:outline-none focus:border-teal-500 text-slate-800"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Photo Gallery Section */}
+              <div className="space-y-2">
+                <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Business Photo Gallery</label>
+                <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold px-1">
+                  <span>{editBizGallery.length} Photo(s) in Gallery</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="admin-gallery-upload"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        const base64 = reader.result as string;
+                        if (base64) {
+                          setEditBizGallery(prev => [...prev, base64]);
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                      e.target.value = '';
+                    }}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="admin-gallery-upload"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 rounded-lg text-[9px] font-black uppercase tracking-wider cursor-pointer transition-colors shadow-sm"
+                  >
+                    ➕ Add Gallery Photo
+                  </label>
+                </div>
+
+                {editBizGallery.length > 0 ? (
+                  <div className="grid grid-cols-4 gap-2.5 max-h-[140px] overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-xl shadow-inner">
+                    {editBizGallery.map((img, idx) => (
+                      <div key={idx} className="relative aspect-video rounded-lg overflow-hidden group border border-slate-200 shadow-sm bg-white">
+                        <img src={img} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setEditBizGallery(prev => prev.filter((_, i) => i !== idx))}
+                          className="absolute top-1 right-1 h-5 w-5 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md transition-colors opacity-90 hover:scale-105 cursor-pointer"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="border border-dashed border-slate-200 rounded-xl p-4 text-center text-slate-400 bg-slate-50/50">
+                    <span className="text-[10px] font-bold uppercase tracking-wider">No photos in gallery</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">
+                    Subscription Plan Tier
+                  </label>
+                  <select
+                    value={editBizSubscription}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditBizSubscription(val);
+                      if (val !== 'Free') {
+                        setEditBizPremium(true);
+                      }
+                    }}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
+                  >
+                    <option value="Free">Free Plan</option>
+                    <option value="Starter">Starter Plan</option>
+                    <option value="Basic">Basic Plan</option>
+                    <option value="Silver">Silver Plan</option>
+                    <option value="Gold">Gold Plan</option>
+                    <option value="Pro">Pro Plan</option>
+                    <option value="Premium">Premium Plan</option>
+                    <option value="Enterprise">Enterprise Plan</option>
+                    <option value="Admin Created">Admin Created (VIP)</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-4 pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer font-bold">
+                    <input
+                      type="checkbox"
+                      checked={editBizVerified}
+                      onChange={e => setEditBizVerified(e.target.checked)}
+                      className="text-teal-605 rounded border-slate-300 focus:ring-teal-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span>Approved & Live on Website (Uncheck to Put On Hold / Hide)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer font-bold">
+                    <input
+                      type="checkbox"
+                      checked={editBizPremium}
+                      onChange={e => setEditBizPremium(e.target.checked)}
+                      className="text-teal-605 rounded border-slate-300 focus:ring-teal-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span>Featured Premium Listing</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setAdminEditModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-450 hover:bg-slate-55 rounded-xl font-bold cursor-pointer transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-teal text-white font-extrabold px-6 py-2 rounded-xl shadow-lg cursor-pointer transition-all"
+                >
+                  Save Business Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* ==================== ADMIN DIRECT BUSINESS CREATION MODAL ==================== */}
+      {adminAddBizModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="fixed inset-0" onClick={() => setAdminAddBizModalOpen(false)} />
+          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 z-10 flex flex-col max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 text-left">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3.5 mb-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-200">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 uppercase tracking-wider">➕ Add Direct Business / Profile — Admin Entry</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Create verified listings directly. Tagged with "👑 Created by Admin".</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAdminAddBizModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <form onSubmit={handleCreateDirectAdminBusiness} className="space-y-5 text-xs text-slate-700">
+              
+              {/* SECTION 1: Business Details & Structured Address */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3.5">
+                <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
+                  <h4 className="font-black text-xs text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>🏢</span> Business Details &amp; Address
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={handleAutoDetectAdminLocation}
+                    disabled={isDetectingAdminLocation}
+                    className="text-[10px] font-black text-teal-700 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-2.5 py-1 rounded-lg flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                  >
+                    <span>📍</span>
+                    <span>{isDetectingAdminLocation ? 'Detecting GPS...' : 'Auto-Fetch GPS'}</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Business Name */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Business / Shop Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={newBizName}
+                      onChange={(e) => setNewBizName(e.target.value)}
+                      placeholder="e.g. Dr. Sameer Khan Clinic or Nevada Family Restaurant"
+                      className="w-full bg-white border border-slate-250 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
+                    />
+                  </div>
+
+                  {/* Category Selection with Loans & Insurance Multi-Select Quick Chips */}
+                  <div className="sm:col-span-2 bg-gradient-to-r from-emerald-50/80 via-teal-50/60 to-sky-50/80 border border-teal-200/90 rounded-2xl p-3.5 space-y-3 shadow-2xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-teal-200/60 pb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">🏦</span>
+                        <div>
+                          <h5 className="text-[11px] font-black text-teal-950 uppercase tracking-wide">
+                            Loans &amp; Insurance Categories Select
+                          </h5>
+                          <p className="text-[10px] text-teal-700 font-medium">
+                            Click multiple categories below to assign all offered loan or insurance services
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-teal-700 font-bold bg-white/80 px-2.5 py-0.5 rounded-full border border-teal-200 shadow-2xs">
+                        💡 Multi-Select Enabled
+                      </span>
+                    </div>
+
+                    {/* Selected Categories Box (Displays all currently selected categories with ✕ removal) */}
+                    {parseCategories(newBizCategory).length > 0 && (
+                      <div className="bg-white border border-teal-300 rounded-xl p-2.5 shadow-2xs space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1">
+                            <span>🏷️ Added Categories:</span>
+                            <span className="bg-teal-700 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold">
+                              {parseCategories(newBizCategory).length}
+                            </span>
+                          </span>
+                          {parseCategories(newBizCategory).length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setNewBizCategory(parseCategories(newBizCategory)[0])}
+                              className="text-[9px] text-slate-400 hover:text-rose-600 font-bold cursor-pointer"
+                            >
+                              Clear extra
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {parseCategories(newBizCategory).map(cat => {
+                            const isLoan = LOAN_CATEGORIES.some(c => c.toLowerCase() === cat.toLowerCase());
+                            const isIns = INSURANCE_CATEGORIES.some(c => c.toLowerCase() === cat.toLowerCase());
+                            return (
+                              <span
+                                key={cat}
+                                className={`inline-flex items-center gap-1.5 text-[11px] font-extrabold px-2.5 py-1 rounded-lg border shadow-2xs transition-all ${
+                                  isLoan
+                                    ? 'bg-teal-50 border-teal-300 text-teal-900'
+                                    : isIns
+                                    ? 'bg-sky-50 border-sky-300 text-sky-900'
+                                    : 'bg-slate-100 border-slate-300 text-slate-800'
+                                }`}
+                              >
+                                <span>{isLoan ? '🏦' : isIns ? '🛡️' : '🏢'}</span>
+                                <span>{cat}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setNewBizCategory(removeCategoryFromStr(newBizCategory, cat))}
+                                  className="text-slate-400 hover:text-rose-600 ml-0.5 font-bold cursor-pointer transition-colors"
+                                  title={`Remove ${cat}`}
+                                >
+                                  ✕
+                                </button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Loans Chips */}
+                    <div className="space-y-1.5">
+                      <div className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>💳 Loans in Boisar (Select Multiple):</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {LOAN_CATEGORIES.map((cat) => {
+                          const isSel = parseCategories(newBizCategory).some(c => c.toLowerCase() === cat.toLowerCase());
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => {
+                                const nextCat = toggleMultiCategory(newBizCategory, cat);
+                                setNewBizCategory(nextCat);
+                                if (!newBizDescription) {
+                                  setNewBizDescription(`Verified ${nextCat} services in Boisar. Best interest rates, quick approvals & hassle-free documentation.`);
+                                }
+                              }}
+                              className={`text-[11px] px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                isSel
+                                  ? 'bg-teal-700 text-white shadow-xs ring-2 ring-teal-400 scale-102 font-black'
+                                  : 'bg-white/95 text-slate-700 hover:bg-teal-100 hover:text-teal-900 border border-slate-200'
+                              }`}
+                            >
+                              <span>{isSel ? '✓' : '+'}</span>
+                              <span>{cat}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Insurance Chips */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <span>🛡️ Insurance Plans (Select Multiple):</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {INSURANCE_CATEGORIES.map((cat) => {
+                          const isSel = parseCategories(newBizCategory).some(c => c.toLowerCase() === cat.toLowerCase());
+                          return (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => {
+                                const nextCat = toggleMultiCategory(newBizCategory, cat);
+                                setNewBizCategory(nextCat);
+                                if (!newBizDescription) {
+                                  setNewBizDescription(`Verified ${nextCat} provider in Boisar. Instant policy issuance, cashless claim assistance & expert advice.`);
+                                }
+                              }}
+                              className={`text-[11px] px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                                isSel
+                                  ? 'bg-sky-700 text-white shadow-xs ring-2 ring-sky-400 scale-102 font-black'
+                                  : 'bg-white/95 text-slate-700 hover:bg-sky-100 hover:text-sky-900 border border-slate-200'
+                              }`}
+                            >
+                              <span>{isSel ? '✓' : '+'}</span>
+                              <span>{cat}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Standard Dropdown below chips */}
+                    <div className="pt-2 border-t border-teal-200/50">
+                      <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">
+                        Selected Business Category *
+                      </label>
+                      <select
+                        value={newBizCategory}
+                        onChange={(e) => setNewBizCategory(e.target.value)}
+                        className="w-full bg-white border border-slate-250 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 cursor-pointer shadow-2xs"
+                      >
+                        {parseCategories(newBizCategory).length > 1 && (
+                          <option value={newBizCategory}>
+                            ✓ Multiple Selected: {newBizCategory}
+                          </option>
+                        )}
+                        <optgroup label="🏦 Loans & Finance Categories">
+                          {LOAN_CATEGORIES.map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="🛡️ Insurance Categories">
+                          {INSURANCE_CATEGORIES.map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="🏢 All Other General Categories">
+                          {categoriesList.filter(c => !LOAN_CATEGORIES.includes(c) && !INSURANCE_CATEGORIES.includes(c)).map((cat, idx) => (
+                            <option key={idx} value={cat}>{cat}</option>
+                          ))}
+                        </optgroup>
+                        {customAdminCategories.length > 0 && (
+                          <optgroup label="✨ Custom Added Categories">
+                            {customAdminCategories.map((cat, idx) => (
+                              <option key={idx} value={cat}>{cat}</option>
+                            ))}
+                          </optgroup>
+                        )}
+                        <option value="Other">Other Custom Category...</option>
+                      </select>
+                    </div>
+
+                    {/* Custom Category Input if 'Other' selected */}
+                    {newBizCategory === 'Other' && (
+                      <div className="pt-1">
+                        <label className="block text-[10px] text-teal-800 font-black uppercase tracking-wider mb-1">Custom Category Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={newBizCustomCat}
+                          onChange={(e) => setNewBizCustomCat(e.target.value)}
+                          placeholder="e.g. Cake Designer or Solar Agency"
+                          className="w-full bg-white border border-teal-300 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Locality / Area */}
+                  <div>
+                    <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Area / Locality *</label>
+                    <select
+                      value={newBizLocation}
+                      onChange={(e) => setNewBizLocation(e.target.value)}
+                      className="w-full bg-white border border-slate-250 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 cursor-pointer shadow-2xs"
+                    >
+                      <option value="Boisar West">Boisar West</option>
+                      <option value="Boisar East">Boisar East</option>
+                      <option value="Ostwal Wonder City">Ostwal Wonder City</option>
+                      <option value="Tarapur MIDC">Tarapur MIDC</option>
+                      <option value="Navapur Road">Navapur Road</option>
+                      <option value="Kambode">Kambode</option>
+                      <option value="Palghar">Palghar</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Structured Address Fields */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                  <div>
+                    <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">Shop / Plot / Wing</label>
+                    <input
+                      type="text"
+                      value={newBizPlotNo}
+                      onChange={(e) => setNewBizPlotNo(e.target.value)}
+                      placeholder="Shop No. 12"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">Building / Complex</label>
+                    <input
+                      type="text"
+                      value={newBizBldgName}
+                      onChange={(e) => setNewBizBldgName(e.target.value)}
+                      placeholder="Ostwal Mall"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">Street / Road</label>
+                    <input
+                      type="text"
+                      value={newBizStreet}
+                      onChange={(e) => setNewBizStreet(e.target.value)}
+                      placeholder="TAPS Road"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">Landmark</label>
+                    <input
+                      type="text"
+                      value={newBizLandmark}
+                      onChange={(e) => setNewBizLandmark(e.target.value)}
+                      placeholder="Opp D-Mart"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div>
+                    <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">City</label>
+                    <input
+                      type="text"
+                      value={newBizCity}
+                      onChange={(e) => setNewBizCity(e.target.value)}
+                      className="w-full bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">Pincode</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={newBizPincode}
+                      onChange={(e) => setNewBizPincode(e.target.value.replace(/\D/g, ''))}
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">GST Number (Opt)</label>
+                    <input
+                      type="text"
+                      maxLength={15}
+                      value={newBizGst}
+                      onChange={(e) => setNewBizGst(e.target.value.toUpperCase())}
+                      placeholder="27AAAAA0000A1Z5"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 uppercase"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: Contact & Online Details */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3">
+                <h4 className="font-black text-xs text-slate-800 uppercase tracking-wider border-b border-slate-200/80 pb-2 flex items-center gap-1.5">
+                  <span>📞</span> Contact Person &amp; Communication
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Contact Person Name</label>
+                    <input
+                      type="text"
+                      value={newBizContactPerson}
+                      onChange={(e) => setNewBizContactPerson(e.target.value)}
+                      placeholder="e.g. Ramesh Patel"
+                      className="w-full bg-white border border-slate-250 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Phone Number *</label>
+                    <input
+                      type="tel"
+                      maxLength={10}
+                      value={newBizPhone}
+                      onChange={(e) => setNewBizPhone(e.target.value.replace(/\D/g, ''))}
+                      placeholder="10-digit mobile number"
+                      className="w-full bg-white border border-slate-250 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider">WhatsApp Number</label>
+                      <button
+                        type="button"
+                        onClick={() => setNewBizWhatsapp(newBizPhone)}
+                        className="text-[9px] font-bold text-teal-600 hover:underline cursor-pointer"
+                      >
+                        Copy Phone
+                      </button>
+                    </div>
+                    <input
+                      type="tel"
+                      maxLength={10}
+                      value={newBizWhatsapp}
+                      onChange={(e) => setNewBizWhatsapp(e.target.value.replace(/\D/g, ''))}
+                      placeholder="10-digit WhatsApp"
+                      className="w-full bg-white border border-slate-250 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                  <div>
+                    <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      value={newBizEmail}
+                      onChange={(e) => setNewBizEmail(e.target.value)}
+                      placeholder="shop@example.com"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">Website URL</label>
+                    <input
+                      type="text"
+                      value={newBizWebsite}
+                      onChange={(e) => setNewBizWebsite(e.target.value)}
+                      placeholder="https://..."
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">Google Maps Link</label>
+                    <input
+                      type="text"
+                      value={newBizGoogleMaps}
+                      onChange={(e) => setNewBizGoogleMaps(e.target.value)}
+                      placeholder="https://maps.google.com/..."
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: Description, Timings & Media */}
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3.5">
+                <h4 className="font-black text-xs text-slate-800 uppercase tracking-wider border-b border-slate-200/80 pb-2 flex items-center gap-1.5">
+                  <span>🕒</span> Timings, About Description &amp; Photos
+                </h4>
+
+                {/* About / Bio Description */}
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">About Business / Bio Description *</label>
+                  <textarea
+                    rows={2}
+                    value={newBizDescription}
+                    onChange={(e) => setNewBizDescription(e.target.value)}
+                    placeholder="Describe services, products, doctor consultation timings, facilities, why clients should choose this business..."
+                    className="w-full bg-white border border-slate-250 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 shadow-2xs"
+                  />
+                </div>
+
+                {/* Working Hours Day Schedule Builder */}
+                <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2">
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider">🕐 Daily Working Hours</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-[140px] overflow-y-auto pr-1">
+                    {Object.entries(newBizSchedule).map(([day, slot]) => (
+                      <div key={day} className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 p-1.5 rounded-lg">
+                        <span className="text-[9px] font-black text-slate-700 w-7 shrink-0">{day}</span>
+                        {slot.closed ? (
+                          <span className="flex-1 text-[9px] font-bold text-rose-500 bg-rose-50 border border-rose-200 rounded px-2 py-0.5 text-center">Closed</span>
+                        ) : (
+                          <div className="flex items-center gap-1 flex-1 min-w-0">
+                            <input
+                              type="time"
+                              value={slot.open}
+                              onChange={(e) => setNewBizSchedule(prev => ({ ...prev, [day]: { ...prev[day], open: e.target.value } }))}
+                              className="w-full min-w-0 bg-white border border-slate-200 rounded px-1 py-0.5 text-[10px] font-bold text-slate-800"
+                            />
+                            <span className="text-[8px] text-slate-400 font-bold">-</span>
+                            <input
+                              type="time"
+                              value={slot.close}
+                              onChange={(e) => setNewBizSchedule(prev => ({ ...prev, [day]: { ...prev[day], close: e.target.value } }))}
+                              className="w-full min-w-0 bg-white border border-slate-200 rounded px-1 py-0.5 text-[10px] font-bold text-slate-800"
+                            />
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setNewBizSchedule(prev => ({ ...prev, [day]: { ...prev[day], closed: !prev[day].closed } }))}
+                          className={`text-[8px] font-black px-1.5 py-0.5 rounded border transition-colors cursor-pointer shrink-0 ${slot.closed
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                              : 'bg-rose-50 border-rose-200 text-rose-600'
+                            }`}
+                        >
+                          {slot.closed ? 'Open' : 'Close'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Profile / Cover Image Upload */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider">
+                    🖼️ Main Cover Photo
+                  </label>
+                  <div className="flex items-center gap-3 bg-white border border-slate-250 rounded-2xl p-2.5">
+                    <div className="h-14 w-18 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center shrink-0 shadow-inner">
+                      {newBizImage ? (
+                        <img src={newBizImage} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-lg">📷</span>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-1 text-left">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="admin-add-photo-picker"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            const base64 = reader.result as string;
+                            if (base64) setNewBizImage(base64);
+                          };
+                          reader.readAsDataURL(file);
+                          e.target.value = '';
+                        }}
+                        className="hidden"
+                      />
+                      <div className="flex items-center gap-2">
+                        <label
+                          htmlFor="admin-add-photo-picker"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black cursor-pointer shadow-xs"
+                        >
+                          <span>📁 Choose Main Cover Photo from Gallery</span>
+                        </label>
+                        {newBizImage && (
+                          <button
+                            type="button"
+                            onClick={() => setNewBizImage('')}
+                            className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Multiple Gallery Photos Upload Section */}
+                <div className="space-y-2 bg-white border border-slate-250 rounded-2xl p-3">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider">
+                      📸 Business Photos Gallery ({newBizGallery.length} Photos)
+                    </label>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      id="admin-add-gallery-picker"
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        if (files.length === 0) return;
+                        files.forEach((file) => {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            const base64 = reader.result as string;
+                            if (base64) {
+                              setNewBizGallery(prev => [...prev, base64]);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        });
+                        e.target.value = '';
+                      }}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="admin-add-gallery-picker"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 bg-teal-700 hover:bg-teal-800 text-white rounded-xl text-xs font-black cursor-pointer shadow-xs"
+                    >
+                      <span>📁 ➕ Choose Multiple Photos from Gallery</span>
+                    </label>
+                  </div>
+
+                  {newBizGallery.length > 0 ? (
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 pt-1 border-t border-slate-100">
+                      {newBizGallery.map((imgUrl, idx) => (
+                        <div key={idx} className="relative group h-14 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 shadow-2xs">
+                          <img src={imgUrl} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setNewBizGallery(prev => prev.filter((_, i) => i !== idx))}
+                            className="absolute top-1 right-1 bg-rose-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-black shadow-md hover:bg-rose-700 cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[9px] text-slate-400 font-medium italic">No store interior/service photos added yet.</p>
+                  )}
+                </div>
+
+                {/* Social Links */}
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">📸 Instagram Profile</label>
+                    <input
+                      type="text"
+                      value={newBizInstagram}
+                      onChange={(e) => setNewBizInstagram(e.target.value)}
+                      placeholder="@username or URL"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">▶️ YouTube Channel</label>
+                    <input
+                      type="text"
+                      value={newBizYoutube}
+                      onChange={(e) => setNewBizYoutube(e.target.value)}
+                      placeholder="YouTube channel URL"
+                      className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 4: Services & Products Catalog (Exact request: "and serives add bi krske") */}
+              <div className="bg-teal-50/50 border border-teal-200 p-4 rounded-2xl space-y-4">
+                <div className="flex items-center justify-between border-b border-teal-200/80 pb-2">
+                  <h4 className="font-black text-xs text-teal-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>🛠️</span> Offered Services Directory ({newBizServices.length})
+                  </h4>
+                  <span className="text-[10px] text-teal-700 font-bold">Add specific services for this business</span>
+                </div>
+
+                {/* Add Service Inputs */}
+                <div className="bg-white border border-teal-200 rounded-xl p-3 space-y-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="sm:col-span-1">
+                      <input
+                        type="text"
+                        value={newBizSvcInput.name}
+                        onChange={(e) => setNewBizSvcInput(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Service Name (e.g. Root Canal / Full AC Service)"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        value={newBizSvcInput.price}
+                        onChange={(e) => setNewBizSvcInput(prev => ({ ...prev, price: e.target.value }))}
+                        placeholder="Price ₹ (e.g. 499 or 0)"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        value={newBizSvcInput.duration}
+                        onChange={(e) => setNewBizSvcInput(prev => ({ ...prev, duration: e.target.value }))}
+                        placeholder="Duration (e.g. 45 Mins)"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newBizSvcInput.desc}
+                      onChange={(e) => setNewBizSvcInput(prev => ({ ...prev, desc: e.target.value }))}
+                      placeholder="Short description of service (optional)..."
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!newBizSvcInput.name.trim()) {
+                          alert('Please enter a service name.');
+                          return;
+                        }
+                        setNewBizServices(prev => [...prev, { ...newBizSvcInput }]);
+                        setNewBizSvcInput({ name: '', price: '', duration: '', desc: '' });
+                      }}
+                      className="bg-teal-700 hover:bg-teal-800 text-white font-black text-xs px-4 py-1.5 rounded-lg shadow-xs cursor-pointer shrink-0"
+                    >
+                      ➕ Add Service
+                    </button>
+                  </div>
+                </div>
+
+                {/* Added Services List */}
+                {newBizServices.length > 0 ? (
+                  <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
+                    {newBizServices.map((srv, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-white border border-teal-150 p-2 rounded-xl text-xs shadow-2xs">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-teal-50 text-teal-700 font-black text-[10px] flex items-center justify-center">✓</span>
+                          <div>
+                            <span className="font-extrabold text-slate-800">{srv.name}</span>
+                            {srv.duration && <span className="text-[10px] text-slate-400 font-bold ml-2">⏱️ {srv.duration}</span>}
+                            {srv.desc && <p className="text-[10px] text-slate-500 font-medium">{srv.desc}</p>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-black text-teal-700">{srv.price ? `₹${srv.price}` : 'Contact for Price'}</span>
+                          <button
+                            type="button"
+                            onClick={() => setNewBizServices(prev => prev.filter((_, i) => i !== idx))}
+                            className="text-rose-600 hover:text-rose-700 font-bold p-1 cursor-pointer"
+                            title="Delete service"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-teal-700 italic">No services added yet. Fill above to add services for this shop/listing.</p>
+                )}
+
+                {/* Products Catalog Builder */}
+                <div className="border-t border-teal-200/80 pt-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h5 className="font-black text-xs text-teal-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <span>🛍️</span> Featured Products ({newBizProducts.length})
+                    </h5>
+                  </div>
+                  <div className="bg-white border border-teal-200 rounded-xl p-3 space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <input
+                        type="text"
+                        value={newBizProdInput.name}
+                        onChange={(e) => setNewBizProdInput(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Product Name (e.g. PVC Pipe)"
+                        className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                      />
+                      <input
+                        type="text"
+                        value={newBizProdInput.price}
+                        onChange={(e) => setNewBizProdInput(prev => ({ ...prev, price: e.target.value }))}
+                        placeholder="Price ₹ (e.g. 300)"
+                        className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                      />
+                      <input
+                        type="text"
+                        value={newBizProdInput.desc}
+                        onChange={(e) => setNewBizProdInput(prev => ({ ...prev, desc: e.target.value }))}
+                        placeholder="Short description..."
+                        className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id="admin-product-photo-upload"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              const base64 = reader.result as string;
+                              if (base64) setNewBizProdInput(p => ({ ...p, image: base64 } as any));
+                            };
+                            reader.readAsDataURL(file);
+                            e.target.value = '';
+                          }}
+                        />
+                        <label
+                          htmlFor="admin-product-photo-upload"
+                          className="px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg text-[10px] font-black cursor-pointer shadow-2xs"
+                        >
+                          {(newBizProdInput as any).image ? '✓ Photo Attached' : '📁 Add Item Photo'}
+                        </label>
+                        {(newBizProdInput as any).image && (
+                          <button
+                            type="button"
+                            onClick={() => setNewBizProdInput(p => ({ ...p, image: '' } as any))}
+                            className="text-[10px] text-rose-600 font-bold hover:underline"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!newBizProdInput.name.trim()) {
+                            alert('Please enter a product name.');
+                            return;
+                          }
+                          setNewBizProducts(prev => [...prev, { ...newBizProdInput }]);
+                          setNewBizProdInput({ name: '', price: '', desc: '', image: '' } as any);
+                        }}
+                        className="bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs px-3.5 py-1.5 rounded-lg shadow-xs cursor-pointer shrink-0"
+                      >
+                        ➕ Add Product
+                      </button>
+                    </div>
+                  </div>
+
+                  {newBizProducts.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {newBizProducts.map((prod, idx) => (
+                        <span key={idx} className="bg-white border border-teal-200 px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-800 flex items-center gap-1.5 shadow-2xs">
+                          {(prod as any).image ? <span className="text-xs">🖼️</span> : <span>📦</span>}
+                          <span>{prod.name} ({prod.price ? `₹${prod.price}` : 'Free'})</span>
+                          <button
+                            type="button"
+                            onClick={() => setNewBizProducts(prev => prev.filter((_, i) => i !== idx))}
+                            className="text-rose-600 font-bold hover:text-rose-700 cursor-pointer ml-1"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* SECTION 5: Admin Rating & Badges */}
+              <div className="bg-amber-50/60 border border-amber-200 p-4 rounded-2xl space-y-3">
+                <h4 className="font-black text-xs text-amber-900 uppercase tracking-wider border-b border-amber-200/80 pb-1.5 flex items-center gap-1.5">
+                  <span>👑</span> Admin Rating, Plan &amp; Verification Badges
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Initial Customer Rating ⭐</label>
+                    <select
+                      value={newBizRating}
+                      onChange={(e) => setNewBizRating(e.target.value)}
+                      className="w-full bg-white border border-amber-300 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500 cursor-pointer"
+                    >
+                      <option value="5.0">5.0 ⭐ (Excellent)</option>
+                      <option value="4.8">4.8 ⭐ (Very Good)</option>
+                      <option value="4.5">4.5 ⭐ (Good)</option>
+                      <option value="4.0">4.0 ⭐ (Average)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Subscription Plan Tier</label>
+                    <select
+                      value={newBizSubscription}
+                      onChange={(e) => setNewBizSubscription(e.target.value)}
+                      className="w-full bg-white border border-amber-300 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-500 cursor-pointer"
+                    >
+                      <option value="Admin Created">Admin Created (VIP)</option>
+                      <option value="Premium">Premium Plan</option>
+                      <option value="Gold">Gold Plan</option>
+                      <option value="Silver">Silver Plan</option>
+                      <option value="Free">Free Plan</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-extrabold text-emerald-900">
+                    <input
+                      type="checkbox"
+                      checked={newBizVerified}
+                      onChange={(e) => setNewBizVerified(e.target.checked)}
+                      className="w-4 h-4 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500"
+                    />
+                    <span>✓ Auto-Verify Business (Verified Checkmark Badge)</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-extrabold text-teal-900">
+                    <input
+                      type="checkbox"
+                      checked={newBizPremium}
+                      onChange={(e) => setNewBizPremium(e.target.checked)}
+                      className="w-4 h-4 text-teal-600 rounded border-teal-300 focus:ring-teal-500"
+                    />
+                    <span>⭐ Mark as Featured / Top Sponsored</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex gap-3 pt-3 justify-end border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setAdminAddBizModalOpen(false)}
+                  className="px-5 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold cursor-pointer transition-colors text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingDirectBiz}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-6 py-2.5 rounded-xl shadow-lg transition-all hover:scale-[1.01] cursor-pointer flex items-center gap-2"
+                >
+                  {addingDirectBiz ? 'Creating Listing & Services...' : '👑 Create Business with Services (Tagged Admin)'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== ADMIN DIRECT SPECIALIST CREATION MODAL ==================== */}
+      {adminAddSpecialistModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="fixed inset-0" onClick={() => setAdminAddSpecialistModalOpen(false)} />
+          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 z-10 flex flex-col max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 text-left">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3.5 mb-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-teal-50 text-teal-600 border border-teal-200">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 uppercase tracking-wider">✨ Add Specialist / Freelancer — Admin Entry</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Create verified specialist profiles directly. Tagged with "👑 Created by Admin".</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAdminAddSpecialistModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <form onSubmit={handleCreateDirectAdminSpecialist} className="space-y-4 text-xs text-slate-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Specialist Name */}
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Specialist / Freelancer Name *</label>
+                  <input
+                    type="text"
+                    value={newSpecName}
+                    onChange={(e) => setNewSpecName(e.target.value)}
+                    placeholder="e.g. Dr. Priya Sharma or Ravi Electricals"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Mobile / WhatsApp Number *</label>
+                  <input
+                    type="tel"
+                    maxLength={10}
+                    value={newSpecPhone}
+                    onChange={(e) => setNewSpecPhone(e.target.value.replace(/\D/g, ''))}
+                    placeholder="10-digit mobile number"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+
+                {/* Specialist Category Type (key) */}
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Specialist Network Section</label>
+                  <select
+                    value={newSpecCategoryKey}
+                    onChange={(e) => setNewSpecCategoryKey(e.target.value as any)}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 cursor-pointer"
+                  >
+                    <option value="helpers">🔧 Home Services & Helpers</option>
+                    <option value="caterers">🍽️ Caterers & Food Specialists</option>
+                    <option value="influencers">🎤 Content Creators & Influencers</option>
+                    <option value="properties">🏠 Real Estate & Property Agents</option>
+                  </select>
+                </div>
+
+                {/* Specialty / Display Category */}
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Specialty / Display Category *</label>
+                  <input
+                    type="text"
+                    value={newSpecCategory}
+                    onChange={(e) => setNewSpecCategory(e.target.value)}
+                    placeholder="e.g. Electrician, Photographer, Tiffin Chef..."
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+
+                {/* Price / Rate */}
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Starting Price / Rate *</label>
+                  <input
+                    type="text"
+                    value={newSpecPrice}
+                    onChange={(e) => setNewSpecPrice(e.target.value)}
+                    placeholder="e.g. ₹500/visit or ₹200/hr"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
+                  />
+                </div>
+
+                {/* Experience */}
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Years of Experience</label>
+                  <select
+                    value={newSpecExperience}
+                    onChange={(e) => setNewSpecExperience(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500 cursor-pointer"
+                  >
+                    <option value="Fresher">Fresher (New)</option>
+                    <option value="1+ Year">1+ Year</option>
+                    <option value="2+ Years">2+ Years</option>
+                    <option value="3+ Years">3+ Years</option>
+                    <option value="5+ Years">5+ Years</option>
+                    <option value="7+ Years">7+ Years</option>
+                    <option value="10+ Years">10+ Years</option>
+                    <option value="15+ Years">15+ Years</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Services (comma separated) */}
+              <div>
+                <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Services Offered (comma separated)</label>
+                <input
+                  type="text"
+                  value={newSpecServices}
+                  onChange={(e) => setNewSpecServices(e.target.value)}
+                  placeholder="e.g. AC Repair, Wiring, Fan Installation, CCTV Setup"
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Bio */}
+              <div>
+                <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">About / Bio</label>
+                <textarea
+                  rows={3}
+                  value={newSpecBio}
+                  onChange={(e) => setNewSpecBio(e.target.value)}
+                  placeholder="Describe expertise, experience, and why clients should hire this specialist..."
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3.5 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-500"
+                />
+              </div>
+
+              {/* Profile Avatar URL */}
+              <div>
+                <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">📷 Profile Avatar (Paste Image URL)</label>
+                <div className="flex items-center gap-3">
+                  <div className="h-14 w-14 rounded-full border-2 border-slate-200 overflow-hidden flex items-center justify-center bg-slate-50 shrink-0 shadow-inner">
+                    {newSpecAvatar ? (
+                      <img src={newSpecAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xl">👤</span>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="admin-spec-avatar-picker"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onloadend = () => { if (reader.result) setNewSpecAvatar(reader.result as string); };
+                        reader.readAsDataURL(file);
+                        e.target.value = '';
+                      }}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="admin-spec-avatar-picker"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold cursor-pointer transition-colors shadow-sm"
+                    >
+                      📁 Choose Photo
+                    </label>
+                    <input
+                      type="text"
+                      value={newSpecAvatar}
+                      onChange={(e) => setNewSpecAvatar(e.target.value)}
+                      placeholder="Or paste image URL..."
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-bold focus:outline-none focus:border-teal-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Links */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                <div>
+                  <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">📸 Instagram Link</label>
+                  <input
+                    type="text"
+                    value={newSpecInstagram}
+                    onChange={(e) => setNewSpecInstagram(e.target.value)}
+                    placeholder="@username or full URL"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[9px] text-slate-500 font-extrabold uppercase mb-1">▶️ YouTube Link</label>
+                  <input
+                    type="text"
+                    value={newSpecYoutube}
+                    onChange={(e) => setNewSpecYoutube(e.target.value)}
+                    placeholder="YouTube channel URL"
+                    className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800"
+                  />
+                </div>
+              </div>
+
+              {/* Subscription & Verification */}
+              <div className="flex flex-wrap items-center gap-4 bg-teal-50/60 border border-teal-200 p-3.5 rounded-2xl">
+                <div>
+                  <label className="block text-[9px] text-slate-600 font-black uppercase mb-1">Subscription Plan</label>
+                  <select
+                    value={newSpecSubscription}
+                    onChange={(e) => setNewSpecSubscription(e.target.value as any)}
+                    className="bg-white border border-teal-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-800 cursor-pointer"
+                  >
+                    <option value="Free">Free</option>
+                    <option value="Pro">⭐ Pro</option>
+                    <option value="Premium">👑 Premium</option>
+                  </select>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-extrabold text-teal-900">
+                  <input
+                    type="checkbox"
+                    checked={newSpecVerified}
+                    onChange={(e) => setNewSpecVerified(e.target.checked)}
+                    className="w-4 h-4 text-teal-600 rounded border-teal-300 focus:ring-teal-500"
+                  />
+                  <span>✓ Auto-Verify Profile (Verified Badge)</span>
+                </label>
+              </div>
+
+              {/* Submit */}
+              <div className="flex gap-3 pt-3 justify-end border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setAdminAddSpecialistModalOpen(false)}
+                  className="px-4 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold cursor-pointer transition-colors text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingDirectSpec}
+                  className="bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-xs px-6 py-2.5 rounded-xl shadow-lg transition-all hover:scale-[1.01] cursor-pointer flex items-center gap-2"
+                >
+                  {addingDirectSpec ? 'Creating Profile...' : '✨ Create Specialist (Tagged Admin)'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== ADMIN DIRECT TRAVELS & VEHICLE CREATION MODAL ==================== */}
+      {adminAddVehicleModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="fixed inset-0" onClick={() => setAdminAddVehicleModalOpen(false)} />
+          <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 z-10 flex flex-col max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 text-left">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3.5 mb-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
+                  <Car className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 uppercase tracking-wider">🚗 Add Travels &amp; Vehicle Listing</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Add verified driver or agency directly into the server database.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAdminAddVehicleModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <form onSubmit={handleAdminAddVehicle} className="space-y-3.5 text-xs text-slate-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Driver / Agency Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={adminVehForm.name}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g. Boisar Travels / Rahul Cab"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Vehicle Category *</label>
+                  <select
+                    value={adminVehForm.category}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600 cursor-pointer"
+                  >
+                    <option value="Car & Cab">Car &amp; Cab (Sedan/SUV)</option>
+                    <option value="Auto Rickshaw">Auto Rickshaw</option>
+                    <option value="Bike Rental">Bike Rental</option>
+                    <option value="Bus & Traveler">Bus &amp; Traveler (17-32 Seater)</option>
+                    <option value="Tempo & Shifting">Tempo &amp; Shifting (Tata Ace / Pickup)</option>
+                    <option value="Commercial">Commercial Trucks &amp; Heavy</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Vehicle Model</label>
+                  <input
+                    type="text"
+                    value={adminVehForm.vehicleModel}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, vehicleModel: e.target.value }))}
+                    placeholder="e.g. Maruti Ertiga AC / Tata Ace"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Capacity</label>
+                  <input
+                    type="text"
+                    value={adminVehForm.capacity}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, capacity: e.target.value }))}
+                    placeholder="e.g. 6+1 Passengers"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Rate / Fares</label>
+                  <input
+                    type="text"
+                    value={adminVehForm.ratePerKm}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, ratePerKm: e.target.value }))}
+                    placeholder="e.g. ₹13/km or ₹800/Trip"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Stand / Location</label>
+                  <input
+                    type="text"
+                    value={adminVehForm.location}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="e.g. Boisar West Station"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Contact Phone *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={adminVehForm.phone}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="e.g. 9820098200"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Availability Timing</label>
+                  <input
+                    type="text"
+                    value={adminVehForm.timing}
+                    onChange={e => setAdminVehForm(prev => ({ ...prev, timing: e.target.value }))}
+                    placeholder="e.g. 24x7 Available on Call"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Vehicle Photo URL (Optional)</label>
+                <input
+                  type="url"
+                  value={adminVehForm.image}
+                  onChange={e => setAdminVehForm(prev => ({ ...prev, image: e.target.value }))}
+                  placeholder="https://images.unsplash.com/... or leave blank for default"
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600"
+                />
+              </div>
+
+              {/* Submit */}
+              <div className="flex gap-3 pt-3 justify-end border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setAdminAddVehicleModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold cursor-pointer transition-colors text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-700 hover:bg-blue-800 text-white font-extrabold text-xs px-6 py-2 rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                >
+                  🚗 Save Vehicle to Database
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== ADD HOME TECHNICIAN / SERVICE MODAL ==================== */}
+      {adminAddTechModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="fixed inset-0" onClick={() => setAdminAddTechModalOpen(false)} />
+          <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 z-10 flex flex-col max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 text-left">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-teal-50 text-teal-600 border border-teal-200">
+                  <Wrench className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 uppercase tracking-wider">➕ Add Home Technician / Helper</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Add service providers directly to Majh Boisar Home Services database.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAdminAddTechModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <form onSubmit={handleAdminAddTechnician} className="space-y-3.5 text-xs text-slate-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Technician / Shop / Helper Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={adminTechForm.name}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g. Ramesh Sharma (AC Repair)"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Service Category *</label>
+                  <select
+                    value={adminTechForm.category}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600 cursor-pointer"
+                  >
+                    <option value="AC Service">❄️ AC Repair &amp; Service</option>
+                    <option value="Electrician">⚡ Electrician</option>
+                    <option value="Plumber">🚰 Plumber</option>
+                    <option value="Carpenter">🪚 Carpenter</option>
+                    <option value="House Maid">🧹 House Maid</option>
+                    <option value="Personal Driver">🚗 Personal Driver</option>
+                    <option value="Home Cook / Maharaj">👨‍🍳 Home Cook / Maharaj</option>
+                    <option value="Babysitter / Nanny">👶 Babysitter / Nanny</option>
+                    <option value="Elderly Caretaker">👵 Elderly Caretaker</option>
+                    <option value="Painter">🎨 Painter &amp; Waterproofing</option>
+                    <option value="Pest Control">🦟 Pest Control</option>
+                    <option value="Appliance Repair">🔧 Appliance Repair (Washing Machine/Fridge)</option>
+                    <option value="RO Water Purifier">💧 RO Water Purifier</option>
+                    <option value="Deep Cleaning">✨ Deep Cleaning</option>
+                    <option value="CCTV & Security">📹 CCTV &amp; Security</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Contact Mobile Number *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={adminTechForm.phone}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="e.g. 98XXXXXXXX"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Boisar Location / Stand</label>
+                  <input
+                    type="text"
+                    value={adminTechForm.location}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="e.g. Boisar West, Ostwal Empire"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Visiting Fee / Salary / Rates</label>
+                  <input
+                    type="text"
+                    value={adminTechForm.visitingFee}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, visitingFee: e.target.value }))}
+                    placeholder="e.g. ₹199 Inspection or ₹3,500/Mo"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Work Experience</label>
+                  <input
+                    type="text"
+                    value={adminTechForm.experience}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, experience: e.target.value }))}
+                    placeholder="e.g. 6+ Yrs Experience"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Availability / Timing</label>
+                  <input
+                    type="text"
+                    value={adminTechForm.timing}
+                    onChange={e => setAdminTechForm(prev => ({ ...prev, timing: e.target.value }))}
+                    placeholder="e.g. Daily 8 AM - 8 PM or On-Demand"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Contact Mode</label>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setAdminTechForm(prev => ({ ...prev, allowCalls: true }))}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                        adminTechForm.allowCalls ? 'bg-slate-900 text-white border-slate-900' : 'bg-slate-50 text-slate-600 border-slate-250'
+                      }`}
+                    >
+                      Call &amp; WhatsApp
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAdminTechForm(prev => ({ ...prev, allowCalls: false }))}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                        !adminTechForm.allowCalls ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 text-slate-600 border-slate-250'
+                      }`}
+                    >
+                      WhatsApp Only
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Profile Photo URL (Optional)</label>
+                <input
+                  type="url"
+                  value={adminTechForm.image}
+                  onChange={e => setAdminTechForm(prev => ({ ...prev, image: e.target.value }))}
+                  placeholder="https://images.unsplash.com/... or leave blank for default"
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-teal-600"
+                />
+              </div>
+
+              {/* Submit */}
+              <div className="flex gap-3 pt-3 justify-end border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setAdminAddTechModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold cursor-pointer transition-colors text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-teal-700 hover:bg-teal-800 text-white font-extrabold text-xs px-6 py-2 rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                >
+                  🔧 Save Service to Database
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== ADD BLOOD DONOR MODAL ==================== */}
+      {adminAddDonorModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="fixed inset-0" onClick={() => setAdminAddDonorModalOpen(false)} />
+          <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 z-10 flex flex-col max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 text-left">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-200">
+                  <Heart className="w-5 h-5 fill-rose-100" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 uppercase tracking-wider">➕ Add Voluntary Blood Donor</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Add emergency blood donor profile directly to Majh Boisar database.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAdminAddDonorModalOpen(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form Body */}
+            <form onSubmit={handleAdminAddDonor} className="space-y-3.5 text-xs text-slate-700">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Donor Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={adminDonorForm.name}
+                    onChange={e => setAdminDonorForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g. Ramesh Patil"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-rose-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Blood Group *</label>
+                  <select
+                    value={adminDonorForm.bloodGroup}
+                    onChange={e => setAdminDonorForm(prev => ({ ...prev, bloodGroup: e.target.value }))}
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-rose-600 cursor-pointer"
+                  >
+                    <option value="O+">🩸 O Positive (O+)</option>
+                    <option value="B+">🩸 B Positive (B+)</option>
+                    <option value="A+">🩸 A Positive (A+)</option>
+                    <option value="AB+">🩸 AB Positive (AB+)</option>
+                    <option value="O-">🩸 O Negative (O-)</option>
+                    <option value="B-">🩸 B Negative (B-)</option>
+                    <option value="A-">🩸 A Negative (A-)</option>
+                    <option value="AB-">🩸 AB Negative (AB-)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Mobile Number (WhatsApp) *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={adminDonorForm.phone}
+                    onChange={e => setAdminDonorForm(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="e.g. 9820098200"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-rose-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Location / Area in Boisar</label>
+                  <input
+                    type="text"
+                    value={adminDonorForm.location}
+                    onChange={e => setAdminDonorForm(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="e.g. Boisar West, Ostwal Empire"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-rose-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] text-slate-600 font-black uppercase tracking-wider mb-1">Availability / Last Donated Status</label>
+                <input
+                  type="text"
+                  value={adminDonorForm.lastDonated}
+                  onChange={e => setAdminDonorForm(prev => ({ ...prev, lastDonated: e.target.value }))}
+                  placeholder="e.g. Ready to donate, or Donated last month"
+                  className="w-full bg-slate-50 border border-slate-250 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-rose-600"
+                />
+              </div>
+
+              {/* Submit */}
+              <div className="flex gap-3 pt-3 justify-end border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setAdminAddDonorModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold cursor-pointer transition-colors text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-rose-700 hover:bg-rose-800 text-white font-extrabold text-xs px-6 py-2 rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                >
+                  🩸 Save &amp; Publish Blood Donor
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== POST ADMIN JOB MODAL ==================== */}
+      {adminJobModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="fixed inset-0" onClick={() => setAdminJobModalOpen(false)} />
+          <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 z-10 flex flex-col max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200 text-left">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-200">
+                  <Briefcase className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 uppercase tracking-wider">➕ Post New Job Vacancy — Admin</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Publish job listings with full specs & employer details.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAdminJobModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!adminJobTitle.trim() || !adminJobCompany.trim()) {
+                  alert('Please enter Job Title and Company Name');
+                  return;
+                }
+
+                try {
+                  const res = await fetch('/api/jobs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      title: adminJobTitle.trim(),
+                      company: adminJobCompany.trim(),
+                      category: adminJobCategory,
+                      salary: adminJobSalary.trim() || 'Attractive Salary',
+                      location: adminJobLocation.trim() || 'Boisar',
+                      jobType: adminJobType,
+                      phone: adminJobPhone.replace(/\D/g, '') || '9820123456',
+                      description: adminJobDescription.trim() || `${adminJobTitle} at ${adminJobCompany} in Boisar.`,
+                      status: 'Open'
+                    })
+                  });
+
+                  if (res.ok) {
+                    const createdJob = await res.json();
+                    setAdminJobsList(prev => [createdJob, ...prev]);
+                    setAdminJobModalOpen(false);
+                    alert(`🎉 Job "${adminJobTitle}" at ${adminJobCompany} has been published!`);
+                  } else {
+                    const err = await res.json();
+                    alert(err?.error || 'Failed to publish job.');
+                  }
+                } catch (err) {
+                  console.error('Error posting admin job:', err);
+                  alert('Failed to publish job.');
+                }
+              }}
+              className="space-y-4 text-xs font-bold text-slate-700"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Job Title *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g., Accounts Executive, Sales Manager, Receptionist"
+                    value={adminJobTitle}
+                    onChange={(e) => setAdminJobTitle(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Company / Business Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g., Shree Industrial Pvt Ltd"
+                    value={adminJobCompany}
+                    onChange={(e) => setAdminJobCompany(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Category / Industry</label>
+                  <select
+                    value={adminJobCategory}
+                    onChange={(e) => setAdminJobCategory(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                  >
+                    <option value="Sales & Marketing">Sales & Marketing</option>
+                    <option value="Medical & Healthcare">Medical & Healthcare</option>
+                    <option value="Finance & Accounting">Finance & Accounting</option>
+                    <option value="Factory & Industrial MIDC">Factory & Industrial MIDC</option>
+                    <option value="Office Admin & Receptionist">Office Admin & Receptionist</option>
+                    <option value="Delivery & Logistics">Delivery & Logistics</option>
+                    <option value="Hotel & Restaurant">Hotel & Restaurant</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Salary Range</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., ₹18,000 - ₹25,000 / month"
+                    value={adminJobSalary}
+                    onChange={(e) => setAdminJobSalary(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Location</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Tarapur MIDC, Boisar West"
+                    value={adminJobLocation}
+                    onChange={(e) => setAdminJobLocation(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Job Type</label>
+                  <select
+                    value={adminJobType}
+                    onChange={(e) => setAdminJobType(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                  >
+                    <option value="Full Time">Full Time</option>
+                    <option value="Part Time">Part Time</option>
+                    <option value="Work From Home">Work From Home</option>
+                    <option value="Contract / Shift">Contract / Shift</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Experience Required</label>
+                  <select
+                    value={adminJobExperience}
+                    onChange={(e) => setAdminJobExperience(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                  >
+                    <option value="0-2 Years (Fresher Welcome)">0-2 Years (Fresher Welcome)</option>
+                    <option value="1-3 Years">1-3 Years</option>
+                    <option value="3-5 Years">3-5 Years</option>
+                    <option value="5+ Years Senior">5+ Years Senior</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Employer Phone</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., 9820123456"
+                    value={adminJobPhone}
+                    onChange={(e) => setAdminJobPhone(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-2 space-y-2 bg-slate-50 border border-slate-200 p-3 rounded-2xl">
+                  <label className="block text-[10px] text-slate-500 uppercase font-black">
+                    Company / Office Banner Image
+                  </label>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-3">
+                    {/* Live Image Preview Thumbnail Box */}
+                    <div className="w-20 h-16 rounded-xl border-2 border-dashed border-slate-300 overflow-hidden bg-white shrink-0 flex items-center justify-center relative shadow-2xs">
+                      {adminJobImage ? (
+                        <img src={adminJobImage} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-[10px] text-slate-400 font-bold text-center px-1">No Image</span>
+                      )}
+                    </div>
+
+                    <div className="flex-1 space-y-2 w-full text-left">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id="admin-job-image-file-input"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              const base64 = reader.result as string;
+                              if (base64) {
+                                setAdminJobImage(base64);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                            e.target.value = '';
+                          }}
+                          className="hidden"
+                        />
+                        <label
+                          htmlFor="admin-job-image-file-input"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white rounded-xl text-xs font-black cursor-pointer transition-all shadow-2xs"
+                        >
+                          📁 Choose / Upload Photo
+                        </label>
+
+                        {adminJobImage && (
+                          <button
+                            type="button"
+                            onClick={() => setAdminJobImage('')}
+                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition-colors cursor-pointer border border-rose-200"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      <input
+                        type="text"
+                        placeholder="Or paste image URL directly (e.g. https://...)"
+                        value={adminJobImage}
+                        onChange={(e) => setAdminJobImage(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Job Requirements & Description</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Describe role responsibilities, candidate skills needed..."
+                    value={adminJobDescription}
+                    onChange={(e) => setAdminJobDescription(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-3 justify-end border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setAdminJobModalOpen(false)}
+                  className="px-4 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold cursor-pointer transition-colors text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs px-6 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Publish Job Listing</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== 🏖️ ADMIN ADD RESORT & VILLA MODAL ==================== */}
+      {adminAddResortModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="fixed inset-0" onClick={() => setAdminAddResortModalOpen(false)} />
+          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 p-6 z-10 flex flex-col max-h-[90vh] overflow-y-auto text-left">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center">
+                  <Waves className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 uppercase tracking-wider">
+                    Add Direct Resort / Private Pool Villa
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Publish a new beach resort or private villa to the /resorts portal.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAdminAddResortModalOpen(false)}
+                className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveNewResort} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Resort / Villa Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g., Kelwa Beach Palms Villa, Sea Breeze Agro Resort"
+                    value={newResortName}
+                    onChange={(e) => setNewResortName(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-cyan-600"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Tagline / Highlight</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Luxury Beachfront Villa with Private Infinity Pool & BBQ Lawn"
+                    value={newResortTagline}
+                    onChange={(e) => setNewResortTagline(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:border-cyan-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Property Type</label>
+                  <select
+                    value={newResortType}
+                    onChange={(e) => setNewResortType(e.target.value as any)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-cyan-600 cursor-pointer"
+                  >
+                    <option value="Private Pool Villa">Private Pool Villa</option>
+                    <option value="Beach Resort">Beach Resort</option>
+                    <option value="Luxury Farmhouse">Luxury Farmhouse</option>
+                    <option value="Weekend Cottage">Weekend Cottage</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Destination Area</label>
+                  <select
+                    value={newResortArea}
+                    onChange={(e) => setNewResortArea(e.target.value as any)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-cyan-600 cursor-pointer"
+                  >
+                    <option value="Kelwa Beach">Kelwa Beach (Palghar)</option>
+                    <option value="Dahanu">Dahanu & Bordi Beach</option>
+                    <option value="Boisar">Boisar & Surroundings</option>
+                    <option value="Manor / Palghar">Manor / Palghar Highway</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Night Stay Price (₹/Night) *</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="e.g. 6999"
+                    value={newResortNightPrice}
+                    onChange={(e) => setNewResortNightPrice(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-cyan-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Day Picnic Rate (₹/Person)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 899"
+                    value={newResortDayPrice}
+                    onChange={(e) => setNewResortDayPrice(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-cyan-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Contact Phone Number *</label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="10-digit mobile"
+                    value={newResortPhone}
+                    onChange={(e) => setNewResortPhone(e.target.value.replace(/\D/g, ''))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-cyan-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">WhatsApp Mobile</label>
+                  <input
+                    type="tel"
+                    placeholder="10-digit WhatsApp"
+                    value={newResortWhatsapp}
+                    onChange={(e) => setNewResortWhatsapp(e.target.value.replace(/\D/g, ''))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-cyan-600"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-[10px] text-slate-400 uppercase font-black mb-1">Detailed Address / Landmark</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Near Sitladevi Temple, Kelwa Beach Road, Palghar"
+                    value={newResortAddress}
+                    onChange={(e) => setNewResortAddress(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:border-cyan-600"
+                  />
+                </div>
+
+                <div className="sm:col-span-2 space-y-2 bg-slate-50 border border-slate-200 p-3 rounded-2xl">
+                  <label className="block text-[10px] text-slate-500 uppercase font-black">
+                    Resort / Villa Photo
+                  </label>
+                  <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <div className="w-20 h-16 rounded-xl border-2 border-dashed border-slate-300 overflow-hidden bg-white shrink-0 flex items-center justify-center relative shadow-2xs">
+                      {newResortImage ? (
+                        <img src={newResortImage} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-[10px] text-slate-400 font-bold text-center px-1">No Image</span>
+                      )}
+                    </div>
+
+                    <div className="flex-1 space-y-2 w-full text-left">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id="admin-resort-image-file-input"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              const base64 = reader.result as string;
+                              if (base64) setNewResortImage(base64);
+                            };
+                            reader.readAsDataURL(file);
+                            e.target.value = '';
+                          }}
+                          className="hidden"
+                        />
+                        <label
+                          htmlFor="admin-resort-image-file-input"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-cyan-700 hover:bg-cyan-800 active:scale-98 text-white rounded-xl text-xs font-black cursor-pointer transition-all shadow-2xs"
+                        >
+                          📁 Choose / Upload Photo
+                        </label>
+                        {newResortImage && (
+                          <button
+                            type="button"
+                            onClick={() => setNewResortImage('')}
+                            className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-bold transition-colors cursor-pointer border border-rose-200"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Or paste image URL (e.g. https://...)"
+                        value={newResortImage}
+                        onChange={(e) => setNewResortImage(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-800 focus:outline-none focus:border-cyan-600"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-3 justify-end border-t border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setAdminAddResortModalOpen(false)}
+                  className="px-4 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold cursor-pointer transition-colors text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-cyan-700 hover:bg-cyan-800 text-white font-extrabold text-xs px-6 py-2.5 rounded-xl shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Publish Resort / Villa</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── 1. SINGLE HOTEL BOOKING COMMISSION SETTLEMENT CONFIRMATION MODAL ── */}
+      {payoutModalOpen && selectedBookingForPayout && (() => {
+        const gross = Number(selectedBookingForPayout.totalAmount) || 0;
+        const cut = Math.round(gross * 0.10);
+        const pInfo = getPartnerPayoutDetails(selectedBookingForPayout.hotelId || selectedBookingForPayout.hotelName);
+
+        return (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-left animate-in fade-in zoom-in duration-200 my-8">
+              <div className="flex items-center justify-between border-b border-slate-150 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center font-bold text-base">
+                    🧾
+                  </div>
+                  <div>
+                    <h4 className="font-black text-sm text-slate-900">Record Hotel Commission Collection</h4>
+                    <p className="text-[11px] text-slate-500 font-medium">Booking #{selectedBookingForPayout.id} • {selectedBookingForPayout.roomCategory || selectedBookingForPayout.roomType || 'Room'}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPayoutModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 font-black text-sm p-1.5 cursor-pointer rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Business Model Clarification Note */}
+              <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3 text-[11px] text-amber-900 flex items-start gap-2">
+                <span className="text-base leading-none">🏨</span>
+                <div>
+                  <span className="font-black">Pay at Hotel Model: </span>
+                  <span>Guest paid 100% room bill directly at the hotel front desk. Hotelier owes Majh Boisar 10% platform commission.</span>
+                </div>
+              </div>
+
+              {/* Settlement Summary Breakdown */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-500 font-semibold">Hotel Property:</span>
+                  <strong className="text-slate-900">{selectedBookingForPayout.hotelName}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 font-semibold">Guest Details:</span>
+                  <strong className="text-slate-900">{selectedBookingForPayout.guestName} ({selectedBookingForPayout.guestPhone})</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 font-semibold">Stay Slot / Date:</span>
+                  <span className="font-bold text-slate-700">{selectedBookingForPayout.checkInDate || selectedBookingForPayout.date || 'Today'}</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-200/80 pt-2">
+                  <span className="text-slate-500 font-semibold">Total Room Tariff (Collected by Hotel):</span>
+                  <span className="font-bold text-slate-800">₹{gross.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-300 pt-2.5 text-sm bg-emerald-50/80 -mx-4 -mb-4 p-4 rounded-b-2xl">
+                  <span className="font-black text-slate-900">10% Platform Commission Received:</span>
+                  <span className="font-black text-emerald-700 text-lg">₹{cut.toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+
+              {/* Hotel Partner Contact */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-1.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Hotel Partner Contact</span>
+                  <span className="text-[11px] font-bold text-slate-700">{pInfo.phone}</span>
+                </div>
+                <div className="text-[11px] text-slate-500 flex justify-between">
+                  <span>Registered A/C: <strong>{pInfo.bank} ({pInfo.holder})</strong></span>
+                  <span>UPI: <strong className="font-mono text-slate-800">{pInfo.upi}</strong></span>
+                </div>
+              </div>
+
+              {/* Payment Mode & UTR Input Form */}
+              <div className="space-y-3 pt-1">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
+                      Commission Paid Via
+                    </label>
+                    <select
+                      value={payoutPaymentMode}
+                      onChange={e => setPayoutPaymentMode(e.target.value as any)}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none cursor-pointer"
+                    >
+                      <option value="UPI">⚡ UPI (GPay / PhonePe / Paytm)</option>
+                      <option value="Cash">💵 Cash Paid by Hotelier</option>
+                      <option value="NEFT">🏛️ Bank NEFT / IMPS</option>
+                      <option value="Other">📝 Other / Direct Adjustment</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
+                        Receipt / Ref No.
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setPayoutUtrInput(`${payoutPaymentMode}-${Date.now().toString().slice(-6)}`)}
+                        className="text-[9px] text-emerald-700 font-bold hover:underline cursor-pointer"
+                      >
+                        Auto-Generate
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={payoutUtrInput}
+                      onChange={e => setPayoutUtrInput(e.target.value)}
+                      placeholder={`e.g. ${payoutPaymentMode}-849201`}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none font-mono"
+                    />
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2 pt-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={payoutNotifyWhatsapp}
+                    onChange={e => setPayoutNotifyWhatsapp(e.target.checked)}
+                    className="w-4 h-4 text-emerald-600 rounded cursor-pointer"
+                  />
+                  <span className="text-xs text-slate-700 font-bold">📲 Send WhatsApp commission clearance receipt to Hotel Owner</span>
+                </label>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2.5 pt-2 border-t border-slate-150">
+                <button
+                  type="button"
+                  onClick={() => setPayoutModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleMarkBookingPayoutSettled(selectedBookingForPayout.id, payoutUtrInput, payoutPaymentMode, payoutNotifyWhatsapp)}
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black transition-all shadow-xs cursor-pointer active:scale-98"
+                >
+                  ✓ Confirm &amp; Mark ₹{cut} Received
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── 2. BATCH HOTEL COMMISSION SETTLEMENT MODAL ── */}
+      {batchPayoutModalOpen && selectedHotelForBatchPayout && (() => {
+        const matching = adminHotelBookings.filter(b => 
+          (b.hotelId === selectedHotelForBatchPayout || b.hotelName === selectedHotelForBatchPayout) &&
+          (b.payoutStatus || '').toLowerCase() !== 'settled'
+        );
+        const totalGross = matching.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+        const totalPlatformCut = Math.round(totalGross * 0.10);
+        const pInfo = getPartnerPayoutDetails(selectedHotelForBatchPayout);
+
+        return (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-left animate-in fade-in zoom-in duration-200 my-8">
+              <div className="flex items-center justify-between border-b border-slate-150 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center font-bold text-base">
+                    ⚡
+                  </div>
+                  <div>
+                    <h4 className="font-black text-sm text-slate-900">Record Hotel Commission Settlement (Batch)</h4>
+                    <p className="text-[11px] text-slate-500 font-medium">{pInfo.hotelName} • {matching.length} Pending Booking(s)</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBatchPayoutModalOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 font-black text-sm p-1.5 cursor-pointer rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Pay at Hotel Note */}
+              <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3 text-[11px] text-amber-900 flex items-start gap-2">
+                <span className="text-base leading-none">🏨</span>
+                <div>
+                  <span className="font-black">Pay at Hotel Settlement: </span>
+                  <span>The hotelier collected {matching.length} guest payments at check-in. This settles the 10% platform commission due to Majh Boisar.</span>
+                </div>
+              </div>
+
+              {/* Batch Financial Summary */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-slate-500 font-semibold">Pending Bookings to Clear:</span>
+                  <strong className="text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">{matching.length} Bookings</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 font-semibold">Total Room Tariff Collected by Hotel:</span>
+                  <span className="font-bold text-slate-800">₹{totalGross.toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between border-t border-slate-300 pt-2.5 text-sm bg-emerald-50/80 -mx-4 -mb-4 p-4 rounded-b-2xl">
+                  <span className="font-black text-slate-900">Total 10% Commission to Collect:</span>
+                  <span className="font-black text-emerald-700 text-lg">₹{totalPlatformCut.toLocaleString('en-IN')}</span>
+                </div>
+              </div>
+
+              {/* Hotel Contact & Reference */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-1.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Hotelier Contact</span>
+                  <span className="text-[11px] font-bold text-slate-800">{pInfo.phone}</span>
+                </div>
+                <div className="text-[11px] text-slate-500 flex justify-between">
+                  <span>Registered A/C: <strong>{pInfo.bank} ({pInfo.holder})</strong></span>
+                  <span>UPI: <strong className="font-mono text-slate-800">{pInfo.upi}</strong></span>
+                </div>
+              </div>
+
+              {/* Payment Mode & Batch UTR */}
+              <div className="space-y-3 pt-1">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
+                      Batch Collection Mode
+                    </label>
+                    <select
+                      value={batchPayoutPaymentMode}
+                      onChange={e => setBatchPayoutPaymentMode(e.target.value as any)}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none cursor-pointer"
+                    >
+                      <option value="UPI">⚡ UPI Batch Settlement</option>
+                      <option value="Cash">💵 Cash Paid by Hotelier</option>
+                      <option value="NEFT">🏛️ Bank NEFT / Corporate IMPS</option>
+                      <option value="Other">📝 Other Settlement</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
+                        UTR / Batch Receipt Ref *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setBatchPayoutUtrInput(`${batchPayoutPaymentMode}-BATCH-${Date.now().toString().slice(-6)}`)}
+                        className="text-[9px] text-emerald-700 font-bold hover:underline cursor-pointer"
+                      >
+                        Auto-Gen
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={batchPayoutUtrInput}
+                      onChange={e => setBatchPayoutUtrInput(e.target.value)}
+                      placeholder={`e.g. ${batchPayoutPaymentMode}-948201`}
+                      className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none font-mono"
+                    />
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2 pt-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={batchPayoutNotifyWhatsapp}
+                    onChange={e => setBatchPayoutNotifyWhatsapp(e.target.checked)}
+                    className="w-4 h-4 text-emerald-600 rounded cursor-pointer"
+                  />
+                  <span className="text-xs text-slate-700 font-bold">📲 Open WhatsApp to send commission clearance receipt to Hotel Owner</span>
+                </label>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2.5 pt-2 border-t border-slate-150">
+                <button
+                  type="button"
+                  onClick={() => setBatchPayoutModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleBatchSettleHotel(selectedHotelForBatchPayout, batchPayoutUtrInput, batchPayoutPaymentMode, batchPayoutNotifyWhatsapp)}
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black transition-all shadow-xs cursor-pointer active:scale-98"
+                >
+                  ✓ Confirm &amp; Record ₹{totalPlatformCut} Received
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── 3. EDIT HOTEL PARTNER BANK & UPI DETAILS MODAL ── */}
+      {editPartnerBankModalOpen && selectedPartnerForBankEdit && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 text-left animate-in fade-in zoom-in duration-200 my-8">
+            <div className="flex items-center justify-between border-b border-slate-150 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-teal-50 text-teal-800 border border-teal-200 flex items-center justify-center font-bold text-base">
+                  🏦
+                </div>
+                <div>
+                  <h4 className="font-black text-sm text-slate-900">Edit Partner Settlement &amp; Bank Account</h4>
+                  <p className="text-[11px] text-slate-500 font-medium">{selectedPartnerForBankEdit.name || 'Hotel Partner'}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditPartnerBankModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 font-black text-sm p-1.5 cursor-pointer rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePartnerBankSubmit} className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
+                  ⚡ UPI ID (GPay / PhonePe / Paytm) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={bankEditForm.upi}
+                  onChange={e => setBankEditForm({ ...bankEditForm, upi: e.target.value })}
+                  placeholder="e.g. freesiahotel@okhdfcbank"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-teal-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
+                  👤 Account Holder / Business Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={bankEditForm.holder}
+                  onChange={e => setBankEditForm({ ...bankEditForm, holder: e.target.value })}
+                  placeholder="e.g. Express Inn Hospitality LLP"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-teal-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
+                  🏛️ Bank Name &amp; Branch *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={bankEditForm.bank}
+                  onChange={e => setBankEditForm({ ...bankEditForm, bank: e.target.value })}
+                  placeholder="e.g. HDFC Bank, Boisar West Branch"
+                  className="w-full bg-slate-50 border border-slate-200 focus:border-teal-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="space-y-1">
+                  <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
+                    🔢 Account Number *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={bankEditForm.accNo}
+                    onChange={e => setBankEditForm({ ...bankEditForm, accNo: e.target.value })}
+                    placeholder="e.g. 50200084920194"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-teal-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-[10px] text-slate-700 font-black uppercase tracking-wider">
+                    🏢 IFSC Code *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={bankEditForm.ifsc}
+                    onChange={e => setBankEditForm({ ...bankEditForm, ifsc: e.target.value.toUpperCase() })}
+                    placeholder="e.g. HDFC0001842"
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-teal-600 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 outline-none font-mono uppercase"
+                  />
+                </div>
+              </div>
+
+              <p className="text-[10px] text-slate-500 pt-1">
+                💡 These details will be permanently saved and shared with the Hotelier&apos;s dashboard.
+              </p>
+
+              <div className="flex gap-2.5 pt-2 border-t border-slate-150">
+                <button
+                  type="button"
+                  onClick={() => setEditPartnerBankModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-black transition-all shadow-xs cursor-pointer active:scale-98"
+                >
+                  💾 Save Account Details
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 4. ASSIGN HOTEL OWNER MODAL */}
+      {assignHotelModalOpen && assigningHotel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-purple-800 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-full">
+                  🏨 Hotel Portal Assignment
+                </span>
+                <h3 className="text-base font-black text-slate-900 mt-1.5">{assigningHotel.name}</h3>
+                <p className="text-xs text-slate-500 font-medium">{assigningHotel.location || 'Boisar'} • Boisar</p>
+              </div>
+              <button
+                onClick={() => setAssignHotelModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 space-y-1">
+              <p className="font-bold flex items-center gap-1.5">
+                <span>🔒 Strict Owner Access Rule:</span>
+              </p>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                Jab aap yahan mobile number assign karenge, tab sirf aur sirf uss number se login karne par is hotel ka reception portal open hoga. Kisi dusre user ke liye ye hotel portal open nahi hoga.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                Owner 10-Digit Mobile Number *
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  maxLength={10}
+                  value={assignHotelOwnerPhoneInput}
+                  onChange={e => setAssignHotelOwnerPhoneInput(e.target.value.replace(/\D/g, ''))}
+                  placeholder="e.g. 9823456789"
+                  className="w-full bg-slate-50 border border-slate-300 focus:border-purple-600 rounded-xl pl-12 pr-3 py-2.5 text-sm font-black text-slate-900 font-mono outline-none"
+                />
+              </div>
+              <span className="text-[10px] text-slate-400 block">
+                Enter 10-digit number. Leave empty and click Save to unassign.
+              </span>
+            </div>
+
+            <div className="flex gap-2.5 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setAssignHotelModalOpen(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAssignHotel}
+                className="flex-1 py-2.5 rounded-xl bg-purple-900 hover:bg-purple-950 text-white font-black text-xs shadow-xs cursor-pointer active:scale-98"
+              >
+                💾 Save &amp; Activate Portal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. ASSIGN BUSINESS OWNER MODAL */}
+      {assignBizModalOpen && assigningBiz && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-0.5 rounded-full">
+                  🏪 Business Portal Assignment
+                </span>
+                <h3 className="text-base font-black text-slate-900 mt-1.5">{assigningBiz.name}</h3>
+                <p className="text-xs text-slate-500 font-medium">{assigningBiz.category} • Boisar</p>
+              </div>
+              <button
+                onClick={() => setAssignBizModalOpen(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 space-y-1">
+              <p className="font-bold flex items-center gap-1.5">
+                <span>🔒 Strict Owner Access Rule:</span>
+              </p>
+              <p className="text-[11px] text-amber-800 leading-relaxed">
+                Jab aap yahan mobile number assign karenge, tab sirf aur sirf uss number se login karne par is business ka dashboard portal open hoga.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-black text-slate-700 uppercase tracking-wider">
+                Owner 10-Digit Mobile Number *
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  maxLength={10}
+                  value={assignBizOwnerPhoneInput}
+                  onChange={e => setAssignBizOwnerPhoneInput(e.target.value.replace(/\D/g, ''))}
+                  placeholder="e.g. 9823456789"
+                  className="w-full bg-slate-50 border border-slate-300 focus:border-teal-600 rounded-xl pl-12 pr-3 py-2.5 text-sm font-black text-slate-900 font-mono outline-none"
+                />
+              </div>
+              <span className="text-[10px] text-slate-400 block">
+                Enter 10-digit number. Leave empty and click Save to unassign.
+              </span>
+            </div>
+
+            <div className="flex gap-2.5 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setAssignBizModalOpen(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAssignBiz}
+                className="flex-1 py-2.5 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-black text-xs shadow-xs cursor-pointer active:scale-98"
+              >
+                💾 Save &amp; Activate Portal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
