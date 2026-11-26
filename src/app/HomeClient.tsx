@@ -2630,7 +2630,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-7 sm:mt-10">
         <div className="space-y-7 sm:space-y-10">
           {/* Loans in Boisar Section - 2x2 Grid with Swipe */}
-          <div className="rounded-3xl border border-purple-200/70 bg-gradient-to-br from-[#f3e8ff] via-[#ede9fe] to-[#e9d5ff] px-3 py-4 shadow-[0_8px_24px_rgba(126,34,206,0.08)] sm:px-5 sm:py-6">
+          <div className="py-1">
             {/* Left-Aligned Section Header with Amber Underline */}
             <div className="text-left mb-3.5 sm:mb-4 px-1">
               <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight inline-block">
@@ -2763,7 +2763,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           </div>
 
           {/* Insurance Plans Section - 2x2 Grid with Swipe */}
-          <div className="rounded-3xl border border-purple-200/70 bg-gradient-to-br from-[#f3e8ff] via-[#ede9fe] to-[#e9d5ff] px-3 py-4 shadow-[0_8px_24px_rgba(126,34,206,0.08)] sm:px-5 sm:py-6">
+          <div className="py-1">
             {/* Left-Aligned Section Header with Emerald Underline */}
             <div className="text-left mb-3.5 sm:mb-4 px-1">
               <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight inline-block">
@@ -2896,7 +2896,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           </div>
 
           {/* Digital Marketing Services Section - 2x2 Grid with Swipe */}
-          <div className="rounded-3xl border border-purple-200/70 bg-gradient-to-br from-[#f3e8ff] via-[#ede9fe] to-[#e9d5ff] px-3 py-4 shadow-[0_8px_24px_rgba(126,34,206,0.08)] sm:px-5 sm:py-6">
+          <div className="py-1">
             {/* Left-Aligned Section Header with Red Underline */}
             <div className="text-left mb-3.5 sm:mb-4 px-1">
               <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight inline-block">
@@ -3038,7 +3038,7 @@ export default function HomeClient({ initialSpecialCategory }: { initialSpecialC
           </div>
 
           {/* Stores & Shopping Section - 2x2 Grid with Swipe */}
-          <div className="rounded-3xl border border-purple-200/70 bg-gradient-to-br from-[#f3e8ff] via-[#ede9fe] to-[#e9d5ff] px-3 py-4 shadow-[0_8px_24px_rgba(126,34,206,0.08)] sm:px-5 sm:py-6">
+          <div className="py-1">
             {/* Left-Aligned Section Header with Indigo Underline */}
             <div className="text-left mb-3.5 sm:mb-4 px-1">
               <h3 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight inline-block">

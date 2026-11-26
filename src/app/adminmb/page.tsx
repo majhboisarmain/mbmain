@@ -4145,13 +4145,13 @@ export default function AdminPanelPage() {
                 if (typeof window !== 'undefined') {
                   sessionStorage.setItem('majh_admin_dashboard_delegated', 'granted');
                 }
-                router.push('/dashboard');
+                router.push('/dashboard?adminControl=true');
               }}
               className="h-9 px-3.5 inline-flex items-center justify-center gap-1.5 rounded-lg bg-teal-800 hover:bg-teal-900 text-white font-bold text-xs shadow-xs transition-all cursor-pointer whitespace-nowrap shrink-0 select-none active:scale-95"
-              title="Open Business Dashboard with Super Admin access"
+              title="Open Business Dashboard with Admin Control"
             >
               <BarChart2 className="w-3.5 h-3.5 shrink-0" />
-              <span>Business Dashboard</span>
+              <span>Business Dashboard (All Businesses)</span>
             </button>
 
             {/* Refresh Data */}
@@ -13482,6 +13482,207 @@ export default function AdminPanelPage() {
                 💾 Save &amp; Activate Portal
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* ACTIVITY & NOTIFICATIONS CENTER MODAL                     */}
+      {/* ======================================================== */}
+      {notificationsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-5 animate-in fade-in duration-200">
+          <div
+            className="fixed inset-0"
+            onClick={() => setNotificationsModalOpen(false)}
+          />
+
+          <div className="relative w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col max-h-[90vh] z-10 animate-in zoom-in-95 duration-200 overflow-hidden">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/80 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-200 text-amber-600 flex items-center justify-center shrink-0">
+                  <Bell className="w-5 h-5 animate-bounce" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+                      Activity &amp; Alerts Center
+                    </h3>
+                    {unreadActivitiesCount > 0 && (
+                      <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse">
+                        {unreadActivitiesCount} new
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Live updates across Businesses, Properties, Jobs, Leads, Claims, Reports &amp; Bookings
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {unreadActivitiesCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={markAllActivitiesAsRead}
+                    className="text-xs font-bold text-teal-700 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 shrink-0"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Mark all read</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setNotificationsModalOpen(false)}
+                  className="w-9 h-9 rounded-xl hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Search & Filter Pill Tabs Bar */}
+            <div className="p-4 border-b border-slate-100 bg-white space-y-3 shrink-0">
+              {/* Search input */}
+              <div className="relative flex items-center">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+                <input
+                  type="text"
+                  value={activitySearchQuery}
+                  onChange={(e) => setActivitySearchQuery(e.target.value)}
+                  placeholder="Search by title, business name, phone, or location..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs font-semibold text-slate-800 placeholder-slate-400 outline-none focus:border-teal-500 focus:bg-white transition-all"
+                />
+                {activitySearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setActivitySearchQuery('')}
+                    className="absolute right-3 text-xs text-slate-400 hover:text-slate-600 font-bold"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Filter Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs font-bold">
+                {[
+                  { key: 'all', label: 'All', count: activityCounts.all },
+                  { key: 'business', label: 'Businesses', count: activityCounts.business },
+                  { key: 'property', label: 'Properties', count: activityCounts.property },
+                  { key: 'job', label: 'Jobs', count: activityCounts.job },
+                  { key: 'lead', label: 'Leads', count: activityCounts.lead },
+                  { key: 'claim', label: 'Claims', count: activityCounts.claim },
+                  { key: 'report', label: 'Reports', count: activityCounts.report },
+                  { key: 'booking', label: 'Bookings', count: activityCounts.booking },
+                ].map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setActivityFilter(f.key as any)}
+                    className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                      activityFilter === f.key
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                    }`}
+                  >
+                    <span>{f.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${
+                      activityFilter === f.key ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                    }`}>
+                      {f.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Activity List Container */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2.5">
+              {filteredActivities.length === 0 ? (
+                <div className="py-12 text-center space-y-2 text-slate-400">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                    <Bell className="w-6 h-6 opacity-40" />
+                  </div>
+                  <p className="text-sm font-bold text-slate-600">No activities found</p>
+                  <p className="text-xs text-slate-400">
+                    {activitySearchQuery ? 'Try adjusting your search query.' : 'New submissions and inquiries will appear here automatically.'}
+                  </p>
+                </div>
+              ) : (
+                filteredActivities.map((act) => {
+                  const isUnread = act.timestamp > lastReadTimestamp;
+
+                  return (
+                    <div
+                      key={act.id}
+                      onClick={() => handleOpenActivityInTab(act)}
+                      className={`group p-3.5 sm:p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 hover:shadow-md ${
+                        isUnread
+                          ? 'bg-amber-50/40 border-amber-200/90 hover:border-amber-400'
+                          : 'bg-white border-slate-200/80 hover:border-slate-300'
+                      }`}
+                    >
+                      {/* Icon */}
+                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border ${act.badgeClass}`}>
+                        {renderActivityIcon(act.type, "w-5 h-5")}
+                      </div>
+
+                      {/* Content */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2 mb-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                              {act.typeLabel}
+                            </span>
+                            {isUnread && (
+                              <span className="inline-block w-2 h-2 rounded-full bg-rose-500" />
+                            )}
+                          </div>
+                          <span className="text-[11px] font-semibold text-slate-400 shrink-0">
+                            {act.timeAgo}
+                          </span>
+                        </div>
+
+                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-teal-700 transition-colors leading-tight truncate">
+                          {act.title}
+                        </h4>
+
+                        <p className="text-xs text-slate-500 truncate mt-0.5">
+                          {act.subtitle}
+                        </p>
+
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {act.dateStr}
+                          </span>
+                          <span className="text-xs font-bold text-teal-700 group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
+                            <span>Open Tab</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3.5 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-xs text-slate-500 shrink-0">
+              <span className="font-semibold">
+                Showing {filteredActivities.length} of {allActivities.length} total events
+              </span>
+              <button
+                type="button"
+                onClick={() => setNotificationsModalOpen(false)}
+                className="px-4 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
           </div>
         </div>
       )}

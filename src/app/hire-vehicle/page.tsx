@@ -401,15 +401,24 @@ function HireVehicleContent() {
       
       {/* 1. Breadcrumbs Header */}
       <div className="bg-white border-b border-slate-200 py-2.5 px-3 sm:px-6 lg:px-8 shadow-2xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 text-left">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 sm:gap-3 text-left">
           <div className="flex items-center gap-2 sm:gap-3 text-xs truncate min-w-0">
             <BackButton variant="pill" label="Back" fallbackUrl="/" />
             <Link href="/" className="text-slate-500 hover:text-teal-900 font-bold transition-colors shrink-0">
               Home
             </Link>
-            <span className="text-slate-300">/</span>
+            <span className="text-slate-300 shrink-0">/</span>
             <span className="text-slate-900 font-black truncate">Hire a Vehicle in Boisar</span>
           </div>
+
+          <button
+            type="button"
+            onClick={handleOpenAddModal}
+            className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-[11px] sm:text-xs font-black px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl shadow-xs transition-all cursor-pointer shrink-0 whitespace-nowrap"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.6]" />
+            <span>Add Your Vehicle</span>
+          </button>
         </div>
       </div>
 
@@ -510,24 +519,35 @@ function HireVehicleContent() {
                           )}
                         </div>
 
-                        {/* Vehicle Photo Container */}
+                        {/* Vehicle Photo Container (100% Full Vehicle Visible + Clean Ratio) */}
                         <div 
                           onClick={() => setPreviewModalImg({ src: v.image, title: `${v.name} · ${v.vehicleModel}`, category: v.category })}
-                          className="relative w-full aspect-[16/10] bg-slate-950 overflow-hidden cursor-pointer group/img"
+                          className="relative w-full aspect-[4/3] bg-slate-950 overflow-hidden cursor-pointer group/img flex items-center justify-center"
                         >
                           <img
                             src={v.image}
-                            alt={v.name}
-                            className="w-full h-full object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
+                            alt=""
+                            aria-hidden="true"
+                            className="absolute inset-0 w-full h-full object-cover blur-md opacity-45 scale-110 pointer-events-none"
                           />
-                          <div className="absolute top-2.5 left-2.5">
+                          <img
+                            src={v.image}
+                            alt={v.name}
+                            className="relative z-1 max-w-full max-h-full w-auto h-auto object-contain group-hover/img:scale-[1.03] transition-transform duration-500"
+                          />
+                          <div className="absolute top-2.5 left-2.5 z-10">
                             <span className="bg-slate-900/90 text-white text-[9.5px] font-black px-2.5 py-1 rounded-lg">
                               {v.category}
                             </span>
                           </div>
-                          <div className="absolute top-2.5 right-2.5">
+                          <div className="absolute top-2.5 right-2.5 z-10">
                             <span className="bg-blue-600 text-white text-xs font-black px-2.5 py-1 rounded-lg shadow-sm">
                               {v.ratePerKm}
+                            </span>
+                          </div>
+                          <div className="absolute bottom-2 right-2 z-10 opacity-90 sm:opacity-0 group-hover/img:opacity-100 transition-opacity">
+                            <span className="bg-black/75 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 border border-white/20 shadow-xs">
+                              🔍 Full Photo
                             </span>
                           </div>
                         </div>
@@ -605,15 +625,21 @@ function HireVehicleContent() {
                   }`}
                 >
                   <div>
-                    {/* Vehicle Photo Container (Full Vehicle View) */}
+                    {/* Vehicle Photo Container (100% Full Vehicle Visible + Clean Ratio) */}
                     <div 
                       onClick={() => setPreviewModalImg({ src: v.image, title: `${v.name} · ${v.vehicleModel}`, category: v.category })}
-                      className="relative w-full aspect-[16/10] bg-slate-950 overflow-hidden shrink-0 cursor-pointer group/img"
+                      className="relative w-full aspect-[4/3] bg-slate-950 overflow-hidden shrink-0 cursor-pointer group/img flex items-center justify-center"
                     >
                       <img
                         src={v.image}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 w-full h-full object-cover blur-md opacity-45 scale-110 pointer-events-none"
+                      />
+                      <img
+                        src={v.image}
                         alt={v.name}
-                        className="w-full h-full object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
+                        className="relative z-1 max-w-full max-h-full w-auto h-auto object-contain group-hover/img:scale-[1.03] transition-transform duration-500"
                       />
                       {v.featured && (
                         <div className="absolute top-2.5 left-2.5 z-10">
@@ -622,17 +648,17 @@ function HireVehicleContent() {
                           </span>
                         </div>
                       )}
-                      <div className={`absolute ${v.featured ? 'top-10' : 'top-2.5'} left-2.5`}>
+                      <div className={`absolute ${v.featured ? 'top-10' : 'top-2.5'} left-2.5 z-10`}>
                         <span className="bg-slate-900/90 backdrop-blur-md text-white text-[9.5px] font-black px-2.5 py-1 rounded-lg shadow-xs border border-white/10">
                           {v.category}
                         </span>
                       </div>
-                      <div className="absolute top-2.5 right-2.5">
+                      <div className="absolute top-2.5 right-2.5 z-10">
                         <span className="bg-blue-600 text-white text-xs font-black px-2.5 py-1 rounded-lg shadow-sm">
                           {v.ratePerKm}
                         </span>
                       </div>
-                      <div className="absolute bottom-2 right-2 opacity-90 sm:opacity-0 group-hover/img:opacity-100 transition-opacity">
+                      <div className="absolute bottom-2 right-2 z-10 opacity-90 sm:opacity-0 group-hover/img:opacity-100 transition-opacity">
                         <span className="bg-black/75 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 border border-white/20 shadow-xs">
                           🔍 Full Photo
                         </span>

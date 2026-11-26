@@ -32,23 +32,49 @@ export default function Navbar() {
   const [userHotelPassCount, setUserHotelPassCount] = useState(0);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
 
-  const refreshUserHotelPasses = () => {
+  const refreshUserHotelPasses = async () => {
     if (typeof window === 'undefined') return;
     if (!isLoggedIn || !loggedInUser?.phone) {
       setUserHotelPassCount(0);
       return;
     }
+    const userPhoneClean = (loggedInUser?.phone || '').replace(/\D/g, '').slice(-10);
+    if (!userPhoneClean) {
+      setUserHotelPassCount(0);
+      return;
+    }
+    let hiddenIds: string[] = [];
+    const seenIds = new Set<string>();
     try {
       const stored = JSON.parse(localStorage.getItem('majh_boisar_hotel_bookings') || '[]');
-      const hiddenIds = JSON.parse(localStorage.getItem('majh_boisar_user_hidden_passes') || '[]');
-      const userPhoneClean = (loggedInUser?.phone || '').replace(/\D/g, '');
-      const myPasses = stored.filter((p: any) => {
-        const guestPhoneClean = (p.guestPhone || '').replace(/\D/g, '');
-        return guestPhoneClean === userPhoneClean && !hiddenIds.includes(p.id);
-      });
-      setUserHotelPassCount(myPasses.length);
-    } catch (e) {
+      hiddenIds = JSON.parse(localStorage.getItem('majh_boisar_user_hidden_passes') || '[]');
+      if (Array.isArray(stored)) {
+        stored.forEach((p: any) => {
+          const guestPhoneClean = (p.guestPhone || '').replace(/\D/g, '').slice(-10);
+          if (guestPhoneClean === userPhoneClean && !hiddenIds.includes(p.id)) {
+            seenIds.add(String(p.id));
+          }
+        });
+      }
+      setUserHotelPassCount(seenIds.size);
+    } catch {
       setUserHotelPassCount(0);
+    }
+
+    // Also sync central DB bookings so cross-device/DB bookings appear automatically
+    try {
+      const res = await fetch(`/api/hotel-bookings?phone=${encodeURIComponent(userPhoneClean)}`);
+      const data = await res.json().catch(() => null);
+      if (data && data.success && Array.isArray(data.bookings)) {
+        data.bookings.forEach((b: any) => {
+          if (b?.id && !hiddenIds.includes(b.id)) {
+            seenIds.add(String(b.id));
+          }
+        });
+        setUserHotelPassCount(seenIds.size);
+      }
+    } catch {
+      // Ignore network errors and keep local count
     }
   };
 
@@ -785,25 +811,25 @@ export default function Navbar() {
                         </div>
 
                         <div className="space-y-1">
-                          {/* View All Bookings */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setProfileDropdownOpen(false);
-                              setIsHotelPassesModalOpen(true);
-                            }}
-                            className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs text-slate-800 hover:bg-slate-50 transition-colors font-bold group cursor-pointer text-left"
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <Receipt className="w-4 h-4 text-slate-600 stroke-[1.8]" />
-                              <span>View All Bookings</span>
-                            </div>
-                            {userHotelPassCount > 0 && (
+                          {/* View All Bookings (Visible only when user has bookings) */}
+                          {userHotelPassCount > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProfileDropdownOpen(false);
+                                setIsHotelPassesModalOpen(true);
+                              }}
+                              className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-xs text-slate-800 hover:bg-slate-50 transition-colors font-bold group cursor-pointer text-left"
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <Receipt className="w-4 h-4 text-slate-600 stroke-[1.8]" />
+                                <span>View All Bookings</span>
+                              </div>
                               <span className="text-[9px] bg-teal-600 text-white font-black px-1.5 py-0.5 rounded-full">
                                 {userHotelPassCount}
                               </span>
-                            )}
-                          </button>
+                            </button>
+                          )}
 
                           {/* Business Dashboard or Register */}
                           {hasUserListing ? (
@@ -1042,28 +1068,28 @@ export default function Navbar() {
 
               {/* 2. Primary Navigation Group (Bookings, Dashboard/Register, Property, Advertise) */}
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden divide-y divide-slate-100">
-                {/* View all bookings */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    setIsHotelPassesModalOpen(true);
-                  }}
-                  className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors text-left group cursor-pointer"
-                >
-                  <div className="flex items-center gap-3.5">
-                    <Receipt className="w-5 h-5 text-slate-600 stroke-[1.8]" />
-                    <span className="text-sm font-medium text-slate-800">View all bookings</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {userHotelPassCount > 0 && (
+                {/* View all bookings (Visible only when user has bookings) */}
+                {userHotelPassCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setIsHotelPassesModalOpen(true);
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-slate-50 transition-colors text-left group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <Receipt className="w-5 h-5 text-slate-600 stroke-[1.8]" />
+                      <span className="text-sm font-medium text-slate-800">View all bookings</span>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <span className="text-[10px] font-black bg-teal-600 text-white px-2 py-0.5 rounded-full">
                         {userHotelPassCount} active
                       </span>
-                    )}
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </button>
+                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                    </div>
+                  </button>
+                )}
 
                 {/* My Business Dashboard / List Your Business */}
                 <Link
